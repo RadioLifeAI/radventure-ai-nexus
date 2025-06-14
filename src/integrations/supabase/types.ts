@@ -9,7 +9,545 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      achievements: {
+        Row: {
+          code: string
+          created_at: string
+          criteria: Json
+          description: string | null
+          icon_url: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          criteria: Json
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          criteria?: Json
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      difficulties: {
+        Row: {
+          description: string | null
+          id: number
+          level: number
+        }
+        Insert: {
+          description?: string | null
+          id?: number
+          level: number
+        }
+        Update: {
+          description?: string | null
+          id?: number
+          level?: number
+        }
+        Relationships: []
+      }
+      event_cases: {
+        Row: {
+          case_id: string
+          event_id: string
+          id: string
+        }
+        Insert: {
+          case_id: string
+          event_id: string
+          id?: string
+        }
+        Update: {
+          case_id?: string
+          event_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_cases_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "medical_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_cases_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_rankings: {
+        Row: {
+          event_id: string
+          id: string
+          rank: number | null
+          score: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          event_id: string
+          id?: string
+          rank?: number | null
+          score: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          event_id?: string
+          id?: string
+          rank?: number | null
+          score?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_rankings_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_rankings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_registrations: {
+        Row: {
+          event_id: string
+          id: string
+          registered_at: string
+          user_id: string
+        }
+        Insert: {
+          event_id: string
+          id?: string
+          registered_at?: string
+          user_id: string
+        }
+        Update: {
+          event_id?: string
+          id?: string
+          registered_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_registrations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          prize_radcoins: number
+          scheduled_end: string
+          scheduled_start: string
+          status: Database["public"]["Enums"]["event_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          prize_radcoins?: number
+          scheduled_end: string
+          scheduled_start: string
+          status?: Database["public"]["Enums"]["event_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          prize_radcoins?: number
+          scheduled_end?: string
+          scheduled_start?: string
+          status?: Database["public"]["Enums"]["event_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      imaging_modalities: {
+        Row: {
+          id: number
+          name: string
+        }
+        Insert: {
+          id?: number
+          name: string
+        }
+        Update: {
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      medical_cases: {
+        Row: {
+          author_id: string | null
+          created_at: string
+          description: string | null
+          difficulty_level: number | null
+          id: string
+          meta: Json | null
+          modality: string | null
+          specialty: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          created_at?: string
+          description?: string | null
+          difficulty_level?: number | null
+          id?: string
+          meta?: Json | null
+          modality?: string | null
+          specialty?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          created_at?: string
+          description?: string | null
+          difficulty_level?: number | null
+          id?: string
+          meta?: Json | null
+          modality?: string | null
+          specialty?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medical_cases_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medical_specialties: {
+        Row: {
+          id: number
+          name: string
+        }
+        Insert: {
+          id?: number
+          name: string
+        }
+        Update: {
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      monthly_rankings: {
+        Row: {
+          category: string | null
+          id: string
+          points: number
+          rank: number | null
+          updated_at: string
+          user_id: string
+          year_month: string
+        }
+        Insert: {
+          category?: string | null
+          id?: string
+          points: number
+          rank?: number | null
+          updated_at?: string
+          user_id: string
+          year_month: string
+        }
+        Update: {
+          category?: string | null
+          id?: string
+          points?: number
+          rank?: number | null
+          updated_at?: string
+          user_id?: string
+          year_month?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monthly_rankings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          birthdate: string | null
+          country_code: string | null
+          created_at: string
+          current_streak: number
+          email: string | null
+          full_name: string | null
+          id: string
+          radcoin_balance: number
+          total_points: number
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          birthdate?: string | null
+          country_code?: string | null
+          created_at?: string
+          current_streak?: number
+          email?: string | null
+          full_name?: string | null
+          id: string
+          radcoin_balance?: number
+          total_points?: number
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          birthdate?: string | null
+          country_code?: string | null
+          created_at?: string
+          current_streak?: number
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          radcoin_balance?: number
+          total_points?: number
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      radcoin_transactions_log: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string
+          id: string
+          metadata: Json | null
+          tx_type: Database["public"]["Enums"]["radcoin_tx_type"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          tx_type: Database["public"]["Enums"]["radcoin_tx_type"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          tx_type?: Database["public"]["Enums"]["radcoin_tx_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "radcoin_transactions_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          id: string
+          status: string | null
+          stripe_customer_id: string | null
+          tier: Database["public"]["Enums"]["subscription_tier"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          status?: string | null
+          stripe_customer_id?: string | null
+          tier?: Database["public"]["Enums"]["subscription_tier"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          status?: string | null
+          stripe_customer_id?: string | null
+          tier?: Database["public"]["Enums"]["subscription_tier"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      system_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: Json | null
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value?: Json | null
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: Json | null
+        }
+        Relationships: []
+      }
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          id: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          id?: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          id?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_achievements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_case_history: {
+        Row: {
+          answered_at: string
+          case_id: string
+          details: Json | null
+          id: string
+          is_correct: boolean | null
+          points: number | null
+          user_id: string
+        }
+        Insert: {
+          answered_at?: string
+          case_id: string
+          details?: Json | null
+          id?: string
+          is_correct?: boolean | null
+          points?: number | null
+          user_id: string
+        }
+        Update: {
+          answered_at?: string
+          case_id?: string
+          details?: Json | null
+          id?: string
+          is_correct?: boolean | null
+          points?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_case_history_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "medical_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_case_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +556,14 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      event_status: "SCHEDULED" | "ACTIVE" | "FINISHED"
+      radcoin_tx_type:
+        | "event_reward"
+        | "subscription_purchase"
+        | "help_purchase"
+        | "admin_grant"
+        | "admin_revoke"
+      subscription_tier: "Free" | "Pro" | "Plus"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +678,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      event_status: ["SCHEDULED", "ACTIVE", "FINISHED"],
+      radcoin_tx_type: [
+        "event_reward",
+        "subscription_purchase",
+        "help_purchase",
+        "admin_grant",
+        "admin_revoke",
+      ],
+      subscription_tier: ["Free", "Pro", "Plus"],
+    },
   },
 } as const
