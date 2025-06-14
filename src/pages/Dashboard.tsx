@@ -1,5 +1,5 @@
 
-import { Rocket, User, Globe, Star, TrendingUp, Award, PieChart, MapPin } from "lucide-react";
+import { Rocket, Globe, Star, TrendingUp, Award, PieChart, MapPin, Activity, BookOpen, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Link } from "react-router-dom";
@@ -21,6 +21,10 @@ export default function Dashboard() {
     { name: "Dr. Pioneiro", avatar: "https://randomuser.me/api/portraits/men/70.jpg", points: 4430 },
   ];
 
+  // Estilização dos títulos dos cards para melhor destaque
+  const cardTitleClass = "mt-2 text-lg md:text-xl font-extrabold text-white drop-shadow-[0_1px_2px_rgba(44,220,255,0.4)]";
+  const cardDescClass = "mt-1 text-sm md:text-base text-cyan-100";
+  
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white">
       {/* Header */}
@@ -58,34 +62,71 @@ export default function Dashboard() {
           </Button>
         </section>
 
-        {/* Quick Actions */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-3">
+        {/* Quick Actions com novos menus e títulos mais visíveis */}
+        <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-6 mt-3">
+          {/* Central de Casos */}
+          <Card className="bg-black/70 rounded-xl shadow-md border-none hover:scale-105 transition">
+            <CardContent className="flex flex-col items-center p-6 text-center">
+              <Activity className="text-cyan-400 mb-2" size={36}/>
+              <span className={cardTitleClass}>Central de Casos</span>
+              <span className={cardDescClass}>Resolva desafios reais, aprenda e suba de nível!</span>
+              <Button asChild size="sm" variant="outline" className="mt-4 border-cyan-300 text-cyan-200 hover:bg-cyan-900/30 font-bold">
+                <Link to="#">Explorar Casos</Link>
+              </Button>
+            </CardContent>
+          </Card>
+          {/* Crie sua Jornada */}
+          <Card className="bg-black/70 rounded-xl shadow-md border-none hover:scale-105 transition">
+            <CardContent className="flex flex-col items-center p-6 text-center">
+              <BookOpen className="text-violet-400 mb-2" size={36}/>
+              <span className={cardTitleClass}>Crie sua Jornada</span>
+              <span className={cardDescClass}>Personalize seu aprendizado com módulos e trilhas temáticas.</span>
+              <Button asChild size="sm" variant="outline" className="mt-4 border-violet-400 text-violet-200 hover:bg-violet-900/20 font-bold">
+                <Link to="#">Nova Jornada</Link>
+              </Button>
+            </CardContent>
+          </Card>
+          {/* Eventos */}
+          <Card className="bg-black/70 rounded-xl shadow-md border-none hover:scale-105 transition">
+            <CardContent className="flex flex-col items-center p-6 text-center">
+              <Calendar className="text-blue-300 mb-2" size={36}/>
+              <span className={cardTitleClass}>Eventos</span>
+              <span className={cardDescClass}>Participe de eventos exclusivos e concorra no ranking.</span>
+              <Button asChild size="sm" variant="outline" className="mt-4 border-blue-400 text-blue-200 hover:bg-blue-900/30 font-bold">
+                <Link to="#">Ver Eventos</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Leaderboard Global */}
           <Card className="bg-black/70 rounded-xl shadow-md border-none hover:scale-105 transition">
             <CardContent className="flex flex-col items-center p-6 text-center">
               <Globe className="text-cyan-300 mb-2" size={36}/>
-              <CardTitle>Leaderboard Global</CardTitle>
-              <CardDescription className="mt-1">Compare seu desempenho com radiologistas do mundo inteiro!</CardDescription>
-              <Button asChild size="sm" variant="outline" className="mt-4 border-cyan-400 text-cyan-200 hover:bg-cyan-900/30">
+              <span className={cardTitleClass}>Leaderboard Global</span>
+              <span className={cardDescClass}>Compare seu desempenho com radiologistas do mundo inteiro!</span>
+              <Button asChild size="sm" variant="outline" className="mt-4 border-cyan-400 text-cyan-200 hover:bg-cyan-900/30 font-bold">
                 <Link to="#">Ver Ranking</Link>
               </Button>
             </CardContent>
           </Card>
+          {/* Minhas Conquistas */}
           <Card className="bg-black/70 rounded-xl shadow-md border-none hover:scale-105 transition">
             <CardContent className="flex flex-col items-center p-6 text-center">
               <Award className="text-yellow-300 mb-2" size={36}/>
-              <CardTitle>Minhas Conquistas</CardTitle>
-              <CardDescription className="mt-1">Colecione badges exclusivos ao superar desafios e eventos.</CardDescription>
-              <Button asChild size="sm" variant="outline" className="mt-4 border-yellow-400 text-yellow-200 hover:bg-yellow-900/20">
+              <span className={cardTitleClass}>Minhas Conquistas</span>
+              <span className={cardDescClass}>Colecione badges exclusivos ao superar desafios e eventos.</span>
+              <Button asChild size="sm" variant="outline" className="mt-4 border-yellow-400 text-yellow-200 hover:bg-yellow-900/20 font-bold">
                 <Link to="#">Ver Conquistas</Link>
               </Button>
             </CardContent>
           </Card>
+          {/* Estatísticas */}
           <Card className="bg-black/70 rounded-xl shadow-md border-none hover:scale-105 transition">
             <CardContent className="flex flex-col items-center p-6 text-center">
               <PieChart className="text-green-300 mb-2" size={36}/>
-              <CardTitle>Estatísticas</CardTitle>
-              <CardDescription className="mt-1">Monitore sua evolução, acertos, streaks e gráficos de performance.</CardDescription>
-              <Button asChild size="sm" variant="outline" className="mt-4 border-green-400 text-green-200 hover:bg-green-900/30">
+              <span className={cardTitleClass}>Estatísticas</span>
+              <span className={cardDescClass}>Monitore sua evolução, acertos, streaks e gráficos de performance.</span>
+              <Button asChild size="sm" variant="outline" className="mt-4 border-green-400 text-green-200 hover:bg-green-900/30 font-bold">
                 <Link to="#">Minhas Estatísticas</Link>
               </Button>
             </CardContent>
@@ -118,3 +159,4 @@ export default function Dashboard() {
     </div>
   );
 }
+
