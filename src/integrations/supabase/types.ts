@@ -39,6 +39,35 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_roles: {
+        Row: {
+          assigned_at: string
+          id: string
+          profile_id: string
+          role: Database["public"]["Enums"]["admin_role"]
+        }
+        Insert: {
+          assigned_at?: string
+          id?: string
+          profile_id: string
+          role: Database["public"]["Enums"]["admin_role"]
+        }
+        Update: {
+          assigned_at?: string
+          id?: string
+          profile_id?: string
+          role?: Database["public"]["Enums"]["admin_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_roles_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       difficulties: {
         Row: {
           description: string | null
@@ -123,13 +152,6 @@ export type Database = {
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "event_rankings_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       event_registrations: {
@@ -157,13 +179,6 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "event_registrations_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -205,15 +220,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["event_status"]
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "events_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       imaging_modalities: {
         Row: {
@@ -267,15 +274,7 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "medical_cases_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       medical_specialties: {
         Row: {
@@ -320,59 +319,72 @@ export type Database = {
           user_id?: string
           year_month?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "monthly_rankings_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       profiles: {
         Row: {
+          academic_specialty: string | null
+          academic_stage: Database["public"]["Enums"]["academic_stage"] | null
           avatar_url: string | null
           bio: string | null
           birthdate: string | null
+          college: string | null
           country_code: string | null
           created_at: string
           current_streak: number
           email: string | null
           full_name: string | null
           id: string
+          medical_specialty: string | null
+          nickname: string | null
+          preferences: Json | null
           radcoin_balance: number
           total_points: number
+          type: Database["public"]["Enums"]["profile_type"]
           updated_at: string
           username: string | null
         }
         Insert: {
+          academic_specialty?: string | null
+          academic_stage?: Database["public"]["Enums"]["academic_stage"] | null
           avatar_url?: string | null
           bio?: string | null
           birthdate?: string | null
+          college?: string | null
           country_code?: string | null
           created_at?: string
           current_streak?: number
           email?: string | null
           full_name?: string | null
           id: string
+          medical_specialty?: string | null
+          nickname?: string | null
+          preferences?: Json | null
           radcoin_balance?: number
           total_points?: number
+          type?: Database["public"]["Enums"]["profile_type"]
           updated_at?: string
           username?: string | null
         }
         Update: {
+          academic_specialty?: string | null
+          academic_stage?: Database["public"]["Enums"]["academic_stage"] | null
           avatar_url?: string | null
           bio?: string | null
           birthdate?: string | null
+          college?: string | null
           country_code?: string | null
           created_at?: string
           current_streak?: number
           email?: string | null
           full_name?: string | null
           id?: string
+          medical_specialty?: string | null
+          nickname?: string | null
+          preferences?: Json | null
           radcoin_balance?: number
           total_points?: number
+          type?: Database["public"]["Enums"]["profile_type"]
           updated_at?: string
           username?: string | null
         }
@@ -406,15 +418,7 @@ export type Database = {
           tx_type?: Database["public"]["Enums"]["radcoin_tx_type"]
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "radcoin_transactions_log_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       subscriptions: {
         Row: {
@@ -494,13 +498,6 @@ export type Database = {
             referencedRelation: "achievements"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "user_achievements_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       user_case_history: {
@@ -539,13 +536,6 @@ export type Database = {
             referencedRelation: "medical_cases"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "user_case_history_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
     }
@@ -556,7 +546,20 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      academic_stage: "Student" | "Intern" | "Resident" | "Specialist"
+      admin_role:
+        | "DEV"
+        | "TechAdmin"
+        | "WebSecuritySpecialist"
+        | "ContentEditor"
+        | "WebPerformanceSpecialist"
+        | "WebAnalyticsManager"
+        | "DigitalMarketingSpecialist"
+        | "EcommerceManager"
+        | "CustomerSupportCoordinator"
+        | "ComplianceOfficer"
       event_status: "SCHEDULED" | "ACTIVE" | "FINISHED"
+      profile_type: "USER" | "ADMIN"
       radcoin_tx_type:
         | "event_reward"
         | "subscription_purchase"
@@ -679,7 +682,21 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      academic_stage: ["Student", "Intern", "Resident", "Specialist"],
+      admin_role: [
+        "DEV",
+        "TechAdmin",
+        "WebSecuritySpecialist",
+        "ContentEditor",
+        "WebPerformanceSpecialist",
+        "WebAnalyticsManager",
+        "DigitalMarketingSpecialist",
+        "EcommerceManager",
+        "CustomerSupportCoordinator",
+        "ComplianceOfficer",
+      ],
       event_status: ["SCHEDULED", "ACTIVE", "FINISHED"],
+      profile_type: ["USER", "ADMIN"],
       radcoin_tx_type: [
         "event_reward",
         "subscription_purchase",
