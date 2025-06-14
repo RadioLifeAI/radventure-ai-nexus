@@ -16,6 +16,8 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { HeaderNav } from "@/components/HeaderNav";
+import { UserProfile } from "@/components/UserProfile";
 
 type Category = {
   name: string;
@@ -189,29 +191,18 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white">
-      {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-center md:justify-between px-6 md:px-16 py-6 border-b border-cyan-600/40">
-        <div className="flex items-center gap-3">
-          <span className="bg-cyan-500 p-2 rounded-full shadow-md"><ImageIcon className="text-white" size={28}/></span>
-          <span className="text-2xl font-bold tracking-tight">RadVenture</span>
-        </div>
-        <nav className="mt-4 md:mt-0 flex gap-4 items-center">
-          <Button asChild className="bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 font-bold px-5 py-2 rounded-lg">
-            <Link to="/">Voltar à Home</Link>
-          </Button>
-        </nav>
-      </header>
-
-      <main className="flex-1 flex flex-col gap-3 px-2 md:px-16 pt-4 pb-8">
+      <HeaderNav />
+      <main className="flex-1 flex flex-col gap-3 px-2 md:px-16 pt-2 pb-8">
+        <UserProfile user={user}/>
         {/* Menus do topo para filtro */}
-        <section className="flex justify-center gap-2 flex-wrap mb-2 animate-fade-in">
+        <section className="flex justify-center gap-2 flex-wrap mb-2 animate-fade-in mt-2">
           <button
             className={`${menuButton} ${filter === "imagem" ? "" : menuButtonInactive}`}
             type="button"
             onClick={() => setFilter("imagem")}
             aria-label="Filtrar por Diagnóstico por Imagem"
           >
-            <ImageIcon size={20} /> Diagnóstico por Imagem
+            Imagem
           </button>
           <button
             className={`${menuButton} ${filter === "medica" ? "" : menuButtonInactive}`}
@@ -219,7 +210,7 @@ export default function Dashboard() {
             onClick={() => setFilter("medica")}
             aria-label="Filtrar por Especialidades Médicas"
           >
-            <File size={20} /> Especialidades Médicas
+            Médicas
           </button>
         </section>
         {/* Grid cards categorias */}
@@ -233,7 +224,6 @@ export default function Dashboard() {
             />
           ))}
         </section>
-
         {/* Perfil resumido */}
         <section className="flex flex-col md:flex-row gap-6 justify-between items-center mb-4">
           <div className="flex items-center gap-6">
