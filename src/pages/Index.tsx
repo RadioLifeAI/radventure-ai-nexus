@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Rocket, Globe, Users, ShieldCheck, TrendingUp, Award } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -17,6 +16,9 @@ export default function Index() {
           <Button asChild className="bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 font-bold px-5 py-2 rounded-lg">
             <Link to="/login">Começar Agora</Link>
           </Button>
+          <Button asChild variant="outline" className="border-cyan-400 text-cyan-200 hover:bg-cyan-900/30 hidden md:inline-flex">
+            <Link to="/dashboard">Ver Demo do Dashboard</Link>
+          </Button>
         </nav>
       </header>
       {/* Hero */}
@@ -33,6 +35,9 @@ export default function Index() {
           </Button>
           <Button variant="outline" className="border-cyan-300 text-cyan-100 hover:bg-cyan-700 hover:text-white font-bold px-7 py-3 text-lg drop-shadow-md">
             Ver Demo
+          </Button>
+          <Button asChild variant="outline" className="border-cyan-400 text-cyan-200 hover:bg-cyan-900/30 md:hidden font-bold px-7 py-3 text-lg">
+            <Link to="/dashboard">Dashboard</Link>
           </Button>
         </div>
       </section>
