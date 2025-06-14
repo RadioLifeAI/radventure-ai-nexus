@@ -1,18 +1,18 @@
 
-import { Rocket, PieChart, Activity, BookOpen, Calendar, Search, Grid2x2, List } from "lucide-react";
+import { Rocket, PieChart, Activity, BookOpen, Calendar, Search, Grid2x2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import React, { useState } from "react";
 
 const imageSpecialties = [
-  { name: "Neurorradiologia", color: "from-purple-600 to-pink-500" },
-  { name: "Coluna", color: "from-blue-700 to-cyan-500" },
-  { name: "Cabeça e Pescoço", color: "from-fuchsia-600 to-blue-400" },
-  { name: "Tórax", color: "from-indigo-700 to-blue-300" },
-  { name: "Abdome", color: "from-yellow-400 to-orange-600" },
-  { name: "Musculoesquelético", color: "from-green-400 to-teal-600" },
-  { name: "Intervencionista", color: "from-gray-600 to-cyan-900" },
+  "Neurorradiologia",
+  "Coluna",
+  "Cabeça e Pescoço",
+  "Tórax",
+  "Abdome",
+  "Musculoesquelético",
+  "Intervencionista",
 ];
 
 const medicalSpecialties = [
@@ -48,8 +48,10 @@ export default function Dashboard() {
   // Futurista: Filtros de categoria (imagem | médica)
   const [filter, setFilter] = useState<"imagem" | "medica">("imagem");
 
-  const cardTitleClass = "mt-2 text-lg md:text-xl font-extrabold text-white drop-shadow-[0_1px_2px_rgba(44,220,255,0.25)]";
-  const cardDescClass = "mt-1 text-sm md:text-base text-cyan-100";
+  const menuBase =
+    "flex flex-col items-center justify-center gap-1 bg-white/10 hover:bg-white/20 border border-cyan-700/30 text-cyan-200 hover:text-white font-bold rounded-lg px-4 py-3 cursor-pointer transition-shadow duration-200 shadow-md hover:shadow-xl";
+  const selectedMenu =
+    "bg-cyan-700/80 text-white border-cyan-500";
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white">
@@ -66,9 +68,9 @@ export default function Dashboard() {
         </nav>
       </header>
 
-      <main className="flex-1 flex flex-col gap-9 px-4 md:px-16 py-8 md:py-12">
+      <main className="flex-1 flex flex-col gap-7 px-4 md:px-16 py-6 md:py-10">
         {/* Perfil resumido */}
-        <section className="flex flex-col md:flex-row gap-6 justify-between items-center">
+        <section className="flex flex-col md:flex-row gap-6 justify-between items-center mb-4">
           <div className="flex items-center gap-6">
             <img src={user.avatar} alt="Avatar" className="w-20 h-20 rounded-full border-4 border-cyan-400 shadow-lg" />
             <div>
@@ -91,57 +93,56 @@ export default function Dashboard() {
           </Button>
         </section>
 
-        {/* Filtros rápidos */}
-        <section>
-          <div className="flex gap-4 flex-wrap justify-center md:justify-start mb-4">
-            <Button
-              variant={filter === "imagem" ? "default" : "outline"}
-              className={`font-extrabold text-base px-6 py-2 transition-all duration-200 ${filter === "imagem" ? "bg-gradient-to-r from-violet-500 to-cyan-500 border-0" : ""}`}
+        {/* Menu/Filtros Categorias */}
+        <section className="w-full flex flex-col gap-4">
+          <div className="flex gap-2 flex-wrap justify-center md:justify-start">
+            <button
+              className={`${menuBase} ${filter === "imagem" ? selectedMenu : ""}`}
               onClick={() => setFilter("imagem")}
+              type="button"
+              aria-label="Filtro Diagnóstico por Imagem"
             >
-              Diagnóstico por Imagem
-            </Button>
-            <Button
-              variant={filter === "medica" ? "default" : "outline"}
-              className={`font-extrabold text-base px-6 py-2 transition-all duration-200 ${filter === "medica" ? "bg-gradient-to-r from-cyan-500 to-blue-500 border-0" : ""}`}
+              <Grid2x2 size={22} />
+              <span className="text-base font-bold mt-1">Diagnóstico por Imagem</span>
+            </button>
+            <button
+              className={`${menuBase} ${filter === "medica" ? selectedMenu : ""}`}
               onClick={() => setFilter("medica")}
+              type="button"
+              aria-label="Filtro Especialidades Médicas"
             >
-              Especialidades Médicas
-            </Button>
+              <BookOpen size={20} />
+              <span className="text-base font-bold mt-1">Especialidades Médicas</span>
+            </button>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-            {(filter === "imagem" ? imageSpecialties : medicalSpecialties).map((cat, idx) => (
-              <Card
-                key={typeof cat === "string" ? cat : cat.name}
-                className={`bg-gradient-to-br ${typeof cat === "string"
-                  ? "from-cyan-900 to-cyan-500"
-                  : cat.color} rounded-xl shadow-lg border-0 hover:scale-105 transition`}
+          {/* Lista de categorias */}
+          <div className="mt-1 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-5">
+            {(filter === "imagem" ? imageSpecialties : medicalSpecialties).map((cat) => (
+              <div
+                key={cat}
+                className="flex flex-col items-center bg-cyan-950/90 border border-cyan-800/80 rounded-lg p-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:bg-cyan-900/70 cursor-pointer group"
               >
-                <CardContent className="flex flex-col items-center p-5 py-8 text-center">
-                  <Grid2x2 className="mb-2 text-cyan-200" size={32}/>
-                  <span className="mt-1 mb-2 text-base font-extrabold text-white drop-shadow-[0_1px_2px_rgba(44,220,255,0.4)]">
-                    {typeof cat === "string" ? cat : cat.name}
-                  </span>
-                  <Button asChild size="sm" variant="outline"
-                    className="mt-2 border-cyan-200 text-cyan-100 hover:bg-cyan-900/30 font-bold"
-                  >
-                    <Link to="#">
-                      <Search size={16} className="mr-1"/> Explorar
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
+                <Grid2x2 size={28} className="mb-1 text-cyan-300 group-hover:text-cyan-100 transition" />
+                <span className="text-sm md:text-base font-bold text-cyan-100/90 group-hover:text-white text-center leading-tight">{cat}</span>
+                <Button asChild size="sm" variant="outline"
+                  className="mt-2 border-cyan-200 text-cyan-100 hover:bg-cyan-900/50 font-bold"
+                >
+                  <Link to="#">
+                    <Search size={15} className="mr-1"/> Explorar
+                  </Link>
+                </Button>
+              </div>
             ))}
           </div>
         </section>
 
         {/* Ações rápidas */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-6 mt-3">
+        <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-6 mt-6">
           <Card className="bg-black/60 rounded-xl shadow-md border-none hover:scale-105 transition">
             <CardContent className="flex flex-col items-center p-6 text-center">
               <Activity className="text-cyan-400 mb-2" size={36}/>
-              <span className={cardTitleClass}>Central de Casos</span>
-              <span className={cardDescClass}>Resolva desafios reais, aprenda e suba de nível!</span>
+              <span className="mt-2 text-lg md:text-xl font-extrabold text-white drop-shadow-[0_1px_2px_rgba(44,220,255,0.25)]">Central de Casos</span>
+              <span className="mt-1 text-sm md:text-base text-cyan-100">Resolva desafios reais, aprenda e suba de nível!</span>
               <Button asChild size="sm" variant="outline" className="mt-4 border-cyan-300 text-cyan-200 hover:bg-cyan-900/30 font-bold">
                 <Link to="#">Explorar Casos</Link>
               </Button>
@@ -150,8 +151,8 @@ export default function Dashboard() {
           <Card className="bg-black/60 rounded-xl shadow-md border-none hover:scale-105 transition">
             <CardContent className="flex flex-col items-center p-6 text-center">
               <BookOpen className="text-violet-400 mb-2" size={36}/>
-              <span className={cardTitleClass}>Crie sua Jornada</span>
-              <span className={cardDescClass}>Personalize seu aprendizado com módulos e trilhas temáticas.</span>
+              <span className="mt-2 text-lg md:text-xl font-extrabold text-white drop-shadow-[0_1px_2px_rgba(44,220,255,0.25)]">Crie sua Jornada</span>
+              <span className="mt-1 text-sm md:text-base text-cyan-100">Personalize seu aprendizado com módulos e trilhas temáticas.</span>
               <Button asChild size="sm" variant="outline" className="mt-4 border-violet-400 text-violet-200 hover:bg-violet-900/20 font-bold">
                 <Link to="#">Nova Jornada</Link>
               </Button>
@@ -160,8 +161,8 @@ export default function Dashboard() {
           <Card className="bg-black/60 rounded-xl shadow-md border-none hover:scale-105 transition">
             <CardContent className="flex flex-col items-center p-6 text-center">
               <Calendar className="text-blue-300 mb-2" size={36}/>
-              <span className={cardTitleClass}>Eventos</span>
-              <span className={cardDescClass}>Participe de eventos exclusivos e concorra no ranking.</span>
+              <span className="mt-2 text-lg md:text-xl font-extrabold text-white drop-shadow-[0_1px_2px_rgba(44,220,255,0.25)]">Eventos</span>
+              <span className="mt-1 text-sm md:text-base text-cyan-100">Participe de eventos exclusivos e concorra no ranking.</span>
               <Button asChild size="sm" variant="outline" className="mt-4 border-blue-400 text-blue-200 hover:bg-blue-900/30 font-bold">
                 <Link to="#">Ver Eventos</Link>
               </Button>
