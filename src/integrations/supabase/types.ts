@@ -328,6 +328,7 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           birthdate: string | null
+          city: string | null
           college: string | null
           country_code: string | null
           created_at: string
@@ -339,6 +340,7 @@ export type Database = {
           nickname: string | null
           preferences: Json | null
           radcoin_balance: number
+          state: string | null
           total_points: number
           type: Database["public"]["Enums"]["profile_type"]
           updated_at: string
@@ -350,6 +352,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           birthdate?: string | null
+          city?: string | null
           college?: string | null
           country_code?: string | null
           created_at?: string
@@ -361,6 +364,7 @@ export type Database = {
           nickname?: string | null
           preferences?: Json | null
           radcoin_balance?: number
+          state?: string | null
           total_points?: number
           type?: Database["public"]["Enums"]["profile_type"]
           updated_at?: string
@@ -372,6 +376,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           birthdate?: string | null
+          city?: string | null
           college?: string | null
           country_code?: string | null
           created_at?: string
@@ -383,6 +388,7 @@ export type Database = {
           nickname?: string | null
           preferences?: Json | null
           radcoin_balance?: number
+          state?: string | null
           total_points?: number
           type?: Database["public"]["Enums"]["profile_type"]
           updated_at?: string
@@ -543,7 +549,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      process_case_completion: {
+        Args: { p_user_id: string; p_case_id: string; p_points?: number }
+        Returns: undefined
+      }
     }
     Enums: {
       academic_stage: "Student" | "Intern" | "Resident" | "Specialist"
