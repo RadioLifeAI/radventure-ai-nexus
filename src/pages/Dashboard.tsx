@@ -1,173 +1,156 @@
+
+import React, { useState } from "react";
 import {
-  Circle,
-  Square,
+  Activity,
+  BookOpen,
+  Calendar,
+  Headphones,
+  Image as ImageIcon,
+  FileText,
   SquarePlus,
   SquareCheck,
   SquareMinus,
-  File,
-  Image as ImageIcon,
-  FileText,
-  Activity,
-  Search,
-  BookOpen,
-  Calendar,
+  Square,
+  Circle,
+  Stethoscope,
+  Baby,
+  Shield,
+  Brain,
+  HeartPulse,
+  Users,
+  TestTube,
+  Syringe,
+  Droplets,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import React, { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { HeaderNav } from "@/components/HeaderNav";
 import { UserProfile } from "@/components/UserProfile";
 
-type Category = {
-  name: string;
-  color: string;
-  icon: React.ReactNode;
-  url?: string;
-};
-
-const imageSpecialties: Category[] = [
-  {
-    name: "Neurorradiologia",
-    color: "bg-cyan-600",
-    icon: <Circle className="text-white" size={32}/>,
-  },
-  {
-    name: "Coluna",
-    color: "bg-fuchsia-600",
-    icon: <SquareMinus className="text-white" size={32}/>,
-  },
-  {
-    name: "Cabeça e Pescoço",
-    color: "bg-orange-500",
-    icon: <ImageIcon className="text-white" size={32}/>,
-  },
+// Especialidades por Imagem
+const imageSpecialties = [
   {
     name: "Tórax",
-    color: "bg-emerald-600",
-    icon: <SquareCheck className="text-white" size={32}/>,
+    description: "Radiologia torácica",
+    icon: <SquareCheck size={36} className="text-[#13c7a7]" />,
+    bg: "bg-gradient-to-t from-[#e5f6f5] to-white",
+    cases: 1,
   },
   {
     name: "Abdome",
-    color: "bg-violet-600",
-    icon: <File className="text-white" size={32}/>,
+    description: "Radiologia abdominal",
+    icon: <FileText size={36} className="text-[#f29e3b]" />,
+    bg: "bg-gradient-to-t from-[#fff7ed] to-white",
+    cases: 0,
+  },
+  {
+    name: "Neuro",
+    description: "Neuroimagem",
+    icon: <Brain size={36} className="text-[#8f5cf7]" />,
+    bg: "bg-gradient-to-t from-[#f4f0fd] to-white",
+    cases: 11,
   },
   {
     name: "Musculoesquelético",
-    color: "bg-sky-500",
-    icon: <SquarePlus className="text-white" size={32}/>,
+    description: "Traumatologia e ortopedia",
+    icon: <SquarePlus size={36} className="text-[#414c64]" />,
+    bg: "bg-gradient-to-t from-[#ecf2fb] to-white",
+    cases: 0,
   },
   {
-    name: "Intervencionista",
-    color: "bg-rose-600",
-    icon: <FileText className="text-white" size={32}/>,
+    name: "Coluna",
+    description: "Radiologia da coluna",
+    icon: <SquareMinus size={36} className="text-[#757575]" />,
+    bg: "bg-gradient-to-t from-[#e7e7ea] to-white",
+    cases: 0,
   },
 ];
 
-const medicalSpecialties: Category[] = [
-  {
-    name: "Medicina de Emergência",
-    color: "bg-cyan-800",
-    icon: <Circle className="text-white" size={32}/>,
-  },
-  {
-    name: "Pediatria",
-    color: "bg-pink-600",
-    icon: <SquarePlus className="text-white" size={32}/>,
-  },
-  {
-    name: "Trauma",
-    color: "bg-yellow-600",
-    icon: <SquareCheck className="text-white" size={32}/>,
-  },
+// Especialidades Médicas
+const medicalSpecialties = [
   {
     name: "Saúde da Mulher",
-    color: "bg-rose-700",
-    icon: <File className="text-white" size={32}/>,
-  },
-  {
-    name: "Obstetrícia",
-    color: "bg-emerald-700",
-    icon: <SquareMinus className="text-white" size={32}/>,
+    description: "Radiologia ginecológica",
+    icon: <HeartPulse size={32} className="text-[#db1c69]" />,
+    bg: "bg-gradient-to-t from-[#ffe1ed] to-white",
+    cases: 0,
   },
   {
     name: "Ginecologia",
-    color: "bg-violet-700",
-    icon: <FileText className="text-white" size={32}/>,
+    description: "Ginecologia diagnóstica",
+    icon: <Users size={32} className="text-[#ff3276]" />,
+    bg: "bg-gradient-to-t from-[#ffe7ee] to-white",
+    cases: 0,
   },
   {
     name: "Hematologia",
-    color: "bg-fuchsia-800",
-    icon: <Square className="text-white" size={32}/>,
+    description: "Doenças hematológicas",
+    icon: <Droplets size={32} className="text-[#ed212c]" />,
+    bg: "bg-gradient-to-t from-[#ffe6e7] to-white",
+    cases: 0,
   },
   {
-    name: "Gastrointestinal",
-    color: "bg-cyan-700",
-    icon: <SquareMinus className="text-white" size={32}/>,
-  },
-  {
-    name: "Hepatobiliar",
-    color: "bg-orange-600",
-    icon: <Circle className="text-white" size={32}/>,
-  },
-  {
-    name: "Dermatologia",
-    color: "bg-sky-700",
-    icon: <SquareCheck className="text-white" size={32}/>,
-  },
-  {
-    name: "Otorrinolaringologia",
-    color: "bg-yellow-700",
-    icon: <File className="text-white" size={32}/>,
+    name: "Obstetrícia",
+    description: "Ultrassom obstétrico",
+    icon: <Baby size={32} className="text-[#17bbea]" />,
+    bg: "bg-gradient-to-t from-[#e6f7fb] to-white",
+    cases: 0,
   },
   {
     name: "Oncologia",
-    color: "bg-cyan-900",
-    icon: <SquarePlus className="text-white" size={32}/>,
+    description: "Radiologia oncológica",
+    icon: <TestTube size={32} className="text-[#693bff]" />,
+    bg: "bg-gradient-to-t from-[#efe9ff] to-white",
+    cases: 0,
   },
   {
-    name: "Urologia",
-    color: "bg-emerald-900",
-    icon: <Circle className="text-white" size={32}/>,
-  },
-  {
-    name: "Vascular",
-    color: "bg-violet-800",
-    icon: <SquareCheck className="text-white" size={32}/>,
-  },
-  {
-    name: "Cirurgia",
-    color: "bg-orange-900",
-    icon: <FileText className="text-white" size={32}/>,
-  },
-  {
-    name: "Clínica Médica",
-    color: "bg-fuchsia-900",
-    icon: <Square className="text-white" size={32}/>,
-  },
-  {
-    name: "Outros",
-    color: "bg-stone-700",
-    icon: <SquareMinus className="text-white" size={32}/>,
+    name: "Pediatria",
+    description: "Radiologia pediátrica",
+    icon: <Stethoscope size={32} className="text-[#25bfff]" />,
+    bg: "bg-gradient-to-t from-[#e6fafd] to-white",
+    cases: 0,
   },
 ];
 
-// MenuCard para cada especialidade/categoria
-function CategoryMenuCard({ name, color, icon }: Category) {
+// Componente Card de Especialidade
+function SpecialtyCard({ icon, name, description, bg, cases }: any) {
   return (
     <div
-      className={`flex flex-col items-center justify-center rounded-xl shadow-lg cursor-pointer transition-transform hover:scale-105 px-4 py-5 ${color}`}
-      tabIndex={0}
-      role="button"
-      aria-label={`Explorar casos de ${name}`}
-      style={{ minHeight: 122 }}
+      className={`rounded-2xl shadow hover:shadow-lg transition-all duration-200 ${bg} p-5 flex flex-col justify-between min-h-[140px]`}
     >
-      <div className="mb-2 flex items-center justify-center">
-        {icon}
+      <div className="flex gap-3 items-center">
+        <div className="rounded-xl bg-white shadow p-2 flex items-center justify-center">{icon}</div>
+        <div>
+          <div className="font-bold text-lg text-gray-800">{name}</div>
+          <div className="text-sm text-gray-500">{description}</div>
+        </div>
       </div>
-      <span className="text-white font-bold text-center text-base drop-shadow-sm leading-tight">{name}</span>
+      <div className="flex items-center justify-between mt-5">
+        <span className="text-xs font-semibold text-gray-600">
+          {cases} caso{cases === 1 ? "" : "s"} disponível{cases === 1 ? "" : "is"}
+        </span>
+        <Button size="sm" className="bg-gradient-to-r from-[#11d3fc] to-[#26b2fe] text-white font-bold px-4 py-1 rounded-lg shadow hover:scale-105 transition outline-none border-none">
+          Começar
+        </Button>
+      </div>
     </div>
   );
+}
+
+// Cards Ações rápidas logo abaixo do perfil
+function ActionCard({ icon, title, description, link, color }: any) {
+  return (
+    <div className="bg-[#161f38] rounded-2xl shadow-lg flex flex-col items-center p-6 min-h-[186px]">
+      <div className={`mb-2`}>{React.cloneElement(icon, { size: 38, className: color })}</div>
+      <span className="mt-2 text-lg font-extrabold text-white drop-shadow-sm text-center">{title}</span>
+      <span className="mt-1 text-sm text-cyan-100 text-center">{description}</span>
+      <Button asChild size="sm" variant="outline"
+        className={`mt-4 border-none text-[#11d3fc] bg-white hover:bg-[#d1f6fd] font-bold px-4 rounded-xl shadow`}
+      >
+        <Link to={link || "#"}>{title === "Central de Casos" ? (<><Activity size={15} className="mr-1" />Explorar</>) : title === "Crie sua Jornada" ? "Nova Jornada" : "Ver Eventos"}</Link>
+      </Button>
+    </div>
+  )
 }
 
 export default function Dashboard() {
@@ -180,109 +163,62 @@ export default function Dashboard() {
     ranking: 7,
   };
 
-  // Filtro das categorias
-  const [filter, setFilter] = useState<"imagem" | "medica">("imagem");
-
-  // Classes para o menu topo
-  const menuButton =
-    "flex items-center gap-2 px-4 py-2 rounded-2xl font-bold text-lg transition bg-cyan-700/90 text-white border-2 border-cyan-300 shadow hover:bg-cyan-800/90 hover:border-white";
-  const menuButtonInactive =
-    "bg-slate-200 text-cyan-900 border-slate-300 hover:bg-slate-300";
-
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white w-full">
       <HeaderNav />
-      <main className="flex-1 flex flex-col gap-3 px-2 md:px-16 pt-2 pb-8">
-        <UserProfile user={user}/>
-        {/* Menus do topo para filtro */}
-        <section className="flex justify-center gap-2 flex-wrap mb-2 animate-fade-in mt-2">
-          <button
-            className={`${menuButton} ${filter === "imagem" ? "" : menuButtonInactive}`}
-            type="button"
-            onClick={() => setFilter("imagem")}
-            aria-label="Filtrar por Diagnóstico por Imagem"
-          >
-            Imagem
-          </button>
-          <button
-            className={`${menuButton} ${filter === "medica" ? "" : menuButtonInactive}`}
-            type="button"
-            onClick={() => setFilter("medica")}
-            aria-label="Filtrar por Especialidades Médicas"
-          >
-            Médicas
-          </button>
-        </section>
-        {/* Grid cards categorias */}
-        <section className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4 mb-8">
-          {(filter === "imagem" ? imageSpecialties : medicalSpecialties).map((cat) => (
-            <CategoryMenuCard
-              key={cat.name}
-              name={cat.name}
-              color={cat.color}
-              icon={cat.icon}
-            />
-          ))}
-        </section>
-        {/* Perfil resumido */}
-        <section className="flex flex-col md:flex-row gap-6 justify-between items-center mb-4">
-          <div className="flex items-center gap-6">
-            <img src={user.avatar} alt="Avatar" className="w-20 h-20 rounded-full border-4 border-cyan-400 shadow-lg" />
-            <div>
-              <h2 className="text-2xl md:text-3xl font-semibold tracking-tight flex items-center gap-2">
-                {user.name}
-              </h2>
-              <div className="flex items-center gap-2 mt-1 text-cyan-100">
-                <span className="flex items-center gap-1">{user.totalPoints} pts</span>
-                <span className="ml-2 flex items-center gap-1">{user.city}, {user.state}</span>
-              </div>
-              <div className="flex gap-4 mt-3 text-sm">
-                <span className="bg-cyan-700/50 px-3 py-1 rounded-2xl flex items-center gap-1">Ranking Nacional: <b>{user.ranking}º</b></span>
-                <span className="bg-cyan-800/40 px-3 py-1 rounded-2xl flex items-center gap-1">Próxima conquista: <b>Expert Radiologista</b></span>
-              </div>
-            </div>
-          </div>
-          <Button className="bg-gradient-to-r from-cyan-400 to-blue-500 shadow-lg px-8 py-3 text-lg font-extrabold hover:scale-105 transition">
-            Começar Novo Desafio
-          </Button>
+      <main className="flex-1 flex flex-col gap-4 px-2 md:px-16 pt-4 pb-10">
+        {/* Perfil principal */}
+        <UserProfile user={user} />
+
+        {/* Actions Cards */}
+        <section className="w-full grid grid-cols-1 sm:grid-cols-3 gap-6 mt-2 mb-4">
+          <ActionCard
+            icon={<Activity />}
+            title="Central de Casos"
+            description="Resolva desafios reais, aprenda e suba de nível!"
+            link="#"
+            color="text-[#11d3fc]"
+          />
+          <ActionCard
+            icon={<BookOpen />}
+            title="Crie sua Jornada"
+            description="Personalize seu aprendizado com módulos e trilhas temáticas."
+            link="#"
+            color="text-[#a189fa]"
+          />
+          <ActionCard
+            icon={<Calendar />}
+            title="Eventos"
+            description="Participe de eventos exclusivos e concorra no ranking."
+            link="#"
+            color="text-[#11d3fc]"
+          />
         </section>
 
-        {/* Ações rápidas (cards) */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-6 mt-6">
-          <Card className="bg-black/60 rounded-xl shadow-md border-none hover:scale-105 transition">
-            <CardContent className="flex flex-col items-center p-6 text-center">
-              <Activity className="text-cyan-400 mb-2" size={36}/>
-              <span className="mt-2 text-lg md:text-xl font-extrabold text-white drop-shadow-[0_1px_2px_rgba(44,220,255,0.25)]">Central de Casos</span>
-              <span className="mt-1 text-sm md:text-base text-cyan-100">Resolva desafios reais, aprenda e suba de nível!</span>
-              <Button asChild size="sm" variant="outline"
-                className="mt-4 border-cyan-300 text-cyan-200 hover:bg-cyan-900/30 font-bold"
-              >
-                <Link to="#">
-                  <Search size={15} className="mr-1"/> Explorar
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-          <Card className="bg-black/60 rounded-xl shadow-md border-none hover:scale-105 transition">
-            <CardContent className="flex flex-col items-center p-6 text-center">
-              <BookOpen className="text-violet-400 mb-2" size={36}/>
-              <span className="mt-2 text-lg md:text-xl font-extrabold text-white drop-shadow-[0_1px_2px_rgba(44,220,255,0.25)]">Crie sua Jornada</span>
-              <span className="mt-1 text-sm md:text-base text-cyan-100">Personalize seu aprendizado com módulos e trilhas temáticas.</span>
-              <Button asChild size="sm" variant="outline" className="mt-4 border-violet-400 text-violet-200 hover:bg-violet-900/20 font-bold">
-                <Link to="#">Nova Jornada</Link>
-              </Button>
-            </CardContent>
-          </Card>
-          <Card className="bg-black/60 rounded-xl shadow-md border-none hover:scale-105 transition">
-            <CardContent className="flex flex-col items-center p-6 text-center">
-              <Calendar className="text-blue-300 mb-2" size={36}/>
-              <span className="mt-2 text-lg md:text-xl font-extrabold text-white drop-shadow-[0_1px_2px_rgba(44,220,255,0.25)]">Eventos</span>
-              <span className="mt-1 text-sm md:text-base text-cyan-100">Participe de eventos exclusivos e concorra no ranking.</span>
-              <Button asChild size="sm" variant="outline" className="mt-4 border-blue-400 text-blue-200 hover:bg-blue-900/30 font-bold">
-                <Link to="#">Ver Eventos</Link>
-              </Button>
-            </CardContent>
-          </Card>
+        {/* Diagnóstico por Imagem */}
+        <section className="w-full mt-4">
+          <h2 className="font-extrabold text-2xl text-white mb-2">Diagnóstico por Imagem</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-6">
+            {imageSpecialties.map((spec) => (
+              <SpecialtyCard
+                key={spec.name}
+                {...spec}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* Especialidades Médicas */}
+        <section className="w-full mt-8 mb-4">
+          <h2 className="font-extrabold text-2xl text-white mb-2">Especialidades Médicas</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-6">
+            {medicalSpecialties.map((spec) => (
+              <SpecialtyCard
+                key={spec.name}
+                {...spec}
+              />
+            ))}
+          </div>
         </section>
       </main>
       {/* Footer */}
