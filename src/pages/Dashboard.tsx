@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Activity,
@@ -66,49 +65,166 @@ const imageSpecialties = [
   },
 ];
 
-// Especialidades Médicas
+// Diagnóstico por Imagem (Categorias radiológicas principais)
+const imagingCategories = [
+  {
+    name: "Neurorradiologia",
+    icon: <Brain size={33} className="text-[#8f5cf7]" />,
+    bg: "bg-gradient-to-t from-[#f4f0fd] to-white",
+  },
+  {
+    name: "Coluna",
+    icon: <SquareMinus size={33} className="text-[#757575]" />,
+    bg: "bg-gradient-to-t from-[#e7e7ea] to-white",
+  },
+  {
+    name: "Cabeça e Pescoço",
+    icon: <Shield size={33} className="text-[#11d3fc]" />,
+    bg: "bg-gradient-to-t from-[#e5f6f5] to-white",
+  },
+  {
+    name: "Tórax",
+    icon: <HeartPulse size={33} className="text-[#13c7a7]" />,
+    bg: "bg-gradient-to-t from-[#e5f6f5] to-white",
+  },
+  {
+    name: "Abdome",
+    icon: <FileText size={33} className="text-[#f29e3b]" />,
+    bg: "bg-gradient-to-t from-[#fff7ed] to-white",
+  },
+  {
+    name: "Musculoesquelético",
+    icon: <SquarePlus size={33} className="text-[#414c64]" />,
+    bg: "bg-gradient-to-t from-[#ecf2fb] to-white",
+  },
+  {
+    name: "Intervencionista",
+    icon: <Syringe size={33} className="text-[#db1c69]" />,
+    bg: "bg-gradient-to-t from-[#ffe1ed] to-white",
+  },
+];
+
+// Especialidades Médicas (completa e atualizada)
 const medicalSpecialties = [
   {
-    name: "Saúde da Mulher",
-    description: "Radiologia ginecológica",
-    icon: <HeartPulse size={32} className="text-[#db1c69]" />,
-    bg: "bg-gradient-to-t from-[#ffe1ed] to-white",
-    cases: 0,
-  },
-  {
-    name: "Ginecologia",
-    description: "Ginecologia diagnóstica",
-    icon: <Users size={32} className="text-[#ff3276]" />,
-    bg: "bg-gradient-to-t from-[#ffe7ee] to-white",
-    cases: 0,
-  },
-  {
-    name: "Hematologia",
-    description: "Doenças hematológicas",
-    icon: <Droplets size={32} className="text-[#ed212c]" />,
-    bg: "bg-gradient-to-t from-[#ffe6e7] to-white",
-    cases: 0,
-  },
-  {
-    name: "Obstetrícia",
-    description: "Ultrassom obstétrico",
-    icon: <Baby size={32} className="text-[#17bbea]" />,
-    bg: "bg-gradient-to-t from-[#e6f7fb] to-white",
-    cases: 0,
-  },
-  {
-    name: "Oncologia",
-    description: "Radiologia oncológica",
-    icon: <TestTube size={32} className="text-[#693bff]" />,
-    bg: "bg-gradient-to-t from-[#efe9ff] to-white",
-    cases: 0,
+    name: "Medicina de Emergência",
+    icon: <Activity size={32} className="text-[#fd8a42]" />,
+    bg: "bg-gradient-to-t from-[#fff1e5] to-white",
   },
   {
     name: "Pediatria",
-    description: "Radiologia pediátrica",
-    icon: <Stethoscope size={32} className="text-[#25bfff]" />,
+    icon: <Baby size={32} className="text-[#25bfff]" />,
     bg: "bg-gradient-to-t from-[#e6fafd] to-white",
-    cases: 0,
+  },
+  {
+    name: "Trauma",
+    icon: <TestTube size={32} className="text-[#9e90fa]" />,
+    bg: "bg-gradient-to-t from-[#efe9ff] to-white",
+  },
+  {
+    name: "Saúde da Mulher",
+    icon: <HeartPulse size={32} className="text-[#db1c69]" />,
+    bg: "bg-gradient-to-t from-[#ffe1ed] to-white",
+  },
+  {
+    name: "Obstetrícia",
+    icon: <Baby size={32} className="text-[#17bbea]" />,
+    bg: "bg-gradient-to-t from-[#e6f7fb] to-white",
+  },
+  {
+    name: "Ginecologia",
+    icon: <Users size={32} className="text-[#ff3276]" />,
+    bg: "bg-gradient-to-t from-[#ffe7ee] to-white",
+  },
+  {
+    name: "Hematologia",
+    icon: <Droplets size={32} className="text-[#ed212c]" />,
+    bg: "bg-gradient-to-t from-[#ffe6e7] to-white",
+  },
+  {
+    name: "Gastrointestinal",
+    icon: <TestTube size={32} className="text-[#35b37c]" />,
+    bg: "bg-gradient-to-t from-[#e5fff5] to-white",
+  },
+  {
+    name: "Hepatobiliar",
+    icon: <FileText size={32} className="text-[#aa7f4f]" />,
+    bg: "bg-gradient-to-t from-[#fff7ed] to-white",
+  },
+  {
+    name: "Dermatologia",
+    icon: <Shield size={32} className="text-[#f29e3b]" />,
+    bg: "bg-gradient-to-t from-[#fff7ed] to-white",
+  },
+  {
+    name: "Otorrinolaringologia",
+    icon: <Headphones size={32} className="text-[#22b5bf]" />,
+    bg: "bg-gradient-to-t from-[#e5f6f5] to-white",
+  },
+  {
+    name: "Oncologia",
+    icon: <TestTube size={32} className="text-[#693bff]" />,
+    bg: "bg-gradient-to-t from-[#efe9ff] to-white",
+  },
+  {
+    name: "Urologia",
+    icon: <Droplets size={32} className="text-[#2797ed]" />,
+    bg: "bg-gradient-to-t from-[#e6f7fb] to-white",
+  },
+  {
+    name: "Vascular",
+    icon: <Users size={32} className="text-[#e8417a]" />,
+    bg: "bg-gradient-to-t from-[#fbe6f7] to-white",
+  },
+  {
+    name: "Cirurgia",
+    icon: <SquarePlus size={32} className="text-[#112dfc]" />,
+    bg: "bg-gradient-to-t from-[#e6e9fd] to-white",
+  },
+  {
+    name: "Clínica Médica",
+    icon: <Stethoscope size={32} className="text-[#214461]" />,
+    bg: "bg-gradient-to-t from-[#e6fafd] to-white",
+  },
+  {
+    name: "Reumatologia",
+    icon: <HeartPulse size={32} className="text-[#8fcc18]" />,
+    bg: "bg-gradient-to-t from-[#f6ffe5] to-white",
+  },
+  {
+    name: "Nefrologia",
+    icon: <Droplets size={32} className="text-[#179ad6]" />,
+    bg: "bg-gradient-to-t from-[#e6fafd] to-white",
+  },
+  {
+    name: "Cardiologia",
+    icon: <HeartPulse size={32} className="text-[#fc2d1a]" />,
+    bg: "bg-gradient-to-t from-[#ffe5e5] to-white",
+  },
+  {
+    name: "Neurologia",
+    icon: <Brain size={32} className="text-[#965cf1]" />,
+    bg: "bg-gradient-to-t from-[#f4f0fd] to-white",
+  },
+  {
+    name: "Endocrinologia",
+    icon: <TestTube size={32} className="text-[#ffa101]" />,
+    bg: "bg-gradient-to-t from-[#fffbe5] to-white",
+  },
+  {
+    name: "Infectologia",
+    icon: <Shield size={32} className="text-[#67d01c]" />,
+    bg: "bg-gradient-to-t from-[#e7fbe6] to-white",
+  },
+  {
+    name: "Psiquiatria",
+    icon: <Brain size={32} className="text-[#b815f6]" />,
+    bg: "bg-gradient-to-t from-[#fdeaff] to-white",
+  },
+  {
+    name: "Outros",
+    icon: <Circle size={32} className="text-[#757575]" />,
+    bg: "bg-gradient-to-t from-[#ededed] to-white",
   },
 ];
 
@@ -195,15 +311,16 @@ export default function Dashboard() {
           />
         </section>
 
-        {/* Diagnóstico por Imagem */}
+        {/* Filtros de Diagnóstico por Imagem */}
         <section className="w-full mt-4">
           <h2 className="font-extrabold text-2xl text-white mb-2">Diagnóstico por Imagem</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-6">
-            {imageSpecialties.map((spec) => (
-              <SpecialtyCard
-                key={spec.name}
-                {...spec}
-              />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-4">
+            {imagingCategories.map((cat) => (
+              <div key={cat.name}
+                className={`flex flex-col items-center justify-center p-4 rounded-xl shadow ${cat.bg} hover:scale-105 transition cursor-pointer`}>
+                {cat.icon}
+                <span className="mt-2 text-base font-semibold text-gray-700">{cat.name}</span>
+              </div>
             ))}
           </div>
         </section>
@@ -211,12 +328,13 @@ export default function Dashboard() {
         {/* Especialidades Médicas */}
         <section className="w-full mt-8 mb-4">
           <h2 className="font-extrabold text-2xl text-white mb-2">Especialidades Médicas</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-4">
             {medicalSpecialties.map((spec) => (
-              <SpecialtyCard
-                key={spec.name}
-                {...spec}
-              />
+              <div key={spec.name}
+                className={`flex flex-col items-center justify-center p-4 rounded-xl shadow ${spec.bg} hover:scale-105 transition cursor-pointer`}>
+                {spec.icon}
+                <span className="mt-2 text-base font-semibold text-gray-700">{spec.name}</span>
+              </div>
             ))}
           </div>
         </section>
