@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useCaseProfileFormState } from "../hooks/useCaseProfileFormState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,35 +31,11 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
   // Listas vindas do banco para selects
   const [categories, setCategories] = useState<{id: number, name: string}[]>([]);
   const [difficulties, setDifficulties] = useState<{id: number, level: number, description: string | null}[]>([]);
+  
+  // Usar nosso novo hook de estado do formulário
+  const { form, setForm, resetForm } = useCaseProfileFormState();
+
   // Form fields
-  const [form, setForm] = useState({
-    category_id: "",
-    difficulty_level: "",
-    points: "10",
-    modality: "",
-    subtype: "",
-    title: "",
-    findings: "",
-    patient_age: "",
-    patient_gender: "",
-    symptoms_duration: "",
-    patient_clinical_info: "",
-    main_question: "",
-    explanation: "",
-    answer_options: ["", "", "", ""],
-    answer_feedbacks: ["", "", "", ""],
-    answer_short_tips: ["", "", "", ""], // NOVO
-    correct_answer_index: 0,
-    image_url: "",
-    // Novos campos
-    can_skip: true,
-    max_elimination: 0,
-    ai_hint_enabled: false,
-    manual_hint: "",
-    skip_penalty_points: 0,
-    elimination_penalty_points: 0,
-    ai_tutor_level: "desligado"
-  });
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -346,33 +323,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     const { error } = await supabase.from("medical_cases").insert([payload]);
     if (!error) {
       setFeedback("Caso cadastrado com sucesso!");
-      setForm({
-        category_id: "",
-        difficulty_level: "",
-        points: "10",
-        modality: "",
-        subtype: "",
-        title: "",
-        findings: "",
-        patient_age: "",
-        patient_gender: "",
-        symptoms_duration: "",
-        patient_clinical_info: "",
-        main_question: "",
-        explanation: "",
-        answer_options: ["", "", "", ""],
-        answer_feedbacks: ["", "", "", ""],
-        answer_short_tips: ["", "", "", ""],
-        correct_answer_index: 0,
-        image_url: "",
-        can_skip: true,
-        max_elimination: 0,
-        ai_hint_enabled: false,
-        manual_hint: "",
-        skip_penalty_points: 0,
-        elimination_penalty_points: 0,
-        ai_tutor_level: "desligado"
-      });
+      resetForm();
       onCreated?.();
     } else {
       setFeedback("Erro ao cadastrar caso.");
