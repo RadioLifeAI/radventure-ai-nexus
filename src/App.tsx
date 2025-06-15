@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +13,7 @@ import CasoUsuarioView from "./pages/CasoUsuarioView";
 import Eventos from "./pages/Eventos";
 import RankingEventos from "./pages/RankingEventos";
 import Rankings from "./pages/Rankings";
+import Estatisticas from "./pages/Estatisticas";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +33,7 @@ const App = () => (
           <Route path="/eventos" element={<Eventos />} />
           <Route path="/ranking-eventos" element={<RankingEventos />} />
           <Route path="/rankings" element={<Rankings />} />
+          <Route path="/estatisticas" element={<Estatisticas />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
