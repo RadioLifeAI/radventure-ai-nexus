@@ -30,12 +30,13 @@ export default function EventDetailsModal({ open, onClose, event, ranking = [] }
             <div className="flex items-center gap-4">
               {event.banner_url && <img src={event.banner_url} alt="" className="h-14 w-36 rounded-md object-cover shadow border" />}
               <span>{event.name}</span>
-              <Badge className="ml-2 capitalize" variant="secondary">
-                {event.status === "ACTIVE" && <Award className="mr-1 text-green-600" size={16} />}
-                {event.status === "SCHEDULED" && <Clock className="mr-1 text-yellow-500" size={16} />}
-                {event.status === "FINISHED" && <CheckCircle2 className="mr-1 text-gray-700" size={16} />}
+              <span className="ml-2 capitalize px-2 py-1 text-xs rounded bg-muted">
+                {/* COR DESTAQUE PELO STATUS */}
+                {event.status === "ACTIVE" && <Award className="inline-block mr-1 text-green-600" size={16} />}
+                {event.status === "SCHEDULED" && <Clock className="inline-block mr-1 text-yellow-500" size={16} />}
+                {event.status === "FINISHED" && <CheckCircle2 className="inline-block mr-1 text-gray-700" size={16} />}
                 {event.status?.toLowerCase()}
-              </Badge>
+              </span>
               {event.event_type && <span className="ml-2 text-xs px-2 py-1 rounded bg-cyan-100 text-cyan-700">{event.event_type}</span>}
             </div>
           </DialogTitle>
