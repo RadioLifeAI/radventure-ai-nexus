@@ -204,7 +204,8 @@ Importante: Não explique na resposta geral, use só os campos acima. A alternat
       if (findings) contextIntro += `Achados radiológicos: ${findings}. `;
     }
 
-    const systemPrompt = `
+    // Corrigindo o erro: trocando o nome da constante abaixo para finalSystemPrompt:
+    const finalSystemPrompt = `
 ${contextIntro}
 Com base no DIAGNÓSTICO de referência abaixo, preencha somente o JSON com todos os campos do caso clínico, em formato o mais enxuto possível e FOQUE só na integração dos achados com o quadro clínico, especialmente em "explanation" e "feedbacks". Estruture assim:
 {
@@ -239,7 +240,7 @@ Importante:
       body: JSON.stringify({
         model: "gpt-4o-mini",
         messages: [
-          { role: "system", content: systemPrompt },
+          { role: "system", content: finalSystemPrompt },
           { role: "user", content: `Diagnóstico de referência: ${diagnosis}` }
         ],
         max_tokens: 700,
