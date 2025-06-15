@@ -162,9 +162,13 @@ ${EXAMPLES}
 
 // Handlers de tratamento da resposta da IA
 function tryParseJsonFromCompletion(raw: string) {
-  const match = raw.match(/\{[\s\S]*\}/);
-  const jsonString = match ? match[0] : raw;
-  return JSON.parse(jsonString);
+  try {
+    const match = raw.match(/\{[\s\S]*\}/);
+    const jsonString = match ? match[0] : raw;
+    return JSON.parse(jsonString);
+  } catch (err) {
+    throw new Error(`Erro ao fazer parse do JSON: ${err.message}. RAW: ${raw.slice(0, 500)}`);
+  }
 }
 
 function trimFieldsOnPayload(payload: any) {
@@ -212,7 +216,25 @@ serve(async (req) => {
       try {
         const messages = buildPromptAlternatives({ diagnosis, findings, modality, subtype });
         const raw = await getOpenAISuggestion({ messages, max_tokens: 300, temperature: 0.7 });
-        const payload = tryParseJsonFromCompletion(raw);
+
+        console.log("[Alternativas] RAW response da IA:", raw);
+
+        let payload;
+        try {
+          payload = tryParseJsonFromCompletion(raw);
+        } catch (parseErr: any) {
+          // Falha no parse do JSON vindo da IA - retorna erro + remontagem bruta
+          console.error("[Alternativas] Erro de parse JSON da IA:", parseErr.message, "\nRAW:", raw);
+          return new Response(
+            JSON.stringify({
+              error: "API did not return a valid JSON for diffs",
+              raw: raw.slice(0, 1000),
+              message: parseErr.message
+            }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
         // Trimming/ajustes
         if (Array.isArray(payload.answer_feedbacks)) {
           payload.answer_feedbacks = payload.answer_feedbacks.map((f: string) =>
@@ -228,8 +250,14 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
       } catch (e: any) {
+        // Adiciona detalhamento do erro (mensagem e até 300car da resposta bruta)
+        console.error("[Alternativas] Falha inesperada:", e.message);
         return new Response(
-          JSON.stringify({ error: "API did not return a valid JSON for diffs", raw: e.message }),
+          JSON.stringify({
+            error: "API did not return a valid JSON for diffs",
+            fullError: e.message,
+            raw: typeof e?.raw === "string" ? e.raw.slice(0, 300) : "",
+          }),
           { status: 500, headers: corsHeaders }
         );
       }
