@@ -52,6 +52,54 @@ export function useCaseProfileFormUtils({
         categoriaId = match ? String(match.id) : "";
       }
 
+      // --- NOVA LÓGICA para garantir os selects corretos de modalidade/subtipo ---
+      // Importa as opções do componente para comparação
+      // Como os MODALIDADADES estão apenas no componente, copiamos aqui o array para validação
+      const ALL_MODALITIES = [
+        "Tomografia Computadorizada (TC)",
+        "Ressonância Magnética (RM)",
+        "Ultrassonografia (US)",
+        "Radiografia (RX)",
+        "Mamografia (MMG)",
+        "Medicina Nuclear (MN)",
+        "Radiologia Intervencionista (RI)",
+        "Fluoroscopia",
+        "Densitometria Óssea (DMO)"
+      ];
+
+      // Subtipos possíveis (flattened)
+      const ALL_SUBTYPES = [
+        // Tomografia Computadorizada (TC)
+        "Angio-TC de Crânio", "Angio-TC de Pescoço e Carótidas", "Angio-TC de Tórax", "Angio-TC de Aorta", "Angio-TC de Artérias Coronárias", "Angio-TC de Vasos Abdominais", "Angio-TC de Membros Inferiores/Superiores", "TC Crânio", "TC Seios da Face", "TC Pescoço", "TC Tórax", "TC Abdome Total", "TC Pelve", "Uro-TC", "Entero-TC", "TC Coluna", "TC Musculoesquelético",
+        // Ressonância Magnética (RM)
+        "RM Encéfalo", "Angio-RM de Crânio", "RM Sela Túrcica / Hipófise", "RM Órbitas", "RM Pescoço", "RM Tórax", "RM Mama", "RM Cardíaca", "RM Abdome Superior", "Colangio-RM", "Entero-RM", "RM Pelve", "RM Coluna", "RM ATM", "RM Musculoesquelético", "Artro-RM",
+        // Ultrassonografia (US)
+        "US Abdominal Total", "US Abdome Superior", "US Rins e Vias Urinárias", "US Pélvico (Suprapúbico)", "US Pélvico Transvaginal", "US Próstata", "US Obstétrico", "US Mama e Axilas", "US Tireoide e Cervical", "US Glândulas Salivares", "US Musculoesquelético", "US Partes Moles", "US Doppler Vascular", "Ecocardiograma Transtorácico",
+        // Radiografia (RX)
+        "RX Tórax", "RX Abdome Simples e Agudo", "RX Coluna", "RX Crânio e Face", "RX de Extremidades", "RX Pelve e Bacia", "RX Escanometria", "RX Panorâmica de Mandíbula",
+        // Mamografia (MMG)
+        "Mamografia Digital Bilateral", "Mamografia Diagnóstica", "Tomossíntese Mamária", "Mamografia com Contraste",
+        // Medicina Nuclear (MN)
+        "Cintilografia Óssea", "Cintilografia Miocárdica", "Cintilografia Renal", "Cintilografia de Tireoide", "PET-CT Oncológico", "PET-CT com PSMA", "PET-CT com FDG",
+        // Radiologia Intervencionista (RI)
+        "Angioplastia e Stent", "Biópsia Guiada", "Drenagem de Abscessos", "Quimioembolização Hepática", "Ablação por Radiofrequência", "Vertebroplastia",
+        // Fluoroscopia
+        "Estudo Contrastado do Esôfago, Estômago e Duodeno (EED)", "Trânsito Intestinal", "Enema Opaco", "Histerossalpingografia (HSG)", "Uretrocistografia Miccional",
+        // Densitometria Óssea (DMO)
+        "Densitometria de Coluna e Fêmur", "Densitometria de Corpo Inteiro"
+      ];
+
+      // Se a IA sugeriu uma modalidade válida, use-a; senão mantenha a anterior
+      let newModality = form.modality;
+      if (suggestion.modality && ALL_MODALITIES.includes(suggestion.modality)) {
+        newModality = suggestion.modality;
+      }
+      // Se a IA sugeriu um subtipo válido, use-o; senão mantenha o anterior
+      let newSubtype = form.subtype;
+      if (suggestion.subtype && ALL_SUBTYPES.includes(suggestion.subtype)) {
+        newSubtype = suggestion.subtype;
+      }
+
       setForm((prev: any) => {
         const safeStr = (v: any) => (v === null || v === undefined ? "" : String(v));
         const safeArr = (a: any[] | undefined, fallbackLen = 4) => {
@@ -68,8 +116,8 @@ export function useCaseProfileFormUtils({
               )
             : "",
           points: suggestion.points !== undefined ? safeStr(suggestion.points) : "10",
-          modality: safeStr(suggestion.modality ?? ""),
-          subtype: safeStr(suggestion.subtype ?? ""),
+          modality: newModality,
+          subtype: newSubtype,
           findings: safeStr(suggestion.findings ?? ""),
           patient_clinical_info: safeStr(suggestion.patient_clinical_info ?? ""),
           explanation: safeStr(suggestion.explanation ?? ""),
