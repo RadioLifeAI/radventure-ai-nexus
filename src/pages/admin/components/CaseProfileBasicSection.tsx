@@ -1,0 +1,153 @@
+import React from "react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { CaseModalityFields } from "./CaseModalityFields";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { ImageUploadWithZoom } from "./ImageUploadWithZoom";
+
+type Props = {
+  form: any;
+  highlightedFields: string[];
+  categories: any[];
+  difficulties: any[];
+  handleFormChange: any;
+  handleModalityChange: any;
+  handleAutoFillCaseDetails: any;
+  handleSuggestTitle: any;
+  handleImageChange: any;
+  renderTooltipTip: any;
+};
+
+export function CaseProfileBasicSection({
+  form, highlightedFields, categories, difficulties, handleFormChange,
+  handleModalityChange, handleAutoFillCaseDetails, handleSuggestTitle, handleImageChange, renderTooltipTip
+}: Props) {
+  return (
+    <>
+      {/* Pré-visualização & botões */}
+      <div className="mb-3 flex gap-2">
+        {/* passar botões necessários */}
+      </div>
+      {/* Categoria/Dificuldade/Pontos */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
+        <div>
+          <label className="font-semibold block">Categoria *</label>
+          <select
+            className="w-full border rounded px-2 py-2 bg-white"
+            name="category_id"
+            value={form.category_id}
+            onChange={handleFormChange}
+            required
+          >
+            <option value="">Selecione a categoria</option>
+            {categories.map(c => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="font-semibold block">Dificuldade *</label>
+          <select
+            className="w-full border rounded px-2 py-2 bg-white"
+            name="difficulty_level"
+            value={form.difficulty_level}
+            onChange={handleFormChange}
+            required
+          >
+            <option value="">Selecione a dificuldade</option>
+            {difficulties.map(d => (
+              <option key={d.id} value={d.level}>
+                {d.description ? `${d.level} - ${d.description}` : d.level}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="font-semibold block">Pontos *</label>
+          <Input
+            name="points"
+            type="number"
+            value={form.points}
+            min={1}
+            onChange={handleFormChange}
+            placeholder="Ex: 10"
+            required
+          />
+        </div>
+      </div>
+      {/* Modalidade/Subtipo */}
+      <CaseModalityFields value={{ modality: form.modality, subtype: form.subtype }} onChange={handleModalityChange} />
+      {/* Diagnóstico e botões */}
+      <div className="flex flex-col md:flex-row gap-6">
+        <div className="flex-1 space-y-3">
+          <div className="flex items-end gap-2">
+            <div className="flex-1">
+              {/* LABEL "Diagnóstico" e observação */}
+              <label className="font-semibold">
+                Diagnóstico*{" "}
+                <span className="text-xs text-muted-foreground">(Não será exibido ao usuário, apenas referência interna)</span>
+              </label>
+              <Input
+                name="title"
+                value={form.title}
+                onChange={handleFormChange}
+                placeholder="Ex: Tuberculose pulmonar"
+                required
+                className={highlightedFields.includes("title") ? "ring-2 ring-cyan-400" : ""}
+              />
+            </div>
+            {/* Botão Sugerir Título (mantido) */}
+            <Button type="button" onClick={handleSuggestTitle} variant="secondary" className="mb-1">
+              Sugerir Diagnóstico
+            </Button>
+            {/* NOVO botão Auto-preencher */}
+            <Button
+              type="button"
+              onClick={handleAutoFillCaseDetails}
+              variant="secondary"
+              className="mb-1"
+              title="Preencher achados, resumo, idade, gênero, sintomas e opções avançadas de forma automática"
+            >
+              Auto-preencher detalhes do caso
+            </Button>
+          </div>
+          <label className="font-semibold mt-3">Achados radiológicos *</label>
+          <Textarea name="findings" value={form.findings} onChange={handleFormChange} placeholder="Descreva os achados..." required className={highlightedFields.includes("findings") ? "ring-2 ring-cyan-400" : ""} />
+
+          <label className="font-semibold mt-3">Resumo Clínico *</label>
+          <Textarea name="patient_clinical_info" value={form.patient_clinical_info} onChange={handleFormChange} placeholder="Breve histórico do paciente..." required className={highlightedFields.includes("patient_clinical_info") ? "ring-2 ring-cyan-400" : ""} />
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-3">
+            <div>
+              <label className="font-semibold">Idade</label>
+              <Input name="patient_age" value={form.patient_age} onChange={handleFormChange} placeholder="Ex: 37" className={highlightedFields.includes("patient_age") ? "ring-2 ring-cyan-400" : ""} />
+            </div>
+            <div>
+              <label className="font-semibold">Gênero</label>
+              <select
+                className={`w-full border rounded px-2 py-2 bg-white ${highlightedFields.includes("patient_gender") ? "ring-2 ring-cyan-400" : ""}`}
+                name="patient_gender"
+                value={form.patient_gender}
+                onChange={handleFormChange}
+              >
+                {[{ value: "", label: "Selecione..." },
+                  { value: "Masculino", label: "Masculino" },
+                  { value: "Feminino", label: "Feminino" },
+                  { value: "Outro", label: "Outro" }].map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="font-semibold">Duração dos sintomas</label>
+              <Input name="symptoms_duration" value={form.symptoms_duration} onChange={handleFormChange} placeholder="Ex: 1 semana" className={highlightedFields.includes("symptoms_duration") ? "ring-2 ring-cyan-400" : ""} />
+            </div>
+          </div>
+        </div>
+        {/* Imagem */}
+        <div className="pt-3 min-w-[240px] flex flex-col items-center">
+          <ImageUploadWithZoom value={form.image_url} onChange={handleImageChange} />
+        </div>
+      </div>
+    </>
+  );
+}
