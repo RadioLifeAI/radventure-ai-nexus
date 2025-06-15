@@ -80,7 +80,7 @@ export function useCaseProfileFormUtils({
         categoriaId = match ? String(match.id) : "";
       }
 
-      // --- NOVA LÓGICA para garantir os selects corretos de modalidade/subtipo ---
+      // --- MODALIDADE/SUBTIPO --- (já existente)
       const ALL_MODALITIES = [
         "Tomografia Computadorizada (TC)",
         "Ressonância Magnética (RM)",
@@ -114,7 +114,6 @@ export function useCaseProfileFormUtils({
         "Densitometria de Coluna e Fêmur", "Densitometria de Corpo Inteiro"
       ];
 
-      // Se a IA sugeriu uma modalidade válida, use-a; senão mantenha a anterior
       let newModality = form.modality;
       if (suggestion.modality && ALL_MODALITIES.includes(suggestion.modality)) {
         newModality = suggestion.modality;
@@ -124,7 +123,29 @@ export function useCaseProfileFormUtils({
         newSubtype = suggestion.subtype;
       }
 
-      // ATENÇÃO: para "findings", SEMPRE usar a sugestão da IA, mesmo que já exista preenchido!
+      // --------- NOVO: gerar campos avançados automáticos ---------
+      const defaultDifficulty = suggestion.difficulty
+        ? String(suggestion.difficulty)
+        : (form.difficulty_level || "1");
+      const nOptions = Array.isArray(suggestion.answer_options) ? suggestion.answer_options.length : 4;
+
+      // (Valores sugeridos podem ser adaptados conforme o quiz)
+      const autoAdvanced = {
+        can_skip: true,
+        max_elimination: Math.max(1, nOptions - 2), // pelo menos 1, máximo (n-2)
+        ai_hint_enabled: true,
+        manual_hint: suggestion.manual_hint ?? "",
+        skip_penalty_points: 2,
+        elimination_penalty_points: 1,
+        ai_tutor_level: "basico", // ou dynamic
+      };
+
+      // --------- EMBARALHAR alternativas ---------
+      const optionsArr = Array.isArray(suggestion.answer_options) ? suggestion.answer_options.slice(0, 4) : ["", "", "", ""];
+      const feedbacksArr = Array.isArray(suggestion.answer_feedbacks) ? suggestion.answer_feedbacks.slice(0, 4) : ["", "", "", ""];
+      const tipsArr = Array.isArray(suggestion.answer_short_tips) ? suggestion.answer_short_tips.slice(0, 4) : ["", "", "", ""];
+      const shuffle = shuffleAlternativesWithFeedback(optionsArr, feedbacksArr, tipsArr, 0);
+
       setForm((prev: any) => {
         const safeStr = (v: any) => (v === null || v === undefined ? "" : String(v));
         const safeArr = (a: any[] | undefined, fallbackLen = 4) => {
@@ -143,21 +164,22 @@ export function useCaseProfileFormUtils({
           points: suggestion.points !== undefined ? safeStr(suggestion.points) : "10",
           modality: newModality,
           subtype: newSubtype,
-          findings: safeStr(suggestion.findings ?? ""), // SEMPRE usa sugestão IA
+          findings: safeStr(suggestion.findings ?? ""),
           patient_clinical_info: safeStr(suggestion.patient_clinical_info ?? ""),
           explanation: suggestion.explanation ?? "",
-          answer_feedbacks: Array.isArray(suggestion.answer_feedbacks)
-            ? suggestion.answer_feedbacks.map((f: string) => f ?? "").slice(0, 4)
-            : ["", "", "", ""],
-          patient_age: safeStr(suggestion.patient_age ?? ""), // CORRIGIDO: sempre sobrescreve
-          patient_gender: safeStr(suggestion.patient_gender ?? ""), // CORRIGIDO: sempre sobrescreve
-          symptoms_duration: safeStr(suggestion.symptoms_duration ?? ""), // CORRIGIDO: sempre sobrescreve
+          answer_feedbacks: shuffle.feedbacks,
+          patient_age: safeStr(suggestion.patient_age ?? ""),
+          patient_gender: safeStr(suggestion.patient_gender ?? ""),
+          symptoms_duration: safeStr(suggestion.symptoms_duration ?? ""),
           main_question: safeStr(suggestion.main_question ?? ""),
-          answer_options: safeArr(suggestion.answer_options, 4),
-          answer_short_tips: safeArr(suggestion.answer_short_tips, 4),
-          correct_answer_index: 0,
+          answer_options: shuffle.options,
+          answer_short_tips: shuffle.tips,
+          correct_answer_index: shuffle.correctIdx,
+          // ----- CAMPOS AVANÇADOS preenchidos automaticamente -----
+          ...autoAdvanced
         };
       });
+
       setHighlightedFields([
         "category_id",
         "difficulty_level",
@@ -174,11 +196,19 @@ export function useCaseProfileFormUtils({
         "answer_options",
         "answer_feedbacks",
         "answer_short_tips",
+        // Avançados:
+        "can_skip",
+        "max_elimination",
+        "ai_hint_enabled",
+        "manual_hint",
+        "skip_penalty_points",
+        "elimination_penalty_points",
+        "ai_tutor_level"
       ]);
       setTimeout(() => setHighlightedFields([]), 2500);
       toast({
         title: "Campos preenchidos por IA!",
-        description: "Revise as sugestões — principalmente a explicação curta, focada na integração entre achados radiológicos e o contexto clínico.",
+        description: "Incluindo configurações avançadas e alternativas já embaralhadas. Revise as sugestões — principalmente a explicação curta, integração dos achados e quadro clínico."
       });
     } catch (err: any) {
       toast({
