@@ -73,9 +73,14 @@ Importante: Não explique na resposta geral, use só os campos acima. A alternat
 }
 
 function buildPromptFindings({ diagnosis, modality, subtype, systemPrompt }) {
+  // Instrução anti-sugestão explícita
+  const NUNCA_SUGERIR_DIAGNOSTICO =
+    "ATENÇÃO: NUNCA use termos como 'sugerindo', 'compatível com', 'indicando', 'característico de', etc. NUNCA deduza, sugira, cite ou relacione os achados diretamente com qualquer diagnóstico ou condição. Apenas descreva o que está objetivo na imagem (como localização, morfologia, quantidade, padrão, distribuição), sem qualquer julgamento ou hipótese diagnóstica.";
+
   const promptFindings = systemPrompt
-    ? `${systemPrompt}\n${DIAG_NOT_REVEALED}`
-    : `Você é especialista em radiologia. Gere uma descrição de achados radiológicos concisa (máx. 200 caracteres), integrando diagnóstico e modalidade. ${DIAG_NOT_REVEALED}`;
+    ? `${systemPrompt}\n${NUNCA_SUGERIR_DIAGNOSTICO}\n${DIAG_NOT_REVEALED}`
+    : `Você é especialista em radiologia. Gere uma descrição de achados radiológicos concisa (máx. 200 caracteres), integrando diagnóstico e modalidade, mas ${NUNCA_SUGERIR_DIAGNOSTICO} ${DIAG_NOT_REVEALED}`;
+
   return [
     { role: "system", content: promptFindings },
     { role: "user", content: `Diagnóstico: ${diagnosis ?? "-"}; Modalidade: ${modality ?? "-"}; Subtipo: ${subtype ?? "-"}` }
