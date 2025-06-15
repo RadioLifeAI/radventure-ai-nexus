@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +8,10 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
+import { EventForm } from "./EventForm";
 
 type EventEditModalProps = {
   open: boolean;
@@ -17,41 +20,40 @@ type EventEditModalProps = {
   onSave: (updated: any) => void;
 };
 
-/** Form simples para edição - pode ser trocado por um form completo depois */
 export default function EventEditModal({ open, onClose, event, onSave }: EventEditModalProps) {
-  const [form, setForm] = React.useState<any>(event || {});
-
-  React.useEffect(() => { setForm(event || {}); }, [event]);
-
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
-    const { name, value } = e.target;
-    setForm(f => ({ ...f, [name]: value }));
-  }
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    onSave(form);
-  }
+  const [loading, setLoading] = useState(false);
 
   if (!event) return null;
+
+  async function handleUpdate(values: any) {
+    setLoading(true);
+    const { id, ...rest } = values;
+    const { error } = await supabase.from("events").update(rest).eq("id", id);
+    setLoading(false);
+    if (error) {
+      toast({ title: "Erro ao salvar evento", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Evento atualizado!", description: "As informações do evento foram salvas." });
+      onSave({ ...event, ...rest });
+      onClose();
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-lg w-full p-6">
+      <DialogContent className="max-w-2xl w-full p-0">
         <DialogHeader>
           <DialogTitle>Editar Evento</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-2 my-2">
-          <input type="text" className="input w-full" name="name" value={form.name || ""} onChange={handleChange} placeholder="Nome" />
-          <textarea className="input w-full" name="description" value={form.description || ""} onChange={handleChange} placeholder="Descrição" />
-          <input type="number" className="input w-full" name="max_participants" value={form.max_participants || ""} onChange={handleChange} placeholder="Máx. participantes" />
-          <input type="number" className="input w-full" name="prize_radcoins" value={form.prize_radcoins || ""} onChange={handleChange} placeholder="RadCoins" />
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="secondary" type="button">Cancelar</Button>
-            </DialogClose>
-            <Button variant="default" type="submit">Salvar</Button>
-          </DialogFooter>
-        </form>
+        <div className="p-2">
+          <EventForm
+            mode="edit"
+            initialValues={event}
+            loading={loading}
+            onSubmit={handleUpdate}
+            onCancel={onClose}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );
