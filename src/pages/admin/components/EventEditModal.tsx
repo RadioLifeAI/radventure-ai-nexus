@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Dialog,
@@ -45,7 +44,7 @@ export default function EventEditModal({ open, onClose, event, onSave }: EventEd
         <DialogHeader>
           <DialogTitle>Editar Evento</DialogTitle>
         </DialogHeader>
-        {/* SCROLLABLE FORM CONTENT */}
+        {/* Form Content with Scroll */}
         <div className="overflow-y-auto px-4 pb-1 pt-2 flex-1 max-h-[75vh]">
           <EventForm
             mode="edit"
@@ -55,7 +54,8 @@ export default function EventEditModal({ open, onClose, event, onSave }: EventEd
             onCancel={onClose}
           />
         </div>
-        <DialogFooter className="sticky bottom-0 bg-white px-4 py-3 mt-0 border-t z-10">
+        {/* Footer agora é só no rodapé do modal, sem sticky */}
+        <DialogFooter className="bg-white px-4 py-3 mt-0 border-t z-10">
           <Button variant="secondary" type="button" onClick={onClose}>Cancelar</Button>
           <Button type="submit" form="event-form-in-modal" disabled={loading}>
             {loading ? "Salvando..." : "Salvar alterações"}
