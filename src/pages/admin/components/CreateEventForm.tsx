@@ -1,10 +1,17 @@
-
 import React, { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { EventBannerUpload } from "./EventBannerUpload";
 import { CaseFiltersSelector } from "./CaseFiltersSelector";
+import { EventTemplatesModal } from "./EventTemplatesModal";
+import { CaseFilterStatsBar } from "./CaseFilterStatsBar";
+import { useCaseFiltersStats } from "../hooks/useCaseFiltersStats";
+import { ConfigAlertBanner } from "./ConfigAlertBanner";
+import { EventConfigProgressBar } from "./EventConfigProgressBar";
+import { useEventConfigProgress } from "../hooks/useEventConfigProgress";
+import { EventConfigMotivationPhrase } from "./EventConfigMotivationPhrase";
+import { CaseFiltersGamifiedSection } from "./CaseFiltersGamifiedSection";
 
 type Prize = { position: number, prize: number };
 
@@ -31,8 +38,31 @@ export function CreateEventForm({ onCreated }: { onCreated?: () => void }) {
     { position: 9, prize: 15 },
     { position: 10, prize: 10 },
   ]);
-  // Filtros de seleção de casos
   const [caseFilters, setCaseFilters] = useState({});
+  const [showTemplates, setShowTemplates] = useState(false);
+
+  // Estatísticas dos filtros (número de casos, dificuldade estimada etc)
+  const { stats, loading: statsLoading } = useCaseFiltersStats(caseFilters);
+  // Progresso de configuração
+  const progress = useEventConfigProgress({
+    name, scheduledStart, scheduledEnd, numberOfCases, durationMinutes, caseFilters
+  });
+
+  // Validação rápida e warnings
+  let alertMsg = "";
+  if ((!!caseFilters && Object.keys(caseFilters).length > 0) && stats.count < numberOfCases) {
+    alertMsg = `Atenção: Apenas ${stats.count} casos disponíveis para os filtros selecionados (menos que o número de casos do evento).`;
+  }
+
+  function handleApplyTemplate(tpl: any) {
+    setCaseFilters(tpl.filters || {});
+    setName(tpl.title || "");
+    setNumberOfCases(tpl.numberOfCases || 10);
+    setDurationMinutes(tpl.durationMinutes || 30);
+    setPrizeRadcoins(tpl.prizeRadcoins || 500);
+    setAutoStart(tpl.autoStart ?? true);
+    setShowTemplates(false);
+  }
 
   const [loading, setLoading] = useState(false);
 
@@ -69,10 +99,20 @@ export function CreateEventForm({ onCreated }: { onCreated?: () => void }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto p-4 bg-white rounded shadow space-y-6">
-      <h2 className="text-xl font-bold">Novo Evento</h2>
-      
-      <CaseFiltersSelector value={caseFilters} onChange={setCaseFilters} />
+    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto p-4 bg-white rounded shadow space-y-6 animate-fade-in">
+      <div className="flex flex-col gap-1 mb-1">
+        <EventConfigMotivationPhrase />
+        <EventConfigProgressBar percent={progress} />
+        <CaseFilterStatsBar stats={stats} loading={statsLoading} />
+        <ConfigAlertBanner message={alertMsg} />
+      </div>
+      <div className="flex justify-between items-center mb-1">
+        <h2 className="text-xl font-bold">Novo Evento</h2>
+        <button type="button" className="border px-3 py-1 rounded text-xs bg-blue-50 hover:bg-blue-100 border-blue-200"
+          onClick={() => setShowTemplates(true)}>Templates rápidos</button>
+      </div>
+      {/* Nova seção gamificada de filtros */}
+      <CaseFiltersGamifiedSection value={caseFilters} onChange={setCaseFilters} />
 
       <div className="grid grid-cols-2 gap-4">
         <div>
@@ -129,6 +169,12 @@ export function CreateEventForm({ onCreated }: { onCreated?: () => void }) {
           </div>
         </div>
       </div>
+      {showTemplates && (
+        <EventTemplatesModal
+          onApplyTemplate={handleApplyTemplate}
+          onClose={() => setShowTemplates(false)}
+        />
+      )}
       <Button type="submit" disabled={loading}>
         {loading ? "Criando evento..." : "Criar evento"}
       </Button>
