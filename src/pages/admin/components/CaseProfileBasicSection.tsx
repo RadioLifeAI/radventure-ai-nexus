@@ -14,7 +14,7 @@ type Props = {
   handleFormChange: any;
   handleModalityChange: any;
   handleAutoFillCaseDetails: any;
-  handleSuggestTitle: any;
+  handleSuggestDiagnosis: any;
   handleSuggestHint: any;
   handleImageChange: any;
   renderTooltipTip: any;
@@ -22,15 +22,15 @@ type Props = {
   handleSuggestClinicalInfo: any;
   undoFindings: any;
   undoClinical: any;
-  undoTitle: any;
+  undoDiagnosis: any;
   setForm: any;
 };
 
 export function CaseProfileBasicSection({
   form, highlightedFields, categories, difficulties, handleFormChange,
-  handleModalityChange, handleAutoFillCaseDetails, handleSuggestTitle, handleSuggestHint, handleImageChange, renderTooltipTip,
+  handleModalityChange, handleAutoFillCaseDetails, handleSuggestDiagnosis, handleSuggestHint, handleImageChange, renderTooltipTip,
   handleSuggestFindings, handleSuggestClinicalInfo,
-  undoFindings, undoClinical, undoTitle, setForm
+  undoFindings, undoClinical, undoDiagnosis, setForm
 }: Props) {
   // Novo: adaptador para array de imagens
   function handleImagesChange(imgArr: { url: string; legend: string }[]) {
@@ -115,19 +115,19 @@ export function CaseProfileBasicSection({
           <div className="flex items-end gap-2">
             <div className="flex-1">
               <label className="font-semibold">
-                Diagnóstico (interno)*{" "}
+                Diagnóstico (referência)*{" "}
                 <span className="text-xs text-muted-foreground">(Não será exibido no título do caso)</span>
               </label>
               <Input
-                name="title"
-                value={form.title_diagnosis ?? ""}
-                onChange={e => setForm((prev: any) => ({ ...prev, title_diagnosis: e.target.value }))}
+                name="diagnosis_internal"
+                value={form.diagnosis_internal ?? ""}
+                onChange={e => setForm((prev: any) => ({ ...prev, diagnosis_internal: e.target.value }))}
                 placeholder="Ex: Tuberculose pulmonar"
                 required
-                className={highlightedFields.includes("title") ? "ring-2 ring-cyan-400" : ""}
+                className={highlightedFields.includes("diagnosis_internal") ? "ring-2 ring-cyan-400" : ""}
               />
             </div>
-            <Button type="button" onClick={handleSuggestTitle} variant="secondary" className="mb-1">
+            <Button type="button" onClick={handleSuggestDiagnosis} variant="secondary" className="mb-1">
               Sugerir Diagnóstico
             </Button>
             <Button
@@ -135,9 +135,9 @@ export function CaseProfileBasicSection({
               variant="ghost"
               size="icon"
               title="Desfazer sugestão IA para diagnóstico"
-              onClick={() => undoTitle.undo((val: string) => setForm((prev: any) => ({ ...prev, title: val })))}
+              onClick={() => undoDiagnosis.undo((val: string) => setForm((prev: any) => ({ ...prev, diagnosis_internal: val })))}
               className="mb-1"
-              disabled={!undoTitle.canUndo()}
+              disabled={!undoDiagnosis.canUndo()}
             >
               <Undo2 size={18} />
             </Button>

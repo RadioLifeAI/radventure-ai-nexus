@@ -100,11 +100,11 @@ export function useCaseProfileFormHandlers({ categories, difficulties }: { categ
   // Sugestões IA e automações vêm do utils
   const {
     handleAutoFillCaseDetails,
-    handleSuggestTitle,
+    handleSuggestDiagnosis,
     handleSuggestAlternatives,
     handleSuggestHint,
     handleSuggestExplanation,
-    handleGenerateAutoTitle,
+    handleGenerateCaseTitleAuto,
     handleSuggestFindings,
     handleSuggestClinicalInfo
   } = utils;
@@ -145,11 +145,11 @@ export function useCaseProfileFormHandlers({ categories, difficulties }: { categ
     handleCorrectChange,
     handleImageChange,
     handleAutoFillCaseDetails,
-    handleSuggestTitle,
+    handleSuggestDiagnosis,
     handleSuggestAlternatives,
     handleSuggestHint,
     handleSuggestExplanation,
-    handleGenerateAutoTitle,
+    handleGenerateCaseTitleAuto,
     handleSuggestFindings,
     handleSuggestClinicalInfo,
     handleRandomizeOptions

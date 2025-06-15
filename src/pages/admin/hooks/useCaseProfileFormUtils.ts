@@ -9,7 +9,7 @@ export function useCaseProfileFormUtils({
   categories,
   difficulties,
   toast,
-  setHighlightedFields,
+  setHighlightedFields
 }: any) {
   function normalizeString(str: string = "") {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
@@ -25,20 +25,18 @@ export function useCaseProfileFormUtils({
   }
 
   async function handleAutoFillCaseDetails() {
-    if (!form.title_diagnosis?.trim()) {
+    if (!form.diagnosis_internal?.trim()) {
       toast({ description: "Por favor, preencha o campo Diagnóstico para sugerir todos os detalhes." });
       return;
     }
     setSubmitting(true);
     try {
-      const body: any = { diagnosis: form.title_diagnosis };
+      const body: any = { diagnosis: form.diagnosis_internal };
       if (form.findings?.trim()) body.findings = form.findings.trim();
       if (form.modality?.trim()) body.modality = form.modality.trim();
       if (form.subtype?.trim()) body.subtype = form.subtype.trim();
 
-      const { data, error } = await supabase.functions.invoke("case-autofill", {
-        body
-      });
+      const { data, error } = await supabase.functions.invoke("case-autofill", { body });
 
       if (error) {
         throw new Error(error.message || "Falha na chamada IA via Supabase.");
@@ -182,26 +180,24 @@ export function useCaseProfileFormUtils({
     }
   }
 
-  async function handleSuggestTitle() {
-    // Agora usa findings E/OU resumo clínico para sugestão de diagnóstico (mas diagnóstico real é internamente)
+  async function handleSuggestDiagnosis() {
     if (!form.findings && !form.patient_clinical_info) {
-      toast({ description: "Preencha Achados Radiológicos e/ou Resumo Clínico para sugerir um título." });
+      toast({ description: "Preencha Achados Radiológicos e/ou Resumo Clínico para sugerir um diagnóstico." });
       return;
     }
-    // Propõe um "diagnóstico interno sugerido"
-    setForm((prev: any) => ({ ...prev, title_diagnosis: "Diagnóstico sugerido pelo sistema (placeholder)" }));
+    setForm((prev: any) => ({ ...prev, diagnosis_internal: "Diagnóstico sugerido pelo sistema (placeholder)" }));
     toast({ description: "Diagnóstico sugerido automaticamente (personalize se desejar)." });
   }
+
   async function handleSuggestAlternatives() {
-    // AGORA: Usar diagnóstico interno!
-    if (!form.title_diagnosis) {
+    if (!form.diagnosis_internal) {
       toast({ description: "Preencha o campo Diagnóstico para sugerir alternativas." });
       return;
     }
     setSubmitting(true);
     try {
       const reqBody: any = {
-        diagnosis: form.title_diagnosis,
+        diagnosis: form.diagnosis_internal,
         findings: form.findings || "",
         modality: form.modality || "",
         subtype: form.subtype || "",
@@ -234,8 +230,8 @@ export function useCaseProfileFormUtils({
     }
     setSubmitting(false);
   }
+
   async function handleSuggestHint() {
-    // AGORA: Usar diagnóstico interno!
     if (!form.findings && !form.patient_clinical_info) {
       toast({ description: "Preencha Achados Radiológicos e/ou Resumo Clínico para sugerir uma dica." });
       return;
@@ -245,7 +241,7 @@ export function useCaseProfileFormUtils({
       const contextHint = `Você é um especialista em radiologia e diagnóstico por imagem, e deve fornecer uma dica curta (máx. 200 caracteres) para o estudante resolver o caso, focando apenas em integrar achados radiológicos com o contexto clínico. Não use frases genéricas, seja objetivo.`;
       const { data, error } = await supabase.functions.invoke("case-autofill", {
         body: {
-          diagnosis: form.title_diagnosis || "",
+          diagnosis: form.diagnosis_internal || "",
           findings: form.findings || "",
           modality: form.modality || "",
           subtype: form.subtype || "",
@@ -277,13 +273,14 @@ export function useCaseProfileFormUtils({
     }
     setSubmitting(false);
   }
+
   async function handleSuggestExplanation() {
-    if (!form.findings && !form.main_question && !form.title_diagnosis) {
+    if (!form.findings && !form.main_question && !form.diagnosis_internal) {
       toast({ description: "Preencha Achados, Pergunta Principal ou Diagnóstico para sugerir uma explicação." });
       return;
     }
     // Sempre foca e encurta ainda mais
-    if (!form.findings && !form.title_diagnosis && !form.patient_clinical_info) {
+    if (!form.findings && !form.diagnosis_internal && !form.patient_clinical_info) {
       toast({ description: "Preencha Achados Radiológicos, Diagnóstico ou Resumo Clínico para sugerir explicação." });
       return;
     }
@@ -292,7 +289,7 @@ export function useCaseProfileFormUtils({
     try {
       const { data, error } = await supabase.functions.invoke("case-autofill", {
         body: {
-          diagnosis: form.title_diagnosis || "",
+          diagnosis: form.diagnosis_internal || "",
           findings: form.findings || "",
           modality: form.modality || "",
           subtype: form.subtype || "",
@@ -315,7 +312,8 @@ export function useCaseProfileFormUtils({
     }
     setSubmitting(false);
   }
-  async function handleGenerateAutoTitle() {
+
+  async function handleGenerateCaseTitleAuto() {
     if (!form.category_id || !form.modality) {
       toast({ description: "Selecione uma categoria e modalidade primeiro." });
       return;
@@ -345,8 +343,7 @@ export function useCaseProfileFormUtils({
   }
 
   async function handleSuggestFindings() {
-    // Pode ou não usar diagnóstico interno, mas vamos preferir o diagnóstico interno por consistência
-    if (!form.title_diagnosis?.trim() && !form.modality?.trim()) {
+    if (!form.diagnosis_internal?.trim() && !form.modality?.trim()) {
       toast({ description: "Preencha Diagnóstico e/ou Modalidade para sugerir os achados." });
       return;
     }
@@ -355,7 +352,7 @@ export function useCaseProfileFormUtils({
       const contextFindings = `Você é especialista em radiologia. Gere uma descrição de achados radiológicos concisa (máx. 200 caracteres), associando com o diagnóstico e modalidades fornecidos.`;
       const { data, error } = await supabase.functions.invoke("case-autofill", {
         body: {
-          diagnosis: form.title_diagnosis || "",
+          diagnosis: form.diagnosis_internal || "",
           modality: form.modality || "",
           subtype: form.subtype || "",
           withFindingsOnly: true,
@@ -383,7 +380,7 @@ export function useCaseProfileFormUtils({
   }
 
   async function handleSuggestClinicalInfo() {
-    if (!form.title_diagnosis?.trim() && !form.modality?.trim()) {
+    if (!form.diagnosis_internal?.trim() && !form.modality?.trim()) {
       toast({ description: "Preencha Diagnóstico e/ou Modalidade para sugerir o resumo clínico." });
       return;
     }
@@ -392,7 +389,7 @@ export function useCaseProfileFormUtils({
       const contextClinical = `Você é especialista em radiologia. Gere um resumo clínico conciso (máximo 300 caracteres) integrando as informações do diagnóstico/modalidade.`;
       const { data, error } = await supabase.functions.invoke("case-autofill", {
         body: {
-          diagnosis: form.title_diagnosis || "",
+          diagnosis: form.diagnosis_internal || "",
           modality: form.modality || "",
           subtype: form.subtype || "",
           withClinicalInfoOnly: true,
@@ -423,11 +420,11 @@ export function useCaseProfileFormUtils({
     normalizeString,
     suggestPointsByDifficulty,
     handleAutoFillCaseDetails,
-    handleSuggestTitle,
+    handleSuggestDiagnosis,
     handleSuggestAlternatives,
     handleSuggestHint,
     handleSuggestExplanation,
-    handleGenerateAutoTitle,
+    handleGenerateCaseTitleAuto,
     handleSuggestFindings,
     handleSuggestClinicalInfo
   };

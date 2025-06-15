@@ -63,15 +63,15 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     showAdvanced, setShowAdvanced, showPreview, setShowPreview, highlightedFields, setHighlightedFields,
     handleFormChange, handleModalityChange, handleOptionChange, handleOptionFeedbackChange,
     handleShortTipChange, handleCorrectChange, handleImageChange,
-    handleAutoFillCaseDetails, handleSuggestTitle, handleSuggestAlternatives, handleSuggestHint, handleSuggestExplanation, handleGenerateAutoTitle,
+    handleAutoFillCaseDetails, handleSuggestDiagnosis, handleSuggestAlternatives, handleSuggestHint, handleSuggestExplanation, handleGenerateCaseTitleAuto,
     handleSuggestFindings, handleSuggestClinicalInfo,
-    handleRandomizeOptions // NOVO
+    handleRandomizeOptions
   } = handlers;
 
-  // Hooks de undo para os principais campos envolvidos em sugestões IA
+  // Hooks de undo para campos
   const undoFindings = useFieldUndo(handlers.form.findings);
   const undoClinical = useFieldUndo(handlers.form.patient_clinical_info);
-  const undoTitle = useFieldUndo(handlers.form.title);
+  const undoDiagnosis = useFieldUndo(handlers.form.title_diagnosis);
 
   // Funções auxiliares para o CaseProfileBasicSection passar aos botões
   const onSuggestFindings = async () => {
@@ -82,9 +82,9 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     undoClinical.handleBeforeChange(handlers.form.patient_clinical_info);
     await handlers.handleSuggestClinicalInfo();
   };
-  const onSuggestTitle = async () => {
-    undoTitle.handleBeforeChange(handlers.form.title);
-    await handlers.handleSuggestTitle();
+  const onSuggestDiagnosis = async () => {
+    undoDiagnosis.handleBeforeChange(handlers.form.title_diagnosis);
+    await handlers.handleSuggestDiagnosis();
   };
 
   function renderTooltipTip(id: string, text: string) {
@@ -184,9 +184,9 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
       <h2 className="text-xl font-bold mb-2">Criar Novo Caso Médico</h2>
       <CaseProfileFormActions
         onPreview={() => setShowPreview(true)}
-        onSuggestTitle={onSuggestTitle}
+        onSuggestTitle={onSuggestDiagnosis}
         onAutoFill={handleAutoFillCaseDetails}
-        onGenerateAutoTitle={handleGenerateAutoTitle}
+        onGenerateAutoTitle={handleGenerateCaseTitleAuto}
         showPreview={showPreview}
       />
       <CaseProfileBasicSection
@@ -197,16 +197,15 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         handleFormChange={handleFormChange}
         handleModalityChange={handleModalityChange}
         handleAutoFillCaseDetails={handleAutoFillCaseDetails}
-        handleSuggestTitle={onSuggestTitle}
+        handleSuggestDiagnosis={onSuggestDiagnosis}
         handleSuggestHint={handleSuggestHint}
         handleImageChange={handleImageChange}
         renderTooltipTip={renderTooltipTip}
         handleSuggestFindings={onSuggestFindings}
         handleSuggestClinicalInfo={onSuggestClinical}
-        // Componente Undo por campo
         undoFindings={undoFindings}
         undoClinical={undoClinical}
-        undoTitle={undoTitle}
+        undoDiagnosis={undoDiagnosis}
         setForm={setForm}
       />
       <label className="font-semibold block mt-3">
@@ -222,7 +221,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         handleShortTipChange={handleShortTipChange}
         handleCorrectChange={handleCorrectChange}
         handleSuggestAlternatives={handleSuggestAlternatives}
-        handleRandomizeOptions={handleRandomizeOptions} // NOVO
+        handleRandomizeOptions={handleRandomizeOptions}
         renderTooltipTip={renderTooltipTip}
       />
       <CaseProfileExplanationSectionContainer
