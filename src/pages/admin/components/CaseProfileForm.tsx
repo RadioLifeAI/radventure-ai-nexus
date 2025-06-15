@@ -90,9 +90,15 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     }
     setSubmitting(true);
     try {
-      // Agora usando o invoke da função edge Supabase
+      // Novo: prepara corpo conforme preenchimento dos campos
+      const body: any = { diagnosis: form.title };
+      if (form.findings?.trim()) body.findings = form.findings.trim();
+      if (form.modality?.trim()) body.modality = form.modality.trim();
+      if (form.subtype?.trim()) body.subtype = form.subtype.trim();
+
+      // Chama a função edge mandando o contexto clínico aprimorado
       const { data, error } = await supabase.functions.invoke("case-autofill", {
-        body: { diagnosis: form.title },
+        body
       });
 
       if (error) {
@@ -101,7 +107,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
 
       const suggestion = data?.suggestion || {};
       setForm(prev => {
-        // Defensive helpers to ensure string fields for TS & consistency
+        // Defensive helpers to ensure string fields para TS & consistência
         const safeStr = (v: any) => (v === null || v === undefined ? "" : String(v));
         const safeArr = (a: any[] | undefined, fallbackLen = 4) => {
           if (Array.isArray(a)) return a.map(safeStr).concat(Array(fallbackLen).fill("")).slice(0, fallbackLen);
