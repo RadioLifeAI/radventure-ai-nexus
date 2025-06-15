@@ -99,7 +99,6 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
   // --- NOVA FUNÇÃO: AUTO-PREENCHIMENTO DOS CAMPOS BASEADO EM DIAGNÓSTICO ---
   function handleAutoFillCaseDetails() {
     const diag = form.title?.trim() || "Patologia não especificada";
-    // Exemplos mock
     const findingsExamples: Record<string, string> = {
       "Pneumonia": "Infiltrado pulmonar difuso em lobo inferior direito, broncogramas aéreos visíveis.",
       "DPOC": "Hipertransparência pulmonar, achatamento de diafragma, aumento do espaço retroesternal.",
@@ -114,18 +113,24 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
       "Parada Cardíaca": "Homem 52 anos, hipertenso, apresenta dispneia intensa e ortopneia.",
       "Patologia não especificada": "Quadro clínico compatível com doença pulmonar não especificada."
     };
+    const explanationExamples: Record<string, string> = {
+      "Pneumonia": "Explicação: O quadro clínico e os achados radiológicos são típicos de pneumonia lobar. O tratamento deve ser iniciado prontamente, baseado nos protocolos atuais.",
+      "DPOC": "Explicação: Os achados são compatíveis com DPOC devido à história de tabagismo e sinais radiológicos clássicos de hiperinsuflação pulmonar.",
+      "Tuberculose": "Explicação: O conjunto de sintomas sistêmicos prolongados e os achados apicais sugerem tuberculose pulmonar.",
+      "Parada Cardíaca": "Explicação: As alterações cardíacas e pulmonares observadas apontam para insuficiência cardíaca aguda pós-parada cardíaca.",
+      "Patologia não especificada": "Explicação: O caso ilustra alterações inespecíficas, recomendando investigação complementar para definição diagnóstica."
+    };
 
     // Mock automação dos campos avançados:
     const advancedMock = {
-      can_skip: Math.random() < 0.5, // aleatório true/false
+      can_skip: Math.random() < 0.5,
       max_elimination: 2,
-      ai_hint_enabled: Math.random() < 0.7, // mais provável ativado
+      ai_hint_enabled: Math.random() < 0.7,
       skip_penalty_points: 5,
       elimination_penalty_points: 3,
       ai_tutor_level: ["desligado", "basico", "detalhado"][Math.floor(Math.random() * 3)]
     };
 
-    // Preenchimento aleatório permanecem iguais:
     const randomAge = Math.floor(Math.random() * 50) + 20;
     const genders = ["Masculino", "Feminino", "Outro"];
     const randomGender = genders[Math.floor(Math.random() * genders.length)];
@@ -136,17 +141,16 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
       ...prev,
       findings: findingsExamples[diag] || findingsExamples["Patologia não especificada"],
       patient_clinical_info: summaryExamples[diag] || summaryExamples["Patologia não especificada"],
+      explanation: explanationExamples[diag] || explanationExamples["Patologia não especificada"],
       patient_age: String(randomAge),
       patient_gender: randomGender,
       symptoms_duration: randomSymptoms,
-      // opções AVANÇADAS automáticas
       can_skip: advancedMock.can_skip,
       max_elimination: advancedMock.max_elimination,
       ai_hint_enabled: advancedMock.ai_hint_enabled,
       skip_penalty_points: advancedMock.skip_penalty_points,
       elimination_penalty_points: advancedMock.elimination_penalty_points,
       ai_tutor_level: advancedMock.ai_tutor_level
-      // Não preenche manual_hint para deixar para o botão separado (ajustes finos)
     }));
   }
 
