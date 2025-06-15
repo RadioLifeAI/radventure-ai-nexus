@@ -63,11 +63,11 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     showAdvanced, setShowAdvanced, showPreview, setShowPreview, highlightedFields, setHighlightedFields,
     handleFormChange, handleModalityChange, handleOptionChange, handleOptionFeedbackChange,
     handleShortTipChange, handleCorrectChange, handleImageChange,
-    handleAutoFillCaseDetails, handleSuggestTitle, handleSuggestAlternatives, handleSuggestHint, handleSuggestExplanation, handleGenerateAutoTitle
+    handleAutoFillCaseDetails, handleSuggestTitle, handleSuggestAlternatives, handleSuggestHint, handleSuggestExplanation, handleGenerateAutoTitle,
+    handleSuggestFindings, handleSuggestClinicalInfo
   } = handlers;
 
   // Hooks de undo para os principais campos envolvidos em sugestões IA
-  const [_, setForm] = [null, handlers.setForm];
   const undoFindings = useFieldUndo(handlers.form.findings);
   const undoClinical = useFieldUndo(handlers.form.patient_clinical_info);
   const undoTitle = useFieldUndo(handlers.form.title);

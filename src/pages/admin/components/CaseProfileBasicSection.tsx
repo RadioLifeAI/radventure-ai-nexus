@@ -1,10 +1,10 @@
-
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { CaseModalityFields } from "./CaseModalityFields";
 import { Undo2 } from "lucide-react";
+import { ImageUploadWithZoom } from "./ImageUploadWithZoom";
 
 type Props = {
   form: any;
