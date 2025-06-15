@@ -3,7 +3,8 @@ import React, { useEffect, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Filter } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { MODALIDADES_SUBTYPES, ModalityOption } from "./modalitiesSubtypes";
+import { useModalitiesAndSubtypes } from "../hooks/useModalitiesAndSubtypes";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 
 type Option = { value: string; label: string };
 
@@ -11,7 +12,7 @@ type CaseFilters = {
   category?: string[];
   difficulty?: string[];
   modality?: string[];
-  subtype?: string[]; // adicionando subtipo
+  subtype?: string[];
 };
 
 export type CaseFiltersSelectorProps = {
@@ -22,8 +23,7 @@ export type CaseFiltersSelectorProps = {
 export function CaseFiltersSelector({ value, onChange }: CaseFiltersSelectorProps) {
   const [specialties, setSpecialties] = useState<Option[]>([]);
   const [difficulties, setDifficulties] = useState<Option[]>([]);
-  const [modalities, setModalities] = useState<Option[]>([]);
-  const [expanded, setExpanded] = useState(true);
+  const { options: modalitiesOptions, loading: modalitiesLoading } = useModalitiesAndSubtypes();
 
   useEffect(() => {
     async function fetchOptions() {
@@ -37,8 +37,6 @@ export function CaseFiltersSelector({ value, onChange }: CaseFiltersSelectorProp
       setDifficulties(
         (diffData || []).map((d: any) => ({ value: `${d.level}`, label: d.description }))
       );
-      // Modalidades via utilitário fixo 
-      setModalities(MODALIDADES_SUBTYPES.map(({ value, label }) => ({ value, label })));
     }
     fetchOptions();
   }, []);
@@ -51,7 +49,7 @@ export function CaseFiltersSelector({ value, onChange }: CaseFiltersSelectorProp
         ? [...old, val]
         : old.filter((v: string) => v !== val),
       // Limpando subtipo se modalidade for alterada!
-      ...(type === "modality" && !checked ? { subtype: [] } : {})
+      ...(type === "modality" ? { subtype: [] } : {})
     });
   }
 
@@ -69,16 +67,19 @@ export function CaseFiltersSelector({ value, onChange }: CaseFiltersSelectorProp
     onChange({});
   }
 
-  // Modalidades selecionadas no filtro
   const selectedModalities = value.modality || [];
-  // Subtipos disponíveis SOMENTE das modalidades selecionadas
-  const availableSubtypes = MODALIDADES_SUBTYPES
-    .filter(mod => selectedModalities.includes(mod.value))
-    .flatMap(mod => mod.subtypes);
+  // Agrupa subtipos das modalidades selecionadas
+  const subtypesPerModality = modalitiesOptions
+    .filter((m) => selectedModalities.includes(m.value))
+    .map((m) => ({
+      modality: m.label,
+      subtypes: m.subtypes,
+    }))
+    .filter(m => m.subtypes.length > 0);
 
   return (
     <div className="rounded-xl border p-6 bg-white mb-4 flex flex-col gap-4 max-w-2xl mx-auto">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-2">
         <span className="flex items-center gap-2 text-lg font-semibold">
           <Filter className="opacity-80" /> Filtros de Casos
         </span>
@@ -90,78 +91,95 @@ export function CaseFiltersSelector({ value, onChange }: CaseFiltersSelectorProp
           Limpar Filtros
         </button>
       </div>
+      <Accordion type="multiple" className="w-full space-y-2" defaultValue={["cat", "dif", "mod"]}>
+        {/* Categoria */}
+        <AccordionItem value="cat">
+          <AccordionTrigger className="font-bold text-base">Categorias / Especialidades</AccordionTrigger>
+          <AccordionContent>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-40 overflow-auto pr-2">
+              {specialties.map((opt) => (
+                <label key={opt.value} className="flex items-center gap-2 font-normal">
+                  <Checkbox
+                    checked={!!value.category?.includes(opt.value)}
+                    onCheckedChange={checked =>
+                      handleCheck("category", opt.value, Boolean(checked))
+                    }
+                  />
+                  {opt.label}
+                </label>
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
 
-      {/* Categoria */}
-      <div>
-        <div className="font-bold mb-1">Categoria</div>
-        <div className="grid grid-cols-3 gap-2">
-          {specialties.map((opt) => (
-            <label key={opt.value} className="flex items-center gap-2 font-normal">
-              <Checkbox
-                checked={!!value.category?.includes(opt.value)}
-                onCheckedChange={checked =>
-                  handleCheck("category", opt.value, Boolean(checked))
-                }
-              />
-              {opt.label}
-            </label>
-          ))}
-        </div>
-      </div>
+        {/* Dificuldade */}
+        <AccordionItem value="dif">
+          <AccordionTrigger className="font-bold text-base">Dificuldade</AccordionTrigger>
+          <AccordionContent>
+            <div className="flex flex-wrap gap-3">
+              {difficulties.map((opt) => (
+                <label key={opt.value} className="flex items-center gap-2 font-normal">
+                  <Checkbox
+                    checked={!!value.difficulty?.includes(opt.value)}
+                    onCheckedChange={checked =>
+                      handleCheck("difficulty", opt.value, Boolean(checked))
+                    }
+                  />
+                  {opt.label}
+                </label>
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
 
-      {/* Dificuldade */}
-      <div>
-        <div className="font-bold mb-1">Dificuldade</div>
-        <div className="flex gap-4">
-          {difficulties.map((opt) => (
-            <label key={opt.value} className="flex items-center gap-2 font-normal">
-              <Checkbox
-                checked={!!value.difficulty?.includes(opt.value)}
-                onCheckedChange={checked =>
-                  handleCheck("difficulty", opt.value, Boolean(checked))
-                }
-              />
-              {opt.label}
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* Modalidade Principal */}
-      <div>
-        <div className="font-bold mb-1">Modalidade Principal</div>
-        <div className="grid grid-cols-3 gap-2">
-          {modalities.map((opt) => (
-            <label key={opt.value} className="flex items-center gap-2 font-normal">
-              <Checkbox
-                checked={!!value.modality?.includes(opt.value)}
-                onCheckedChange={checked =>
-                  handleCheck("modality", opt.value, Boolean(checked))
-                }
-              />
-              {opt.label}
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* Subtipo (cascata, aparece ao selecionar uma Modalidade) */}
-      {selectedModalities.length > 0 && (
-        <div>
-          <div className="font-bold mb-1">Subtipo (opcional)</div>
-          <div className="grid grid-cols-3 gap-2">
-            {availableSubtypes.map((sub) => (
-              <label key={sub.value} className="flex items-center gap-2 font-normal">
-                <Checkbox
-                  checked={!!value.subtype?.includes(sub.value)}
-                  onCheckedChange={checked => handleSubtypeCheck(sub.value, Boolean(checked))}
-                />
-                {sub.label}
-              </label>
-            ))}
-          </div>
-        </div>
-      )}
+        {/* Modalidade de Imagem */}
+        <AccordionItem value="mod">
+          <AccordionTrigger className="font-bold text-base">Modalidades de Imagem</AccordionTrigger>
+          <AccordionContent>
+            {modalitiesLoading ? (
+              <div className="text-sm text-gray-500 p-2">Carregando modalidades...</div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-40 overflow-auto pr-2">
+                {modalitiesOptions.map((opt) => (
+                  <label key={opt.value} className="flex items-center gap-2 font-normal">
+                    <Checkbox
+                      checked={!!value.modality?.includes(opt.value)}
+                      onCheckedChange={checked =>
+                        handleCheck("modality", opt.value, Boolean(checked))
+                      }
+                    />
+                    {opt.label}
+                  </label>
+                ))}
+              </div>
+            )}
+          </AccordionContent>
+        </AccordionItem>
+        {/* Subtipos em cascata */}
+        {selectedModalities.length > 0 && subtypesPerModality.length > 0 && (
+          <AccordionItem value="subs">
+            <AccordionTrigger className="font-bold text-base">Subtipos por Modalidade</AccordionTrigger>
+            <AccordionContent>
+              {subtypesPerModality.map(({ modality, subtypes }) => (
+                <div key={modality} className="mb-3">
+                  <div className="font-semibold mb-1 text-gray-700">{modality}</div>
+                  <div className="flex flex-wrap gap-2">
+                    {subtypes.map((sub) => (
+                      <label key={sub.value} className="flex items-center gap-2 font-normal">
+                        <Checkbox
+                          checked={!!value.subtype?.includes(sub.value)}
+                          onCheckedChange={checked => handleSubtypeCheck(sub.value, Boolean(checked))}
+                        />
+                        {sub.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </AccordionContent>
+          </AccordionItem>
+        )}
+      </Accordion>
     </div>
   );
 }
