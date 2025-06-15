@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { CaseProfileForm } from "./components/CaseProfileForm";
 import { MedicalCasesTable } from "./components/MedicalCasesTable";
@@ -38,42 +37,13 @@ export default function CasosMedicos() {
 
   return (
     <div>
-      {/* [Removido] Botão temporário para gerar casos fake */}
+      {/* O formulário de cadastro de novos casos */}
       <CaseProfileForm onCreated={refreshCases} />
-      <h3 className="text-xl font-bold mb-5 mt-12">Casos Cadastrados</h3>
-      <div className="flex flex-col md:flex-row gap-4 mb-4">
-        <div>
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-56">
-              <SelectValue placeholder="Filtrar por especialidade" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas Especialidades</SelectItem>
-              {specialties.map((cat) => (
-                <SelectItem key={cat.id} value={String(cat.name)}>{cat.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Select value={modalityFilter} onValueChange={setModalityFilter}>
-            <SelectTrigger className="w-56">
-              <SelectValue placeholder="Filtrar por modalidade" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">
-                {modalities.length === 0 ? "Modalidade Principal" : "Todas Modalidades"}
-              </SelectItem>
-              {modalities.length > 0 &&
-                modalities.map((mod) => (
-                  <SelectItem key={mod} value={mod}>{mod}</SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      <MedicalCasesTable cases={cases} onDelete={deleteCase} onEdit={editCase} />
+      {/* Abaixo foi removido: 
+          - Título "Casos Cadastrados"
+          - Filtros das especialidades e modalidades
+          - Tabela dos casos cadastrados 
+      */}
     </div>
   );
 }
-
