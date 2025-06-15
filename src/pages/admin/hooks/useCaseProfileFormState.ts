@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 
 /**
@@ -9,6 +8,7 @@ const INITIAL_FORM = {
   category_id: "",
   difficulty_level: "",
   points: "10",
+  specialty: "",
   modality: "",
   subtype: "",
   title: "",
@@ -41,4 +41,3 @@ export function useCaseProfileFormState() {
 
   return { form, setForm, resetForm };
 }
-
