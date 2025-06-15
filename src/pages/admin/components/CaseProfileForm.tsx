@@ -64,7 +64,8 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     handleFormChange, handleModalityChange, handleOptionChange, handleOptionFeedbackChange,
     handleShortTipChange, handleCorrectChange, handleImageChange,
     handleAutoFillCaseDetails, handleSuggestTitle, handleSuggestAlternatives, handleSuggestHint, handleSuggestExplanation, handleGenerateAutoTitle,
-    handleSuggestFindings, handleSuggestClinicalInfo
+    handleSuggestFindings, handleSuggestClinicalInfo,
+    handleRandomizeOptions // NOVO
   } = handlers;
 
   // Hooks de undo para os principais campos envolvidos em sugestões IA
@@ -215,6 +216,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         handleShortTipChange={handleShortTipChange}
         handleCorrectChange={handleCorrectChange}
         handleSuggestAlternatives={handleSuggestAlternatives}
+        handleRandomizeOptions={handleRandomizeOptions} // NOVO
         renderTooltipTip={renderTooltipTip}
       />
       <CaseProfileExplanationSectionContainer

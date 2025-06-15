@@ -5,6 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowDown, Sparkles, Sword, Smile, Frown, Lightbulb, Book } from "lucide-react";
 import clsx from "clsx";
+import { useShuffledAnswers } from "@/hooks/useShuffledAnswers";
+import { Loader } from "@/components/Loader";
+import { getLetter } from "@/utils/quiz";
 
 // FEEDBACKS GAMIFICADOS
 const FEEDBACKS = [
@@ -20,49 +23,6 @@ function randomFeedback(acertou: boolean) {
     return ok[Math.floor(Math.random() * ok.length)];
   }
   return FEEDBACKS[2 + Math.floor(Math.random() * 2)];
-}
-
-function getLetter(idx: number) {
-  return String.fromCharCode(65 + idx);
-}
-
-// Hook para embaralhar as alternativas somente para visualização do usuário:
-function useShuffledAnswers(caso: any) {
-  const [shuffled, setShuffled] = useState<{
-    options: string[];
-    feedbacks: string[];
-    shortTips: string[];
-    correctIndex: number;
-  } | null>(null);
-
-  useEffect(() => {
-    if (!caso || !Array.isArray(caso.answer_options)) {
-      setShuffled(null);
-      return;
-    }
-    // Junta todas as infos relevantes numa lista
-    const zipped = caso.answer_options.map((answer: string, idx: number) => ({
-      answer,
-      feedback: caso.answer_feedbacks?.[idx] ?? "",
-      shortTip: caso.answer_short_tips?.[idx] ?? "",
-      isCorrect: idx === caso.correct_answer_index,
-    }));
-    // Shuffle
-    for (let i = zipped.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [zipped[i], zipped[j]] = [zipped[j], zipped[i]];
-    }
-    // Descobre o novo índice da correta
-    const newCorrectIdx = zipped.findIndex(x => x.isCorrect);
-    setShuffled({
-      options: zipped.map(x => x.answer),
-      feedbacks: zipped.map(x => x.feedback),
-      shortTips: zipped.map(x => x.shortTip),
-      correctIndex: newCorrectIdx,
-    });
-  // Executa shuffle toda vez que o caso (ou suas alternativas) mudar
-  }, [caso?.answer_options, caso?.correct_answer_index, caso?.answer_feedbacks, caso?.answer_short_tips, caso]);
-  return shuffled;
 }
 
 export default function CasoUsuarioView() {
@@ -102,10 +62,10 @@ export default function CasoUsuarioView() {
     if (id) fetchCaso();
   }, [id]);
 
-  // NOVO: usa alternativas embaralhadas só na visualização do usuário
+  // Alternativas embaralhadas apenas na visualização do usuário
   const shuffled = useShuffledAnswers(caso);
 
-  // Descobre índices corretos de acordo com o shuffle
+  // Índice correto de acordo com o shuffle local
   const correctIdx = shuffled?.correctIndex ?? caso?.correct_answer_index;
   const acertou = selected === correctIdx && answered && selected !== null;
   const feedbackMsg = randomFeedback(acertou);
@@ -293,14 +253,3 @@ export default function CasoUsuarioView() {
     </div>
   );
 }
-
-// Loader simples
-function Loader() {
-  return (
-    <svg className="animate-spin h-8 w-8 text-cyan-700 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-      <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-      <path className="opacity-70" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-    </svg>
-  );
-}
-

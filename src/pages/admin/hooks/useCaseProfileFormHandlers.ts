@@ -1,9 +1,29 @@
-
 import { useState } from "react";
 import { useCaseProfileFormState } from "./useCaseProfileFormState";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useCaseProfileFormUtils } from "./useCaseProfileFormUtils";
+
+// Função utilitária
+function shuffleAlternatives(state: any) {
+  const arr = state.answer_options.map((opt: string, idx: number) => ({
+    option: opt,
+    feedback: state.answer_feedbacks[idx] ?? "",
+    tip: state.answer_short_tips[idx] ?? "",
+    isCorrect: idx === state.correct_answer_index,
+  }));
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  const newCorrectIdx = arr.findIndex(x => x.isCorrect);
+  return {
+    answer_options: arr.map(x => x.option),
+    answer_feedbacks: arr.map(x => x.feedback),
+    answer_short_tips: arr.map(x => x.tip),
+    correct_answer_index: newCorrectIdx,
+  };
+}
 
 export function useCaseProfileFormHandlers({ categories, difficulties }: { categories: any[], difficulties: any[] }) {
   const { form, setForm, resetForm } = useCaseProfileFormState();
@@ -82,6 +102,20 @@ export function useCaseProfileFormHandlers({ categories, difficulties }: { categ
     handleSuggestClinicalInfo
   } = utils;
 
+  // Novo: handler para randomizar alternativas no form
+  function handleRandomizeOptions() {
+    // Previna campos vazios!
+    setForm((prev: any) => {
+      if (!Array.isArray(prev.answer_options) || prev.answer_options.some((a: string) => !a)) {
+        toast({ title: "Preencha todas as alternativas antes de embaralhar.", variant: "destructive" });
+        return prev;
+      }
+      const shuffled = shuffleAlternatives(prev);
+      toast({ title: "Alternativas embaralhadas!" });
+      return { ...prev, ...shuffled };
+    });
+  }
+
   return {
     form,
     setForm,
@@ -109,8 +143,8 @@ export function useCaseProfileFormHandlers({ categories, difficulties }: { categ
     handleSuggestHint,
     handleSuggestExplanation,
     handleGenerateAutoTitle,
-    handleSuggestFindings, // <-- Add this
-    handleSuggestClinicalInfo // <-- And this
+    handleSuggestFindings,
+    handleSuggestClinicalInfo,
+    handleRandomizeOptions
   };
 }
-
