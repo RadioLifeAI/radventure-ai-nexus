@@ -21,6 +21,8 @@ async function gerarCasosFake() {
     ["Parabéns pela assertividade!", "Resposta incompleta.", "Estude mais sobre o tema.", "Conferir imagem com atenção."]
   ];
   const getRand = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)];
+  
+  // Seleciona apenas campos compatíveis com a tabela
   const mockCases = Array.from({ length: 10 }).map((_, idx) => ({
     title: getRand(TITULOS) + " #" + (Math.floor(Math.random() * 1000)),
     specialty: getRand(SPECIALTIES),
@@ -30,9 +32,9 @@ async function gerarCasosFake() {
     modality: getRand(MODALIDADES),
     subtype: "",
     findings: "Achado típico evidente na imagem em " + getRand(MODALIDADES),
-    patient_age: 27 + idx,
+    patient_age: (27 + idx).toString(),
     patient_gender: idx % 2 === 0 ? "Masculino" : "Feminino",
-    symptoms_duration: idx + 1 + " dias",
+    symptoms_duration: (idx + 1) + " dias",
     patient_clinical_info: "Paciente com quadro clínico sugestivo para o diagnóstico.",
     main_question: getRand(QUES),
     answer_options: ["Alternativa A", "Alternativa B", "Alternativa C", "Alternativa D"],
@@ -47,17 +49,61 @@ async function gerarCasosFake() {
     manual_hint: "Dica extra para o usuário.",
     skip_penalty_points: 0,
     elimination_penalty_points: 0,
-    ai_tutor_level: "desligado",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    case_number: idx + 1000
+    ai_tutor_level: "desligado"
   }));
-  const { error } = await supabase.from("medical_cases").insert(mockCases);
-  if (!error) {
-    toast({ title: "Casos de teste gerados!" });
-    window.location.reload();
-  } else {
-    toast({ title: "Erro ao gerar casos!", variant: "destructive" });
+
+  // Remover campos que não existem na tabela (como case_number)
+  const sanitizedCases = mockCases.map((c) => {
+    // seleciona apenas os campos realmente aceitos pela tabela (ajuste conforme necessário!)
+    const {
+      title, specialty, category_id, difficulty_level, points, modality, subtype, findings,
+      patient_age, patient_gender, symptoms_duration, patient_clinical_info, main_question,
+      answer_options, answer_feedbacks, answer_short_tips, correct_answer_index, image_url, explanation, 
+      can_skip, max_elimination, ai_hint_enabled, manual_hint, skip_penalty_points, elimination_penalty_points,
+      ai_tutor_level
+    } = c;
+    return {
+      title,
+      specialty,
+      category_id,
+      difficulty_level,
+      points,
+      modality,
+      subtype,
+      findings,
+      patient_age,
+      patient_gender,
+      symptoms_duration,
+      patient_clinical_info,
+      main_question,
+      answer_options,
+      answer_feedbacks,
+      answer_short_tips,
+      correct_answer_index,
+      image_url,
+      explanation,
+      can_skip,
+      max_elimination,
+      ai_hint_enabled,
+      manual_hint,
+      skip_penalty_points,
+      elimination_penalty_points,
+      ai_tutor_level
+    };
+  });
+
+  try {
+    const { error } = await supabase.from("medical_cases").insert(sanitizedCases);
+    if (!error) {
+      toast({ title: "Casos de teste gerados!" });
+      window.location.reload();
+    } else {
+      toast({ title: "Erro ao gerar casos! " + error.message, variant: "destructive" });
+      console.error("Erro ao gerar casos dummy:", error);
+    }
+  } catch (err: any) {
+    toast({ title: "Erro inesperado ao gerar casos!", variant: "destructive" });
+    console.error("Erro interno (gerarCasosFake):", err);
   }
 }
 
