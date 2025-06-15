@@ -100,6 +100,14 @@ export function useCaseProfileFormUtils({
       // Usar util de advanced auto fill:
       const autoAdvanced = buildAutoAdvancedFields(suggestion, form);
 
+      // SHUFFLE LOGIC FIX: ensure we compute the shuffle variable:
+      const shuffle = shuffleAlternativesWithFeedback(
+        Array.isArray(suggestion.answer_options) ? suggestion.answer_options.slice(0, 4) : ["", "", "", ""],
+        Array.isArray(suggestion.answer_feedbacks) ? suggestion.answer_feedbacks.slice(0, 4) : ["", "", "", ""],
+        Array.isArray(suggestion.answer_short_tips) ? suggestion.answer_short_tips.slice(0, 4) : ["", "", "", ""],
+        0
+      );
+
       setForm((prev: any) => {
         const safeStr = (v: any) => (v === null || v === undefined ? "" : String(v));
         const safeArr = (a: any[] | undefined, fallbackLen = 4) => {
