@@ -1,13 +1,13 @@
-
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowDown, Sparkles, Sword, Smile, Frown, Lightbulb, Book } from "lucide-react";
+import { ArrowDown, Sparkles, Sword, Smile, Frown, Lightbulb, Book, Image } from "lucide-react";
 import clsx from "clsx";
 import { useShuffledAnswers } from "@/hooks/useShuffledAnswers";
 import { Loader } from "@/components/Loader";
 import { getLetter } from "@/utils/quiz";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 
 // FEEDBACKS GAMIFICADOS
 const FEEDBACKS = [
@@ -71,15 +71,45 @@ export default function CasoUsuarioView() {
   const feedbackMsg = randomFeedback(acertou);
   const showFeedback = answered && selected !== null;
 
+  // Detecta array de imagens (formato novo)
+  let caseImages: Array<{ url: string; legend?: string }> = [];
+  try {
+    caseImages = Array.isArray(caso?.image_url)
+      ? caso.image_url
+      : typeof caso?.image_url === "string" && caso.image_url?.startsWith("[")
+        ? JSON.parse(caso.image_url)
+        : !!caso?.image_url ? [{ url: caso.image_url }] : [];
+  } catch {
+    caseImages = !!caso?.image_url ? [{ url: caso.image_url }] : [];
+  }
+
   return (
     <div className="flex flex-col md:flex-row gap-6 px-4 py-6 md:py-10 bg-[#f5f7fd] min-h-screen animate-fade-in">
-      {/* Esquerda: Imagem */}
+      {/* Esquerda: Imagem - agora carrossel de imagens */}
       <div className="md:w-[350px] flex-shrink-0 flex flex-col items-center">
         <div className="rounded-xl bg-black overflow-hidden shadow-md border mb-2 flex items-center justify-center" style={{ minHeight: 200 }}>
           {loading ? (
             <Loader />
-          ) : caso?.image_url ? (
-            <img src={caso.image_url} alt="Imagem do caso" className="object-contain max-h-[320px] min-w-[280px]" />
+          ) : caseImages.length > 0 ? (
+            <Carousel className="w-[310px]">
+              <CarouselContent>
+                {caseImages.map((img, idx) => (
+                  <CarouselItem key={idx}>
+                    <img
+                      src={img.url}
+                      alt={`Imagem do caso ${idx + 1}`}
+                      className="object-contain max-h-[320px] min-w-[280px] rounded"
+                    />
+                    {/* Legenda só aparece após 'Responder' */}
+                    {answered && img.legend && (
+                      <div className="text-xs text-center text-blue-900 mt-2 bg-blue-50 border border-blue-200 rounded px-2 py-1">
+                        {img.legend}
+                      </div>
+                    )}
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
           ) : (
             <div className="flex flex-col items-center justify-center w-[280px] h-[200px] gap-2">
               <Book className="w-12 h-12 text-gray-400 opacity-60" />

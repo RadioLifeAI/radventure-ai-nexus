@@ -32,6 +32,11 @@ export function CaseProfileBasicSection({
   handleSuggestFindings, handleSuggestClinicalInfo,
   undoFindings, undoClinical, undoTitle, setForm
 }: Props) {
+  // Novo: adaptador para array de imagens
+  function handleImagesChange(imgArr: { url: string; legend: string }[]) {
+    // propaga nova lista para o form
+    handleImageChange(imgArr); // form.image_url agora é array de {url,legend}
+  }  
   return (
     <>
       {/* Pré-visualização & botões */}
@@ -212,7 +217,10 @@ export function CaseProfileBasicSection({
         </div>
         {/* Imagem */}
         <div className="pt-3 min-w-[240px] flex flex-col items-center">
-          <ImageUploadWithZoom value={form.image_url} onChange={handleImageChange} />
+          <ImageUploadWithZoom
+            value={form.image_url ?? []}
+            onChange={handleImagesChange}
+          />
         </div>
       </div>
     </>
