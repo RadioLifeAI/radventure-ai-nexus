@@ -41,11 +41,12 @@ export default function EventEditModal({ open, onClose, event, onSave }: EventEd
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-2xl w-full p-0">
+      <DialogContent className="max-w-4xl w-full p-0 max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Editar Evento</DialogTitle>
         </DialogHeader>
-        <div className="p-2">
+        {/* SCROLLABLE FORM CONTENT */}
+        <div className="overflow-y-auto px-4 pb-1 pt-2 flex-1 max-h-[75vh]">
           <EventForm
             mode="edit"
             initialValues={event}
@@ -54,6 +55,12 @@ export default function EventEditModal({ open, onClose, event, onSave }: EventEd
             onCancel={onClose}
           />
         </div>
+        <DialogFooter className="sticky bottom-0 bg-white px-4 py-3 mt-0 border-t z-10">
+          <Button variant="secondary" type="button" onClick={onClose}>Cancelar</Button>
+          <Button type="submit" form="event-form-in-modal" disabled={loading}>
+            {loading ? "Salvando..." : "Salvar alterações"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

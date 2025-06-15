@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { EventBannerUpload } from "./EventBannerUpload";
@@ -139,7 +138,11 @@ export function EventForm({ mode, initialValues = {}, loading, onSubmit, onCance
   }, [mode, initialValues]);
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto p-4 bg-white rounded shadow space-y-6 animate-fade-in">
+    <form
+      onSubmit={handleSubmit}
+      id="event-form-in-modal"
+      className="max-w-2xl mx-auto p-4 bg-white rounded shadow space-y-6 animate-fade-in"
+    >
       <div className="flex flex-col gap-1 mb-1">
         <EventConfigMotivationPhrase />
         <EventConfigProgressBar percent={progress} />
@@ -218,16 +221,6 @@ export function EventForm({ mode, initialValues = {}, loading, onSubmit, onCance
           onClose={() => setShowTemplates(false)}
         />
       )}
-      <div className="flex gap-2 justify-end">
-        {onCancel && (
-          <Button type="button" variant="secondary" onClick={onCancel}>
-            Cancelar
-          </Button>
-        )}
-        <Button type="submit" disabled={loading}>
-          {loading ? (mode === "edit" ? "Salvando..." : "Criando evento...") : (mode === "edit" ? "Salvar alterações" : "Criar evento")}
-        </Button>
-      </div>
     </form>
   );
 }
