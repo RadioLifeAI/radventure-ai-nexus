@@ -119,7 +119,8 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
       }
 
       const payload: any = {
-        specialty: categories.find(c => String(c.id) === String(form.category_id))?.name || null,
+        // Adiciona specialty com fallback para vazio/null caso não encontrado
+        specialty: form.specialty || (categories.find(c => String(c.id) === String(form.category_id))?.name ?? null),
         category_id: form.category_id ? Number(form.category_id) : null,
         case_number: caseNumber ?? null,
         difficulty_level: form.difficulty_level ? Number(form.difficulty_level) : null,
@@ -139,7 +140,6 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         answer_short_tips: form.answer_short_tips,
         correct_answer_index: form.correct_answer_index,
         image_url: form.image_url,
-        // Novos campos
         can_skip: form.can_skip,
         max_elimination: form.max_elimination,
         ai_hint_enabled: form.ai_hint_enabled,

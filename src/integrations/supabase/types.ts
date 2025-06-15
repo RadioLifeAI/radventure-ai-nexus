@@ -266,8 +266,10 @@ export type Database = {
           patient_age: string | null
           patient_clinical_info: string | null
           patient_gender: string | null
+          points: number | null
           skip_penalty_points: number | null
           specialty: string | null
+          subtype: string | null
           symptoms_duration: string | null
           title: string
           updated_at: string
@@ -300,8 +302,10 @@ export type Database = {
           patient_age?: string | null
           patient_clinical_info?: string | null
           patient_gender?: string | null
+          points?: number | null
           skip_penalty_points?: number | null
           specialty?: string | null
+          subtype?: string | null
           symptoms_duration?: string | null
           title: string
           updated_at?: string
@@ -334,8 +338,10 @@ export type Database = {
           patient_age?: string | null
           patient_clinical_info?: string | null
           patient_gender?: string | null
+          points?: number | null
           skip_penalty_points?: number | null
           specialty?: string | null
+          subtype?: string | null
           symptoms_duration?: string | null
           title?: string
           updated_at?: string
