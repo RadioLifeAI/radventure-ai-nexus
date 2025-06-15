@@ -25,13 +25,13 @@ export function useCaseProfileFormUtils({
   }
 
   async function handleAutoFillCaseDetails() {
-    if (!form.title?.trim()) {
+    if (!form.title_diagnosis?.trim()) {
       toast({ description: "Por favor, preencha o campo Diagnóstico para sugerir todos os detalhes." });
       return;
     }
     setSubmitting(true);
     try {
-      const body: any = { diagnosis: form.title };
+      const body: any = { diagnosis: form.title_diagnosis };
       if (form.findings?.trim()) body.findings = form.findings.trim();
       if (form.modality?.trim()) body.modality = form.modality.trim();
       if (form.subtype?.trim()) body.subtype = form.subtype.trim();
@@ -183,22 +183,25 @@ export function useCaseProfileFormUtils({
   }
 
   async function handleSuggestTitle() {
+    // Agora usa findings E/OU resumo clínico para sugestão de diagnóstico (mas diagnóstico real é internamente)
     if (!form.findings && !form.patient_clinical_info) {
       toast({ description: "Preencha Achados Radiológicos e/ou Resumo Clínico para sugerir um título." });
       return;
     }
-    setForm((prev: any) => ({ ...prev, title: "Título sugerido pelo sistema (placeholder)" }));
-    toast({ description: "Título sugerido automaticamente (personalize se desejar)." });
+    // Propõe um "diagnóstico interno sugerido"
+    setForm((prev: any) => ({ ...prev, title_diagnosis: "Diagnóstico sugerido pelo sistema (placeholder)" }));
+    toast({ description: "Diagnóstico sugerido automaticamente (personalize se desejar)." });
   }
   async function handleSuggestAlternatives() {
-    if (!form.title) {
+    // AGORA: Usar diagnóstico interno!
+    if (!form.title_diagnosis) {
       toast({ description: "Preencha o campo Diagnóstico para sugerir alternativas." });
       return;
     }
     setSubmitting(true);
     try {
       const reqBody: any = {
-        diagnosis: form.title,
+        diagnosis: form.title_diagnosis,
         findings: form.findings || "",
         modality: form.modality || "",
         subtype: form.subtype || "",
@@ -232,17 +235,17 @@ export function useCaseProfileFormUtils({
     setSubmitting(false);
   }
   async function handleSuggestHint() {
+    // AGORA: Usar diagnóstico interno!
     if (!form.findings && !form.patient_clinical_info) {
       toast({ description: "Preencha Achados Radiológicos e/ou Resumo Clínico para sugerir uma dica." });
       return;
     }
     setSubmitting(true);
     try {
-      // Solicita para a IA uma dica clínica radiológica direta e enxuta (até 200 caracteres)
       const contextHint = `Você é um especialista em radiologia e diagnóstico por imagem, e deve fornecer uma dica curta (máx. 200 caracteres) para o estudante resolver o caso, focando apenas em integrar achados radiológicos com o contexto clínico. Não use frases genéricas, seja objetivo.`;
       const { data, error } = await supabase.functions.invoke("case-autofill", {
         body: {
-          diagnosis: form.title || "",
+          diagnosis: form.title_diagnosis || "",
           findings: form.findings || "",
           modality: form.modality || "",
           subtype: form.subtype || "",
@@ -275,12 +278,12 @@ export function useCaseProfileFormUtils({
     setSubmitting(false);
   }
   async function handleSuggestExplanation() {
-    if (!form.findings && !form.main_question && !form.title) {
+    if (!form.findings && !form.main_question && !form.title_diagnosis) {
       toast({ description: "Preencha Achados, Pergunta Principal ou Diagnóstico para sugerir uma explicação." });
       return;
     }
     // Sempre foca e encurta ainda mais
-    if (!form.findings && !form.title && !form.patient_clinical_info) {
+    if (!form.findings && !form.title_diagnosis && !form.patient_clinical_info) {
       toast({ description: "Preencha Achados Radiológicos, Diagnóstico ou Resumo Clínico para sugerir explicação." });
       return;
     }
@@ -289,7 +292,7 @@ export function useCaseProfileFormUtils({
     try {
       const { data, error } = await supabase.functions.invoke("case-autofill", {
         body: {
-          diagnosis: form.title || "",
+          diagnosis: form.title_diagnosis || "",
           findings: form.findings || "",
           modality: form.modality || "",
           subtype: form.subtype || "",
@@ -342,7 +345,8 @@ export function useCaseProfileFormUtils({
   }
 
   async function handleSuggestFindings() {
-    if (!form.title?.trim() && !form.modality?.trim()) {
+    // Pode ou não usar diagnóstico interno, mas vamos preferir o diagnóstico interno por consistência
+    if (!form.title_diagnosis?.trim() && !form.modality?.trim()) {
       toast({ description: "Preencha Diagnóstico e/ou Modalidade para sugerir os achados." });
       return;
     }
@@ -351,7 +355,7 @@ export function useCaseProfileFormUtils({
       const contextFindings = `Você é especialista em radiologia. Gere uma descrição de achados radiológicos concisa (máx. 200 caracteres), associando com o diagnóstico e modalidades fornecidos.`;
       const { data, error } = await supabase.functions.invoke("case-autofill", {
         body: {
-          diagnosis: form.title || "",
+          diagnosis: form.title_diagnosis || "",
           modality: form.modality || "",
           subtype: form.subtype || "",
           withFindingsOnly: true,
@@ -379,7 +383,7 @@ export function useCaseProfileFormUtils({
   }
 
   async function handleSuggestClinicalInfo() {
-    if (!form.title?.trim() && !form.modality?.trim()) {
+    if (!form.title_diagnosis?.trim() && !form.modality?.trim()) {
       toast({ description: "Preencha Diagnóstico e/ou Modalidade para sugerir o resumo clínico." });
       return;
     }
@@ -388,7 +392,7 @@ export function useCaseProfileFormUtils({
       const contextClinical = `Você é especialista em radiologia. Gere um resumo clínico conciso (máximo 300 caracteres) integrando as informações do diagnóstico/modalidade.`;
       const { data, error } = await supabase.functions.invoke("case-autofill", {
         body: {
-          diagnosis: form.title || "",
+          diagnosis: form.title_diagnosis || "",
           modality: form.modality || "",
           subtype: form.subtype || "",
           withClinicalInfoOnly: true,
