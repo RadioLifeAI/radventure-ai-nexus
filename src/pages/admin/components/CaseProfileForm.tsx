@@ -106,7 +106,6 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     setSubmitting(true);
 
     try {
-      // Para garantir numeração correta, conta novamente antes do insert para evitar duplicatas
       let caseNumber = form.case_number;
       if ((!caseNumber || isNaN(Number(caseNumber))) && form.category_id && form.modality) {
         const { data } = await supabase
@@ -127,9 +126,9 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         subtype: form.subtype || null,
         title: form.title,
         findings: form.findings,
-        // adicionando os campos de paciente
-        patient_age: form.patient_age,
-        patient_gender: form.patient_gender,
+        // adicionando os campos de paciente (garantindo string ou null)
+        patient_age: form.patient_age === "" ? null : String(form.patient_age),
+        patient_gender: form.patient_gender === "" ? null : String(form.patient_gender),
         symptoms_duration: form.symptoms_duration,
         patient_clinical_info: form.patient_clinical_info,
         main_question: form.main_question,
@@ -139,7 +138,6 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         answer_short_tips: form.answer_short_tips,
         correct_answer_index: form.correct_answer_index,
         image_url: form.image_url,
-        // Novos campos
         can_skip: form.can_skip,
         max_elimination: form.max_elimination,
         ai_hint_enabled: form.ai_hint_enabled,
@@ -151,9 +149,13 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         updated_at: new Date().toISOString(),
       };
 
+      // Remove campos undefined (algum campo react-hook pode inserir)
       Object.keys(payload).forEach(k => {
-        if (typeof payload[k] === "string" && payload[k] === "") payload[k] = null;
+        if (payload[k] === "" || payload[k] === undefined) payload[k] = null;
       });
+
+      // LOG: Mostra o payload antes de enviar
+      console.log("Payload do caso médico:", payload);
 
       const { error } = await supabase.from("medical_cases").insert([payload]);
       if (!error) {
@@ -163,11 +165,15 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         onCreated?.();
       } else {
         setFeedback("Erro ao cadastrar caso.");
-        toast({ title: "Erro ao cadastrar caso!", variant: "destructive" });
+        toast({ title: "Erro ao cadastrar caso! " + error.message, variant: "destructive" });
+        // LOG: Mostra erro detalhado do Supabase
+        console.error("Erro supabase:", error);
       }
     } catch (err: any) {
       setFeedback("Erro ao cadastrar caso.");
       toast({ title: "Erro ao cadastrar caso!", variant: "destructive" });
+      // LOG: Mostra erro inesperado
+      console.error("Erro inesperado ao cadastrar caso:", err);
     }
     setSubmitting(false);
     setTimeout(() => setFeedback(""), 2300);
