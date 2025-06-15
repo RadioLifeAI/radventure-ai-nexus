@@ -96,6 +96,42 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
       });
   }, []);
 
+  // --- NOVA FUNÇÃO: AUTO-PREENCHIMENTO DOS CAMPOS BASEADO EM DIAGNÓSTICO ---
+  function handleAutoFillCaseDetails() {
+    // Usar o campo diagnóstico (title) para gerar exemplos
+    const diag = form.title?.trim() || "Patologia não especificada";
+    // Exemplos mockados, em produção integrar API/IA aqui
+    const findingsExamples: Record<string, string> = {
+      "Pneumonia": "Infiltrado pulmonar difuso em lobo inferior direito, broncogramas aéreos visíveis.",
+      "DPOC": "Hipertransparência pulmonar, achatamento de diafragma, aumento do espaço retroesternal.",
+      "Tuberculose": "Opacidades apicais bilaterais, cavitação no ápice direito.",
+      "Parada Cardíaca": "Cardiomegalia com congestão pulmonar, linhas B de Kerley.",
+      "Patologia não especificada": "Opacidade focal não especificada nos campos pulmonares."
+    };
+    const summaryExamples: Record<string, string> = {
+      "Pneumonia": "Paciente de 39 anos, sexo masculino, há 4 dias com febre, tosse produtiva e dor torácica.",
+      "DPOC": "Homem de 60 anos, tabagista, quadro de dispneia progressiva e tosse crônica.",
+      "Tuberculose": "Mulher, 43 anos, emagrecimento, sudorese noturna e tosse há 3 semanas.",
+      "Parada Cardíaca": "Homem 52 anos, hipertenso, apresenta dispneia intensa e ortopneia.",
+      "Patologia não especificada": "Quadro clínico compatível com doença pulmonar não especificada."
+    };
+    // Preenchimento randômico para idade, gênero, sintomas
+    const randomAge = Math.floor(Math.random() * 50) + 20;
+    const genders = ["Masculino", "Feminino", "Outro"];
+    const randomGender = genders[Math.floor(Math.random() * genders.length)];
+    const symptomExamples = ["3 dias", "1 semana", "2 semanas", "5 dias"];
+    const randomSymptoms = symptomExamples[Math.floor(Math.random() * symptomExamples.length)];
+
+    setForm(prev => ({
+      ...prev,
+      findings: findingsExamples[diag] || findingsExamples["Patologia não especificada"],
+      patient_clinical_info: summaryExamples[diag] || summaryExamples["Patologia não especificada"],
+      patient_age: String(randomAge),
+      patient_gender: randomGender,
+      symptoms_duration: randomSymptoms
+    }));
+  }
+
   function handleFormChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     const { name, value, type, checked } = e.target as any;
     if (name === "difficulty_level") {
@@ -318,11 +354,32 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         <div className="flex-1 space-y-3">
           <div className="flex items-end gap-2">
             <div className="flex-1">
-              <label className="font-semibold">Título *</label>
-              <Input name="title" value={form.title} onChange={handleFormChange} placeholder="Ex: PAF pulmonar em paciente jovem" required />
+              {/* LABEL "Diagnóstico" e observação */}
+              <label className="font-semibold">
+                Diagnóstico*{" "}
+                <span className="text-xs text-muted-foreground">(Não será exibido ao usuário, apenas referência interna)</span>
+              </label>
+              <Input
+                name="title"
+                value={form.title}
+                onChange={handleFormChange}
+                placeholder="Ex: Tuberculose pulmonar"
+                required
+              />
             </div>
+            {/* Botão Sugerir Título (mantido) */}
             <Button type="button" onClick={handleSuggestTitle} variant="secondary" className="mb-1">
-              Sugerir Título
+              Sugerir Diagnóstico
+            </Button>
+            {/* NOVO botão Auto-preencher */}
+            <Button
+              type="button"
+              onClick={handleAutoFillCaseDetails}
+              variant="secondary"
+              className="mb-1"
+              title="Preencher achados, resumo, idade, gênero e sintomas de forma automática"
+            >
+              Auto-preencher detalhes do caso
             </Button>
           </div>
           <label className="font-semibold mt-3">Achados radiológicos *</label>
