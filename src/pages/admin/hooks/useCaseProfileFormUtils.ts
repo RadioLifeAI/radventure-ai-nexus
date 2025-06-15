@@ -21,6 +21,35 @@ export function useCaseProfileFormUtils({
       default:  return "10";
     }
   }
+  // Util para embaralhamento coordenado
+  function shuffleAlternativesWithFeedback(
+    options: string[],
+    feedbacks: string[],
+    tips: string[],
+    currentCorrectIdx: number
+  ) {
+    // Cria array de objetos mantendo referência ao correto
+    const arr = options.map((option, idx) => ({
+      option,
+      feedback: feedbacks[idx] ?? "",
+      tip: tips[idx] ?? "",
+      isCorrect: idx === currentCorrectIdx,
+    }));
+    // Embaralha
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    // Encontra o novo índice correto
+    const newCorrectIdx = arr.findIndex((el) => el.isCorrect);
+    return {
+      options: arr.map((el) => el.option),
+      feedbacks: arr.map((el) => el.feedback),
+      tips: arr.map((el) => el.tip),
+      correctIdx: newCorrectIdx,
+    };
+  }
+
   async function handleAutoFillCaseDetails() {
     if (!form.title?.trim()) {
       toast({ description: "Por favor, preencha o campo Diagnóstico para sugerir todos os detalhes." });
@@ -189,14 +218,22 @@ export function useCaseProfileFormUtils({
       if (error) throw new Error(error.message || "Não foi possível sugerir alternativas (IA).");
 
       const suggestion = data?.suggestion || {};
+      // IA retorna sempre correta na posição zero; sortear!
+      const options = Array.isArray(suggestion.answer_options) ? suggestion.answer_options.slice(0, 4) : ["", "", "", ""];
+      const feedbacks = Array.isArray(suggestion.answer_feedbacks) ? suggestion.answer_feedbacks.slice(0, 4) : ["", "", "", ""];
+      const tips = Array.isArray(suggestion.answer_short_tips) ? suggestion.answer_short_tips.slice(0, 4) : ["", "", "", ""];
+      // Sempre considere a alternativa correta como o índice 0 da IA
+      const { options: shuffledOptions, feedbacks: shuffledFeedbacks, tips: shuffledTips, correctIdx } =
+        shuffleAlternativesWithFeedback(options, feedbacks, tips, 0);
+
       setForm((prev: any) => ({
         ...prev,
-        answer_options: Array.isArray(suggestion.answer_options) ? suggestion.answer_options.slice(0,4) : ["", "", "", ""],
-        answer_feedbacks: Array.isArray(suggestion.answer_feedbacks) ? suggestion.answer_feedbacks.slice(0,4) : ["", "", "", ""],
-        answer_short_tips: Array.isArray(suggestion.answer_short_tips) ? suggestion.answer_short_tips.slice(0,4) : ["", "", "", ""],
-        correct_answer_index: 0
+        answer_options: shuffledOptions,
+        answer_feedbacks: shuffledFeedbacks,
+        answer_short_tips: shuffledTips,
+        correct_answer_index: correctIdx
       }));
-      toast({ description: "Alternativas sugeridas por IA considerando os principais diagnósticos diferenciais." });
+      toast({ description: "Alternativas sugeridas por IA e embaralhadas!" });
     } catch (err: any) {
       toast({ variant: "destructive", description: err?.message || "Falha ao gerar alternativas (IA)." });
     }
