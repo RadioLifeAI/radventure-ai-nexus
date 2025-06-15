@@ -13,6 +13,9 @@ import { CaseProfileBasicSection } from "./CaseProfileBasicSection";
 import { CaseProfileAlternativesSection } from "./CaseProfileAlternativesSection";
 import { CaseProfileExplanationSection } from "./CaseProfileExplanationSection";
 import { CaseProfileAdvancedConfig } from "./CaseProfileAdvancedConfig";
+import { useCaseProfileFormHandlers } from "../hooks/useCaseProfileFormHandlers";
+import { CaseProfileFormActions } from "./CaseProfileFormActions";
+import { CaseProfileFormLayout } from "./CaseProfileFormLayout";
 
 const GENDER_OPTIONS = [
   { value: "", label: "Selecione..." },
@@ -28,47 +31,9 @@ const AI_TUTOR_LEVELS = [
 ];
 
 export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
-  // Listas vindas do banco para selects
   const [categories, setCategories] = useState<{id: number, name: string}[]>([]);
   const [difficulties, setDifficulties] = useState<{id: number, level: number, description: string | null}[]>([]);
   
-  // Usar nosso novo hook de estado do formulário
-  const { form, setForm, resetForm } = useCaseProfileFormState();
-
-  // Form fields
-  const [submitting, setSubmitting] = useState(false);
-  const [feedback, setFeedback] = useState("");
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
-  // Adiciona controle para destacar campos autocompletados
-  const [highlightedFields, setHighlightedFields] = useState<string[]>([]);
-
-  // Função utilitária para normalizar nomes de categoria (remove acentos e caixa alta/baixa)
-  function normalizeString(str: string = "") {
-    return str
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .trim();
-  }
-
-  // Lógica para sugestão automática de pontos conforme dificuldade
-  function suggestPointsByDifficulty(level: string) {
-    switch (level) {
-      case "1":
-        return "10";
-      case "2":
-        return "20";
-      case "3":
-        return "30";
-      case "4":
-        return "50";
-      default:
-        return "10";
-    }
-  }
-
-  // Carregar selects de categorias e dificuldades
   useEffect(() => {
     supabase.from("medical_specialties")
       .select("id, name")
@@ -91,255 +56,28 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
       });
   }, []);
 
-  // --- NOVA FUNÇÃO: AUTO-PREENCHIMENTO DOS CAMPOS USANDO API AI ---
-  async function handleAutoFillCaseDetails() {
-    if (!form.title?.trim()) {
-      toast({ description: "Por favor, preencha o campo Diagnóstico para sugerir todos os detalhes." });
-      return;
-    }
-    setSubmitting(true);
-    try {
-      // Novo: prepara corpo conforme preenchimento dos campos
-      const body: any = { diagnosis: form.title };
-      if (form.findings?.trim()) body.findings = form.findings.trim();
-      if (form.modality?.trim()) body.modality = form.modality.trim();
-      if (form.subtype?.trim()) body.subtype = form.subtype.trim();
+  const handlers = useCaseProfileFormHandlers({ categories, difficulties });
+  const {
+    form, setForm, resetForm, submitting, setSubmitting, feedback, setFeedback,
+    showAdvanced, setShowAdvanced, showPreview, setShowPreview, highlightedFields, setHighlightedFields,
+    handleFormChange, handleModalityChange, handleOptionChange, handleOptionFeedbackChange,
+    handleShortTipChange, handleCorrectChange, handleImageChange,
+    handleAutoFillCaseDetails, handleSuggestTitle, handleSuggestAlternatives, handleSuggestHint, handleSuggestExplanation, handleGenerateAutoTitle
+  } = handlers;
 
-      // Novidade aqui: procurar categoria pelo nome (tenta achar de forma bem tolerante)
-      const { data, error } = await supabase.functions.invoke("case-autofill", {
-        body
-      });
-
-      if (error) {
-        throw new Error(error.message || "Falha na chamada IA via Supabase.");
-      }
-
-      const suggestion = data?.suggestion || {};
-      
-      // Novidade aqui: procurar categoria pelo nome (tenta achar de forma bem tolerante)
-      let categoriaId = "";
-      if (suggestion.category) {
-        const normalizedAI = normalizeString(suggestion.category);
-        const match = categories.find(cat => normalizeString(cat.name) === normalizedAI)
-          // fallback para startsWith (caso a IA retorne "Neurologia - adulto")
-          || categories.find(cat => normalizeString(cat.name).startsWith(normalizedAI))
-          || categories.find(cat => normalizedAI.startsWith(normalizeString(cat.name)));
-        categoriaId = match ? String(match.id) : "";
-      }
-
-      setForm(prev => {
-        // Defensive helpers to ensure string fields para TS & consistência
-        const safeStr = (v: any) => (v === null || v === undefined ? "" : String(v));
-        const safeArr = (a: any[] | undefined, fallbackLen = 4) => {
-          if (Array.isArray(a)) return a.map(safeStr).concat(Array(fallbackLen).fill("")).slice(0, fallbackLen);
-          return Array(fallbackLen).fill("");
-        };
-
-        return {
-          ...prev,
-          category_id: categoriaId,
-          difficulty_level: suggestion.difficulty
-            ? safeStr(
-                difficulties.find(({ level }) => safeStr(level) === safeStr(suggestion.difficulty))?.level ?? ""
-              )
-            : "",
-          points: suggestion.points !== undefined ? safeStr(suggestion.points) : "10",
-          modality: safeStr(suggestion.modality ?? ""),
-          subtype: safeStr(suggestion.subtype ?? ""),
-          findings: safeStr(suggestion.findings ?? ""),
-          patient_clinical_info: safeStr(suggestion.patient_clinical_info ?? ""),
-          explanation: safeStr(suggestion.explanation ?? ""),
-          patient_age: safeStr(suggestion.patient_age ?? ""),
-          patient_gender: safeStr(suggestion.patient_gender ?? ""),
-          symptoms_duration: safeStr(suggestion.symptoms_duration ?? ""),
-          main_question: safeStr(suggestion.main_question ?? ""),
-          answer_options: safeArr(suggestion.answer_options, 4),
-          answer_feedbacks: safeArr(suggestion.answer_feedbacks, 4),
-          answer_short_tips: safeArr(suggestion.answer_short_tips, 4),
-          correct_answer_index: 0,
-        };
-      });
-      setHighlightedFields([
-        "category_id",
-        "difficulty_level",
-        "points",
-        "modality",
-        "subtype",
-        "findings",
-        "patient_clinical_info",
-        "explanation",
-        "patient_age",
-        "patient_gender",
-        "symptoms_duration",
-        "main_question",
-        "answer_options",
-        "answer_feedbacks",
-        "answer_short_tips",
-      ]);
-      setTimeout(() => setHighlightedFields([]), 2500);
-      toast({
-        title: "Campos preenchidos por IA!",
-        description: "Revise as sugestões e use os botões secundários para refinar cada campo.",
-      });
-    } catch (err: any) {
-      toast({
-        variant: "destructive",
-        title: "Erro ao preencher detalhes automaticamente",
-        description: err?.message || String(err),
-      });
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  function handleFormChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
-    const { name, value, type, checked } = e.target as any;
-    if (name === "difficulty_level") {
-      setForm((prev) => ({
-        ...prev,
-        [name]: value,
-        points: suggestPointsByDifficulty(value),
-      }));
-    } else if (type === "checkbox") {
-      setForm((prev) => ({ ...prev, [name]: checked }));
-    } else {
-      setForm((prev) => ({ ...prev, [name]: value }));
-    }
-  }
-
-  function handleModalityChange(val: { modality: string; subtype: string }) {
-    setForm((prev) => ({ ...prev, modality: val.modality, subtype: val.subtype }));
-  }
-
-  function handleOptionChange(idx: number, val: string) {
-    setForm((prev) => {
-      const opts = [...prev.answer_options];
-      opts[idx] = val;
-      return { ...prev, answer_options: opts };
-    });
-  }
-  function handleOptionFeedbackChange(idx: number, val: string) {
-    setForm((prev) => {
-      const arr = [...prev.answer_feedbacks];
-      arr[idx] = val;
-      return { ...prev, answer_feedbacks: arr };
-    });
-  }
-  function handleShortTipChange(idx: number, val: string) {
-    setForm((prev) => {
-      const arr = [...prev.answer_short_tips];
-      arr[idx] = val;
-      return { ...prev, answer_short_tips: arr };
-    });
-  }
-  function handleCorrectChange(idx: number) {
-    setForm((prev) => ({ ...prev, correct_answer_index: idx }));
-  }
-  function handleImageChange(url: string | null) {
-    setForm((prev) => ({ ...prev, image_url: url || "" }));
-  }
-
-  // Botão: Sugerir título (futuro: chamar IA ou API - atualmente só placeholder)
-  async function handleSuggestTitle() {
-    if (!form.findings && !form.patient_clinical_info) {
-      toast({ description: "Preencha Achados Radiológicos e/ou Resumo Clínico para sugerir um título." });
-      return;
-    }
-    // Placeholder: apenas exemplo de sugestão.
-    setForm(prev => ({ ...prev, title: "Título sugerido pelo sistema (placeholder)" }));
-    toast({ description: "Título sugerido automaticamente (personalize se desejar)." });
-  }
-
-  // Botão: Gerar alternativas (futuro: chamar IA ou API - atualmente só placeholder)
-  async function handleSuggestAlternatives() {
-    if (!form.findings && !form.patient_clinical_info) {
-      toast({ description: "Preencha Achados Radiológicos e Resumo Clínico para gerar alternativas." });
-      return;
-    }
-    // Placeholder: apenas exemplo de sugestão.
-    setForm(prev => ({
-      ...prev,
-      answer_options: [
-        "Diagnóstico A (sugerido pela IA)",
-        "Diagnóstico B (sugerido pela IA)",
-        "Diagnóstico C (sugerido pela IA)",
-        "Diagnóstico D (sugerido pela IA)"
-      ],
-      correct_answer_index: 0
-    }));
-    toast({ description: "Alternativas sugeridas automaticamente (personalize se desejar)." });
-  }
-
-  // --- NOVO: Gerar dica automaticamente (placeholder para IA futura) ---
-  async function handleSuggestHint() {
-    if (!form.findings && !form.patient_clinical_info) {
-      toast({ description: "Preencha Achados Radiológicos e/ou Resumo Clínico para sugerir uma dica." });
-      return;
-    }
-    setForm(prev => ({ ...prev, manual_hint: "Dica gerada automaticamente (placeholder IA)." }));
-    toast({ description: "Dica sugerida automaticamente (futuramente via IA, edite se desejar)." });
-  }
-
-  // NOVA FUNÇÃO: Gerar explicação automaticamente (placeholder IA/API)
-  async function handleSuggestExplanation() {
-    if (!form.findings && !form.main_question && !form.title) {
-      toast({ description: "Preencha Achados, Pergunta Principal ou Diagnóstico para sugerir uma explicação." });
-      return;
-    }
-    setForm(prev => ({
-      ...prev,
-      explanation: "Explicação e feedback gerados automaticamente (placeholder IA/API)."
-    }));
-    toast({ description: "Explicação sugerida automaticamente (futuramente via IA, edite se desejar)." });
-  }
-
-  // --- EMBARALHAMENTO DE ALTERNATIVAS ---
-  function getShuffledAlternatives() {
-    // Retorna novas alternativas embaralhadas (apenas cópia, sem alterar o form ainda)
-    const indices = [0, 1, 2, 3];
-    for (let i = indices.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [indices[i], indices[j]] = [indices[j], indices[i]];
-    }
-    return indices.map(idx => ({
-      answer: form.answer_options[idx],
-      idx,
-      isCorrect: idx === form.correct_answer_index
-    }));
-  }
-
-  // NOVO: Função para buscar o próximo número do caso para categoria/modalidade selecionados
-  async function handleGenerateAutoTitle() {
-    if (!form.category_id || !form.modality) {
-      toast({ description: "Selecione uma categoria e modalidade primeiro." });
-      return;
-    }
-    setSubmitting(true);
-    try {
-      // Busca a categoria (label)
-      const categoria = categories.find(c => String(c.id) === String(form.category_id))?.name || "";
-      // Conta quantos casos existem naquela categoria+modalidade para gerar o próximo número
-      const { data, error } = await supabase
-        .from("medical_cases")
-        .select("id", { count: "exact", head: true })
-        .eq("category_id", Number(form.category_id))
-        .eq("modality", form.modality);
-      // Corrigido: confere o total correto, usando head:true (length) ou se não, count
-      const nextNumber = (data?.length ?? 0) + 1;
-      // Gera o nome automático
-      const autoTitle = `${categoria} - ${form.modality} #${nextNumber}`;
-
-      setForm(prev => ({
-        ...prev,
-        title: autoTitle,
-        case_number: nextNumber // <--- agora atribui number!
-      }));
-      toast({ description: "Título gerado automaticamente!" });
-    } catch (err: any) {
-      toast({ variant: "destructive", description: "Falha ao gerar o título automático." });
-    } finally {
-      setSubmitting(false);
-    }
+  function renderTooltipTip(id: string, text: string) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="ml-1 text-cyan-700 cursor-help align-middle">
+            ⓘ
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="top">
+          <span className="text-xs">{text}</span>
+        </TooltipContent>
+      </Tooltip>
+    );
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -405,53 +143,22 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     setTimeout(() => setFeedback(""), 2300);
   }
 
-  // Substitute the old renderTooltipTip to use shadcn/ui Tooltip
-  function renderTooltipTip(id: string, text: string) {
-    // shadcn/ui Tooltip doesn't require id - just show tooltip on hover
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="ml-1 text-cyan-700 cursor-help align-middle">
-            ⓘ
-          </span>
-        </TooltipTrigger>
-        <TooltipContent side="top">
-          <span className="text-xs">{text}</span>
-        </TooltipContent>
-      </Tooltip>
-    );
-  }
-
   return (
-    <form className="bg-white rounded-lg shadow p-6 max-w-3xl mx-auto space-y-5" onSubmit={handleSubmit}>
+    <form className="w-full" onSubmit={handleSubmit}>
       <CasePreviewModal open={showPreview} onClose={() => setShowPreview(false)} form={form} categories={categories} difficulties={difficulties} />
       <h2 className="text-xl font-bold mb-2">Criar Novo Caso Médico</h2>
-      <div className="mb-3 flex gap-2">
-        <Button type="button" onClick={() => setShowPreview(true)} variant="outline">
-          Pré-visualizar Caso como Usuário
-        </Button>
-        <Button type="button" onClick={handleSuggestTitle} variant="secondary" className="mb-1">
-          Sugerir Diagnóstico
-        </Button>
-        <Button type="button" onClick={handleAutoFillCaseDetails} variant="secondary" className="mb-1">
-          Auto-preencher detalhes do caso
-        </Button>
-        {/* NOVO: Botão de gerar título automático */}
-        <Button type="button" onClick={handleGenerateAutoTitle} variant="secondary" className="mb-1">
-          Gerar título automático
-        </Button>
-      </div>
+      <CaseProfileFormActions
+        onPreview={() => setShowPreview(true)}
+        onSuggestTitle={handleSuggestTitle}
+        onAutoFill={handleAutoFillCaseDetails}
+        onGenerateAutoTitle={handleGenerateAutoTitle}
+        showPreview={showPreview}
+      />
       <CaseProfileBasicSection
-        form={form}
-        highlightedFields={highlightedFields}
-        categories={categories}
-        difficulties={difficulties}
-        handleFormChange={handleFormChange}
-        handleModalityChange={handleModalityChange}
-        handleAutoFillCaseDetails={handleAutoFillCaseDetails}
-        handleSuggestTitle={handleSuggestTitle}
-        handleImageChange={handleImageChange}
-        renderTooltipTip={renderTooltipTip}
+        form={form} highlightedFields={highlightedFields} categories={categories} difficulties={difficulties}
+        handleFormChange={handleFormChange} handleModalityChange={handleModalityChange}
+        handleAutoFillCaseDetails={handleAutoFillCaseDetails} handleSuggestTitle={handleSuggestTitle}
+        handleImageChange={handleImageChange} renderTooltipTip={renderTooltipTip}
       />
       <label className="font-semibold block mt-3">
         Pergunta Principal *
@@ -475,7 +182,6 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         handleSuggestExplanation={handleSuggestExplanation}
         renderTooltipTip={renderTooltipTip}
       />
-      {/* ================== SEÇÃO AVANÇADA ===================== */}
       <div className="mt-7">
         <button
           type="button"
@@ -488,11 +194,9 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
           <CaseProfileAdvancedConfig
             form={form}
             handleFormChange={handleFormChange}
-            handleSuggestHint={handleSuggestHint}
           />
         )}
       </div>
-      {/* ================== FIM SEÇÃO AVANÇADA ===================== */}
       <Button type="submit" disabled={submitting}>Salvar Caso</Button>
       {feedback && (
         <span className="ml-4 text-sm font-medium text-cyan-700">{feedback}</span>
