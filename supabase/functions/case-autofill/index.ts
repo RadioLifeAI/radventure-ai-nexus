@@ -19,6 +19,17 @@ Exemplo de explanation:
 "Achado X na radiografia, aliado ao sintoma Y, justifica o diagnóstico. O diferencial Z é excluído pela ausência de Q."
 `;
 
+// NOVA REGRA DE OURO PARA TODOS OS PROMPTS
+const DIAG_NOT_REVEALED = "REGRAS IMPORTANTES: NUNCA integre, cite, sugira ou deduza o diagnóstico principal nos campos do caso clínico, inclusive achados, resumo clínico, pergunta principal, alternativas etc. Os campos devem fornecer apenas contexto, sem nunca revelar, sugerir ou favorecer o diagnóstico correto. Redija como em um caso real, SEM ENTREGAR a resposta.";
+
+// --- NOVA REGRA PARA FEEDBACK DAS ALTERNATIVAS ---
+const FEEDBACK_INSTRUCTION = `
+Em cada campo de "answer_feedbacks", além do tom MOTIVACIONAL, faça também:
+- uma breve descrição do achado referente àquela alternativa
+- e uma CORRELAÇÃO desse achado com o achado radiológico principal do caso.
+Ou seja: não seja genérico – faça o estudante entender por que a alternativa está certa ou errada relacionando clinicamente e radiologicamente.
+`;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -27,10 +38,73 @@ serve(async (req) => {
   try {
     const { diagnosis, findings, modality, subtype, withAlternativesOnly, withHintOnly, systemPrompt, withFindingsOnly, withClinicalInfoOnly } = await req.json();
 
-    // NOVA REGRA DE OURO PARA TODOS OS PROMPTS
-    const DIAG_NOT_REVEALED = "REGRAS IMPORTANTES: NUNCA integre, cite, sugira ou deduza o diagnóstico principal nos campos do caso clínico, inclusive achados, resumo clínico, pergunta principal, alternativas etc. Os campos devem fornecer apenas contexto, sem nunca revelar, sugerir ou favorecer o diagnóstico correto. Redija como em um caso real, SEM ENTREGAR a resposta.";
+    // --- SÓ gerar alternativas (diagnósticos diferenciais + feedbacks) ---
+    if (withAlternativesOnly) {
+      const contextIntro = `Você é um especialista em radiologia e diagnóstico por imagem, focado em criar casos clínico-radiológicos objetivos para quizzes. Sugira os três principais diagnósticos diferenciais, além do diagnóstico principal fornecido, levando em conta obrigatoriamente os achados radiológicos (${findings ?? "não especificado"}) e os dados clínicos disponíveis. ${DIAG_NOT_REVEALED}
+${FEEDBACK_INSTRUCTION}
+Siga exatamente este formato JSON:
+{
+  "answer_options": ["Diagnóstico Principal", "Diagnóstico Diferencial 1", "Diagnóstico Diferencial 2", "Diagnóstico Diferencial 3"],
+  "answer_feedbacks": ["Feedback para o principal", "Feedback diferencial 1", "Feedback diferencial 2", "Feedback diferencial 3"],
+  "answer_short_tips": ["Dica sobre o principal", "Dica diferencial 1", "Dica diferencial 2", "Dica diferencial 3"]
+}
+Importante: Não explique na resposta geral, use só os campos acima. A alternativa A sempre será o diagnóstico principal.`;
+      const completionRes = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${openAIApiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: contextIntro },
+            { role: "user", content: `Diagnóstico principal: ${diagnosis ?? "-"}; Achados radiológicos: ${findings ?? "-"}; Modalidade: ${modality ?? "-"}; Subtipo: ${subtype ?? "-"}` }
+          ],
+          max_tokens: 300,
+          temperature: 0.7,
+        }),
+      });
 
-    // NOVO: Só gerar achados radiológicos
+      if (!completionRes.ok) {
+        const text = await completionRes.text();
+        return new Response(
+          JSON.stringify({ error: "Failed calling OpenAI (diffs)", details: text }),
+          { status: 500, headers: corsHeaders }
+        );
+      }
+
+      const data = await completionRes.json();
+      const raw = data.choices?.[0]?.message?.content ?? "{}";
+      try {
+        const match = raw.match(/\{[\s\S]*\}/);
+        const jsonString = match ? match[0] : raw;
+        const payload = JSON.parse(jsonString);
+
+        // Trimming feedbacks and explanations to 200 chars
+        if (Array.isArray(payload.answer_feedbacks)) {
+          payload.answer_feedbacks = payload.answer_feedbacks.map((f: string) =>
+            typeof f === "string" ? f.trim().slice(0, 200) : ""
+          );
+        }
+        if (Array.isArray(payload.answer_short_tips)) {
+          payload.answer_short_tips = payload.answer_short_tips.map((f: string) =>
+            typeof f === "string" ? f.trim().slice(0, 200) : ""
+          );
+        }
+
+        return new Response(JSON.stringify({ suggestion: payload }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      } catch (e) {
+        return new Response(
+          JSON.stringify({ error: "API did not return a valid JSON for diffs", raw }),
+          { status: 500, headers: corsHeaders }
+        );
+      }
+    }
+
+    // NOVA: Só gerar achados radiológicos
     if (withFindingsOnly) {
       const promptFindings = systemPrompt
         ? `${systemPrompt}\n${DIAG_NOT_REVEALED}`
@@ -144,71 +218,6 @@ serve(async (req) => {
       });
     }
 
-    if (withAlternativesOnly) {
-      // Solicita apenas alternativas usando o contexto diferencial
-      const contextIntro = `Você é um especialista em radiologia e diagnóstico por imagem, focado em criar casos clínico-radiológicos objetivos para quizzes. Sugira os três principais diagnósticos diferenciais, além do diagnóstico principal fornecido, levando em conta obrigatoriamente os achados radiológicos (${findings ?? "não especificado"}) e os dados clínicos disponíveis. ${DIAG_NOT_REVEALED}
-Siga exatamente este formato JSON:
-{
-  "answer_options": ["Diagnóstico Principal", "Diagnóstico Diferencial 1", "Diagnóstico Diferencial 2", "Diagnóstico Diferencial 3"],
-  "answer_feedbacks": ["Feedback para o principal", "Feedback diferencial 1", "Feedback diferencial 2", "Feedback diferencial 3"],
-  "answer_short_tips": ["Dica sobre o principal", "Dica diferencial 1", "Dica diferencial 2", "Dica diferencial 3"]
-}
-Importante: Não explique na resposta geral, use só os campos acima. A alternativa A sempre será o diagnóstico principal.`;
-      const completionRes = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${openAIApiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            { role: "system", content: contextIntro },
-            { role: "user", content: `Diagnóstico principal: ${diagnosis ?? "-"}; Achados radiológicos: ${findings ?? "-"}; Modalidade: ${modality ?? "-"}; Subtipo: ${subtype ?? "-"}` }
-          ],
-          max_tokens: 300,
-          temperature: 0.7,
-        }),
-      });
-
-      if (!completionRes.ok) {
-        const text = await completionRes.text();
-        return new Response(
-          JSON.stringify({ error: "Failed calling OpenAI (diffs)", details: text }),
-          { status: 500, headers: corsHeaders }
-        );
-      }
-
-      const data = await completionRes.json();
-      const raw = data.choices?.[0]?.message?.content ?? "{}";
-      try {
-        const match = raw.match(/\{[\s\S]*\}/);
-        const jsonString = match ? match[0] : raw;
-        const payload = JSON.parse(jsonString);
-
-        // Trimming feedbacks and explanations to 200 chars
-        if (Array.isArray(payload.answer_feedbacks)) {
-          payload.answer_feedbacks = payload.answer_feedbacks.map((f: string) =>
-            typeof f === "string" ? f.trim().slice(0, 200) : ""
-          );
-        }
-        if (Array.isArray(payload.answer_short_tips)) {
-          payload.answer_short_tips = payload.answer_short_tips.map((f: string) =>
-            typeof f === "string" ? f.trim().slice(0, 200) : ""
-          );
-        }
-
-        return new Response(JSON.stringify({ suggestion: payload }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        });
-      } catch (e) {
-        return new Response(
-          JSON.stringify({ error: "API did not return a valid JSON for diffs", raw }),
-          { status: 500, headers: corsHeaders }
-        );
-      }
-    }
-
     // --- CONTEXTO MAIS RESUMIDO E OBJETIVO PARA EXPLICAÇÃO E TODO O AUTO-PREENCHIMENTO ---
     let contextIntro = `Você é um especialista em radiologia e diagnóstico por imagem que elabora casos clínico-radiológicos objetivamente para quizzes de ensino, valorizando sempre integração entre achados de imagem e quadro clínico.`;
     contextIntro += ` Nas explicações e feedbacks, responda DE FORMA EXTREMAMENTE BREVE, SEM frases genéricas, usando sempre apenas a relação entre os achados radiológicos e sintomas ou contexto clínico.`;
@@ -225,6 +234,9 @@ Importante: Não explique na resposta geral, use só os campos acima. A alternat
     const finalSystemPrompt = `
 ${contextIntro}
 Com base no DIAGNÓSTICO de referência abaixo, preencha somente o JSON com todos os campos do caso clínico de maneira FUNDAMENTADA E COMPLETA, detalhando SEM ENROLAR e evitando resumir excessivamente, e sempre integrando achados, contexto e raciocínio.
+
+${FEEDBACK_INSTRUCTION}
+
 Estruture assim:
 {
   "category": "",
@@ -245,6 +257,7 @@ Estruture assim:
 }
 Importante:
 + Cada campo em "answer_feedbacks" deve ser em TOM MOTIVACIONAL E INCENTIVADOR, direcionado ao estudante, com até 100 caracteres CADA, um texto diferente para cada alternativa (veja exemplos). Use emoções, elogios ou dicas construtivas sempre.
++ O feedback de cada alternativa deve também descrever o achado principal daquela alternativa e correlacionar esse achado com o do caso.
 + O campo "explanation" pode ter até 2-3 frases, totalizando até 300 caracteres, SEM frases genéricas.
 + "findings" e "patient_clinical_info" até 300 caracteres, completando sempre que possível, mas sem verbosidade inútil.
 + Priorize a integração entre achados, sintomas e explicação do diagnóstico.
