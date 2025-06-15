@@ -65,7 +65,7 @@ async function gerarCasosFake() {
 }
 
 export default function CasosMedicos() {
-  const { cases, loading, refreshCases } = useMedicalCases();
+  const { cases, loading, refreshCases, deleteCase, editCase } = useMedicalCases();
 
   return (
     <div>
@@ -77,7 +77,7 @@ export default function CasosMedicos() {
       </div>
       <CaseProfileForm onCreated={refreshCases} />
       <h3 className="text-xl font-bold mb-3 mt-12">Casos Cadastrados</h3>
-      <MedicalCasesTable cases={cases} />
+      <MedicalCasesTable cases={cases} onDelete={deleteCase} onEdit={editCase} />
     </div>
   );
 }
