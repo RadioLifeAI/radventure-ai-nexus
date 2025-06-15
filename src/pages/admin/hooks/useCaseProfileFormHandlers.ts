@@ -77,7 +77,9 @@ export function useCaseProfileFormHandlers({ categories, difficulties }: { categ
     handleSuggestAlternatives,
     handleSuggestHint,
     handleSuggestExplanation,
-    handleGenerateAutoTitle
+    handleGenerateAutoTitle,
+    handleSuggestFindings,
+    handleSuggestClinicalInfo
   } = utils;
 
   return {
@@ -106,6 +108,9 @@ export function useCaseProfileFormHandlers({ categories, difficulties }: { categ
     handleSuggestAlternatives,
     handleSuggestHint,
     handleSuggestExplanation,
-    handleGenerateAutoTitle
+    handleGenerateAutoTitle,
+    handleSuggestFindings, // <-- Add this
+    handleSuggestClinicalInfo // <-- And this
   };
 }
+
