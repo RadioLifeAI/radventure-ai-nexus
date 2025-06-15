@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { MOCK_CASES } from "../utils/medicalCasesMock";
@@ -52,7 +51,9 @@ export function useMedicalCases({ categoryFilter = "", modalityFilter = "" } = {
       }
     }
 
-    maybeInsertMockCases().then(fetchCases);
+    //maybeInsertMockCases().then(fetchCases);
+
+    fetchCases();
 
     // ==== SUPABASE REALTIME ====
     const channel = supabase
