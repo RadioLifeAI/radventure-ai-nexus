@@ -73,15 +73,21 @@ export function useMedicalCases({ categoryFilter = "", modalityFilter = "" } = {
     await fetchCases();
   }
 
-  // Função para deletar caso
-  const deleteCase = useCallback(async (id: string) => {
-    const { error } = await supabase.from("medical_cases").delete().eq("id", id);
-    if (!error) {
-      toast({ title: "Caso excluído com sucesso." });
-    } else {
-      toast({ title: "Erro ao excluir caso!", variant: "destructive" });
-    }
-  }, []);
+  // Função para deletar caso (corrigida)
+  const deleteCase = useCallback(
+    async (id: string) => {
+      const { error, data } = await supabase.from("medical_cases").delete().eq("id", id);
+      console.log("[deleteCase] id:", id, "error:", error, "data:", data);
+      if (!error) {
+        toast({ title: "Caso excluído com sucesso." });
+        await refreshCases(); // Força atualização dos casos!
+      } else {
+        toast({ title: "Erro ao excluir caso!", variant: "destructive" });
+        console.error("[deleteCase] Erro ao excluir caso:", error);
+      }
+    },
+    [refreshCases]
+  );
 
   // Função para editar caso (por hora só imprime no console)
   const editCase = useCallback((id: string) => {
