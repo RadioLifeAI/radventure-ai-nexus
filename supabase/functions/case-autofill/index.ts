@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
@@ -7,18 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-// Regras e exemplos positivos/negativos para impedir diagnóstico revelado
-const RULES_TOP =
-`IMPORTANTE: NUNCA, em hipótese alguma, cite, sugira, reforce nem deduza o diagnóstico principal nos campos do caso clínico, especialmente nos achados radiológicos. NÃO USE termos como "sugere", "compatível com", "diagnóstico provável", "diagnóstico de", "achado sugestivo de", "característico de", "indica", "infere", "aponta para", "diagnóstico agudo". As descrições de achados devem ser puramente objetivas, baseadas SOMENTE nas observações visuais das imagens, SEM inferências diagnósticas ou conclusões clínicas.`;
-
-// Exemplos negativos/positivos
-const EXAMPLES_FINDINGS =
-`
-Exemplos:
-❌ ERRADO: "US abdominal revela aumento do apêndice com diâmetro superior a 6 mm, parede espessada e líquido peri-apendicular, sugerindo inflamação aguda."
-✔️ CORRETO: "Estrutura tubular não compressível, parede espessada, diâmetro de 8mm, presença de líquido peri-apendicular."
-`;
 
 const EXAMPLES = `
 Exemplo de answer_feedbacks:
@@ -32,8 +19,8 @@ Exemplo de explanation:
 "Achado X na radiografia, aliado ao sintoma Y, justifica o diagnóstico. O diferencial Z é excluído pela ausência de Q."
 `;
 
+// Regras reutilizáveis por todos os prompts
 const DIAG_NOT_REVEALED = "REGRAS IMPORTANTES: NUNCA integre, cite, sugira ou deduza o diagnóstico principal nos campos do caso clínico, inclusive achados, resumo clínico, pergunta principal, alternativas etc. Os campos devem fornecer apenas contexto, sem nunca revelar, sugerir ou favorecer o diagnóstico correto. Redija como em um caso real, SEM ENTREGAR a resposta.";
-
 const FEEDBACK_INSTRUCTION = `
 Em cada campo de "answer_feedbacks", além do tom MOTIVACIONAL, faça também:
 - uma breve descrição do achado referente àquela alternativa
@@ -64,42 +51,7 @@ async function getOpenAISuggestion({ messages, max_tokens = 300, temperature = 0
   return data.choices?.[0]?.message?.content ?? "{}";
 }
 
-// --- NOVO: filtro de termos proibidos ---
-const FORBIDDEN_TERMS = [
-  "sugere", "sugestiva", "compatível", "diagnóstico", "indica", "indicam", "indicando", "diagnóstico de", "aponta para", "provável", "característico de", "caracterizando", "típico de", "infere", "conclusão de", "denota", "sugestão de"
-];
-
-// Função para automatizar bloqueio de termos proibidos e avisos
-function sanitizeFindings(text) {
-  if (!text) return "";
-  let sanitized = text;
-  let found = false;
-  FORBIDDEN_TERMS.forEach(term => {
-    const re = new RegExp(term, "i");
-    if (re.test(sanitized)) found = true;
-    sanitized = sanitized.replace(re, "—REMOVIDO—");
-  });
-  if (found) {
-    sanitized += " [Removido termo diagnóstico proibido. Reveja o texto!]";
-  }
-  // Limitar tamanho
-  return sanitized.trim().slice(0, 300);
-}
-
-// Gera prompt otimizado para achados radiológicos
-function buildPromptFindings({ diagnosis, modality, subtype, systemPrompt }) {
-  // Regras e exemplos vêm sempre ANTES
-  const promptFindings =
-    `${RULES_TOP}\n${EXAMPLES_FINDINGS}\n${systemPrompt ? systemPrompt + "\n" : ""}${DIAG_NOT_REVEALED}\n\n` +
-    `Gere uma descrição de achados radiológicos concisa (máx. 200 caracteres), relatando apenas as observações visuais objetivas, SEM inferir diagnósticos, SEM frases ou termos proibidos.`;
-
-  return [
-    { role: "system", content: promptFindings },
-    { role: "user", content: `Diagnóstico: ${diagnosis ?? "-"}; Modalidade: ${modality ?? "-"}; Subtipo: ${subtype ?? "-"}` }
-  ];
-}
-
-// Outras funções seguem igual...
+// Gera prompt para alternativas
 function buildPromptAlternatives({ diagnosis, findings, modality, subtype }) {
   return [
     {
@@ -120,10 +72,20 @@ Importante: Não explique na resposta geral, use só os campos acima. A alternat
   ];
 }
 
+function buildPromptFindings({ diagnosis, modality, subtype, systemPrompt }) {
+  const promptFindings = systemPrompt
+    ? `${systemPrompt}\n${DIAG_NOT_REVEALED}`
+    : `Você é especialista em radiologia. Gere uma descrição de achados radiológicos concisa (máx. 200 caracteres), integrando diagnóstico e modalidade. ${DIAG_NOT_REVEALED}`;
+  return [
+    { role: "system", content: promptFindings },
+    { role: "user", content: `Diagnóstico: ${diagnosis ?? "-"}; Modalidade: ${modality ?? "-"}; Subtipo: ${subtype ?? "-"}` }
+  ];
+}
+
 function buildPromptClinicalInfo({ diagnosis, modality, subtype, systemPrompt }) {
   const promptClinical = systemPrompt
-    ? `${systemPrompt}\n${DIAG_NOT_REVEALED}\n${RULES_TOP}`
-    : `${RULES_TOP}\nVocê é especialista em radiologia. Gere um resumo clínico objetivo e sucinto (máximo 300 caracteres), SEM inferir diagnóstico.`;
+    ? `${systemPrompt}\n${DIAG_NOT_REVEALED}`
+    : `Você é especialista em radiologia. Gere um resumo clínico objetivo e sucinto (máximo 300 caracteres), integrando diagnóstico e modalidade. ${DIAG_NOT_REVEALED}`;
   return [
     { role: "system", content: promptClinical },
     { role: "user", content: `Diagnóstico: ${diagnosis ?? "-"}; Modalidade: ${modality ?? "-"}; Subtipo: ${subtype ?? "-"}` }
@@ -141,8 +103,8 @@ function buildPromptHint({ diagnosis, findings, modality, subtype, systemPrompt 
 }
 
 function buildPromptFullCase({ diagnosis, findings, modality, subtype }) {
-  let contextIntro = `${RULES_TOP}\nVocê é um especialista em radiologia e diagnóstico por imagem que elabora casos clínico-radiológicos objetivamente para quizzes de ensino, valorizando sempre integração entre achados de imagem e quadro clínico.` +
-    ` Nas explicações e feedbacks, responda DE FORMA EXTREMAMENTE BREVE, SEM frases genéricas, usando sempre apenas a relação entre os achados radiológicos e sintomas ou contexto clínico.`;
+  let contextIntro = `Você é um especialista em radiologia e diagnóstico por imagem que elabora casos clínico-radiológicos objetivamente para quizzes de ensino, valorizando sempre integração entre achados de imagem e quadro clínico.`;
+  contextIntro += ` Nas explicações e feedbacks, responda DE FORMA EXTREMAMENTE BREVE, SEM frases genéricas, usando sempre apenas a relação entre os achados radiológicos e sintomas ou contexto clínico.`;
   contextIntro += ` Nunca faça textos longos ou divagações.`;
   contextIntro += ` ${DIAG_NOT_REVEALED}`;
   if (findings || modality || subtype) {
@@ -205,7 +167,7 @@ function trimFieldsOnPayload(payload: any) {
     payload.explanation = payload.explanation.trim().slice(0, 300);
   }
   if (typeof payload.findings === "string") {
-    payload.findings = sanitizeFindings(payload.findings); // <- sanitização automática nova!
+    payload.findings = payload.findings.trim().slice(0, 300);
   }
   if (typeof payload.patient_clinical_info === "string") {
     payload.patient_clinical_info = payload.patient_clinical_info.trim().slice(0, 300);
@@ -273,8 +235,7 @@ serve(async (req) => {
       try {
         const messages = buildPromptFindings({ diagnosis, modality, subtype, systemPrompt });
         const raw = await getOpenAISuggestion({ messages, max_tokens: 100, temperature: 0.5 });
-        // Remover frases proibidas automaticamente
-        let findings = sanitizeFindings((raw ?? "").replace(/^Achados:?\s*/i, "").slice(0, 200));
+        let findings = (raw ?? "").replace(/^Achados:?\s*/i, "").slice(0, 200);
         return new Response(JSON.stringify({ suggestion: { findings } }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
@@ -323,6 +284,7 @@ serve(async (req) => {
     }
 
     // Preenchimento completo
+    // ... keep existing code (final prompt building and OpenAI request logic) the same, but use buildPromptFullCase and centralized handlers
     {
       try {
         const messages = buildPromptFullCase({ diagnosis, findings, modality, subtype });
@@ -354,4 +316,3 @@ serve(async (req) => {
 });
 
 // ... fim do arquivo
-
