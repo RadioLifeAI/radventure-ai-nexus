@@ -111,29 +111,25 @@ function buildPromptFullCase({ diagnosis, findings, modality, subtype }) {
   let contextIntro = `Você é um especialista em radiologia e diagnóstico por imagem que elabora casos clínico-radiológicos objetivamente para quizzes de ensino, valorizando sempre integração entre achados de imagem e quadro clínico.`;
   contextIntro += ` Nas explicações e feedbacks, responda DE FORMA EXTREMAMENTE BREVE, SEM frases genéricas, usando sempre apenas a relação entre os achados radiológicos e sintomas ou contexto clínico.`;
   contextIntro += ` Nunca faça textos longos ou divagações.`;
-  contextIntro += ` ${DIAG_NOT_REVEALED}`;
+  contextIntro += ` REGRAS IMPORTANTES: NUNCA integre, cite, sugira ou deduza o diagnóstico principal nos campos do caso clínico, inclusive achados, resumo clínico, pergunta principal, alternativas etc. Os campos devem fornecer apenas contexto, sem nunca revelar, sugerir ou favorecer o diagnóstico correto. Redija como em um caso real, SEM ENTREGAR a resposta.`;
   if (findings || modality || subtype) {
     contextIntro += ` Dados do caso: `;
     if (modality) contextIntro += `Modalidade: ${modality}. `;
     if (subtype) contextIntro += `Subtipo: ${subtype}. `;
     if (findings) contextIntro += `Achados radiológicos: ${findings}. `;
   }
-  // --- MODIFICAÇÃO PARA VARIAR IDADE, GÊNERO E DURAÇÃO
+
+  // Instrução detalhada para IA preencher TODOS os campos, inclusive os avançados:
   const finalSystemPrompt = `
 ${contextIntro}
-Com base no DIAGNÓSTICO de referência abaixo, preencha somente o JSON com todos os campos do caso clínico de maneira FUNDAMENTADA E COMPLETA, detalhando SEM ENROLAR e evitando resumir excessivamente, e sempre integrando achados, contexto e raciocínio.
+Com base no DIAGNÓSTICO de referência abaixo, preencha SOMENTE o JSON abaixo com TODOS os campos do caso clínico, fundamentando cada parâmetro. Não utilize valores padrão/fixos, atribua um valor lógico baseado no cenário clínico, inclusive para os campos avançados. 
 
-${FEEDBACK_INSTRUCTION}
+Siga EXATAMENTE esta estrutura retornando todos os campos no JSON de resposta (inclusive os avançados!):
 
-IMPORTANTE:
-+ GERE uma faixa adequada de valores para cada novo caso nos campos "patient_age", "patient_gender", "symptoms_duration" — NÃO repita os mesmos valores do exemplo e use variação conforme o diagnóstico e quadro!
-+ Exemplos válidos: "patient_age": "40" | "72" | "15", "patient_gender": "Masculino" ou "Feminino", "symptoms_duration": "2 semanas", "48 horas", "5 meses", etc.
-
-Estruture assim:
 {
   "category": "",
-  "difficulty": 2,
-  "points": 20,
+  "difficulty": "", // nível de 1 a 4 conforme a complexidade
+  "points": "",
   "modality": "",
   "subtype": "",
   "findings": "",
@@ -145,18 +141,25 @@ Estruture assim:
   "answer_options": ["", "", "", ""],
   "answer_feedbacks": ["", "", "", ""],
   "answer_short_tips": ["", "", "", ""],
-  "explanation": ""
+  "explanation": "",
+  "can_skip": true,
+  "max_elimination": "", // definir número lógico com base na quantidade de alternativas
+  "ai_hint_enabled": true,
+  "manual_hint": "", // sempre gerar uma dica integrada ao contexto do caso
+  "skip_penalty_points": "", // penalidade lógica pela dificuldade
+  "elimination_penalty_points": "", // idem acima
+  "ai_tutor_level": "" // NUNCA responder "desligado" por padrão - SEMPRE retorne "basico" ou "detalhado", conforme dificuldade. Só "desligado" se muito justificado (e explique para o admin)
 }
-Importante:
-+ Cada campo em "answer_feedbacks" deve ser em TOM MOTIVACIONAL E INCENTIVADOR, direcionado ao estudante, com até 100 caracteres CADA, um texto diferente para cada alternativa (veja exemplos). Use emoções, elogios ou dicas construtivas sempre.
-+ O feedback de cada alternativa deve também descrever o achado principal daquela alternativa e correlacionar esse achado com o do caso.
-+ O campo "explanation" pode ter até 2-3 frases, totalizando até 300 caracteres, SEM frases genéricas.
-+ "findings" e "patient_clinical_info" até 300 caracteres, completando sempre que possível, mas sem verbosidade inútil.
-+ Priorize a integração entre achados, sintomas e explicação do diagnóstico.
-+ Use os exemplos abaixo como guia:
-${EXAMPLES}
-+ NÃO repita textos prontos. NÃO use frases vagas como "Consulte o contexto". Cada alternativa recebe um feedback único e detalhado.
-+ O diagnóstico correto é sempre alternativa A.
+
+Regras:
+- Preencha TODOS os campos acima de forma fundamentada, realista e alinhada com a dificuldade do caso.
+- O campo "ai_tutor_level" deve vir SEMPRE ativado ("basico" para casos intermediários/difíceis, "detalhado" nos fáceis), nunca como "desligado" sem justificativa explícita.
+- Os parâmetros avançados ("can_skip", "max_elimination", penalidades, tips, manual_hint etc) devem ser selecionados conforme a lógica pedagógica do caso (por exemplo, penalidades mais leves em questões difíceis e mais severas em questões fáceis etc).
+- "category", "difficulty" e "modality" devem ser inferidos do diagnóstico e contexto — utilize a especialidade/subespecialidade e grau de complexidade do diagnóstico.
+- "manual_hint" deve ser uma dica curta, integrada e útil para o estudante, focando nos achados principais e quadro clínico.
+- Não repita textos prontos, cada feedback e tip deve ser único e motivacional.
+
+Exemplo de preenchimento está no modelo acima, mas NÃO copie valores fixos. Fundamente para o caso em questão!
 `;
 
   return [
