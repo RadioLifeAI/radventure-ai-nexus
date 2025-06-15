@@ -1,7 +1,6 @@
 
 import React from "react";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 
 type Props = {
   form: any;
@@ -9,36 +8,47 @@ type Props = {
   handleFormChange: any;
   handleSuggestExplanation: any;
   renderTooltipTip: any;
+  handleSuggestHint: any; // <-- Added this prop
 };
 
 export function CaseProfileExplanationSection({
-  form, highlightedFields, handleFormChange, handleSuggestExplanation, renderTooltipTip
+  form,
+  highlightedFields,
+  handleFormChange,
+  handleSuggestExplanation,
+  renderTooltipTip,
+  handleSuggestHint
 }: Props) {
   return (
-    <div>
-      <label className="font-semibold">
-        Explicação e Feedback Geral *
-        {renderTooltipTip("tip-explanation", "Forneça uma explicação detalhada para aprendizado do usuário quando ele concluir o caso.")}
+    <div className="mt-4">
+      <label className="font-semibold block">
+        Explicação e Feedback *
+        {renderTooltipTip("tip-explanation", "Texto exibido após responder. Dê feedback e raciocínio clínico!")}
       </label>
-      <div className="flex gap-2 items-end">
-        <Textarea
-          name="explanation"
-          value={form.explanation}
-          onChange={handleFormChange}
-          placeholder="Explique o caso e a resposta correta..."
-          required
-          className={highlightedFields.includes("explanation") ? "ring-2 ring-cyan-400" : ""}
-        />
-        <Button
+      <div className="flex gap-2 mb-2">
+        <button
           type="button"
           onClick={handleSuggestExplanation}
-          variant="secondary"
-          className="mb-1 mt-2"
-          title="Gerar explicação geral automaticamente via IA"
+          className="text-xs px-2 py-1 border bg-cyan-50 rounded hover:bg-cyan-100 font-semibold"
         >
-          Gerar Explicação
-        </Button>
+          Sugerir Explicação (IA)
+        </button>
+        <button
+          type="button"
+          onClick={handleSuggestHint}
+          className="text-xs px-2 py-1 border bg-cyan-50 rounded hover:bg-cyan-100 font-semibold"
+        >
+          Sugerir Dica (IA)
+        </button>
       </div>
+      <Textarea
+        name="explanation"
+        value={form.explanation}
+        onChange={handleFormChange}
+        placeholder="Escreva aqui explicações, feedbacks, orientações ao estudante..."
+        required
+        className={highlightedFields.includes("explanation") ? "ring-2 ring-cyan-400" : ""}
+      />
     </div>
   );
 }

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,13 +16,14 @@ type Props = {
   handleModalityChange: any;
   handleAutoFillCaseDetails: any;
   handleSuggestTitle: any;
+  handleSuggestHint: any; // <-- Added this prop
   handleImageChange: any;
   renderTooltipTip: any;
 };
 
 export function CaseProfileBasicSection({
   form, highlightedFields, categories, difficulties, handleFormChange,
-  handleModalityChange, handleAutoFillCaseDetails, handleSuggestTitle, handleImageChange, renderTooltipTip
+  handleModalityChange, handleAutoFillCaseDetails, handleSuggestTitle, handleSuggestHint, handleImageChange, renderTooltipTip
 }: Props) {
   return (
     <>
