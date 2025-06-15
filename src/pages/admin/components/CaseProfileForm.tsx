@@ -46,11 +46,29 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
   useEffect(() => {
     supabase.from("medical_specialties")
       .select("id, name")
-      .then(({ data }) => data && setCategories(data));
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Erro carregando especialidades:", error);
+        } else {
+          if (!data || data.length === 0) {
+            console.warn("Nenhuma categoria encontrada no banco de dados.");
+          }
+          setCategories(data || []);
+        }
+      });
     supabase.from("difficulties")
       .select("id, level, description")
       .order("level", { ascending: true })
-      .then(({ data }) => data && setDifficulties(data));
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Erro carregando dificuldades:", error);
+        } else {
+          if (!data || data.length === 0) {
+            console.warn("Nenhuma dificuldade encontrada no banco de dados.");
+          }
+          setDifficulties(data || []);
+        }
+      });
   }, []);
 
   function handleFormChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
@@ -318,4 +336,3 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     </form>
   );
 }
-
