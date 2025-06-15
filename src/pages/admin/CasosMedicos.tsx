@@ -48,7 +48,7 @@ async function gerarCasosFake() {
       skip_penalty_points: 0,
       elimination_penalty_points: 0,
       ai_tutor_level: "desligado",
-      patient_age: 25 + idx,
+      patient_age: String(25 + idx), // <-- Corrigido: agora é string!
       patient_gender: getRand(GENDERS),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
