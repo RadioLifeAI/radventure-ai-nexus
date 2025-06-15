@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { CaseProfileForm } from "./components/CaseProfileForm";
 import { MedicalCasesTable } from "./components/MedicalCasesTable";
@@ -31,9 +30,9 @@ async function gerarCasosFake() {
     modality: getRand(MODALIDADES),
     subtype: "",
     findings: "Achado típico evidente na imagem em " + getRand(MODALIDADES),
-    patient_age: String(27 + idx),
+    patient_age: 27 + idx,
     patient_gender: idx % 2 === 0 ? "Masculino" : "Feminino",
-    symptoms_duration: String(idx + 1) + " dias",
+    symptoms_duration: idx + 1 + " dias",
     patient_clinical_info: "Paciente com quadro clínico sugestivo para o diagnóstico.",
     main_question: getRand(QUES),
     answer_options: ["Alternativa A", "Alternativa B", "Alternativa C", "Alternativa D"],

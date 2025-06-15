@@ -123,6 +123,7 @@ export function useCaseProfileFormUtils({
           patient_age: safeStr(suggestion.patient_age ?? ""),
           patient_gender: safeStr(suggestion.patient_gender ?? ""),
           symptoms_duration: safeStr(suggestion.symptoms_duration ?? ""),
+          main_question: safeStr(suggestion.main_question ?? ""),
           answer_options: safeArr(suggestion.answer_options, 4),
           answer_short_tips: safeArr(suggestion.answer_short_tips, 4),
           correct_answer_index: 0,
