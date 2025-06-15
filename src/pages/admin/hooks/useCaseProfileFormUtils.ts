@@ -80,49 +80,13 @@ export function useCaseProfileFormUtils({
         categoriaId = match ? String(match.id) : "";
       }
 
-      // --- NOVA LÓGICA para garantir os selects corretos de modalidade/subtipo ---
-      const ALL_MODALITIES = [
-        "Tomografia Computadorizada (TC)",
-        "Ressonância Magnética (RM)",
-        "Ultrassonografia (US)",
-        "Radiografia (RX)",
-        "Mamografia (MMG)",
-        "Medicina Nuclear (MN)",
-        "Radiologia Intervencionista (RI)",
-        "Fluoroscopia",
-        "Densitometria Óssea (DMO)"
-      ];
-
-      const ALL_SUBTYPES = [
-        // Tomografia Computadorizada (TC)
-        "Angio-TC de Crânio", "Angio-TC de Pescoço e Carótidas", "Angio-TC de Tórax", "Angio-TC de Aorta", "Angio-TC de Artérias Coronárias", "Angio-TC de Vasos Abdominais", "Angio-TC de Membros Inferiores/Superiores", "TC Crânio", "TC Seios da Face", "TC Pescoço", "TC Tórax", "TC Abdome Total", "TC Pelve", "Uro-TC", "Entero-TC", "TC Coluna", "TC Musculoesquelético",
-        // Ressonância Magnética (RM)
-        "RM Encéfalo", "Angio-RM de Crânio", "RM Sela Túrcica / Hipófise", "RM Órbitas", "RM Pescoço", "RM Tórax", "RM Mama", "RM Cardíaca", "RM Abdome Superior", "Colangio-RM", "Entero-RM", "RM Pelve", "RM Coluna", "RM ATM", "RM Musculoesquelético", "Artro-RM",
-        // Ultrassonografia (US)
-        "US Abdominal Total", "US Abdome Superior", "US Rins e Vias Urinárias", "US Pélvico (Suprapúbico)", "US Pélvico Transvaginal", "US Próstata", "US Obstétrico", "US Mama e Axilas", "US Tireoide e Cervical", "US Glândulas Salivares", "US Musculoesquelético", "US Partes Moles", "US Doppler Vascular", "Ecocardiograma Transtorácico",
-        // Radiografia (RX)
-        "RX Tórax", "RX Abdome Simples e Agudo", "RX Coluna", "RX Crânio e Face", "RX de Extremidades", "RX Pelve e Bacia", "RX Escanometria", "RX Panorâmica de Mandíbula",
-        // Mamografia (MMG)
-        "Mamografia Digital Bilateral", "Mamografia Diagnóstica", "Tomossíntese Mamária", "Mamografia com Contraste",
-        // Medicina Nuclear (MN)
-        "Cintilografia Óssea", "Cintilografia Miocárdica", "Cintilografia Renal", "Cintilografia de Tireoide", "PET-CT Oncológico", "PET-CT com PSMA", "PET-CT com FDG",
-        // Radiologia Intervencionista (RI)
-        "Angioplastia e Stent", "Biópsia Guiada", "Drenagem de Abscessos", "Quimioembolização Hepática", "Ablação por Radiofrequência", "Vertebroplastia",
-        // Fluoroscopia
-        "Estudo Contrastado do Esôfago, Estômago e Duodeno (EED)", "Trânsito Intestinal", "Enema Opaco", "Histerossalpingografia (HSG)", "Uretrocistografia Miccional",
-        // Densitometria Óssea (DMO)
-        "Densitometria de Coluna e Fêmur", "Densitometria de Corpo Inteiro"
-      ];
-
-      // Se a IA sugeriu uma modalidade válida, use-a; senão mantenha a anterior
-      let newModality = form.modality;
-      if (suggestion.modality && ALL_MODALITIES.includes(suggestion.modality)) {
-        newModality = suggestion.modality;
-      }
-      let newSubtype = form.subtype;
-      if (suggestion.subtype && ALL_SUBTYPES.includes(suggestion.subtype)) {
-        newSubtype = suggestion.subtype;
-      }
+      // --- NOVA LÓGICA: embaralhar alternativas no autofill ---
+      // Prepara alternativas já embaralhadas para simular experiência do estudante no admin
+      const options = Array.isArray(suggestion.answer_options) ? suggestion.answer_options.slice(0, 4) : ["", "", "", ""];
+      const feedbacks = Array.isArray(suggestion.answer_feedbacks) ? suggestion.answer_feedbacks.slice(0, 4) : ["", "", "", ""];
+      const tips = Array.isArray(suggestion.answer_short_tips) ? suggestion.answer_short_tips.slice(0, 4) : ["", "", "", ""];
+      const { options: shuffledOptions, feedbacks: shuffledFeedbacks, tips: shuffledTips, correctIdx } =
+        shuffleAlternativesWithFeedback(options, feedbacks, tips, 0);
 
       // ATENÇÃO: para "findings", SEMPRE usar a sugestão da IA, mesmo que já exista preenchido!
       setForm((prev: any) => {
@@ -141,21 +105,20 @@ export function useCaseProfileFormUtils({
               )
             : "",
           points: suggestion.points !== undefined ? safeStr(suggestion.points) : "10",
-          modality: newModality,
-          subtype: newSubtype,
+          modality: suggestion.modality || prev.modality,
+          subtype: suggestion.subtype || prev.subtype,
           findings: safeStr(suggestion.findings ?? ""), // SEMPRE usa sugestão IA
           patient_clinical_info: safeStr(suggestion.patient_clinical_info ?? ""),
           explanation: suggestion.explanation ?? "",
-          answer_feedbacks: Array.isArray(suggestion.answer_feedbacks)
-            ? suggestion.answer_feedbacks.map((f: string) => f ?? "").slice(0, 4)
-            : ["", "", "", ""],
-          patient_age: safeStr(suggestion.patient_age ?? ""), // CORRIGIDO: sempre sobrescreve
-          patient_gender: safeStr(suggestion.patient_gender ?? ""), // CORRIGIDO: sempre sobrescreve
-          symptoms_duration: safeStr(suggestion.symptoms_duration ?? ""), // CORRIGIDO: sempre sobrescreve
+          // 🟢 Atualização: alternativas embaralhadas!
+          answer_options: shuffledOptions,
+          answer_feedbacks: shuffledFeedbacks,
+          answer_short_tips: shuffledTips,
+          correct_answer_index: correctIdx,
+          patient_age: safeStr(suggestion.patient_age ?? ""),
+          patient_gender: safeStr(suggestion.patient_gender ?? ""),
+          symptoms_duration: safeStr(suggestion.symptoms_duration ?? ""),
           main_question: safeStr(suggestion.main_question ?? ""),
-          answer_options: safeArr(suggestion.answer_options, 4),
-          answer_short_tips: safeArr(suggestion.answer_short_tips, 4),
-          correct_answer_index: 0,
         };
       });
       setHighlightedFields([
@@ -178,7 +141,7 @@ export function useCaseProfileFormUtils({
       setTimeout(() => setHighlightedFields([]), 2500);
       toast({
         title: "Campos preenchidos por IA!",
-        description: "Revise as sugestões — principalmente a explicação curta, focada na integração entre achados radiológicos e o contexto clínico.",
+        description: "Revise as sugestões — inclusive alternativas que agora já vêm embaralhadas, simulando a visualização do usuário.",
       });
     } catch (err: any) {
       toast({
