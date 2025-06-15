@@ -7,6 +7,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const EXAMPLES = `
+Exemplo de answer_feedbacks:
+[
+  "Excelente! Você correlacionou o achado radiológico ao quadro clínico.",
+  "Boa tentativa! Analise novamente os sintomas principais apresentados.",
+  "Quase lá! Compare detidamente a alteração radiológica.",
+  "Siga estudando! Veja o contexto clínico para descartar esta opção."
+]
+Exemplo de explanation:
+"Achado X na radiografia, aliado ao sintoma Y, justifica o diagnóstico. O diferencial Z é excluído pela ausência de Q."
+`;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -207,7 +219,8 @@ Importante: Não explique na resposta geral, use só os campos acima. A alternat
     // Corrigindo o erro: trocando o nome da constante abaixo para finalSystemPrompt:
     const finalSystemPrompt = `
 ${contextIntro}
-Com base no DIAGNÓSTICO de referência abaixo, preencha somente o JSON com todos os campos do caso clínico, em formato o mais enxuto possível e FOQUE só na integração dos achados com o quadro clínico, especialmente em "explanation" e "feedbacks". Estruture assim:
+Com base no DIAGNÓSTICO de referência abaixo, preencha somente o JSON com todos os campos do caso clínico de maneira FUNDAMENTADA E COMPLETA, detalhando SEM ENROLAR e evitando resumir excessivamente, e sempre integrando achados, contexto e raciocínio.
+Estruture assim:
 {
   "category": "",
   "difficulty": 2,
@@ -226,10 +239,14 @@ Com base no DIAGNÓSTICO de referência abaixo, preencha somente o JSON com todo
   "explanation": ""
 }
 Importante:
-+ Cada campo em "answer_feedbacks" deve ser um feedback em TOM INCENTIVADOR e MOTIVACIONAL, dirigido ao usuário que respondeu, com no MÁXIMO 100 caracteres cada, NUNCA repita textos prontos.
-+ Só relacione achados radiológicos e contexto clínico, nunca repita textos intro ou genéricos.
-+ O campo "explanation" deve ter apenas 1-2 frases.
-+ O diagnóstico correto deve ser a alternativa A, e as demais, diferenciais relevantes.
++ Cada campo em "answer_feedbacks" deve ser em TOM MOTIVACIONAL E INCENTIVADOR, direcionado ao estudante, com até 100 caracteres CADA, um texto diferente para cada alternativa (veja exemplos). Use emoções, elogios ou dicas construtivas sempre.
++ O campo "explanation" pode ter até 2-3 frases, totalizando até 300 caracteres, SEM frases genéricas.
++ "findings" e "patient_clinical_info" até 300 caracteres, completando sempre que possível, mas sem verbosidade inútil.
++ Priorize a integração entre achados, sintomas e explicação do diagnóstico.
++ Use os exemplos abaixo como guia:
+${EXAMPLES}
++ NÃO repita textos prontos. NÃO use frases vagas como "Consulte o contexto". Cada alternativa recebe um feedback único e detalhado.
++ O diagnóstico correto é sempre alternativa A.
 `;
 
     const completionRes = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -265,16 +282,28 @@ Importante:
       const jsonString = match ? match[0] : raw;
       const payload = JSON.parse(jsonString);
 
-      // --- LIMIT explanation and feedbacks ---
+      // -- Aumentar limites dos campos
       if (typeof payload.explanation === "string") {
-        payload.explanation = payload.explanation.trim().slice(0, 200);
+        payload.explanation = payload.explanation.trim().slice(0, 300);
+      }
+      if (typeof payload.findings === "string") {
+        payload.findings = payload.findings.trim().slice(0, 300);
+      }
+      if (typeof payload.patient_clinical_info === "string") {
+        payload.patient_clinical_info = payload.patient_clinical_info.trim().slice(0, 300);
       }
       if (Array.isArray(payload.answer_feedbacks)) {
-        // Garanta que cada feedback está motivacional (AI tenta) e até 100 chars
-        payload.answer_feedbacks = payload.answer_feedbacks.map((f: string) =>
-          typeof f === "string"
+        // Garantir feedbacks motivacionais únicos e até 100 chars
+        const motivExemplos = [
+          "Ótima escolha! Você fez uma excelente correlação clínica-imagem.",
+          "Quase! Reveja os sintomas principais e compare com os achados.",
+          "Continue tentando! Analise com atenção as alterações radiológicas.",
+          "Não desanime! Cada erro é um passo para o aprendizado."
+        ];
+        payload.answer_feedbacks = payload.answer_feedbacks.map((f: string, i: number) =>
+          typeof f === "string" && f.trim()
             ? f.trim().slice(0, 100)
-            : ""
+            : motivExemplos[i % motivExemplos.length]
         );
       }
       if (Array.isArray(payload.answer_short_tips)) {
@@ -282,6 +311,11 @@ Importante:
           typeof f === "string" ? f.trim().slice(0, 200) : ""
         );
       }
+
+      // LOG: Registrar o prompt enviado e resposta da IA para facilitar debug
+      console.log("PROMPT:\n", finalSystemPrompt);
+      console.log("USER CONTENT:", `Diagnóstico de referência: ${diagnosis}`);
+      console.log("RAW RESPONSE:", raw);
 
       return new Response(JSON.stringify({ suggestion: payload }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
