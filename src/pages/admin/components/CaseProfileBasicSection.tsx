@@ -105,7 +105,7 @@ export function CaseProfileBasicSection({
             value={
               form.title
               ? form.title
-              : (autoTitlePreview || "(Será definido automaticamente após salvar: Caso [ABREV] [NUM])")
+              : (autoTitlePreview || "(Será definido automaticamente após salvar: Caso [ABREV] [NUM ALEATÓRIO])")
             }
             readOnly
             tabIndex={-1}

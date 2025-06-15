@@ -36,7 +36,6 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
   const [difficulties, setDifficulties] = useState<{id: number, level: number, description: string | null}[]>([]);
   const [categoryForTitle, setCategoryForTitle] = useState<string>("");
   const [modalityForTitle, setModalityForTitle] = useState<string>("");
-  const [caseNumberPreview, setCaseNumberPreview] = useState<number | null>(null);
 
   useEffect(() => {
     supabase.from("medical_specialties")
@@ -71,24 +70,6 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     handleRandomizeOptions
   } = handlers;
 
-  // NOVO: usar preview e função de gerar título
-  useEffect(() => {
-    const categoria = categories.find(c => String(c.id) === String(form.category_id));
-    setCategoryForTitle(categoria ? categoria.name : "");
-    setModalityForTitle(form.modality);
-    if (form.category_id && form.modality) {
-      supabase.from("medical_cases")
-        .select("id", { count: "exact", head: true })
-        .eq("category_id", Number(form.category_id))
-        .eq("modality", form.modality)
-        .then(({ data }) => {
-            setCaseNumberPreview(((data?.length ?? 0) + 1));
-        });
-    } else {
-      setCaseNumberPreview(null);
-    }
-  }, [form.category_id, form.modality, categories, form.modality]);
-
   function abbreviateCategory(catName: string) {
     if (!catName) return "";
     if (catName.toLowerCase().includes("neuro")) return "Neuro";
@@ -96,11 +77,52 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     if (catName.toLowerCase().includes("derma")) return "Derma";
     return catName.replace(/[^a-zA-Z0-9]/g, "").substring(0,5);
   }
-  // Manter preview calculado para exibir
+
+  // Geração do número aleatório de 6 dígitos para título
+  function generateRandomCaseNumber() {
+    return Math.floor(100000 + Math.random() * 900000);
+  }
+
+  // NOVO: Título preview gerado com aleatório
   const autoTitlePreview =
-    categoryForTitle && caseNumberPreview
-      ? `Caso ${abbreviateCategory(categoryForTitle)} ${caseNumberPreview}`
-      : "(Será definido automaticamente após salvar: Caso [ABREV] [NUM])";
+    categoryForTitle && form.modality
+      ? `Caso ${abbreviateCategory(categoryForTitle)} ${form.case_number || generateRandomCaseNumber()}`
+      : "(Será definido automaticamente após salvar: Caso [ABREV] [NUM ALEATÓRIO])";
+
+  // Gera título automático ao clicar botão ou na troca de categoria/mod
+  async function handleGenerateCaseTitleAuto() {
+    if (!form.category_id || !form.modality) {
+      toast({ description: "Selecione uma categoria e modalidade primeiro." });
+      return;
+    }
+    const categoria = categories.find((c: any) => String(c.id) === String(form.category_id))?.name || "";
+    const abrev = abbreviateCategory(categoria);
+    const rndNumber = generateRandomCaseNumber();
+
+    setForm((prev: any) => ({
+      ...prev,
+      title: `Caso ${abrev} ${rndNumber}`,
+      case_number: rndNumber, // Armazena para preview e envio
+    }));
+    toast({ description: "Título gerado automaticamente!" });
+  }
+
+  // Garante geração automática do número e título ao selecionar categoria/mod (sem sobrescrever input manual)
+  useEffect(() => {
+    if (form.category_id && form.modality) {
+      if (!form.case_number) { // Gera apenas se não existe ainda
+        const categoria = categories.find(c => String(c.id) === String(form.category_id));
+        const abrev = abbreviateCategory(categoria?.name || "");
+        const randomCaseNum = generateRandomCaseNumber();
+        setForm((prev: any) => ({
+          ...prev,
+          case_number: randomCaseNum,
+          title: `Caso ${abrev} ${randomCaseNum}`
+        }));
+      }
+    }
+    // eslint-disable-next-line
+  }, [form.category_id, form.modality]);
 
   // Hooks de undo para campos
   const undoFindings = useFieldUndo(handlers.form.findings);
@@ -140,15 +162,10 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     e.preventDefault();
     setSubmitting(true);
     try {
-      // Conta novamente antes do insert para evitar duplicatas
+      // Garante que sempre vai enviar um número aleatório de 6 dígitos se não existe
       let caseNumber = form.case_number;
       if ((!caseNumber || isNaN(Number(caseNumber))) && form.category_id && form.modality) {
-        const { data } = await supabase
-          .from("medical_cases")
-          .select("id", { count: "exact", head: true })
-          .eq("category_id", Number(form.category_id))
-          .eq("modality", form.modality);
-        caseNumber = ((data?.length ?? 0) + 1);
+        caseNumber = generateRandomCaseNumber();
       }
       const selectedCategory = categories.find(c => String(c.id) === String(form.category_id));
       const diagnosis_internal = form.diagnosis_internal ?? "";
@@ -161,7 +178,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         points: form.points ? Number(form.points) : null,
         modality: form.modality || null,
         subtype: form.subtype || null,
-        // title será ignorado pelo trigger (deve vir null)
+        // title será ignorado pelo trigger (deve vir null para garantir título novo)
         title: null,
         findings: form.findings,
         patient_age: form.patient_age,
@@ -194,7 +211,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
       if (!error) {
         // Após insert, pega title auto-gerado
         const autoTitle = saved?.[0]?.title ?? "";
-        setForm((prev: any) => ({ ...prev, title: autoTitle }));
+        setForm((prev: any) => ({ ...prev, title: autoTitle, case_number: saved?.[0]?.case_number }));
         setFeedback("Caso cadastrado com sucesso!");
         toast({ title: `Caso criado! Título: ${autoTitle}` });
         resetForm();
@@ -219,7 +236,6 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         onPreview={() => setShowPreview(true)}
         onSuggestTitle={onSuggestDiagnosis}
         onAutoFill={handleAutoFillCaseDetails}
-        // REMOVER este botão daqui (Gerar título automático será ao lado do campo)
         onGenerateAutoTitle={null}
         showPreview={showPreview}
       />
@@ -243,7 +259,6 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         setForm={setForm}
         autoTitlePreview={autoTitlePreview}
         onGenerateAutoTitle={handleGenerateCaseTitleAuto}
-        // passa preview e handler para o campo de título
       />
       <label className="font-semibold block mt-3">
         Pergunta Principal *
