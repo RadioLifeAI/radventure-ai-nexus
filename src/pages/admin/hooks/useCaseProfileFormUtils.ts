@@ -1,4 +1,15 @@
-export function useCaseProfileFormUtils({ categories, difficulties, toast, setForm, setHighlightedFields }: any) {
+
+import { supabase } from "@/integrations/supabase/client";
+
+export function useCaseProfileFormUtils({
+  form,
+  setForm,
+  setSubmitting,
+  categories,
+  difficulties,
+  toast,
+  setHighlightedFields,
+}: any) {
   function normalizeString(str: string = "") {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
   }
@@ -18,13 +29,11 @@ export function useCaseProfileFormUtils({ categories, difficulties, toast, setFo
     }
     setSubmitting(true);
     try {
-      // Novo: prepara corpo conforme preenchimento dos campos
       const body: any = { diagnosis: form.title };
       if (form.findings?.trim()) body.findings = form.findings.trim();
       if (form.modality?.trim()) body.modality = form.modality.trim();
       if (form.subtype?.trim()) body.subtype = form.subtype.trim();
 
-      // Novidade aqui: procurar categoria pelo nome (tenta achar de forma bem tolerante)
       const { data, error } = await supabase.functions.invoke("case-autofill", {
         body
       });
@@ -34,20 +43,16 @@ export function useCaseProfileFormUtils({ categories, difficulties, toast, setFo
       }
 
       const suggestion = data?.suggestion || {};
-      
-      // Novidade aqui: procurar categoria pelo nome (tenta achar de forma bem tolerante)
       let categoriaId = "";
       if (suggestion.category) {
         const normalizedAI = normalizeString(suggestion.category);
-        const match = categories.find(cat => normalizeString(cat.name) === normalizedAI)
-          // fallback para startsWith (caso a IA retorne "Neurologia - adulto")
-          || categories.find(cat => normalizeString(cat.name).startsWith(normalizedAI))
-          || categories.find(cat => normalizedAI.startsWith(normalizeString(cat.name)));
+        const match = categories.find((cat: any) => normalizeString(cat.name) === normalizedAI)
+          || categories.find((cat: any) => normalizeString(cat.name).startsWith(normalizedAI))
+          || categories.find((cat: any) => normalizedAI.startsWith(normalizeString(cat.name)));
         categoriaId = match ? String(match.id) : "";
       }
 
-      setForm(prev => {
-        // Defensive helpers to ensure string fields para TS & consistência
+      setForm((prev: any) => {
         const safeStr = (v: any) => (v === null || v === undefined ? "" : String(v));
         const safeArr = (a: any[] | undefined, fallbackLen = 4) => {
           if (Array.isArray(a)) return a.map(safeStr).concat(Array(fallbackLen).fill("")).slice(0, fallbackLen);
@@ -59,7 +64,7 @@ export function useCaseProfileFormUtils({ categories, difficulties, toast, setFo
           category_id: categoriaId,
           difficulty_level: suggestion.difficulty
             ? safeStr(
-                difficulties.find(({ level }) => safeStr(level) === safeStr(suggestion.difficulty))?.level ?? ""
+                difficulties.find(({ level }: any) => safeStr(level) === safeStr(suggestion.difficulty))?.level ?? ""
               )
             : "",
           points: suggestion.points !== undefined ? safeStr(suggestion.points) : "10",
@@ -115,8 +120,7 @@ export function useCaseProfileFormUtils({ categories, difficulties, toast, setFo
       toast({ description: "Preencha Achados Radiológicos e/ou Resumo Clínico para sugerir um título." });
       return;
     }
-    // Placeholder: apenas exemplo de sugestão.
-    setForm(prev => ({ ...prev, title: "Título sugerido pelo sistema (placeholder)" }));
+    setForm((prev: any) => ({ ...prev, title: "Título sugerido pelo sistema (placeholder)" }));
     toast({ description: "Título sugerido automaticamente (personalize se desejar)." });
   }
   async function handleSuggestAlternatives() {
@@ -124,8 +128,7 @@ export function useCaseProfileFormUtils({ categories, difficulties, toast, setFo
       toast({ description: "Preencha Achados Radiológicos e Resumo Clínico para gerar alternativas." });
       return;
     }
-    // Placeholder: apenas exemplo de sugestão.
-    setForm(prev => ({
+    setForm((prev: any) => ({
       ...prev,
       answer_options: [
         "Diagnóstico A (sugerido pela IA)",
@@ -142,7 +145,7 @@ export function useCaseProfileFormUtils({ categories, difficulties, toast, setFo
       toast({ description: "Preencha Achados Radiológicos e/ou Resumo Clínico para sugerir uma dica." });
       return;
     }
-    setForm(prev => ({ ...prev, manual_hint: "Dica gerada automaticamente (placeholder IA)." }));
+    setForm((prev: any) => ({ ...prev, manual_hint: "Dica gerada automaticamente (placeholder IA)." }));
     toast({ description: "Dica sugerida automaticamente (futuramente via IA, edite se desejar)." });
   }
   async function handleSuggestExplanation() {
@@ -150,7 +153,7 @@ export function useCaseProfileFormUtils({ categories, difficulties, toast, setFo
       toast({ description: "Preencha Achados, Pergunta Principal ou Diagnóstico para sugerir uma explicação." });
       return;
     }
-    setForm(prev => ({
+    setForm((prev: any) => ({
       ...prev,
       explanation: "Explicação e feedback gerados automaticamente (placeholder IA/API)."
     }));
@@ -163,23 +166,19 @@ export function useCaseProfileFormUtils({ categories, difficulties, toast, setFo
     }
     setSubmitting(true);
     try {
-      // Busca a categoria (label)
-      const categoria = categories.find(c => String(c.id) === String(form.category_id))?.name || "";
-      // Conta quantos casos existem naquela categoria+modalidade para gerar o próximo número
-      const { data, error } = await supabase
+      const categoria = categories.find((c: any) => String(c.id) === String(form.category_id))?.name || "";
+      const { data } = await supabase
         .from("medical_cases")
         .select("id", { count: "exact", head: true })
         .eq("category_id", Number(form.category_id))
         .eq("modality", form.modality);
-      // Corrigido: confere o total correto, usando head:true (length) ou se não, count
       const nextNumber = (data?.length ?? 0) + 1;
-      // Gera o nome automático
       const autoTitle = `${categoria} - ${form.modality} #${nextNumber}`;
 
-      setForm(prev => ({
+      setForm((prev: any) => ({
         ...prev,
         title: autoTitle,
-        case_number: nextNumber // <--- agora atribui number!
+        case_number: nextNumber
       }));
       toast({ description: "Título gerado automaticamente!" });
     } catch (err: any) {
@@ -188,5 +187,14 @@ export function useCaseProfileFormUtils({ categories, difficulties, toast, setFo
       setSubmitting(false);
     }
   }
-  return { normalizeString, suggestPointsByDifficulty, handleAutoFillCaseDetails, handleSuggestTitle, handleSuggestAlternatives, handleSuggestHint, handleSuggestExplanation, handleGenerateAutoTitle };
+  return {
+    normalizeString,
+    suggestPointsByDifficulty,
+    handleAutoFillCaseDetails,
+    handleSuggestTitle,
+    handleSuggestAlternatives,
+    handleSuggestHint,
+    handleSuggestExplanation,
+    handleGenerateAutoTitle
+  };
 }

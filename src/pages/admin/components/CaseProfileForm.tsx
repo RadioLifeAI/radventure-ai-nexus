@@ -155,10 +155,17 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         showPreview={showPreview}
       />
       <CaseProfileBasicSection
-        form={form} highlightedFields={highlightedFields} categories={categories} difficulties={difficulties}
-        handleFormChange={handleFormChange} handleModalityChange={handleModalityChange}
-        handleAutoFillCaseDetails={handleAutoFillCaseDetails} handleSuggestTitle={handleSuggestTitle}
-        handleImageChange={handleImageChange} renderTooltipTip={renderTooltipTip}
+        form={form}
+        highlightedFields={highlightedFields}
+        categories={categories}
+        difficulties={difficulties}
+        handleFormChange={handleFormChange}
+        handleModalityChange={handleModalityChange}
+        handleAutoFillCaseDetails={handleAutoFillCaseDetails}
+        handleSuggestTitle={handleSuggestTitle}
+        handleImageChange={handleImageChange}
+        renderTooltipTip={renderTooltipTip}
+        handleSuggestHint={handleSuggestHint}
       />
       <label className="font-semibold block mt-3">
         Pergunta Principal *
@@ -181,12 +188,13 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         handleFormChange={handleFormChange}
         handleSuggestExplanation={handleSuggestExplanation}
         renderTooltipTip={renderTooltipTip}
+        handleSuggestHint={handleSuggestHint}
       />
       <div className="mt-7">
         <button
           type="button"
           className="text-cyan-700 font-semibold hover:underline"
-          onClick={() => setShowAdvanced(v => !v)}
+          onClick={() => setShowAdvanced((v: boolean) => !v)}
         >
           {showAdvanced ? "Ocultar" : "Mostrar"} Configurações Avançadas
         </button>
