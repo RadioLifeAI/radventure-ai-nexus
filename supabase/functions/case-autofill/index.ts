@@ -73,11 +73,16 @@ Importante: Não explique na resposta geral, use só os campos acima. A alternat
 }
 
 function buildPromptFindings({ diagnosis, modality, subtype, systemPrompt }) {
-  const promptFindings = systemPrompt
-    ? `${systemPrompt}\n${DIAG_NOT_REVEALED}`
-    : `Você é especialista em radiologia. Gere uma descrição de achados radiológicos concisa (máx. 200 caracteres), integrando diagnóstico e modalidade. ${DIAG_NOT_REVEALED}`;
+  const personaPrompt = `Você é um(a) radiologista com título em Radiologia, reconhecido(a) mundialmente por sua excelência em diagnóstico por imagem e ensino médico. Seu objetivo é descrever de forma objetiva, clara e altamente profissional os achados radiológicos encontrados em exames de imagem, mantendo precisão técnica e rigor científico.`;
+
+  const restriction = `${DIAG_NOT_REVEALED}\nNunca revele, cite, deduza ou sugira explicitamente o diagnóstico correto nos achados, apenas descreva o que está presente nas imagens.`;
+
+  const userPrompt =
+    systemPrompt
+      ? `${systemPrompt}\n${restriction}`
+      : `${personaPrompt}\nGere uma descrição de achados radiológicos objetiva, estruturada e sucinta (máx. 200 caracteres), utilizando linguagem técnica avançada, mas sem qualquer menção, sugestão ou dedução do diagnóstico final. Apenas os achados detectados, sem interpretações clínicas ou diagnósticas. ${restriction}`;
   return [
-    { role: "system", content: promptFindings },
+    { role: "system", content: userPrompt },
     { role: "user", content: `Diagnóstico: ${diagnosis ?? "-"}; Modalidade: ${modality ?? "-"}; Subtipo: ${subtype ?? "-"}` }
   ];
 }
