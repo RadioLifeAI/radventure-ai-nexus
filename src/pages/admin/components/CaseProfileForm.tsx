@@ -11,8 +11,8 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 import { CasePreviewModal } from "./CasePreviewModal";
 import { CaseProfileBasicSection } from "./CaseProfileBasicSection";
 import { CaseProfileAlternativesSection } from "./CaseProfileAlternativesSection";
-import { CaseProfileExplanationSection } from "./CaseProfileExplanationSection";
-import { CaseProfileAdvancedConfig } from "./CaseProfileAdvancedConfig";
+import { CaseProfileExplanationSectionContainer } from "./CaseProfileExplanationSectionContainer";
+import { CaseProfileAdvancedConfigContainer } from "./CaseProfileAdvancedConfigContainer";
 import { useCaseProfileFormHandlers } from "../hooks/useCaseProfileFormHandlers";
 import { CaseProfileFormActions } from "./CaseProfileFormActions";
 import { CaseProfileFormLayout } from "./CaseProfileFormLayout";
@@ -182,7 +182,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         handleSuggestAlternatives={handleSuggestAlternatives}
         renderTooltipTip={renderTooltipTip}
       />
-      <CaseProfileExplanationSection
+      <CaseProfileExplanationSectionContainer
         form={form}
         highlightedFields={highlightedFields}
         handleFormChange={handleFormChange}
@@ -198,12 +198,12 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         >
           {showAdvanced ? "Ocultar" : "Mostrar"} Configurações Avançadas
         </button>
-        {showAdvanced && (
-          <CaseProfileAdvancedConfig
-            form={form}
-            handleFormChange={handleFormChange}
-          />
-        )}
+        <CaseProfileAdvancedConfigContainer
+          form={form}
+          handleFormChange={handleFormChange}
+          handleSuggestHint={handleSuggestHint}
+          showAdvanced={showAdvanced}
+        />
       </div>
       <Button type="submit" disabled={submitting}>Salvar Caso</Button>
       {feedback && (
