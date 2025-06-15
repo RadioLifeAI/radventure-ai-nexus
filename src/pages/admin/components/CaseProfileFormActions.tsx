@@ -3,7 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 
 export function CaseProfileFormActions({
-  onPreview, onSuggestTitle, onAutoFill, onGenerateAutoTitle, showPreview
+  onPreview, onSuggestTitle, onAutoFill, showPreview
 }: any) {
   return (
     <div className="mb-3 flex gap-2">
@@ -15,9 +15,6 @@ export function CaseProfileFormActions({
       </Button>
       <Button type="button" onClick={onAutoFill} variant="secondary" className="mb-1">
         Auto-preencher detalhes do caso
-      </Button>
-      <Button type="button" onClick={onGenerateAutoTitle} variant="secondary" className="mb-1">
-        Gerar título automático
       </Button>
     </div>
   );

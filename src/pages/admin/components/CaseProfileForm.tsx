@@ -59,12 +59,12 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     showAdvanced, setShowAdvanced, showPreview, setShowPreview, highlightedFields, setHighlightedFields,
     handleFormChange, handleModalityChange, handleOptionChange, handleOptionFeedbackChange,
     handleShortTipChange, handleCorrectChange, handleImageChange,
-    handleAutoFillCaseDetails, handleSuggestDiagnosis, handleSuggestAlternatives, handleSuggestHint, handleSuggestExplanation, handleGenerateCaseTitleAuto,
+    handleAutoFillCaseDetails, handleSuggestDiagnosis, handleSuggestAlternatives, handleSuggestHint, handleSuggestExplanation,
     handleSuggestFindings, handleSuggestClinicalInfo,
     handleRandomizeOptions
   } = handlers;
 
-  // ==== NOVO: Gerador de título de caso modular ====
+  // Gerador central de título
   const { generateTitle, abbreviateCategory, generateRandomCaseNumber } = useCaseTitleGenerator(categories);
 
   // Preview do título automático
@@ -74,13 +74,23 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
       : "(Será definido automaticamente após salvar: Caso [ABREV] [NUM ALEATÓRIO])";
 
   // Lógica de auto-geração de título ao trocar categoria/modality
-  useEffect(() => {
+  React.useEffect(() => {
     if (form.category_id && form.modality && (!form.case_number || !form.title)) {
       const { title, case_number } = generateTitle(form.category_id, form.modality);
       setForm((prev: any) => ({ ...prev, title, case_number }));
     }
     // eslint-disable-next-line
   }, [form.category_id, form.modality]);
+
+  // Nova função: gerar título centralizado, inclusive botão de "Gerar título"
+  function handleAutoGenerateTitle() {
+    if (form.category_id && form.modality) {
+      const { title, case_number } = generateTitle(form.category_id, form.modality);
+      setForm((prev: any) => ({ ...prev, title, case_number }));
+      setHighlightedFields(["title", "case_number"]);
+      setTimeout(() => setHighlightedFields([]), 1200);
+    }
+  }
 
   // Hooks de undo
   const undoFindings = useFieldUndo(handlers.form.findings);
@@ -213,10 +223,6 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
       <h2 className="text-xl font-bold mb-2">Criar Novo Caso Médico</h2>
       <CaseProfileFormTitleSection
         autoTitlePreview={autoTitlePreview}
-        onPreview={() => setShowPreview(true)}
-        onSuggestTitle={onSuggestDiagnosis}
-        onAutoFill={handleAutoFillCaseDetails}
-        onGenerateAutoTitle={handleGenerateCaseTitleAuto}
         showPreview={showPreview}
       />
       <CaseProfileBasicSection
@@ -238,7 +244,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         undoDiagnosis={undoDiagnosis}
         setForm={setForm}
         autoTitlePreview={autoTitlePreview}
-        onGenerateAutoTitle={handleGenerateCaseTitleAuto}
+        onGenerateAutoTitle={handleAutoGenerateTitle}
       />
       <label className="font-semibold block mt-3">
         Pergunta Principal *

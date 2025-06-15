@@ -38,7 +38,6 @@ export function CaseProfileBasicSection({
   function handleImagesChange(imgArr: { url: string; legend: string }[]) {
     handleImageChange(imgArr);
   }
-  // Display fallback for legacy: always pass array!
   const imagesValue = Array.isArray(form.image_url)
     ? form.image_url
     : (typeof form.image_url === "string" && form.image_url.trim() !== ""
@@ -54,10 +53,6 @@ export function CaseProfileBasicSection({
 
   return (
     <>
-      {/* Pré-visualização & botões */}
-      <div className="mb-3 flex gap-2">
-        {/* Botões principais já existentes em outro lugar */}
-      </div>
       {/* Categoria/Dificuldade/Pontos */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
         <div>
@@ -270,3 +265,5 @@ export function CaseProfileBasicSection({
     </>
   );
 }
+
+// ATENÇÃO: O arquivo está ficando longo (273 linhas). Considere pedir a refatoração em breve!
