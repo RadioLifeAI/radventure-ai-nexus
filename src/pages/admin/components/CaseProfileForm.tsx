@@ -34,7 +34,10 @@ const AI_TUTOR_LEVELS = [
 export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
   const [categories, setCategories] = useState<{id: number, name: string}[]>([]);
   const [difficulties, setDifficulties] = useState<{id: number, level: number, description: string | null}[]>([]);
-  
+  const [categoryForTitle, setCategoryForTitle] = useState<string>("");
+  const [modalityForTitle, setModalityForTitle] = useState<string>("");
+  const [caseNumberPreview, setCaseNumberPreview] = useState<number | null>(null);
+
   useEffect(() => {
     supabase.from("medical_specialties")
       .select("id, name")
@@ -68,10 +71,44 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     handleRandomizeOptions
   } = handlers;
 
+  // --- NOVO: preview automático do título
+  useEffect(() => {
+    const categoria = categories.find(c => String(c.id) === String(form.category_id));
+    setCategoryForTitle(categoria ? categoria.name : "");
+    setModalityForTitle(form.modality);
+    if (form.category_id && form.modality) {
+      // Busca quantos casos já existem nessa combinação, para prever o novo número
+      supabase.from("medical_cases")
+        .select("id", { count: "exact", head: true })
+        .eq("category_id", Number(form.category_id))
+        .eq("modality", form.modality)
+        .then(({ data }) => {
+            setCaseNumberPreview(((data?.length ?? 0) + 1));
+        });
+    } else {
+      setCaseNumberPreview(null);
+    }
+  }, [form.category_id, form.modality, categories, form.modality]);
+
+  // Função para gerar a abreviação igual ao trigger do banco
+  function abbreviateCategory(catName: string) {
+    if (!catName) return "";
+    if (catName.toLowerCase().includes("neuro")) return "Neuro";
+    if (catName.toLowerCase().includes("cardio")) return "Cardio";
+    if (catName.toLowerCase().includes("derma")) return "Derma";
+    return catName.replace(/[^a-zA-Z0-9]/g, "").substring(0,5);
+  }
+
+  // Novo: gerar preview do título
+  const autoTitlePreview =
+    categoryForTitle && caseNumberPreview
+      ? `Caso ${abbreviateCategory(categoryForTitle)} ${caseNumberPreview}`
+      : "(Será definido automaticamente após salvar: Caso [ABREV] [NUM])";
+
   // Hooks de undo para campos
   const undoFindings = useFieldUndo(handlers.form.findings);
   const undoClinical = useFieldUndo(handlers.form.patient_clinical_info);
-  const undoDiagnosis = useFieldUndo(handlers.form.title_diagnosis);
+  const undoDiagnosis = useFieldUndo(handlers.form.diagnosis_internal);
 
   // Funções auxiliares para o CaseProfileBasicSection passar aos botões
   const onSuggestFindings = async () => {
@@ -83,7 +120,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     await handlers.handleSuggestClinicalInfo();
   };
   const onSuggestDiagnosis = async () => {
-    undoDiagnosis.handleBeforeChange(handlers.form.title_diagnosis);
+    undoDiagnosis.handleBeforeChange(handlers.form.diagnosis_internal);
     await handlers.handleSuggestDiagnosis();
   };
 
@@ -117,7 +154,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         caseNumber = ((data?.length ?? 0) + 1);
       }
       const selectedCategory = categories.find(c => String(c.id) === String(form.category_id));
-      const diagnosis_internal = form.title_diagnosis ?? "";
+      const diagnosis_internal = form.diagnosis_internal ?? "";
 
       const payload: any = {
         specialty: selectedCategory ? selectedCategory.name : null,
@@ -150,7 +187,6 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         ai_tutor_level: form.ai_tutor_level,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        // diagnóstico interno salvo apenas no payload, não exibido
         title_diagnosis: diagnosis_internal
       };
       Object.keys(payload).forEach(k => {
@@ -201,8 +237,8 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         handleSuggestHint={handleSuggestHint}
         handleImageChange={handleImageChange}
         renderTooltipTip={renderTooltipTip}
-        handleSuggestFindings={onSuggestFindings}
-        handleSuggestClinicalInfo={onSuggestClinical}
+        handleSuggestFindings={handleSuggestFindings}
+        handleSuggestClinicalInfo={handleSuggestClinicalInfo}
         undoFindings={undoFindings}
         undoClinical={undoClinical}
         undoDiagnosis={undoDiagnosis}

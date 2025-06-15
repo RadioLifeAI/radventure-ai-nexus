@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -96,7 +97,7 @@ export function CaseProfileBasicSection({
       <div className="mb-2">
         <label className="font-semibold block flex items-center gap-2">
           Título do Caso (gerado automaticamente)
-          <span className="text-xs text-cyan-700">(Preenchido automaticamente ao salvar. Usado para identificar o caso, não é o diagnóstico.)</span>
+          <span className="text-xs text-cyan-700">(Será preenchido automaticamente ao selecionar categoria/mod. Visualização para admin.)</span>
         </label>
         <input
           className="w-full border rounded px-2 py-2 bg-gray-100 text-gray-700 font-mono"

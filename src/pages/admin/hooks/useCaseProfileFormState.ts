@@ -1,14 +1,10 @@
 
 import { useState } from "react";
 
-/**
- * Hook para o estado do formulário de case profile.
- */
 const INITIAL_FORM = {
   category_id: "",
   difficulty_level: "",
   points: "10",
-  // specialty removido do formulário, pois é derivado da categoria
   modality: "",
   subtype: "",
   title: "",
@@ -32,8 +28,7 @@ const INITIAL_FORM = {
   elimination_penalty_points: 0,
   ai_tutor_level: "desligado",
   case_number: null as number | null,
-  // Adicionando campo para diagnóstico interno da questão/caso
-  title_diagnosis: ""
+  diagnosis_internal: "" // agora com nome correto!
 };
 
 export function useCaseProfileFormState() {
