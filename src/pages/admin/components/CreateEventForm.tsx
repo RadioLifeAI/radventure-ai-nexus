@@ -1,8 +1,8 @@
-
 import React, { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
+import { EventBannerUpload } from "./EventBannerUpload";
 
 type Prize = { position: number, prize: number };
 
@@ -75,8 +75,8 @@ export function CreateEventForm({ onCreated }: { onCreated?: () => void }) {
           <input value={name} onChange={e => setName(e.target.value)} required className="input border rounded px-2 py-1 w-full" />
         </div>
         <div>
-          <label className="font-semibold block">Banner (URL pública)</label>
-          <input value={bannerUrl} onChange={e => setBannerUrl(e.target.value)} className="input border rounded px-2 py-1 w-full" />
+          <label className="font-semibold block">Banner do evento</label>
+          <EventBannerUpload value={bannerUrl} onChange={setBannerUrl} />
         </div>
         <div>
           <label className="font-semibold block">Início</label>
@@ -131,4 +131,3 @@ export function CreateEventForm({ onCreated }: { onCreated?: () => void }) {
     </form>
   );
 }
-
