@@ -116,13 +116,15 @@ export function useCaseProfileFormUtils({
           subtype: newSubtype,
           findings: safeStr(suggestion.findings ?? ""), // SEMPRE usa sugestão IA
           patient_clinical_info: safeStr(suggestion.patient_clinical_info ?? ""),
-          explanation: safeStr(suggestion.explanation ?? ""),
+          explanation: suggestion.explanation ?? "",
+          answer_feedbacks: Array.isArray(suggestion.answer_feedbacks)
+            ? suggestion.answer_feedbacks.map((f: string) => f ?? "").slice(0, 4)
+            : ["", "", "", ""],
           patient_age: safeStr(suggestion.patient_age ?? ""),
           patient_gender: safeStr(suggestion.patient_gender ?? ""),
           symptoms_duration: safeStr(suggestion.symptoms_duration ?? ""),
           main_question: safeStr(suggestion.main_question ?? ""),
           answer_options: safeArr(suggestion.answer_options, 4),
-          answer_feedbacks: safeArr(suggestion.answer_feedbacks, 4),
           answer_short_tips: safeArr(suggestion.answer_short_tips, 4),
           correct_answer_index: 0,
         };
@@ -168,21 +170,37 @@ export function useCaseProfileFormUtils({
     toast({ description: "Título sugerido automaticamente (personalize se desejar)." });
   }
   async function handleSuggestAlternatives() {
-    if (!form.findings && !form.patient_clinical_info) {
-      toast({ description: "Preencha Achados Radiológicos e Resumo Clínico para gerar alternativas." });
+    if (!form.title) {
+      toast({ description: "Preencha o campo Diagnóstico para sugerir alternativas." });
       return;
     }
-    setForm((prev: any) => ({
-      ...prev,
-      answer_options: [
-        "Diagnóstico A (sugerido pela IA)",
-        "Diagnóstico B (sugerido pela IA)",
-        "Diagnóstico C (sugerido pela IA)",
-        "Diagnóstico D (sugerido pela IA)"
-      ],
-      correct_answer_index: 0
-    }));
-    toast({ description: "Alternativas sugeridas automaticamente (personalize se desejar)." });
+    setSubmitting(true);
+    try {
+      const reqBody: any = {
+        diagnosis: form.title,
+        findings: form.findings || "",
+        modality: form.modality || "",
+        subtype: form.subtype || "",
+        withAlternativesOnly: true
+      };
+      const { data, error } = await supabase.functions.invoke("case-autofill", {
+        body: reqBody
+      });
+      if (error) throw new Error(error.message || "Não foi possível sugerir alternativas (IA).");
+
+      const suggestion = data?.suggestion || {};
+      setForm((prev: any) => ({
+        ...prev,
+        answer_options: Array.isArray(suggestion.answer_options) ? suggestion.answer_options.slice(0,4) : ["", "", "", ""],
+        answer_feedbacks: Array.isArray(suggestion.answer_feedbacks) ? suggestion.answer_feedbacks.slice(0,4) : ["", "", "", ""],
+        answer_short_tips: Array.isArray(suggestion.answer_short_tips) ? suggestion.answer_short_tips.slice(0,4) : ["", "", "", ""],
+        correct_answer_index: 0
+      }));
+      toast({ description: "Alternativas sugeridas por IA considerando os principais diagnósticos diferenciais." });
+    } catch (err: any) {
+      toast({ variant: "destructive", description: err?.message || "Falha ao gerar alternativas (IA)." });
+    }
+    setSubmitting(false);
   }
   async function handleSuggestHint() {
     if (!form.findings && !form.patient_clinical_info) {
@@ -197,22 +215,38 @@ export function useCaseProfileFormUtils({
       toast({ description: "Preencha Achados, Pergunta Principal ou Diagnóstico para sugerir uma explicação." });
       return;
     }
-    // Nova lógica: explicação ainda mais curta; persona IA
-    let summary = "";
-    if (form.findings && form.patient_clinical_info) {
-      summary = `Como especialista em radiologia, destaco: os achados de imagem (${form.findings}) integrados ao quadro clínico (${form.patient_clinical_info}) facilitam diretamente o diagnóstico neste caso.`;
-    } else if (form.findings) {
-      summary = `Os achados radiológicos (${form.findings}) são o principal guia diagnóstico neste cenário clínico.`;
-    } else if (form.patient_clinical_info) {
-      summary = `O resumo clínico apresentado (${form.patient_clinical_info}) direciona a análise dos achados de imagem.`;
-    } else {
-      summary = "A integração entre achados radiológicos e contexto clínico é essencial para a correta solução do caso.";
+    // Sempre foca e encurta ainda mais
+    if (!form.findings && !form.title && !form.patient_clinical_info) {
+      toast({ description: "Preencha Achados Radiológicos, Diagnóstico ou Resumo Clínico para sugerir explicação." });
+      return;
     }
-    setForm((prev: any) => ({
-      ...prev,
-      explanation: summary
-    }));
-    toast({ description: "Explicação curta sugerida automaticamente, focada em integração clínica-radiológica." });
+    const msg = `Como especialista em radiologia, integre achados radiológicos e contexto clínico no mínimo de palavras possível:`;
+    setSubmitting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("case-autofill", {
+        body: {
+          diagnosis: form.title || "",
+          findings: form.findings || "",
+          modality: form.modality || "",
+          subtype: form.subtype || "",
+        }
+      });
+      if (error) throw new Error(error.message);
+      const explanation = data?.suggestion?.explanation;
+      setForm((prev: any) => ({
+        ...prev,
+        explanation: explanation ?? ""
+      }));
+      toast({ description: "Explicação sugerida pela IA com foco objetivo clínica-radiológica." });
+    } catch (err: any) {
+      // fallback local, se IA não responder
+      setForm((prev: any) => ({
+        ...prev,
+        explanation: "Achado radiológico integrado ao quadro clínico direciona o diagnóstico."
+      }));
+      toast({ variant: "destructive", description: "Falha IA. Usando explicação curta padrão." });
+    }
+    setSubmitting(false);
   }
   async function handleGenerateAutoTitle() {
     if (!form.category_id || !form.modality) {
