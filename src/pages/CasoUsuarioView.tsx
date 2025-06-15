@@ -17,16 +17,15 @@ const FEEDBACKS = [
   { title: "Continue praticando! 🔄", icon: <Frown className="text-lg text-red-500 inline ml-1" /> }
 ];
 
-function randomFeedback(acertou: boolean) {
-  if (acertou) {
-    const ok = FEEDBACKS.slice(0, 2);
-    return ok[Math.floor(Math.random() * ok.length)];
-  }
-  return FEEDBACKS[2 + Math.floor(Math.random() * 2)];
-}
+type CasoUsuarioViewProps = {
+  idProp?: string;
+  isAdminView?: boolean;
+};
 
-export default function CasoUsuarioView() {
-  const { id } = useParams();
+export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
+  // Usa id da URL se não vier por prop (modo usuário). Admin passa id por prop.
+  const urlParams = useParams();
+  const id = props.idProp || urlParams.id;
   const [caso, setCaso] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<number | null>(null);

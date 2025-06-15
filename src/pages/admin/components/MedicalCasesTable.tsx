@@ -1,8 +1,9 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Table, TableHead, TableRow, TableHeader, TableBody, TableCell } from "@/components/ui/table";
-import { Edit, Trash } from "lucide-react";
+import { Edit, Trash, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CaseViewerAdminModal } from "./CaseViewerAdminModal";
 
 type MedicalCasesTableProps = {
   cases: any[];
@@ -11,8 +12,12 @@ type MedicalCasesTableProps = {
 };
 
 export function MedicalCasesTable({ cases, onDelete, onEdit }: MedicalCasesTableProps) {
+  const [previewId, setPreviewId] = useState<string | null>(null);
+
   return (
     <div className="bg-white rounded shadow overflow-x-auto">
+      {/* Modal de visualização */}
+      <CaseViewerAdminModal open={!!previewId} onClose={() => setPreviewId(null)} caseId={previewId} />
       <Table>
         <TableHeader>
           <TableRow>
@@ -42,6 +47,14 @@ export function MedicalCasesTable({ cases, onDelete, onEdit }: MedicalCasesTable
               <TableCell>{item.created_at ? new Date(item.created_at).toLocaleString("pt-BR") : ""}</TableCell>
               <TableCell>
                 <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setPreviewId(item.id)}
+                    title="Visualizar como usuário"
+                  >
+                    <Eye />
+                  </Button>
                   <Button
                     size="sm"
                     variant="outline"
