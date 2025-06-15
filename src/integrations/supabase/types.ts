@@ -239,66 +239,90 @@ export type Database = {
       }
       medical_cases: {
         Row: {
+          ai_hint_enabled: boolean | null
+          ai_tutor_level: string | null
           answer_feedbacks: string[] | null
           answer_options: string[] | null
+          answer_short_tips: string[] | null
           author_id: string | null
+          can_skip: boolean | null
           correct_answer_index: number | null
           created_at: string
           created_by: string | null
           description: string | null
           difficulty_level: number | null
+          elimination_penalty_points: number | null
           explanation: string | null
           findings: string | null
           id: string
           image_url: string | null
           main_question: string | null
+          manual_hint: string | null
+          max_elimination: number | null
           meta: Json | null
           modality: string | null
           patient_clinical_info: string | null
+          skip_penalty_points: number | null
           specialty: string | null
           symptoms_duration: string | null
           title: string
           updated_at: string
         }
         Insert: {
+          ai_hint_enabled?: boolean | null
+          ai_tutor_level?: string | null
           answer_feedbacks?: string[] | null
           answer_options?: string[] | null
+          answer_short_tips?: string[] | null
           author_id?: string | null
+          can_skip?: boolean | null
           correct_answer_index?: number | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           difficulty_level?: number | null
+          elimination_penalty_points?: number | null
           explanation?: string | null
           findings?: string | null
           id?: string
           image_url?: string | null
           main_question?: string | null
+          manual_hint?: string | null
+          max_elimination?: number | null
           meta?: Json | null
           modality?: string | null
           patient_clinical_info?: string | null
+          skip_penalty_points?: number | null
           specialty?: string | null
           symptoms_duration?: string | null
           title: string
           updated_at?: string
         }
         Update: {
+          ai_hint_enabled?: boolean | null
+          ai_tutor_level?: string | null
           answer_feedbacks?: string[] | null
           answer_options?: string[] | null
+          answer_short_tips?: string[] | null
           author_id?: string | null
+          can_skip?: boolean | null
           correct_answer_index?: number | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           difficulty_level?: number | null
+          elimination_penalty_points?: number | null
           explanation?: string | null
           findings?: string | null
           id?: string
           image_url?: string | null
           main_question?: string | null
+          manual_hint?: string | null
+          max_elimination?: number | null
           meta?: Json | null
           modality?: string | null
           patient_clinical_info?: string | null
+          skip_penalty_points?: number | null
           specialty?: string | null
           symptoms_duration?: string | null
           title?: string

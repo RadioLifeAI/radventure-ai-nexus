@@ -14,6 +14,12 @@ const GENDER_OPTIONS = [
   { value: "Outro", label: "Outro" }
 ];
 
+const AI_TUTOR_LEVELS = [
+  { value: "desligado", label: "Desligado" },
+  { value: "basico", label: "Básico" },
+  { value: "detalhado", label: "Detalhado" }
+];
+
 export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
   // Listas vindas do banco para selects
   const [categories, setCategories] = useState<{id: number, name: string}[]>([]);
@@ -35,22 +41,32 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     explanation: "",
     answer_options: ["", "", "", ""],
     answer_feedbacks: ["", "", "", ""],
+    answer_short_tips: ["", "", "", ""], // NOVO
     correct_answer_index: 0,
     image_url: "",
+    // Novos campos
+    can_skip: true,
+    max_elimination: 0,
+    ai_hint_enabled: false,
+    manual_hint: "",
+    skip_penalty_points: 0,
+    elimination_penalty_points: 0,
+    ai_tutor_level: "desligado"
   });
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Lógica para sugestão automática de pontos conforme dificuldade
   function suggestPointsByDifficulty(level: string) {
     switch (level) {
-      case "1": // Iniciante
+      case "1":
         return "10";
-      case "2": // Intermediário
+      case "2":
         return "20";
-      case "3": // Avançado
-        return "30"; // Ajustado para 30 pontos
-      case "4": // Infernal
+      case "3":
+        return "30";
+      case "4":
         return "50";
       default:
         return "10";
@@ -65,9 +81,6 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         if (error) {
           console.error("Erro carregando especialidades:", error);
         } else {
-          if (!data || data.length === 0) {
-            console.warn("Nenhuma categoria encontrada no banco de dados.");
-          }
           setCategories(data || []);
         }
       });
@@ -78,23 +91,21 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         if (error) {
           console.error("Erro carregando dificuldades:", error);
         } else {
-          if (!data || data.length === 0) {
-            console.warn("Nenhuma dificuldade encontrada no banco de dados.");
-          }
           setDifficulties(data || []);
         }
       });
   }, []);
 
   function handleFormChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
-    const { name, value } = e.target;
-    // Se o campo alterado é o nível de dificuldade, sugerir pontos automaticamente
+    const { name, value, type, checked } = e.target as any;
     if (name === "difficulty_level") {
       setForm((prev) => ({
         ...prev,
         [name]: value,
         points: suggestPointsByDifficulty(value),
       }));
+    } else if (type === "checkbox") {
+      setForm((prev) => ({ ...prev, [name]: checked }));
     } else {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
@@ -116,6 +127,13 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
       const arr = [...prev.answer_feedbacks];
       arr[idx] = val;
       return { ...prev, answer_feedbacks: arr };
+    });
+  }
+  function handleShortTipChange(idx: number, val: string) {
+    setForm((prev) => {
+      const arr = [...prev.answer_short_tips];
+      arr[idx] = val;
+      return { ...prev, answer_short_tips: arr };
     });
   }
   function handleCorrectChange(idx: number) {
@@ -156,6 +174,16 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     toast({ description: "Alternativas sugeridas automaticamente (personalize se desejar)." });
   }
 
+  // --- NOVO: Gerar dica automaticamente (placeholder para IA futura) ---
+  async function handleSuggestHint() {
+    if (!form.findings && !form.patient_clinical_info) {
+      toast({ description: "Preencha Achados Radiológicos e/ou Resumo Clínico para sugerir uma dica." });
+      return;
+    }
+    setForm(prev => ({ ...prev, manual_hint: "Dica gerada automaticamente (placeholder IA)." }));
+    toast({ description: "Dica sugerida automaticamente (futuramente via IA, edite se desejar)." });
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
@@ -176,8 +204,17 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
       explanation: form.explanation,
       answer_options: form.answer_options,
       answer_feedbacks: form.answer_feedbacks,
+      answer_short_tips: form.answer_short_tips,
       correct_answer_index: form.correct_answer_index,
       image_url: form.image_url,
+      // Novos campos
+      can_skip: form.can_skip,
+      max_elimination: form.max_elimination,
+      ai_hint_enabled: form.ai_hint_enabled,
+      manual_hint: form.manual_hint,
+      skip_penalty_points: form.skip_penalty_points,
+      elimination_penalty_points: form.elimination_penalty_points,
+      ai_tutor_level: form.ai_tutor_level,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -204,8 +241,16 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         explanation: "",
         answer_options: ["", "", "", ""],
         answer_feedbacks: ["", "", "", ""],
+        answer_short_tips: ["", "", "", ""],
         correct_answer_index: 0,
         image_url: "",
+        can_skip: true,
+        max_elimination: 0,
+        ai_hint_enabled: false,
+        manual_hint: "",
+        skip_penalty_points: 0,
+        elimination_penalty_points: 0,
+        ai_tutor_level: "desligado"
       });
       onCreated?.();
     } else {
@@ -344,6 +389,14 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
                 className="text-xs"
                 rows={2}
               />
+              {/* --- NOVO campo: short_tip --- */}
+              <Input
+                value={form.answer_short_tips[idx]}
+                onChange={e => handleShortTipChange(idx, e.target.value)}
+                placeholder={`Meta-dica para alternativa ${letter} (opcional, ex: "Confunde com doença X")`}
+                className="text-xs"
+                maxLength={80}
+              />
             </div>
           ))}
         </div>
@@ -353,6 +406,106 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         <label className="font-semibold">Explicação e Feedback Geral *</label>
         <Textarea name="explanation" value={form.explanation} onChange={handleFormChange} placeholder="Explique o caso e a resposta correta..." required />
       </div>
+      {/* ================== SEÇÃO AVANÇADA ===================== */}
+      <div className="mt-7">
+        <button
+          type="button"
+          className="text-cyan-700 font-semibold hover:underline"
+          onClick={() => setShowAdvanced(v => !v)}
+        >
+          {showAdvanced ? "Ocultar" : "Mostrar"} Configurações Avançadas
+        </button>
+        {showAdvanced && (
+          <div className="border rounded-lg p-4 bg-gray-50 mt-3 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="font-semibold">Permitir pular questão?</label>
+                <input
+                  type="checkbox"
+                  name="can_skip"
+                  checked={form.can_skip}
+                  onChange={handleFormChange}
+                  className="ml-2 accent-cyan-600"
+                />
+              </div>
+              <div>
+                <label className="font-semibold">Máx. alternativas para eliminar</label>
+                <Input
+                  name="max_elimination"
+                  type="number"
+                  min={0}
+                  max={form.answer_options.length - 2}
+                  value={form.max_elimination}
+                  onChange={handleFormChange}
+                />
+              </div>
+              <div>
+                <label className="font-semibold">AI Tutor Nível</label>
+                <select
+                  name="ai_tutor_level"
+                  value={form.ai_tutor_level}
+                  onChange={handleFormChange}
+                  className="w-full border rounded px-2 py-2 bg-white"
+                >
+                  {AI_TUTOR_LEVELS.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="font-semibold">Penalidade ao pular (pontos)</label>
+                <Input
+                  name="skip_penalty_points"
+                  type="number"
+                  min={0}
+                  value={form.skip_penalty_points}
+                  onChange={handleFormChange}
+                />
+              </div>
+              <div>
+                <label className="font-semibold">Penalidade eliminar alternativas (pontos)</label>
+                <Input
+                  name="elimination_penalty_points"
+                  type="number"
+                  min={0}
+                  value={form.elimination_penalty_points}
+                  onChange={handleFormChange}
+                />
+              </div>
+            </div>
+            <div>
+              <label className="font-semibold">Ativar Dica de IA?</label>
+              <input
+                type="checkbox"
+                name="ai_hint_enabled"
+                checked={form.ai_hint_enabled}
+                onChange={handleFormChange}
+                className="ml-2 accent-cyan-600"
+              />
+            </div>
+            <div className="flex gap-2 items-end">
+              <div className="flex-1">
+                <label className="font-semibold">Dica personalizada para o usuário</label>
+                <Textarea
+                  name="manual_hint"
+                  value={form.manual_hint}
+                  onChange={handleFormChange}
+                  placeholder="Dica personalizada a ser exibida ao usuário (opcional)"
+                  className="text-xs"
+                  rows={2}
+                />
+              </div>
+              <Button type="button" onClick={handleSuggestHint} variant="secondary" className="mb-1 mt-2">
+                Gerar Dica Automaticamente
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+      {/* ================== FIM SEÇÃO AVANÇADA ===================== */}
+
       <Button type="submit" disabled={submitting}>Salvar Caso</Button>
       {feedback && (
         <span className="ml-4 text-sm font-medium text-cyan-700">{feedback}</span>
