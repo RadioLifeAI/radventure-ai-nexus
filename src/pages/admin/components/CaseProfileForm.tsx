@@ -173,14 +173,30 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     setTimeout(() => setFeedback(""), 2300);
   }
 
+  // NOVO: botão automatizado para IA preencher todos os campos principais + avançados
+  function handleSuperAutoFill() {
+    handlers.handleAutoFillCaseDetails();
+    // O próprio método já destaca campos e mostra toast!
+  }
+
   return (
     <form className="w-full" onSubmit={handleSubmit}>
       <CasePreviewModal open={showPreview} onClose={() => setShowPreview(false)} form={form} categories={categories} difficulties={difficulties} />
-      <h2 className="text-xl font-bold mb-2">Criar Novo Caso Médico</h2>
+      {/* NOVO BOTÃO SUGESTÃO AUTOMÁTICA */}
+      <div className="flex items-center mb-3 gap-3">
+        <h2 className="text-xl font-bold">Criar Novo Caso Médico</h2>
+        <button
+          type="button"
+          onClick={handleSuperAutoFill}
+          className="ml-2 px-4 py-2 bg-cyan-700 text-white font-semibold rounded shadow hover:bg-cyan-800 transition-colors text-sm"
+        >
+          Sugestão Automática (IA)
+        </button>
+      </div>
       <CaseProfileFormActions
         onPreview={() => setShowPreview(true)}
         onSuggestTitle={onSuggestTitle}
-        onAutoFill={handleAutoFillCaseDetails}
+        onAutoFillCaseDetails={handleAutoFillCaseDetails}
         onGenerateAutoTitle={handleGenerateAutoTitle}
         showPreview={showPreview}
       />
@@ -208,7 +224,9 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         Pergunta Principal *
         {renderTooltipTip("tip-main-question", "Esta pergunta será apresentada ao usuário e guiará o raciocínio clínico.")}
       </label>
-      <Input name="main_question" value={form.main_question} onChange={handleFormChange} placeholder="Ex: Qual é o diagnóstico mais provável?" required />
+      <Input name="main_question" value={form.main_question} onChange={handleFormChange} placeholder="Ex: Qual é o diagnóstico mais provável?" required
+        className={highlightedFields.includes("main_question") ? "ring-2 ring-cyan-400" : ""}
+      />
       <CaseProfileAlternativesSection
         form={form}
         highlightedFields={highlightedFields}
