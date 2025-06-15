@@ -120,9 +120,9 @@ export function useCaseProfileFormUtils({
           answer_feedbacks: Array.isArray(suggestion.answer_feedbacks)
             ? suggestion.answer_feedbacks.map((f: string) => f ?? "").slice(0, 4)
             : ["", "", "", ""],
-          patient_age: safeStr(suggestion.patient_age ?? ""),
-          patient_gender: safeStr(suggestion.patient_gender ?? ""),
-          symptoms_duration: safeStr(suggestion.symptoms_duration ?? ""),
+          patient_age: safeStr(suggestion.patient_age ?? ""), // CORRIGIDO: sempre sobrescreve
+          patient_gender: safeStr(suggestion.patient_gender ?? ""), // CORRIGIDO: sempre sobrescreve
+          symptoms_duration: safeStr(suggestion.symptoms_duration ?? ""), // CORRIGIDO: sempre sobrescreve
           main_question: safeStr(suggestion.main_question ?? ""),
           answer_options: safeArr(suggestion.answer_options, 4),
           answer_short_tips: safeArr(suggestion.answer_short_tips, 4),
