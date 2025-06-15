@@ -1,10 +1,10 @@
+
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { CaseModalityFields } from "./CaseModalityFields";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { ImageUploadWithZoom } from "./ImageUploadWithZoom";
+import { Undo2 } from "lucide-react";
 
 type Props = {
   form: any;
@@ -20,12 +20,17 @@ type Props = {
   renderTooltipTip: any;
   handleSuggestFindings: any;
   handleSuggestClinicalInfo: any;
+  undoFindings: any;
+  undoClinical: any;
+  undoTitle: any;
+  setForm: any;
 };
 
 export function CaseProfileBasicSection({
   form, highlightedFields, categories, difficulties, handleFormChange,
   handleModalityChange, handleAutoFillCaseDetails, handleSuggestTitle, handleSuggestHint, handleImageChange, renderTooltipTip,
-  handleSuggestFindings, handleSuggestClinicalInfo
+  handleSuggestFindings, handleSuggestClinicalInfo,
+  undoFindings, undoClinical, undoTitle, setForm
 }: Props) {
   return (
     <>
@@ -106,6 +111,17 @@ export function CaseProfileBasicSection({
             </Button>
             <Button
               type="button"
+              variant="ghost"
+              size="icon"
+              title="Desfazer sugestão IA para diagnóstico"
+              onClick={() => undoTitle.undo((val: string) => setForm((prev: any) => ({ ...prev, title: val })))}
+              className="mb-1"
+              disabled={!undoTitle.canUndo()}
+            >
+              <Undo2 size={18} />
+            </Button>
+            <Button
+              type="button"
               onClick={handleAutoFillCaseDetails}
               variant="secondary"
               className="mb-1"
@@ -114,6 +130,8 @@ export function CaseProfileBasicSection({
               Auto-preencher detalhes do caso
             </Button>
           </div>
+
+          {/* Achados radiológicos */}
           <label className="font-semibold mt-3 flex items-center">
             Achados radiológicos *
             <Button
@@ -126,9 +144,21 @@ export function CaseProfileBasicSection({
             >
               Sugerir IA
             </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              title="Desfazer sugestão IA para achados"
+              onClick={() => undoFindings.undo((val: string) => setForm((prev: any) => ({ ...prev, findings: val })))}
+              className="ml-1"
+              disabled={!undoFindings.canUndo()}
+            >
+              <Undo2 size={18} />
+            </Button>
           </label>
           <Textarea name="findings" value={form.findings} onChange={handleFormChange} placeholder="Descreva os achados..." required className={highlightedFields.includes("findings") ? "ring-2 ring-cyan-400" : ""} />
 
+          {/* Resumo Clínico */}
           <label className="font-semibold mt-3 flex items-center">
             Resumo Clínico *
             <Button
@@ -140,6 +170,17 @@ export function CaseProfileBasicSection({
               title="Gerar sugestão de resumo clínico via IA"
             >
               Sugerir IA
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              title="Desfazer sugestão IA para resumo clínico"
+              onClick={() => undoClinical.undo((val: string) => setForm((prev: any) => ({ ...prev, patient_clinical_info: val })))}
+              className="ml-1"
+              disabled={!undoClinical.canUndo()}
+            >
+              <Undo2 size={18} />
             </Button>
           </label>
           <Textarea name="patient_clinical_info" value={form.patient_clinical_info} onChange={handleFormChange} placeholder="Breve histórico do paciente..." required className={highlightedFields.includes("patient_clinical_info") ? "ring-2 ring-cyan-400" : ""} />
