@@ -1,9 +1,9 @@
-
 import React, { useState } from "react";
 import { Table, TableHead, TableRow, TableHeader, TableBody, TableCell } from "@/components/ui/table";
 import { Edit, Trash, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CaseViewerAdminModal } from "./CaseViewerAdminModal";
+import { CaseEditAdminModal } from "./CaseEditAdminModal";
 
 type MedicalCasesTableProps = {
   cases: any[];
@@ -13,11 +13,20 @@ type MedicalCasesTableProps = {
 
 export function MedicalCasesTable({ cases, onDelete, onEdit }: MedicalCasesTableProps) {
   const [previewId, setPreviewId] = useState<string | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [refreshIndex, setRefreshIndex] = useState(0);
+
+  // Ao editar, solicitar refresh (parent deve passar props atualizadas)
+  function handleSaved() {
+    setRefreshIndex(i => i+1);
+    if (onEdit) onEdit(""); // dispara refresh externo
+  }
 
   return (
     <div className="bg-white rounded shadow overflow-x-auto">
-      {/* Modal de visualização */}
+      {/* Modals */}
       <CaseViewerAdminModal open={!!previewId} onClose={() => setPreviewId(null)} caseId={previewId} />
+      <CaseEditAdminModal open={!!editId} onClose={() => setEditId(null)} caseId={editId} onSaved={handleSaved} />
       <Table>
         <TableHeader>
           <TableRow>
@@ -58,7 +67,7 @@ export function MedicalCasesTable({ cases, onDelete, onEdit }: MedicalCasesTable
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => onEdit && onEdit(item.id)}
+                    onClick={() => setEditId(item.id)}
                     title="Editar"
                   >
                     <Edit />
