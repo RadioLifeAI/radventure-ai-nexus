@@ -241,6 +241,7 @@ export type Database = {
         Row: {
           author_id: string | null
           created_at: string
+          created_by: string | null
           description: string | null
           difficulty_level: number | null
           id: string
@@ -253,6 +254,7 @@ export type Database = {
         Insert: {
           author_id?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           difficulty_level?: number | null
           id?: string
@@ -265,6 +267,7 @@ export type Database = {
         Update: {
           author_id?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           difficulty_level?: number | null
           id?: string
@@ -274,7 +277,15 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "medical_cases_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       medical_specialties: {
         Row: {
