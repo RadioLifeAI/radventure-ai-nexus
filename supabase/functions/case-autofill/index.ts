@@ -51,6 +51,75 @@ async function getOpenAISuggestion({ messages, max_tokens = 300, temperature = 0
   return data.choices?.[0]?.message?.content ?? "{}";
 }
 
+// Função para buscar até N casos similares do Supabase baseado em campos básicos
+async function fetchSimilarCases({ diagnosis, findings, modality }) {
+  // Estratégia simples: busca casos com a mesma modalidade ou contendo parte do diagnóstico ou findings no título ou findings
+  // Limita para os 3 mais recentes
+  try {
+    // Consulta ao Supabase REST API diretamente via fetch
+    // NOTA: No contexto do Edge Function, usar fetch direto no endpoint REST
+    // A autenticação pode ser feita usando o serviço role key presente no segredo de ambiente
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      console.log("SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set.");
+      return [];
+    }
+
+    // Monta filtro básico em query string
+    // Busca por similaridade simples (é possível sofisticar aqui no futuro)
+    let queryStr = `select=title,findings,modality,answer_options,answer_feedbacks,explanation&order=created_at.desc&limit=5`;
+    // Aplica filtro só se vier valor
+    let filters: string[] = [];
+    if (modality) filters.push(`modality=eq.${encodeURIComponent(modality)}`);
+    if (diagnosis) filters.push(`title=ilike.*${encodeURIComponent(diagnosis)}*`);
+    if (findings) filters.push(`findings=ilike.*${encodeURIComponent(findings)}*`);
+    // Só pega casos com explanation e options válidas:
+    filters.push("explanation=not.is.null");
+    filters.push("answer_options=not.is.null");
+
+    // Concatena filtros por &
+    queryStr += "&" + filters.join("&");
+
+    // Consulta REST API (usa service_role pq é backend, nunca expor para cliente!)
+    const url = `${SUPABASE_URL}/rest/v1/medical_cases?${queryStr}`;
+
+    const res = await fetch(url, {
+      headers: {
+        "apikey": SUPABASE_SERVICE_ROLE_KEY,
+        "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`
+      }
+    });
+
+    const cases = await res.json();
+    // Garante array:
+    if (!Array.isArray(cases)) return [];
+    return cases.slice(0, 3);
+  } catch (err) {
+    console.error("Erro ao buscar casos similares:", err);
+    return [];
+  }
+}
+
+// Função para gerar contexto a partir dos casos similares
+function buildContextFromSimilarCases(cases = []) {
+  if (!cases.length) return "";
+  let msg = "Exemplos de casos reais anteriormente cadastrados no sistema:\n";
+  for (const c of cases) {
+    const title = c.title ?? "";
+    const findings = c.findings ?? "";
+    const modality = c.modality ?? "";
+    const explanation = c.explanation?.slice(0, 200) ?? "";
+    // Pega a alternativa correta (padrão: assume alternativa A)
+    let correct = "";
+    if (Array.isArray(c.answer_options) && c.answer_options.length > 0) correct = c.answer_options[0];
+    msg += `- Caso: ${title}; Modalidade: ${modality}; Achados: ${findings}; Alternativa correta: ${correct}; Explicação: ${explanation}\n`;
+  }
+  msg += "\nUse essas referências para fundamentar seu raciocínio, mas nunca copie literalmente os textos.";
+  return msg;
+}
+
 // Gera prompt para alternativas
 function buildPromptAlternatives({ diagnosis, findings, modality, subtype }) {
   return [
@@ -102,7 +171,9 @@ function buildPromptHint({ diagnosis, findings, modality, subtype, systemPrompt 
   ];
 }
 
-function buildPromptFullCase({ diagnosis, findings, modality, subtype }) {
+// Atualiza a geração do PROMPT para incluir contexto
+// Exemplo para preenchimento completo:
+function buildPromptFullCase({ diagnosis, findings, modality, subtype, similarCasesContext = "" }) {
   let contextIntro = `Você é um especialista em radiologia e diagnóstico por imagem que elabora casos clínico-radiológicos objetivamente para quizzes de ensino, valorizando sempre integração entre achados de imagem e quadro clínico.`;
   contextIntro += ` Nas explicações e feedbacks, responda DE FORMA EXTREMAMENTE BREVE, SEM frases genéricas, usando sempre apenas a relação entre os achados radiológicos e sintomas ou contexto clínico.`;
   contextIntro += ` Nunca faça textos longos ou divagações.`;
@@ -113,6 +184,11 @@ function buildPromptFullCase({ diagnosis, findings, modality, subtype }) {
     if (subtype) contextIntro += `Subtipo: ${subtype}. `;
     if (findings) contextIntro += `Achados radiológicos: ${findings}. `;
   }
+  // Adiciona os exemplos reais no contexto do prompt
+  if (similarCasesContext) {
+    contextIntro += `\n\n${similarCasesContext}\n`;
+  }
+
   const finalSystemPrompt = `
 ${contextIntro}
 Com base no DIAGNÓSTICO de referência abaixo, preencha somente o JSON com todos os campos do caso clínico de maneira FUNDAMENTADA E COMPLETA, detalhando SEM ENROLAR e evitando resumir excessivamente, e sempre integrando achados, contexto e raciocínio.
@@ -193,7 +269,7 @@ function trimFieldsOnPayload(payload: any) {
   return payload;
 }
 
-// Servidor principal
+// Servidor principal (atualiza para usar os casos similares)
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -283,16 +359,19 @@ serve(async (req) => {
       }
     }
 
-    // Preenchimento completo
-    // ... keep existing code (final prompt building and OpenAI request logic) the same, but use buildPromptFullCase and centralized handlers
+    // Preenchimento completo — inclui contexto automático
     {
+      // Busca casos similares antes de gerar prompt
+      const similarCases = await fetchSimilarCases({ diagnosis, findings, modality });
+      const contextFromCases = buildContextFromSimilarCases(similarCases);
+
       try {
-        const messages = buildPromptFullCase({ diagnosis, findings, modality, subtype });
+        const messages = buildPromptFullCase({ diagnosis, findings, modality, subtype, similarCasesContext: contextFromCases });
         const raw = await getOpenAISuggestion({ messages, max_tokens: 700, temperature: 0.7 });
         const payload = tryParseJsonFromCompletion(raw);
         trimFieldsOnPayload(payload);
 
-        // LOG: Registrar o prompt enviado e resposta da IA para facilitar debug
+        // LOG: Registrar o prompt e o contexto real enviado
         console.log("PROMPT:\n", messages[0].content);
         console.log("USER CONTENT:", messages[1].content);
         console.log("RAW RESPONSE:", raw);
