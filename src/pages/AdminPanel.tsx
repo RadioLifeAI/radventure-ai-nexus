@@ -1,6 +1,6 @@
 import React from "react";
 import { AdminSidebar } from "@/components/AdminSidebar";
-import { Outlet } from "react-router-dom";
+import { Routes, Route, Outlet } from "react-router-dom";
 import CasosMedicos from "./admin/CasosMedicos";
 
 export default function AdminPanel() {
@@ -16,12 +16,11 @@ export default function AdminPanel() {
         </header>
         <section className="p-8">
           {/* Conteúdo dinâmico das seções do admin */}
-          <Outlet />
-          {/* Aqui será renderizado o conteúdo de cada seção */}
-          {/* Rotas filhas - renderiza os componentes das abas */}
-          {/* Renderiza rota de casos médicos */}
-          {/* Adicional: rotas reais podem ser feitas no router principal, aqui só demonstrando uso! */}
-          {/* <Route path="casos-medicos" element={<CasosMedicos />} /> */}
+          <Routes>
+            <Route path="casos-medicos" element={<CasosMedicos />} />
+            {/* Coloque aqui outras rotas para outros módulos do admin futuramente */}
+          </Routes>
+          {/* <Outlet /> */}
         </section>
       </main>
     </div>
