@@ -4,12 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableHead, TableRow, TableHeader, TableBody, TableCell } from "@/components/ui/table";
-import { Select } from "@/components/ui/select";
 import { Plus } from "lucide-react";
 
 // Utilitários para listar opções
 async function fetchCategories() {
-  const { data, error } = await supabase.from("case_categories").select("*").order("name");
+  // Use string literal; type as any[]
+  const { data, error } = await supabase.from("case_categories" as any).select("*").order("name");
   return data || [];
 }
 
@@ -21,7 +21,7 @@ async function fetchModalities() {
 async function fetchSubtypes(modalityId: number | null) {
   if (!modalityId) return [];
   const { data, error } = await supabase
-    .from("imaging_subtypes")
+    .from("imaging_subtypes" as any)
     .select("*")
     .eq("modality_id", modalityId)
     .order("name");
@@ -30,9 +30,9 @@ async function fetchSubtypes(modalityId: number | null) {
 
 // Página principal
 export default function CasosMedicos() {
-  const [categories, setCategories] = useState([]);
-  const [modalities, setModalities] = useState([]);
-  const [subtypes, setSubtypes] = useState([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [modalities, setModalities] = useState<any[]>([]);
+  const [subtypes, setSubtypes] = useState<any[]>([]);
   const [selectedModality, setSelectedModality] = useState<number | null>(null);
 
   // Form State (só campos principais para exibir)
@@ -47,7 +47,7 @@ export default function CasosMedicos() {
   });
 
   // Listagem de casos já cadastrados (simplificado)
-  const [cases, setCases] = useState([]);
+  const [cases, setCases] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Load options
@@ -67,9 +67,7 @@ export default function CasosMedicos() {
   // Carrega todos casos médicos (listagem simplificada)
   useEffect(() => {
     setLoading(true);
-    supabase.from("medical_cases")
-      .select("id, title, created_at")
-      .order("created_at", { ascending: false })
+    supabase.from("medical_cases").select("id, title, created_at").order("created_at", { ascending: false })
       .then(({ data }) => {
         setCases(data || []);
         setLoading(false);
@@ -91,18 +89,25 @@ export default function CasosMedicos() {
     e.preventDefault();
     setLoading(true);
 
-    // Simples: só campos principais (adapte depois para todos os campos!)
-    const { error } = await supabase.from("medical_cases").insert({
+    // Build insertion object only with DB columns (see types.ts for Insert shape)
+    const insertObj: any = {
       title: form.title,
       category_id: form.category_id ? Number(form.category_id) : null,
       main_modality_id: form.main_modality_id ? Number(form.main_modality_id) : null,
       subtype_id: form.subtype_id ? Number(form.subtype_id) : null,
       difficulty_level: form.difficulty_level ? Number(form.difficulty_level) : null,
-      patient_age: form.patient_age,
-      patient_gender: form.patient_gender,
+      patient_age: form.patient_age || null,
+      patient_gender: form.patient_gender || null,
       created_at: new Date(),
       updated_at: new Date(),
-    });
+    };
+
+    // Remove any empty string vals to avoid backend error with type null vs ""
+    Object.keys(insertObj).forEach(
+      k => { if (insertObj[k] === "") insertObj[k] = null; }
+    );
+
+    const { error } = await supabase.from("medical_cases").insert([insertObj]);
     if (!error) {
       // reload listagem
       const { data } = await supabase.from("medical_cases").select("id, title, created_at").order("created_at", { ascending: false });
