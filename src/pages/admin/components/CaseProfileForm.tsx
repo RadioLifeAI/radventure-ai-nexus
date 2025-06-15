@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUploadWithZoom } from "./ImageUploadWithZoom";
 import { supabase } from "@/integrations/supabase/client";
+import { CaseModalityFields } from "./CaseModalityFields";
 
 type Option = { value: string, feedback: string };
 const GENDER_OPTIONS = [
@@ -19,10 +20,11 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
   const [difficulties, setDifficulties] = useState<{id: number, level: number, description: string | null}[]>([]);
   // Form fields
   const [form, setForm] = useState({
-    // Novos campos iniciais
     category_id: "",
     difficulty_level: "",
     points: "10",
+    modality: "",
+    subtype: "",
     title: "",
     findings: "",
     patient_age: "",
@@ -53,7 +55,15 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
       .then(({ data }) => data && setDifficulties(data));
   }, []);
 
-  // Handlers de campo
+  function handleFormChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  }
+
+  function handleModalityChange(val: { modality: string; subtype: string }) {
+    setForm((prev) => ({ ...prev, modality: val.modality, subtype: val.subtype }));
+  }
+
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -83,12 +93,12 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     e.preventDefault();
     setSubmitting(true);
     const payload: any = {
-      // Campos iniciais
       specialty: categories.find(c => String(c.id) === form.category_id)?.name || null,
       category_id: form.category_id ? Number(form.category_id) : null,
       difficulty_level: form.difficulty_level ? Number(form.difficulty_level) : null,
       points: form.points ? Number(form.points) : null,
-      // Restante (restaurei, mantendo)
+      modality: form.modality || null,
+      subtype: form.subtype || null,
       title: form.title,
       findings: form.findings,
       patient_age: form.patient_age,
@@ -104,12 +114,10 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
-    // Remove string vazia -> null
     Object.keys(payload).forEach(k => {
       if (typeof payload[k] === "string" && payload[k] === "") payload[k] = null;
     });
 
-    // Enviar para tabela medical_cases
     const { error } = await supabase.from("medical_cases").insert([payload]);
     if (!error) {
       setFeedback("Caso cadastrado com sucesso!");
@@ -117,6 +125,8 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         category_id: "",
         difficulty_level: "",
         points: "10",
+        modality: "",
+        subtype: "",
         title: "",
         findings: "",
         patient_age: "",
@@ -141,7 +151,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
   return (
     <form className="bg-white rounded-lg shadow p-6 max-w-3xl mx-auto space-y-5" onSubmit={handleSubmit}>
       <h2 className="text-xl font-bold mb-2">Criar Novo Caso Médico</h2>
-      {/* Campos iniciais - Categoria, Dificuldade, Pontos */}
+      {/* Linha Categoria/Dificuldade/Pontos */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
         <div>
           <label className="font-semibold block">Categoria *</label>
@@ -149,7 +159,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
             className="w-full border rounded px-2 py-2"
             name="category_id"
             value={form.category_id}
-            onChange={handleChange}
+            onChange={handleFormChange}
             required
           >
             <option value="">Selecione a categoria</option>
@@ -164,7 +174,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
             className="w-full border rounded px-2 py-2"
             name="difficulty_level"
             value={form.difficulty_level}
-            onChange={handleChange}
+            onChange={handleFormChange}
             required
           >
             <option value="">Selecione a dificuldade</option>
@@ -182,13 +192,16 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
             type="number"
             value={form.points}
             min={1}
-            onChange={handleChange}
+            onChange={handleFormChange}
             placeholder="Ex: 10"
             required
           />
         </div>
       </div>
-      {/* Restante do formulário mantido (título, imagem, achados...) */}
+
+      {/* Campos Modalidade/Subtipo */}
+      <CaseModalityFields value={{ modality: form.modality, subtype: form.subtype }} onChange={handleModalityChange} />
+
       <div className="flex flex-col md:flex-row gap-6">
         <div className="flex-1 space-y-3">
           <label className="font-semibold">Título *</label>
