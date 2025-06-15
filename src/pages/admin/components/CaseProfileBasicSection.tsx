@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,20 +15,23 @@ type Props = {
   handleModalityChange: any;
   handleAutoFillCaseDetails: any;
   handleSuggestTitle: any;
-  handleSuggestHint: any; // <-- Added this prop
+  handleSuggestHint: any;
   handleImageChange: any;
   renderTooltipTip: any;
+  handleSuggestFindings: any;
+  handleSuggestClinicalInfo: any;
 };
 
 export function CaseProfileBasicSection({
   form, highlightedFields, categories, difficulties, handleFormChange,
-  handleModalityChange, handleAutoFillCaseDetails, handleSuggestTitle, handleSuggestHint, handleImageChange, renderTooltipTip
+  handleModalityChange, handleAutoFillCaseDetails, handleSuggestTitle, handleSuggestHint, handleImageChange, renderTooltipTip,
+  handleSuggestFindings, handleSuggestClinicalInfo
 }: Props) {
   return (
     <>
       {/* Pré-visualização & botões */}
       <div className="mb-3 flex gap-2">
-        {/* passar botões necessários */}
+        {/* Botões principais já existentes em outro lugar */}
       </div>
       {/* Categoria/Dificuldade/Pontos */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
@@ -99,11 +101,9 @@ export function CaseProfileBasicSection({
                 className={highlightedFields.includes("title") ? "ring-2 ring-cyan-400" : ""}
               />
             </div>
-            {/* Botão Sugerir Título (mantido) */}
             <Button type="button" onClick={handleSuggestTitle} variant="secondary" className="mb-1">
               Sugerir Diagnóstico
             </Button>
-            {/* NOVO botão Auto-preencher */}
             <Button
               type="button"
               onClick={handleAutoFillCaseDetails}
@@ -114,10 +114,34 @@ export function CaseProfileBasicSection({
               Auto-preencher detalhes do caso
             </Button>
           </div>
-          <label className="font-semibold mt-3">Achados radiológicos *</label>
+          <label className="font-semibold mt-3 flex items-center">
+            Achados radiológicos *
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="ml-2 px-2 py-1 text-cyan-700 border border-cyan-200"
+              onClick={handleSuggestFindings}
+              title="Gerar sugestão de achados radiológicos via IA"
+            >
+              Sugerir IA
+            </Button>
+          </label>
           <Textarea name="findings" value={form.findings} onChange={handleFormChange} placeholder="Descreva os achados..." required className={highlightedFields.includes("findings") ? "ring-2 ring-cyan-400" : ""} />
 
-          <label className="font-semibold mt-3">Resumo Clínico *</label>
+          <label className="font-semibold mt-3 flex items-center">
+            Resumo Clínico *
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="ml-2 px-2 py-1 text-cyan-700 border border-cyan-200"
+              onClick={handleSuggestClinicalInfo}
+              title="Gerar sugestão de resumo clínico via IA"
+            >
+              Sugerir IA
+            </Button>
+          </label>
           <Textarea name="patient_clinical_info" value={form.patient_clinical_info} onChange={handleFormChange} placeholder="Breve histórico do paciente..." required className={highlightedFields.includes("patient_clinical_info") ? "ring-2 ring-cyan-400" : ""} />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-3">

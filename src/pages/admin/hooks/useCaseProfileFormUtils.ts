@@ -311,6 +311,81 @@ export function useCaseProfileFormUtils({
       setSubmitting(false);
     }
   }
+
+  async function handleSuggestFindings() {
+    if (!form.title?.trim() && !form.modality?.trim()) {
+      toast({ description: "Preencha Diagnóstico e/ou Modalidade para sugerir os achados." });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const contextFindings = `Você é especialista em radiologia. Gere uma descrição de achados radiológicos concisa (máx. 200 caracteres), associando com o diagnóstico e modalidades fornecidos.`;
+      const { data, error } = await supabase.functions.invoke("case-autofill", {
+        body: {
+          diagnosis: form.title || "",
+          modality: form.modality || "",
+          subtype: form.subtype || "",
+          withFindingsOnly: true,
+          systemPrompt: contextFindings,
+        }
+      });
+      if (error) throw new Error(error.message || "Falha IA ao sugerir achados.");
+      let findings = "";
+      if (data?.suggestion?.findings) {
+        findings = String(data.suggestion.findings).slice(0, 200);
+      } else if (typeof data?.suggestion === "string") {
+        findings = String(data.suggestion).slice(0, 200);
+      }
+      if (!findings) findings = "Achados sugeridos automaticamente. Ajuste conforme o caso clínico.";
+      setForm((prev: any) => ({ ...prev, findings }));
+      toast({ description: "Achados sugeridos via IA! Revise se necessário." });
+    } catch (err: any) {
+      setForm((prev: any) => ({
+        ...prev,
+        findings: "Achados gerados automaticamente (não personalizados: revise achados e quadro clínico)."
+      }));
+      toast({ variant: "destructive", description: "Falha IA ao sugerir achados (IA não respondeu)." });
+    }
+    setSubmitting(false);
+  }
+
+  async function handleSuggestClinicalInfo() {
+    if (!form.title?.trim() && !form.modality?.trim()) {
+      toast({ description: "Preencha Diagnóstico e/ou Modalidade para sugerir o resumo clínico." });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const contextClinical = `Você é especialista em radiologia. Gere um resumo clínico conciso (máximo 300 caracteres) integrando as informações do diagnóstico/modalidade.`;
+      const { data, error } = await supabase.functions.invoke("case-autofill", {
+        body: {
+          diagnosis: form.title || "",
+          modality: form.modality || "",
+          subtype: form.subtype || "",
+          withClinicalInfoOnly: true,
+          systemPrompt: contextClinical,
+        }
+      });
+      if (error) throw new Error(error.message || "Falha IA ao sugerir resumo clínico.");
+      let patient_clinical_info = "";
+      if (data?.suggestion?.patient_clinical_info) {
+        patient_clinical_info = String(data.suggestion.patient_clinical_info).slice(0, 300);
+      } else if (typeof data?.suggestion === "string") {
+        patient_clinical_info = String(data.suggestion).slice(0, 300);
+      }
+      if (!patient_clinical_info) patient_clinical_info = "Resumo clínico sugerido automaticamente. Ajuste conforme necessário.";
+      setForm((prev: any) => ({ ...prev, patient_clinical_info }));
+      toast({ description: "Resumo clínico sugerido via IA! Revise se necessário." });
+    } catch (err: any) {
+      setForm((prev: any) => ({
+        ...prev,
+        patient_clinical_info: "Resumo gerado automaticamente (não personalizado, revise!)."
+      }));
+      toast({ variant: "destructive", description: "Falha IA ao sugerir resumo clínico." });
+    }
+    setSubmitting(false);
+  }
+
   return {
     normalizeString,
     suggestPointsByDifficulty,
@@ -319,6 +394,8 @@ export function useCaseProfileFormUtils({
     handleSuggestAlternatives,
     handleSuggestHint,
     handleSuggestExplanation,
-    handleGenerateAutoTitle
+    handleGenerateAutoTitle,
+    handleSuggestFindings,
+    handleSuggestClinicalInfo
   };
 }

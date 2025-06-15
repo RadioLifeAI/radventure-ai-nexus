@@ -13,7 +13,83 @@ serve(async (req) => {
   }
 
   try {
-    const { diagnosis, findings, modality, subtype, withAlternativesOnly, withHintOnly, systemPrompt } = await req.json();
+    const { diagnosis, findings, modality, subtype, withAlternativesOnly, withHintOnly, systemPrompt, withFindingsOnly, withClinicalInfoOnly } = await req.json();
+
+    // NOVO: Só gerar achados radiológicos
+    if (withFindingsOnly) {
+      const promptFindings = systemPrompt
+        ? systemPrompt
+        : `Você é especialista em radiologia. Gere uma descrição de achados radiológicos concisa (máx. 200 caracteres), integrando diagnóstico e modalidade.`;
+      const completionRes = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${openAIApiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: promptFindings },
+            { role: "user", content: `Diagnóstico: ${diagnosis ?? "-"}; Modalidade: ${modality ?? "-"}; Subtipo: ${subtype ?? "-"}` }
+          ],
+          max_tokens: 100,
+          temperature: 0.5,
+        }),
+      });
+
+      if (!completionRes.ok) {
+        const text = await completionRes.text();
+        return new Response(
+          JSON.stringify({ error: "Failed calling OpenAI for findings", details: text }),
+          { status: 500, headers: corsHeaders }
+        );
+      }
+      const data = await completionRes.json();
+      let findings = data.choices?.[0]?.message?.content?.trim() ?? "";
+      findings = findings.replace(/^Achados:?\s*/i, "").slice(0, 200);
+
+      return new Response(JSON.stringify({ suggestion: { findings } }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    // NOVO: Só gerar resumo clínico (patient_clinical_info)
+    if (withClinicalInfoOnly) {
+      const promptClinical = systemPrompt
+        ? systemPrompt
+        : `Você é especialista em radiologia. Gere um resumo clínico objetivo e sucinto (máximo 300 caracteres), integrando diagnóstico e modalidade.`;
+      const completionRes = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${openAIApiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: promptClinical },
+            { role: "user", content: `Diagnóstico: ${diagnosis ?? "-"}; Modalidade: ${modality ?? "-"}; Subtipo: ${subtype ?? "-"}` }
+          ],
+          max_tokens: 160,
+          temperature: 0.5,
+        }),
+      });
+
+      if (!completionRes.ok) {
+        const text = await completionRes.text();
+        return new Response(
+          JSON.stringify({ error: "Failed calling OpenAI for clinical info", details: text }),
+          { status: 500, headers: corsHeaders }
+        );
+      }
+      const data = await completionRes.json();
+      let patient_clinical_info = data.choices?.[0]?.message?.content?.trim() ?? "";
+      patient_clinical_info = patient_clinical_info.replace(/^Resumo:?\s*/i, "").slice(0, 300);
+
+      return new Response(JSON.stringify({ suggestion: { patient_clinical_info } }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
 
     if (withHintOnly) {
       const promptHint = systemPrompt 
