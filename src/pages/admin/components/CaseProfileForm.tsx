@@ -236,7 +236,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         onPreview={() => setShowPreview(true)}
         onSuggestTitle={onSuggestDiagnosis}
         onAutoFill={handleAutoFillCaseDetails}
-        onGenerateAutoTitle={null}
+        onGenerateAutoTitle={handleGenerateCaseTitleAuto}
         showPreview={showPreview}
       />
       <CaseProfileBasicSection
