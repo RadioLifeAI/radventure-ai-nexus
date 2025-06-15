@@ -1,4 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
+import { buildAutoAdvancedFields } from "./autoAdvancedUtils";
+import { shuffleAlternativesWithFeedback } from "./shuffleUtils";
 
 export function useCaseProfileFormUtils({
   form,
@@ -20,34 +22,6 @@ export function useCaseProfileFormUtils({
       case "4": return "50";
       default:  return "10";
     }
-  }
-  // Util para embaralhamento coordenado
-  function shuffleAlternativesWithFeedback(
-    options: string[],
-    feedbacks: string[],
-    tips: string[],
-    currentCorrectIdx: number
-  ) {
-    // Cria array de objetos mantendo referência ao correto
-    const arr = options.map((option, idx) => ({
-      option,
-      feedback: feedbacks[idx] ?? "",
-      tip: tips[idx] ?? "",
-      isCorrect: idx === currentCorrectIdx,
-    }));
-    // Embaralha
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    // Encontra o novo índice correto
-    const newCorrectIdx = arr.findIndex((el) => el.isCorrect);
-    return {
-      options: arr.map((el) => el.option),
-      feedbacks: arr.map((el) => el.feedback),
-      tips: arr.map((el) => el.tip),
-      correctIdx: newCorrectIdx,
-    };
   }
 
   async function handleAutoFillCaseDetails() {
@@ -123,33 +97,8 @@ export function useCaseProfileFormUtils({
         newSubtype = suggestion.subtype;
       }
 
-      // --------- NOVO: gerar campos avançados automáticos ---------
-      const defaultDifficulty = suggestion.difficulty
-        ? String(suggestion.difficulty)
-        : (form.difficulty_level || "1");
-      const nOptions = Array.isArray(suggestion.answer_options) ? suggestion.answer_options.length : 4;
-
-      // SUGESTÕES PARA OS CAMPOS AVANÇADOS E DICA
-      const autoAdvanced = {
-        can_skip: true,
-        max_elimination: Math.max(1, nOptions - 2), // pelo menos 1, máximo (n-2)
-        ai_hint_enabled: true,
-        manual_hint: suggestion.manual_hint ?? (
-          // fallback se não veio do suggestion
-          suggestion.findings
-            ? `Atenção ao achado: ${suggestion.findings.slice(0,120)}`
-            : "Considere a integração entre achados e quadro clínico!"
-        ),
-        skip_penalty_points: 2,
-        elimination_penalty_points: 1,
-        ai_tutor_level: "basico",
-      };
-
-      // --------- EMBARALHAR alternativas ---------
-      const optionsArr = Array.isArray(suggestion.answer_options) ? suggestion.answer_options.slice(0, 4) : ["", "", "", ""];
-      const feedbacksArr = Array.isArray(suggestion.answer_feedbacks) ? suggestion.answer_feedbacks.slice(0, 4) : ["", "", "", ""];
-      const tipsArr = Array.isArray(suggestion.answer_short_tips) ? suggestion.answer_short_tips.slice(0, 4) : ["", "", "", ""];
-      const shuffle = shuffleAlternativesWithFeedback(optionsArr, feedbacksArr, tipsArr, 0);
+      // Usar util de advanced auto fill:
+      const autoAdvanced = buildAutoAdvancedFields(suggestion, form);
 
       setForm((prev: any) => {
         const safeStr = (v: any) => (v === null || v === undefined ? "" : String(v));
@@ -157,7 +106,6 @@ export function useCaseProfileFormUtils({
           if (Array.isArray(a)) return a.map(safeStr).concat(Array(fallbackLen).fill("")).slice(0, fallbackLen);
           return Array(fallbackLen).fill("");
         };
-
         return {
           ...prev,
           category_id: categoriaId,
@@ -180,7 +128,7 @@ export function useCaseProfileFormUtils({
           answer_options: shuffle.options,
           answer_short_tips: shuffle.tips,
           correct_answer_index: shuffle.correctIdx,
-          // ----- CAMPOS AVANÇADOS preenchidos automaticamente -----
+          // Avançados direto do utilitário!
           ...autoAdvanced
         };
       });
@@ -225,6 +173,7 @@ export function useCaseProfileFormUtils({
       setSubmitting(false);
     }
   }
+
   async function handleSuggestTitle() {
     if (!form.findings && !form.patient_clinical_info) {
       toast({ description: "Preencha Achados Radiológicos e/ou Resumo Clínico para sugerir um título." });
