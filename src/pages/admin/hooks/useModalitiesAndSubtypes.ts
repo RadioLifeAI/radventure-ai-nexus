@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { modalitiesSubtypes } from "../utils/modalitiesSubtypes";
 
 export type ModalityAndSubtypes = {
   value: string;
@@ -9,43 +10,53 @@ export type ModalityAndSubtypes = {
 };
 
 /**
- * Busca todas as modalidades e subtipos existentes na tabela medical_cases.
- * Retorna [{ value, label, subtypes: [{value, label}] }]
+ * Retorna sempre todas as modalidades fixas + subtipos do sistema (padrão da app).
+ * Adicionalmente, se houverem subtipos ou modalidades "novos" na base de dados, mescla ambos (sem duplicar).
  */
 export function useModalitiesAndSubtypes() {
-  const [options, setOptions] = useState<ModalityAndSubtypes[]>([]);
+  const [options, setOptions] = useState<ModalityAndSubtypes[]>(modalitiesSubtypes);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
     (async () => {
-      // Busca modalidades e subtipos existentes (unicas) no banco.
+      // Busca modalidades e subtipos únicos cadastrados
       const { data, error } = await supabase
         .from("medical_cases")
         .select("modality, subtype")
         .neq("modality", null);
 
-      if (error) {
-        setOptions([]);
+      if (error || !data) {
+        setOptions(modalitiesSubtypes);
         setLoading(false);
         return;
       }
 
-      // Mapeia modalidades com seus subtipos (mantendo unicidade)
-      const byModality: Record<string, Set<string>> = {};
-      (data || []).forEach((item) => {
-        if (!item.modality) return;
-        if (!byModality[item.modality]) byModality[item.modality] = new Set();
-        if (item.subtype) byModality[item.modality].add(item.subtype);
+      // Index rápido de modalidades/subtipos fixos para merge
+      const modalitiesMap: Record<string, Set<string>> = {};
+      modalitiesSubtypes.forEach(m => {
+        modalitiesMap[m.value] = new Set(m.subtypes.map(sub => sub.value));
       });
 
-      const opts: ModalityAndSubtypes[] = Object.entries(byModality).map(([modality, subtypesSet]) => ({
+      // Adiciona do banco, só se não existir na lista fixa
+      data.forEach(({ modality, subtype }) => {
+        if (!modality) return;
+        if (!modalitiesMap[modality]) {
+          modalitiesMap[modality] = new Set();
+        }
+        if (subtype) {
+          modalitiesMap[modality].add(subtype);
+        }
+      });
+
+      // Transforma para o formato do componente
+      const opts: ModalityAndSubtypes[] = Object.entries(modalitiesMap).map(([modality, subSet]) => ({
         value: modality,
         label: modality,
-        subtypes: Array.from(subtypesSet).map((sub) => ({ value: sub, label: sub })),
+        subtypes: Array.from(subSet).map((sub) => ({ value: sub, label: sub })),
       }));
 
-      // Ordenar por nome da modalidade
+      // Ordena o array pelo nome da modalidade
       opts.sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
       setOptions(opts);
       setLoading(false);
