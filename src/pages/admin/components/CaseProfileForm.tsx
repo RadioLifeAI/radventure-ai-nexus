@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +41,22 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState("");
 
+  // Lógica para sugestão automática de pontos conforme dificuldade
+  function suggestPointsByDifficulty(level: string) {
+    switch (level) {
+      case "1": // Iniciante
+        return "10";
+      case "2": // Intermediário
+        return "20";
+      case "3": // Avançado
+        return "20";
+      case "4": // Infernal
+        return "50";
+      default:
+        return "10";
+    }
+  }
+
   // Carregar selects de categorias e dificuldades
   useEffect(() => {
     supabase.from("medical_specialties")
@@ -73,7 +88,16 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
 
   function handleFormChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    // Se o campo alterado é o nível de dificuldade, sugerir pontos automaticamente
+    if (name === "difficulty_level") {
+      setForm((prev) => ({
+        ...prev,
+        [name]: value,
+        points: suggestPointsByDifficulty(value),
+      }));
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value }));
+    }
   }
 
   function handleModalityChange(val: { modality: string; subtype: string }) {
