@@ -129,9 +129,15 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
       setForm(prev => ({
         ...prev,
         category_id:
-          categories.find(({ name }) => name === suggestion.category)?.id ?? "",
+          suggestion.category
+            ? String(categories.find(({ name }) => name === suggestion.category)?.id ?? "")
+            : "",
         difficulty_level:
-          difficulties.find(({ level }) => String(level) === String(suggestion.difficulty))?.level?.toString() ?? "",
+          suggestion.difficulty
+            ? String(
+                difficulties.find(({ level }) => String(level) === String(suggestion.difficulty))?.level ?? ""
+              )
+            : "",
         points: suggestion.points?.toString() ?? "10",
         modality: suggestion.modality ?? "",
         subtype: suggestion.subtype ?? "",
