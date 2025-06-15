@@ -90,19 +90,16 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     }
     setSubmitting(true);
     try {
-      const res = await fetch(
-        "https://zyrbkxkxdznyhrpudhrk.functions.supabase.co/case-autofill",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ diagnosis: form.title }),
-        }
-      );
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || data.raw || "Falha na chamada IA.");
+      // Agora usando o invoke da função edge Supabase
+      const { data, error } = await supabase.functions.invoke("case-autofill", {
+        body: { diagnosis: form.title },
+      });
+
+      if (error) {
+        throw new Error(error.message || "Falha na chamada IA via Supabase.");
       }
-      const suggestion = data.suggestion || {};
+
+      const suggestion = data?.suggestion || {};
       setForm(prev => {
         // Defensive helpers to ensure string fields for TS & consistency
         const safeStr = (v: any) => (v === null || v === undefined ? "" : String(v));
@@ -132,7 +129,6 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
           symptoms_duration: safeStr(suggestion.symptoms_duration ?? ""),
           main_question: safeStr(suggestion.main_question ?? ""),
           answer_options: safeArr(suggestion.answer_options, 4),
-          // Atualizado: preencher também os feedbacks e metadicas se vierem na suggestion
           answer_feedbacks: safeArr(suggestion.answer_feedbacks, 4),
           answer_short_tips: safeArr(suggestion.answer_short_tips, 4),
           correct_answer_index: 0,
@@ -163,7 +159,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     } catch (err: any) {
       toast({
         variant: "destructive",
-        title: "Erro ao preencher detalhes automáticamente",
+        title: "Erro ao preencher detalhes automaticamente",
         description: err?.message || String(err),
       });
     } finally {
