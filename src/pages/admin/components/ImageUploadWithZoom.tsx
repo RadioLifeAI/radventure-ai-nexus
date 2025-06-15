@@ -13,6 +13,17 @@ type Props = {
   onChange: (images: CaseImage[]) => void;
 };
 
+// NOVA FUNÇÃO DE SANITIZAÇÃO DE NOME DE ARQUIVO
+function sanitizeFileName(name: string) {
+  // Remove acentos, espaços e caracteres especiais (mantém apenas letras, números, '-', '_', '.')
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Remove acentos unicode
+    .replace(/ /g, "_")              // Espaços para underscore
+    .replace(/[^a-zA-Z0-9._-]/g, "") // Remove tudo exceto letras, números, ponto, _ e -
+    .toLowerCase();
+}
+
 export function ImageUploadWithZoom({ value = [], onChange }: Props) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [images, setImages] = useState<CaseImage[]>(value);
@@ -33,7 +44,8 @@ export function ImageUploadWithZoom({ value = [], onChange }: Props) {
         continue;
       }
 
-      const filename = `${Date.now()}-${file.name}`;
+      // USAR NOME SANITIZADO!
+      const filename = `${Date.now()}-${sanitizeFileName(file.name)}`;
       const { error } = await supabase.storage
         .from("medical-cases")
         .upload(filename, file, { upsert: true });
