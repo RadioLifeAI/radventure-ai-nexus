@@ -89,24 +89,6 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
       ? `Caso ${abbreviateCategory(categoryForTitle)} ${form.case_number || generateRandomCaseNumber()}`
       : "(Será definido automaticamente após salvar: Caso [ABREV] [NUM ALEATÓRIO])";
 
-  // Gera título automático ao clicar botão ou na troca de categoria/mod
-  async function handleGenerateCaseTitleAuto() {
-    if (!form.category_id || !form.modality) {
-      toast({ description: "Selecione uma categoria e modalidade primeiro." });
-      return;
-    }
-    const categoria = categories.find((c: any) => String(c.id) === String(form.category_id))?.name || "";
-    const abrev = abbreviateCategory(categoria);
-    const rndNumber = generateRandomCaseNumber();
-
-    setForm((prev: any) => ({
-      ...prev,
-      title: `Caso ${abrev} ${rndNumber}`,
-      case_number: rndNumber, // Armazena para preview e envio
-    }));
-    toast({ description: "Título gerado automaticamente!" });
-  }
-
   // Garante geração automática do número e título ao selecionar categoria/mod (sem sobrescrever input manual)
   useEffect(() => {
     if (form.category_id && form.modality) {
