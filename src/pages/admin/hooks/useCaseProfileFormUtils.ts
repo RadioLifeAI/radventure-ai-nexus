@@ -20,7 +20,7 @@ export function useCaseProfileFormUtils({
     setSubmitting(true);
     setHighlightedFields([]);
     try {
-      const res = await fetch("/api/case-autofill", {
+      const res = await fetch("https://zyrbkxkxdznyhrpudhrk.functions.supabase.co/case-autofill", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -46,7 +46,7 @@ export function useCaseProfileFormUtils({
     setSubmitting(true);
     setHighlightedFields([]);
     try {
-      const res = await fetch("/api/case-autofill", {
+      const res = await fetch("https://zyrbkxkxdznyhrpudhrk.functions.supabase.co/case-autofill", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -72,7 +72,7 @@ export function useCaseProfileFormUtils({
     setSubmitting(true);
     setHighlightedFields([]);
     try {
-      const res = await fetch("/api/case-autofill", {
+      const res = await fetch("https://zyrbkxkxdznyhrpudhrk.functions.supabase.co/case-autofill", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -123,7 +123,7 @@ export function useCaseProfileFormUtils({
     setSubmitting(true);
     setHighlightedFields([]);
     try {
-      const res = await fetch("/api/case-autofill", {
+      const res = await fetch("https://zyrbkxkxdznyhrpudhrk.functions.supabase.co/case-autofill", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -150,7 +150,7 @@ export function useCaseProfileFormUtils({
     setSubmitting(true);
     setHighlightedFields([]);
     try {
-      const res = await fetch("/api/case-autofill", {
+      const res = await fetch("https://zyrbkxkxdznyhrpudhrk.functions.supabase.co/case-autofill", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -189,7 +189,7 @@ export function useCaseProfileFormUtils({
     setSubmitting(true);
     setHighlightedFields([]);
     try {
-      const res = await fetch("/api/case-autofill", {
+      const res = await fetch("https://zyrbkxkxdznyhrpudhrk.functions.supabase.co/case-autofill", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -215,7 +215,7 @@ export function useCaseProfileFormUtils({
     setSubmitting(true);
     setHighlightedFields([]);
     try {
-      const res = await fetch("/api/case-autofill", {
+      const res = await fetch("https://zyrbkxkxdznyhrpudhrk.functions.supabase.co/case-autofill", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
