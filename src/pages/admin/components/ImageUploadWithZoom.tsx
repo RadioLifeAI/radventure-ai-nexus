@@ -16,7 +16,6 @@ type Props = {
 
 export function ImageUploadWithZoom({ value = [], onChange }: Props) {
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const localRef = useRef<HTMLInputElement | null>(null);
   const [images, setImages] = useState<CaseImage[]>(value);
 
   // Anexar ao array e render, com campo legenda incluso
@@ -51,38 +50,6 @@ export function ImageUploadWithZoom({ value = [], onChange }: Props) {
     setImages(all);
     onChange(all);
     if (inputRef.current) inputRef.current.value = "";
-    if (localRef.current) localRef.current.value = "";
-  }
-
-  function handleLocal(e: React.ChangeEvent<HTMLInputElement>) {
-    if (!e.target.files) return;
-    const files = Array.from(e.target.files).slice(0, 6 - images.length);
-    const readers: Promise<CaseImage>[] = [];
-    for (const file of files) {
-      readers.push(
-        new Promise((resolve, reject) => {
-          if (!file.type.startsWith("image/")) {
-            alert("Tipo de arquivo não permitido. Somente imagens.");
-            reject();
-            return;
-          }
-          if (file.size > 5 * 1024 * 1024) {
-            alert(`Imagem muito grande (${file.name}). Máx: 5MB`);
-            reject();
-            return;
-          }
-          const reader = new FileReader();
-          reader.onload = (ev) => resolve({ url: ev.target?.result as string, legend: "" });
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        })
-      );
-    }
-    Promise.all(readers).then((base64imgs) => {
-      const all = [...images, ...base64imgs].slice(0, 6);
-      setImages(all);
-      onChange(all);
-    });
   }
 
   function handleRemove(idx: number) {
@@ -109,14 +76,22 @@ export function ImageUploadWithZoom({ value = [], onChange }: Props) {
         {images.length > 0 ? (
           images.map((img, idx) => (
             <div
-              className="relative w-32 h-32 bg-gray-200 rounded border flex flex-col items-center justify-center overflow-hidden flex-shrink-0"
+              className="relative w-32 h-36 bg-gray-200 rounded border flex flex-col items-center justify-between overflow-hidden flex-shrink-0 py-1"
               key={idx}
             >
               <img
                 src={img.url}
                 alt={`Imagem ${idx + 1}`}
-                className="w-full h-full object-contain"
+                className="w-full h-24 object-contain"
                 draggable={false}
+              />
+              <input
+                type="text"
+                placeholder="Legenda/Referência"
+                className="w-full px-1 py-0.5 text-xs border-t border-gray-300 mt-1 rounded-b bg-gray-100 outline-none focus:ring"
+                value={img.legend ?? ""}
+                onChange={e => handleLegendChange(idx, e.target.value)}
+                aria-label="Legenda da imagem"
               />
               <button
                 type="button"
@@ -126,14 +101,6 @@ export function ImageUploadWithZoom({ value = [], onChange }: Props) {
               >
                 <X size={18} className="text-red-500" />
               </button>
-              <input
-                type="text"
-                placeholder="Legenda/Referência"
-                className="w-full px-1 py-0.5 text-xs border-t border-gray-300 mt-1 rounded-b bg-gray-100 outline-none focus:ring"
-                value={img.legend}
-                onChange={e => handleLegendChange(idx, e.target.value)}
-                aria-label="Legenda da imagem"
-              />
             </div>
           ))
         ) : (
@@ -160,23 +127,6 @@ export function ImageUploadWithZoom({ value = [], onChange }: Props) {
           className="hidden"
           multiple
           onChange={handleUpload}
-        />
-        <Button
-          variant="secondary"
-          type="button"
-          size="sm"
-          onClick={() => localRef.current?.click()}
-        >
-          <Image size={16} className="mr-2" />
-          Upload Outra Imagem
-        </Button>
-        <input
-          ref={localRef}
-          type="file"
-          accept="image/png,image/jpeg,image/jpg,image/gif"
-          multiple
-          className="hidden"
-          onChange={handleLocal}
         />
       </div>
     </div>
