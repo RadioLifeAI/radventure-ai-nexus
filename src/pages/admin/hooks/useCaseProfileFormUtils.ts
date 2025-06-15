@@ -207,8 +207,43 @@ export function useCaseProfileFormUtils({
       toast({ description: "Preencha Achados Radiológicos e/ou Resumo Clínico para sugerir uma dica." });
       return;
     }
-    setForm((prev: any) => ({ ...prev, manual_hint: "Dica gerada automaticamente (placeholder IA)." }));
-    toast({ description: "Dica sugerida automaticamente (futuramente via IA, edite se desejar)." });
+    setSubmitting(true);
+    try {
+      // Solicita para a IA uma dica clínica radiológica direta e enxuta (até 200 caracteres)
+      const contextHint = `Você é um especialista em radiologia e diagnóstico por imagem, e deve fornecer uma dica curta (máx. 200 caracteres) para o estudante resolver o caso, focando apenas em integrar achados radiológicos com o contexto clínico. Não use frases genéricas, seja objetivo.`;
+      const { data, error } = await supabase.functions.invoke("case-autofill", {
+        body: {
+          diagnosis: form.title || "",
+          findings: form.findings || "",
+          modality: form.modality || "",
+          subtype: form.subtype || "",
+          withHintOnly: true,
+          systemPrompt: contextHint,
+        }
+      });
+      if (error) throw new Error(error.message || "Falha IA ao gerar dica.");
+      let hint = "";
+
+      // Nova convenção: resposta vem como { suggestion: { hint: ... } }
+      if (data?.suggestion?.hint) {
+        hint = String(data.suggestion.hint).slice(0, 200);
+      } else if (typeof data?.suggestion === "string") {
+        hint = String(data.suggestion).slice(0, 200);
+      } else {
+        // fallback genérico
+        hint = "Dica centrada na integração dos achados radiológicos com o contexto clínico.";
+      }
+
+      setForm((prev: any) => ({ ...prev, manual_hint: hint }));
+      toast({ description: "Dica sugerida automaticamente pela IA com máximo de 200 caracteres." });
+    } catch (err: any) {
+      setForm((prev: any) => ({
+        ...prev,
+        manual_hint: "Dica gerada automaticamente (não personalizada: revise achados e quadro clínico)."
+      }));
+      toast({ variant: "destructive", description: "Falha IA. Usando explicação curta padrão." });
+    }
+    setSubmitting(false);
   }
   async function handleSuggestExplanation() {
     if (!form.findings && !form.main_question && !form.title) {

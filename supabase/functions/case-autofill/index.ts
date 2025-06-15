@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
@@ -14,7 +13,45 @@ serve(async (req) => {
   }
 
   try {
-    const { diagnosis, findings, modality, subtype, withAlternativesOnly } = await req.json();
+    const { diagnosis, findings, modality, subtype, withAlternativesOnly, withHintOnly, systemPrompt } = await req.json();
+
+    if (withHintOnly) {
+      const promptHint = systemPrompt 
+        ? systemPrompt 
+        : `Você é um especialista em radiologia. Forneça uma dica super concisa (máx. 200 caracteres) para ajudar o estudante a resolver o caso, integrando achado radiológico e contexto clínico. Não seja genérico.`;
+      const completionRes = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${openAIApiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: promptHint },
+            { role: "user", content: `Diagnóstico: ${diagnosis ?? "-"}; Achados radiológicos: ${findings ?? "-"}; Modalidade: ${modality ?? "-"}; Subtipo: ${subtype ?? "-"}` }
+          ],
+          max_tokens: 120,
+          temperature: 0.6,
+        }),
+      });
+
+      if (!completionRes.ok) {
+        const text = await completionRes.text();
+        return new Response(
+          JSON.stringify({ error: "Failed calling OpenAI for hint", details: text }),
+          { status: 500, headers: corsHeaders }
+        );
+      }
+
+      const data = await completionRes.json();
+      let hint = data.choices?.[0]?.message?.content?.trim() ?? "";
+      hint = hint.replace(/^Dica:?\s*/i, "").slice(0, 200);
+
+      return new Response(JSON.stringify({ suggestion: { hint } }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
 
     if (withAlternativesOnly) {
       // Solicita apenas alternativas usando o contexto diferencial
