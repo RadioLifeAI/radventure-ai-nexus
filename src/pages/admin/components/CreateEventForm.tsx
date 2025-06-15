@@ -1,8 +1,10 @@
+
 import React, { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { EventBannerUpload } from "./EventBannerUpload";
+import { CaseFiltersSelector } from "./CaseFiltersSelector";
 
 type Prize = { position: number, prize: number };
 
@@ -29,7 +31,7 @@ export function CreateEventForm({ onCreated }: { onCreated?: () => void }) {
     { position: 9, prize: 15 },
     { position: 10, prize: 10 },
   ]);
-  // TODO: Filtros de seleção de casos (form básico, adaptações futuras)
+  // Filtros de seleção de casos
   const [caseFilters, setCaseFilters] = useState({});
 
   const [loading, setLoading] = useState(false);
@@ -69,6 +71,9 @@ export function CreateEventForm({ onCreated }: { onCreated?: () => void }) {
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl mx-auto p-4 bg-white rounded shadow space-y-6">
       <h2 className="text-xl font-bold">Novo Evento</h2>
+      
+      <CaseFiltersSelector value={caseFilters} onChange={setCaseFilters} />
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="font-semibold block">Título do evento</label>
@@ -124,7 +129,6 @@ export function CreateEventForm({ onCreated }: { onCreated?: () => void }) {
           </div>
         </div>
       </div>
-      {/* TODO: filtros avançados de seleção de casos e outras configs */}
       <Button type="submit" disabled={loading}>
         {loading ? "Criando evento..." : "Criar evento"}
       </Button>
