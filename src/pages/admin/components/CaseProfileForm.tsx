@@ -11,7 +11,11 @@ import { CaseProfileAdvancedConfigContainer } from "./CaseProfileAdvancedConfigC
 import { useFieldUndo } from "../hooks/useFieldUndo";
 import { useCaseTitleGenerator } from "../hooks/useCaseTitleGenerator";
 import { CaseProfileFormTitleSection } from "./CaseProfileFormTitleSection";
-import { CaseProfileFormPreviewModal } from "./CaseProfileFormPreviewModal";
+import { CaseFormPreviewModal } from "./CaseFormPreviewModal";
+import { CaseProgressDashboard } from "./CaseProgressDashboard";
+import { CaseQualityRadar } from "./CaseQualityRadar";
+import { CaseTemplateChooser } from "./CaseTemplateChooser";
+import { CaseFormGamifiedHelpers } from "./CaseFormGamifiedHelpers";
 import { supabase } from "@/integrations/supabase/client";
 
 const GENDER_OPTIONS = [
@@ -218,9 +222,17 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
 
   return (
     <form className="w-full" onSubmit={handleSubmit}>
-      {/* Propaga para preview modal o array completo */}
-      <CaseProfileFormPreviewModal open={showPreview} onClose={() => setShowPreview(false)} form={form} categories={categories} difficulties={difficulties} />
+      {/* Pré-visualização gamificada adicional */}
+      <CaseFormPreviewModal open={showPreview} onClose={()=>setShowPreview(false)} form={form} categories={categories} difficulties={difficulties} />
+
       <h2 className="text-xl font-bold mb-2">Criar Novo Caso Médico</h2>
+
+      {/* Nova barra de progresso e radar de qualidade */}
+      <CaseProgressDashboard form={form} />
+      <CaseQualityRadar form={form} />
+      <CaseFormGamifiedHelpers form={form} />
+      <CaseTemplateChooser setForm={setForm} />
+
       <CaseProfileFormTitleSection
         autoTitlePreview={autoTitlePreview}
         showPreview={showPreview}
