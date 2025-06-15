@@ -1,14 +1,14 @@
+
 import { useState } from "react";
 
 /**
  * Hook para o estado do formulário de case profile.
- * Pode ser expandido para lógica de validação, etc.
  */
 const INITIAL_FORM = {
   category_id: "",
   difficulty_level: "",
   points: "10",
-  specialty: "",
+  // specialty removido do formulário, pois é derivado da categoria
   modality: "",
   subtype: "",
   title: "",

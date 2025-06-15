@@ -107,7 +107,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     setSubmitting(true);
 
     try {
-      // Para garantir numeração correta, conta novamente antes do insert para evitar duplicatas
+      // Conta novamente antes do insert para evitar duplicatas
       let caseNumber = form.case_number;
       if ((!caseNumber || isNaN(Number(caseNumber))) && form.category_id && form.modality) {
         const { data } = await supabase
@@ -118,9 +118,10 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         caseNumber = ((data?.length ?? 0) + 1);
       }
 
+      const selectedCategory = categories.find(c => String(c.id) === String(form.category_id));
       const payload: any = {
-        // Adiciona specialty com fallback para vazio/null caso não encontrado
-        specialty: form.specialty || (categories.find(c => String(c.id) === String(form.category_id))?.name ?? null),
+        // Grava specialty sempre igual ao nome da categoria selecionada
+        specialty: selectedCategory ? selectedCategory.name : null,
         category_id: form.category_id ? Number(form.category_id) : null,
         case_number: caseNumber ?? null,
         difficulty_level: form.difficulty_level ? Number(form.difficulty_level) : null,
