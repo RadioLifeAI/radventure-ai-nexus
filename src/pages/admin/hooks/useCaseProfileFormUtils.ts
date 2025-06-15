@@ -33,10 +33,21 @@ export function useCaseProfileFormUtils({
     }
     setSubmitting(true);
     try {
-      const body: any = { diagnosis: form.title };
-      if (form.findings?.trim()) body.findings = form.findings.trim();
-      if (form.modality?.trim()) body.modality = form.modality.trim();
-      if (form.subtype?.trim()) body.subtype = form.subtype.trim();
+      // Novo prompt explicando o significado de cada campo para a IA
+      const contextForAI = `
+IMPORTANTE: Ao sugerir os campos abaixo, siga rigorosamente estas definições:
+- Modalidade: tipo de exame de imagem (exemplo: Tomografia Computadorizada, Ressonância Magnética, Radiografia, Ultrassonografia, Mamografia, etc).
+- Subtipo: região do corpo ou protocolo do exame (exemplo: Tórax, Encéfalo, Articulações, Abdome, Seios da Face, Pelve, etc).
+- Categoria: especialidade médica responsável pela avaliação da região ou tipo do caso (exemplo: Torácica, Neuro, Abdome, Musculoesquelético, Mama etc - use exatamente os nomes comuns das especialidades médicas).
+Ao preencher, NÃO confunda Modalidade com Subtipo. Caso o diagnóstico seja de uma patologia pulmonar, por exemplo, a Categoria deve ser "Torácica"; se envolver o cérebro, "Neuro". Não escreva diagnósticos nos campos de achados.
+      `;
+      const body: any = { 
+        diagnosis: form.title,
+        findings: form.findings?.trim() || "",
+        modality: form.modality?.trim() || "",
+        subtype: form.subtype?.trim() || "",
+        systemPrompt: contextForAI,
+      };
 
       const { data, error } = await supabase.functions.invoke("case-autofill", {
         body
@@ -50,28 +61,36 @@ export function useCaseProfileFormUtils({
       let categoriaId = "";
       let categoriaWarning = "";
       if (suggestion.category) {
-        const normalizedAI = normalizeString(String(suggestion.category));
-        const match =
-          categories.find((cat: any) => normalizeString(cat.name) === normalizedAI) ||
-          categories.find((cat: any) => normalizedAI.includes(normalizeString(cat.name))) ||
-          categories.find((cat: any) => normalizeString(cat.name).includes(normalizedAI));
-        if (match) {
-          categoriaId = String(match.id);
-        } else {
-          // tentativas fuzzy
-          const close = categories.find((cat: any) =>
-            normalizeString(cat.name).includes(normalizedAI.slice(0, 4))
+        // Busca mais flexível e com alertas
+        const aiCatNorm = normalizeString(String(suggestion.category));
+        let matchCat = categories.find((cat: any) => 
+          normalizeString(cat.name) === aiCatNorm
+        );
+        if (!matchCat) {
+          // Busca parcial por inclui/exato em parte do nome
+          matchCat = categories.find((cat: any) => 
+            aiCatNorm.includes(normalizeString(cat.name)) ||
+            normalizeString(cat.name).includes(aiCatNorm) 
           );
-          categoriaId = close ? String(close.id) : "";
-          if (!categoriaId) {
-            categoriaWarning =
-              `A categoria sugerida pela IA ("${suggestion.category}") não foi encontrada nas categorias cadastradas. Preencha manualmente.`;
-            toast({ variant: "destructive", title: "Categoria não encontrada!", description: categoriaWarning });
-          }
         }
+        if (!matchCat) {
+          // Fuzzy busca: primeiros 4 caracteres
+          matchCat = categories.find((cat: any) =>
+            normalizeString(cat.name).slice(0,4) === aiCatNorm.slice(0,4)
+          );
+        }
+        if (!matchCat && categories.length) {
+          categoriaWarning = `A categoria sugerida pela IA ("${suggestion.category}") não correspondeu a nenhuma categoria existente. Ajuste manualmente.`;
+          toast({ 
+            variant: "destructive",
+            title: "Categoria não localizada automaticamente!",
+            description: categoriaWarning
+          });
+        }
+        categoriaId = matchCat ? String(matchCat.id) : "";
       }
 
-      // --- MELHORIA: Mapeamento tolerante da modalidade e subtipo ---
+      // --- MELHORIA: Modalidade e Subtipo ---
       const ALL_MODALITIES = [
         "Tomografia Computadorizada (TC)",
         "Ressonância Magnética (RM)",
@@ -88,20 +107,14 @@ export function useCaseProfileFormUtils({
       let newModality = "";
       if (suggestion.modality && suggestion.modality.trim()) {
         const aiMod = normalizeString(suggestion.modality);
-        const idxExact = ALL_MODALITIES_NORMALIZED.findIndex(m => m === aiMod);
-        if (idxExact > -1) {
-          newModality = ALL_MODALITIES[idxExact];
-        } else {
-          // fuzzy: busca que contém ou é contido
-          const idxPartial = ALL_MODALITIES_NORMALIZED.findIndex(m => m.includes(aiMod) || aiMod.includes(m));
-          if (idxPartial > -1) {
-            newModality = ALL_MODALITIES[idxPartial];
-          } else {
-            // fallback: primeira modalidade cujo nome contém ao menos 4 letras do fornecido pela IA
-            const idxStarts = ALL_MODALITIES_NORMALIZED.findIndex(m => m.startsWith(aiMod.slice(0, 5)));
-            newModality = idxStarts > -1 ? ALL_MODALITIES[idxStarts] : form.modality || "";
-          }
+        let idx = ALL_MODALITIES_NORMALIZED.findIndex(m => m === aiMod);
+        if (idx === -1) {
+          idx = ALL_MODALITIES_NORMALIZED.findIndex(m => m.includes(aiMod) || aiMod.includes(m));
         }
+        if (idx === -1) {
+          idx = ALL_MODALITIES_NORMALIZED.findIndex(m => m.startsWith(aiMod.slice(0, 5)));
+        }
+        newModality = idx > -1 ? ALL_MODALITIES[idx] : form.modality || "";
       } else {
         newModality = form.modality || "";
       }
@@ -131,19 +144,16 @@ export function useCaseProfileFormUtils({
       let newSubtype = "";
       if (suggestion.subtype && suggestion.subtype.trim()) {
         const aiSub = normalizeString(suggestion.subtype);
-        const idxExactS = ALL_SUBTYPES_NORMALIZED.findIndex(s => s === aiSub);
-        if (idxExactS > -1) {
-          newSubtype = ALL_SUBTYPES[idxExactS];
-        } else {
-          // fuzzy: busca contém
-          const idxPartialS = ALL_SUBTYPES_NORMALIZED.findIndex(s => s.includes(aiSub) || aiSub.includes(s));
-          if (idxPartialS > -1) {
-            newSubtype = ALL_SUBTYPES[idxPartialS];
-          } else {
-            // tentativa de 4 primeiras letras
-            const idxStartsS = ALL_SUBTYPES_NORMALIZED.findIndex(s => s.startsWith(aiSub.slice(0, 6)));
-            newSubtype = idxStartsS > -1 ? ALL_SUBTYPES[idxStartsS] : form.subtype || "";
-          }
+        let idx = ALL_SUBTYPES_NORMALIZED.findIndex(s => s === aiSub);
+        if (idx === -1) {
+          idx = ALL_SUBTYPES_NORMALIZED.findIndex(s => s.includes(aiSub) || aiSub.includes(s));
+        }
+        if (idx === -1) {
+          idx = ALL_SUBTYPES_NORMALIZED.findIndex(s => s.startsWith(aiSub.slice(0, 6)));
+        }
+        newSubtype = idx > -1 ? ALL_SUBTYPES[idx] : form.subtype || "";
+        if (!newSubtype) {
+          toast({ variant: "destructive", title: "Subtipo não localizado", description: `Não foi possível selecionar um subtipo a partir de "${suggestion.subtype}". Ajuste manualmente.` });
         }
       } else {
         newSubtype = form.subtype || "";
@@ -203,7 +213,7 @@ export function useCaseProfileFormUtils({
       setTimeout(() => setHighlightedFields([]), 2500);
       toast({
         title: "Campos preenchidos por IA!",
-        description: "Revise as sugestões — principalmente a explicação curta, focada na integração entre achados radiológicos e o contexto clínico.",
+        description: "Revise as sugestões — principalmente categoria e subtipo, além da explicação curta, focada na integração entre achados radiológicos e o contexto clínico.",
       });
     } catch (err: any) {
       toast({
