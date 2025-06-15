@@ -1,5 +1,14 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import {
+  buildPromptAlternatives,
+  buildPromptFindings,
+  buildPromptClinicalInfo,
+  buildPromptHint,
+  buildPromptFullCase,
+} from "./prompts.ts";
+import { tryParseJsonFromCompletion, trimFieldsOnPayload } from "./utils.ts";
+
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 const corsHeaders = {
@@ -49,165 +58,6 @@ async function getOpenAISuggestion({ messages, max_tokens = 300, temperature = 0
     throw new Error(text || "Failed calling OpenAI");
   }
   return data.choices?.[0]?.message?.content ?? "{}";
-}
-
-// Gera prompt para alternativas
-function buildPromptAlternatives({ diagnosis, findings, modality, subtype }) {
-  return [
-    {
-      role: "system",
-      content:
-        `Você é um especialista em radiologia e diagnóstico por imagem, focado em criar casos clínico-radiológicos objetivos para quizzes. Sugira os três principais diagnósticos diferenciais, além do diagnóstico principal fornecido, levando em conta obrigatoriamente os achados radiológicos (${findings ?? "não especificado"}) e os dados clínicos disponíveis. ${DIAG_NOT_REVEALED}\n${FEEDBACK_INSTRUCTION}\nSiga exatamente este formato JSON:
-{
-  "answer_options": ["Diagnóstico Principal", "Diagnóstico Diferencial 1", "Diagnóstico Diferencial 2", "Diagnóstico Diferencial 3"],
-  "answer_feedbacks": ["Feedback para o principal", "Feedback diferencial 1", "Feedback diferencial 2", "Feedback diferencial 3"],
-  "answer_short_tips": ["Dica sobre o principal", "Dica diferencial 1", "Dica diferencial 2", "Dica diferencial 3"]
-}
-Importante: Não explique na resposta geral, use só os campos acima. A alternativa A sempre será o diagnóstico principal.`
-    },
-    {
-      role: "user",
-      content: `Diagnóstico principal: ${diagnosis ?? "-"}; Achados radiológicos: ${findings ?? "-"}; Modalidade: ${modality ?? "-"}; Subtipo: ${subtype ?? "-"}`
-    }
-  ];
-}
-
-function buildPromptFindings({ diagnosis, modality, subtype, systemPrompt }) {
-  const personaPrompt = `Você é um(a) radiologista com título em Radiologia, reconhecido(a) mundialmente por sua excelência em diagnóstico por imagem e ensino médico. Seu objetivo é descrever de forma objetiva, clara e altamente profissional os achados radiológicos encontrados em exames de imagem, mantendo precisão técnica e rigor científico.`;
-
-  const restriction = `${DIAG_NOT_REVEALED}\nNunca revele, cite, deduza ou sugira explicitamente o diagnóstico correto nos achados, apenas descreva o que está presente nas imagens.`;
-
-  const userPrompt =
-    systemPrompt
-      ? `${systemPrompt}\n${restriction}`
-      : `${personaPrompt}\nGere uma descrição de achados radiológicos objetiva, estruturada e sucinta (máx. 200 caracteres), utilizando linguagem técnica avançada, mas sem qualquer menção, sugestão ou dedução do diagnóstico final. Apenas os achados detectados, sem interpretações clínicas ou diagnósticas. ${restriction}`;
-  return [
-    { role: "system", content: userPrompt },
-    { role: "user", content: `Diagnóstico: ${diagnosis ?? "-"}; Modalidade: ${modality ?? "-"}; Subtipo: ${subtype ?? "-"}` }
-  ];
-}
-
-function buildPromptClinicalInfo({ diagnosis, modality, subtype, systemPrompt }) {
-  const promptClinical = systemPrompt
-    ? `${systemPrompt}\n${DIAG_NOT_REVEALED}`
-    : `Você é especialista em radiologia. Gere um resumo clínico objetivo e sucinto (máximo 300 caracteres), integrando diagnóstico e modalidade. ${DIAG_NOT_REVEALED}`;
-  return [
-    { role: "system", content: promptClinical },
-    { role: "user", content: `Diagnóstico: ${diagnosis ?? "-"}; Modalidade: ${modality ?? "-"}; Subtipo: ${subtype ?? "-"}` }
-  ];
-}
-
-function buildPromptHint({ diagnosis, findings, modality, subtype, systemPrompt }) {
-  const promptHint = systemPrompt
-    ? `${systemPrompt}\n${DIAG_NOT_REVEALED}`
-    : `Você é um especialista em radiologia. Forneça uma dica super concisa (máx. 200 caracteres) para ajudar o estudante a resolver o caso, integrando achado radiológico e contexto clínico. Não seja genérico. ${DIAG_NOT_REVEALED}`;
-  return [
-    { role: "system", content: promptHint },
-    { role: "user", content: `Diagnóstico: ${diagnosis ?? "-"}; Achados radiológicos: ${findings ?? "-"}; Modalidade: ${modality ?? "-"}; Subtipo: ${subtype ?? "-"}` }
-  ];
-}
-
-function buildPromptFullCase({ diagnosis, findings, modality, subtype }) {
-  let contextIntro = `Você é um especialista em radiologia e diagnóstico por imagem que elabora casos clínico-radiológicos objetivamente para quizzes de ensino, valorizando sempre integração entre achados de imagem e quadro clínico.`;
-  contextIntro += ` Nas explicações e feedbacks, responda DE FORMA EXTREMAMENTE BREVE, SEM frases genéricas, usando sempre apenas a relação entre os achados radiológicos e sintomas ou contexto clínico.`;
-  contextIntro += ` Nunca faça textos longos ou divagações.`;
-  contextIntro += ` REGRAS IMPORTANTES: NUNCA integre, cite, sugira ou deduza o diagnóstico principal nos campos do caso clínico, inclusive achados, resumo clínico, pergunta principal, alternativas etc. Os campos devem fornecer apenas contexto, sem nunca revelar, sugerir ou favorecer o diagnóstico correto. Redija como em um caso real, SEM ENTREGAR a resposta.`;
-  if (findings || modality || subtype) {
-    contextIntro += ` Dados do caso: `;
-    if (modality) contextIntro += `Modalidade: ${modality}. `;
-    if (subtype) contextIntro += `Subtipo: ${subtype}. `;
-    if (findings) contextIntro += `Achados radiológicos: ${findings}. `;
-  }
-
-  // Instrução detalhada para IA preencher TODOS os campos, inclusive os avançados:
-  const finalSystemPrompt = `
-${contextIntro}
-Com base no DIAGNÓSTICO de referência abaixo, preencha SOMENTE o JSON abaixo com TODOS os campos do caso clínico, fundamentando cada parâmetro. Não utilize valores padrão/fixos, atribua um valor lógico baseado no cenário clínico, inclusive para os campos avançados. 
-
-Siga EXATAMENTE esta estrutura retornando todos os campos no JSON de resposta (inclusive os avançados!):
-
-{
-  "category": "",
-  "difficulty": "", // nível de 1 a 4 conforme a complexidade
-  "points": "",
-  "modality": "",
-  "subtype": "",
-  "findings": "",
-  "patient_clinical_info": "",
-  "patient_age": "",
-  "patient_gender": "",
-  "symptoms_duration": "",
-  "main_question": "",
-  "answer_options": ["", "", "", ""],
-  "answer_feedbacks": ["", "", "", ""],
-  "answer_short_tips": ["", "", "", ""],
-  "explanation": "",
-  "can_skip": true,
-  "max_elimination": "", // definir número lógico com base na quantidade de alternativas
-  "ai_hint_enabled": true,
-  "manual_hint": "", // sempre gerar uma dica integrada ao contexto do caso
-  "skip_penalty_points": "", // penalidade lógica pela dificuldade
-  "elimination_penalty_points": "", // idem acima
-  "ai_tutor_level": "" // NUNCA responder "desligado" por padrão - SEMPRE retorne "basico" ou "detalhado", conforme dificuldade. Só "desligado" se muito justificado (e explique para o admin)
-}
-
-Regras:
-- Preencha TODOS os campos acima de forma fundamentada, realista e alinhada com a dificuldade do caso.
-- O campo "ai_tutor_level" deve vir SEMPRE ativado ("basico" para casos intermediários/difíceis, "detalhado" nos fáceis), nunca como "desligado" sem justificativa explícita.
-- Os parâmetros avançados ("can_skip", "max_elimination", penalidades, tips, manual_hint etc) devem ser selecionados conforme a lógica pedagógica do caso (por exemplo, penalidades mais leves em questões difíceis e mais severas em questões fáceis etc).
-- "category", "difficulty" e "modality" devem ser inferidos do diagnóstico e contexto — utilize a especialidade/subespecialidade e grau de complexidade do diagnóstico.
-- "manual_hint" deve ser uma dica curta, integrada e útil para o estudante, focando nos achados principais e quadro clínico.
-- Não repita textos prontos, cada feedback e tip deve ser único e motivacional.
-
-Exemplo de preenchimento está no modelo acima, mas NÃO copie valores fixos. Fundamente para o caso em questão!
-`;
-
-  return [
-    { role: "system", content: finalSystemPrompt },
-    { role: "user", content: `Diagnóstico de referência: ${diagnosis}` }
-  ];
-}
-
-// Handlers de tratamento da resposta da IA
-function tryParseJsonFromCompletion(raw: string) {
-  try {
-    const match = raw.match(/\{[\s\S]*\}/);
-    const jsonString = match ? match[0] : raw;
-    return JSON.parse(jsonString);
-  } catch (err) {
-    throw new Error(`Erro ao fazer parse do JSON: ${err.message}. RAW: ${raw.slice(0, 500)}`);
-  }
-}
-
-function trimFieldsOnPayload(payload: any) {
-  if (typeof payload.explanation === "string") {
-    payload.explanation = payload.explanation.trim().slice(0, 300);
-  }
-  if (typeof payload.findings === "string") {
-    payload.findings = payload.findings.trim().slice(0, 300);
-  }
-  if (typeof payload.patient_clinical_info === "string") {
-    payload.patient_clinical_info = payload.patient_clinical_info.trim().slice(0, 300);
-  }
-  if (Array.isArray(payload.answer_feedbacks)) {
-    const motivExemplos = [
-      "Ótima escolha! Você fez uma excelente correlação clínica-imagem.",
-      "Quase! Reveja os sintomas principais e compare com os achados.",
-      "Continue tentando! Analise com atenção as alterações radiológicas.",
-      "Não desanime! Cada erro é um passo para o aprendizado."
-    ];
-    payload.answer_feedbacks = payload.answer_feedbacks.map((f: string, i: number) =>
-      typeof f === "string" && f.trim()
-        ? f.trim().slice(0, 100)
-        : motivExemplos[i % motivExemplos.length]
-    );
-  }
-  if (Array.isArray(payload.answer_short_tips)) {
-    payload.answer_short_tips = payload.answer_short_tips.map((f: string) =>
-      typeof f === "string" ? f.trim().slice(0, 200) : ""
-    );
-  }
-  return payload;
 }
 
 // Servidor principal
@@ -348,8 +198,7 @@ serve(async (req) => {
       }
     }
 
-    // Preenchimento completo
-    // ... keep existing code (final prompt building and OpenAI request logic) the same, but use buildPromptFullCase and centralized handlers
+    // Preenchimento completo -- aqui usamos o prompt refatorado!
     {
       try {
         const messages = buildPromptFullCase({ diagnosis, findings, modality, subtype });
