@@ -214,7 +214,35 @@ serve(async (req) => {
   }
 
   try {
-    const { diagnosis, findings, modality, subtype, withAlternativesOnly, withHintOnly, systemPrompt, withFindingsOnly, withClinicalInfoOnly } = await req.json();
+    const { diagnosis, findings, modality, subtype, withAlternativesOnly, withHintOnly, systemPrompt, withFindingsOnly, withClinicalInfoOnly, reviewDiagnosisOnly } = await req.json();
+
+    // ------------- NOVO: revisa diagnóstico apenas ---------------
+    if (reviewDiagnosisOnly) {
+      try {
+        // Prompt curto e direto para revisão textual sem mudar significado
+        const messages = [
+          {
+            role: "system",
+            content:
+              "Você é um corretor gramatical médico. Corrija erros de português, acentuação, deixei cada palavra começando com letra maiúscula quando apropriado, e SEMPRE mantenha o diagnóstico exato, sem alterar ou deduzir novos termos nem mudar o significado."
+          },
+          {
+            role: "user",
+            content: String(diagnosis ?? "")
+          }
+        ];
+        const raw = await getOpenAISuggestion({ messages, max_tokens: 60, temperature: 0 });
+        const diagnosis_reviewed = (raw ?? "").trim();
+        return new Response(JSON.stringify({ suggestion: { diagnosis_reviewed } }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      } catch (e: any) {
+        return new Response(
+          JSON.stringify({ error: "Failed to review diagnosis", details: e.message }),
+          { status: 500, headers: corsHeaders }
+        );
+      }
+    }
 
     // Alternativas (diagnósticos diferenciais + feedbacks)
     if (withAlternativesOnly) {
@@ -258,11 +286,7 @@ serve(async (req) => {
         // Adiciona detalhamento do erro (mensagem e até 300car da resposta bruta)
         console.error("[Alternativas] Falha inesperada:", e.message);
         return new Response(
-          JSON.stringify({
-            error: "API did not return a valid JSON for diffs",
-            fullError: e.message,
-            raw: typeof e?.raw === "string" ? e.raw.slice(0, 300) : "",
-          }),
+          JSON.stringify({ error: "API did not return a valid JSON for diffs", fullError: e.message, raw: typeof e?.raw === "string" ? e.raw.slice(0, 300) : "" }),
           { status: 500, headers: corsHeaders }
         );
       }

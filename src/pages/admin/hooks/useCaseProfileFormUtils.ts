@@ -24,6 +24,27 @@ export function useCaseProfileFormUtils({
     }
   }
 
+  // NOVA função para revisar o diagnóstico com a IA
+  async function getDiagnosisReviewedByAI(diagnosisText: string) {
+    if (!diagnosisText?.trim()) return diagnosisText;
+    try {
+      const { data, error } = await supabase.functions.invoke("case-autofill", {
+        body: {
+          reviewDiagnosisOnly: true,
+          diagnosis: diagnosisText
+        }
+      });
+      // Espera-se { suggestion: { diagnosis_reviewed: "..." } }
+      if (error) throw new Error(error.message);
+      const text = data?.suggestion?.diagnosis_reviewed ?? data?.suggestion?.diagnosis ?? "";
+      if (typeof text === "string" && text.trim() !== "") return text.trim();
+      // fallback: capitalizar localmente se não houver resposta da IA
+      return diagnosisText.charAt(0).toUpperCase() + diagnosisText.slice(1);
+    } catch (err: any) {
+      return diagnosisText.charAt(0).toUpperCase() + diagnosisText.slice(1);
+    }
+  }
+
   async function handleAutoFillCaseDetails() {
     if (!form.diagnosis_internal?.trim()) {
       toast({ description: "Por favor, preencha o campo Diagnóstico para sugerir todos os detalhes." });
@@ -31,7 +52,15 @@ export function useCaseProfileFormUtils({
     }
     setSubmitting(true);
     try {
-      const body: any = { diagnosis: form.diagnosis_internal };
+      // REVISA O DIAGNÓSTICO antes de enviar aos prompts para IA!
+      const diagnosisCorrigido = await getDiagnosisReviewedByAI(form.diagnosis_internal);
+
+      // Se mudou algo, atualize o campo antes das requisições seguintes
+      if (diagnosisCorrigido && diagnosisCorrigido !== form.diagnosis_internal) {
+        setForm((prev: any) => ({ ...prev, diagnosis_internal: diagnosisCorrigido }));
+      }
+
+      const body: any = { diagnosis: diagnosisCorrigido };
       if (form.findings?.trim()) body.findings = form.findings.trim();
       if (form.modality?.trim()) body.modality = form.modality.trim();
       if (form.subtype?.trim()) body.subtype = form.subtype.trim();
