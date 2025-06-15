@@ -173,6 +173,8 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         handleSuggestHint={handleSuggestHint}
         handleImageChange={handleImageChange}
         renderTooltipTip={renderTooltipTip}
+        handleSuggestFindings={handlers.handleSuggestFindings}
+        handleSuggestClinicalInfo={handlers.handleSuggestClinicalInfo}
       />
       <label className="font-semibold block mt-3">
         Pergunta Principal *
