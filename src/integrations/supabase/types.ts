@@ -239,41 +239,68 @@ export type Database = {
       }
       medical_cases: {
         Row: {
+          answer_feedbacks: string[] | null
+          answer_options: string[] | null
           author_id: string | null
+          correct_answer_index: number | null
           created_at: string
           created_by: string | null
           description: string | null
           difficulty_level: number | null
+          explanation: string | null
+          findings: string | null
           id: string
+          image_url: string | null
+          main_question: string | null
           meta: Json | null
           modality: string | null
+          patient_clinical_info: string | null
           specialty: string | null
+          symptoms_duration: string | null
           title: string
           updated_at: string
         }
         Insert: {
+          answer_feedbacks?: string[] | null
+          answer_options?: string[] | null
           author_id?: string | null
+          correct_answer_index?: number | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           difficulty_level?: number | null
+          explanation?: string | null
+          findings?: string | null
           id?: string
+          image_url?: string | null
+          main_question?: string | null
           meta?: Json | null
           modality?: string | null
+          patient_clinical_info?: string | null
           specialty?: string | null
+          symptoms_duration?: string | null
           title: string
           updated_at?: string
         }
         Update: {
+          answer_feedbacks?: string[] | null
+          answer_options?: string[] | null
           author_id?: string | null
+          correct_answer_index?: number | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           difficulty_level?: number | null
+          explanation?: string | null
+          findings?: string | null
           id?: string
+          image_url?: string | null
+          main_question?: string | null
           meta?: Json | null
           modality?: string | null
+          patient_clinical_info?: string | null
           specialty?: string | null
+          symptoms_duration?: string | null
           title?: string
           updated_at?: string
         }
