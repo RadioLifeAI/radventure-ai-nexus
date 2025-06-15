@@ -49,7 +49,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
       case "2": // Intermediário
         return "20";
       case "3": // Avançado
-        return "20";
+        return "30"; // Ajustado para 30 pontos
       case "4": // Infernal
         return "50";
       default:
