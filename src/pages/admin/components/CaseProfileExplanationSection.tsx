@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -8,7 +7,7 @@ type Props = {
   handleFormChange: any;
   handleSuggestExplanation: any;
   renderTooltipTip: any;
-  handleSuggestHint: any; // <-- Added this prop
+  handleSuggestHint?: any; // <-- Now optional
 };
 
 export function CaseProfileExplanationSection({
@@ -33,13 +32,15 @@ export function CaseProfileExplanationSection({
         >
           Sugerir Explicação (IA)
         </button>
-        <button
-          type="button"
-          onClick={handleSuggestHint}
-          className="text-xs px-2 py-1 border bg-cyan-50 rounded hover:bg-cyan-100 font-semibold"
-        >
-          Sugerir Dica (IA)
-        </button>
+        {handleSuggestHint && (
+          <button
+            type="button"
+            onClick={handleSuggestHint}
+            className="text-xs px-2 py-1 border bg-cyan-50 rounded hover:bg-cyan-100 font-semibold"
+          >
+            Sugerir Dica (IA)
+          </button>
+        )}
       </div>
       <Textarea
         name="explanation"
