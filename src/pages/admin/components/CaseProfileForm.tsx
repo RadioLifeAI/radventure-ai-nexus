@@ -66,8 +66,8 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
       answer_options: form.answer_options,
       answer_feedbacks: form.answer_feedbacks,
       correct_answer_index: form.correct_answer_index,
-      created_at: new Date(),
-      updated_at: new Date(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
     // Limpar strings vazias para nulo
     Object.keys(payload).forEach(k => {
