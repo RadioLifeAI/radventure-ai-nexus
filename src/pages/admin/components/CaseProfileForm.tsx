@@ -128,6 +128,14 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
       const selectedCategory = categories.find(c => String(c.id) === String(form.category_id));
       const diagnosis_internal = form.diagnosis_internal ?? "";
 
+      // Garante salvação de array JSON (até 6) [{url, legend}]
+      const image_url = Array.isArray(form.image_url)
+        ? form.image_url.slice(0, 6).map((img: any) => ({
+            url: img?.url ?? "",
+            legend: img?.legend ?? ""
+          }))
+        : [];
+
       const payload: any = {
         specialty: selectedCategory ? selectedCategory.name : null,
         category_id: form.category_id ? Number(form.category_id) : null,
@@ -149,7 +157,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         answer_feedbacks: form.answer_feedbacks,
         answer_short_tips: form.answer_short_tips,
         correct_answer_index: form.correct_answer_index,
-        image_url: form.image_url,
+        image_url,
         can_skip: form.can_skip,
         max_elimination: form.max_elimination,
         ai_hint_enabled: form.ai_hint_enabled,
@@ -188,6 +196,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
 
   return (
     <form className="w-full" onSubmit={handleSubmit}>
+      {/* Propaga para preview modal o array completo */}
       <CaseProfileFormPreviewModal open={showPreview} onClose={() => setShowPreview(false)} form={form} categories={categories} difficulties={difficulties} />
       <h2 className="text-xl font-bold mb-2">Criar Novo Caso Médico</h2>
       <CaseProfileFormTitleSection

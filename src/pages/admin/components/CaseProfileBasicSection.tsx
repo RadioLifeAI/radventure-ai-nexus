@@ -36,7 +36,7 @@ export function CaseProfileBasicSection({
   autoTitlePreview, onGenerateAutoTitle
 }: Props) {
   function handleImagesChange(imgArr: { url: string; legend: string }[]) {
-    handleImageChange(imgArr);
+    handleImageChange(imgArr); // já passa array!
   }  
   return (
     <>
@@ -248,7 +248,7 @@ export function CaseProfileBasicSection({
         {/* Imagem */}
         <div className="pt-3 min-w-[240px] flex flex-col items-center">
           <ImageUploadWithZoom
-            value={form.image_url ?? []}
+            value={Array.isArray(form.image_url) ? form.image_url : []}
             onChange={handleImagesChange}
           />
         </div>

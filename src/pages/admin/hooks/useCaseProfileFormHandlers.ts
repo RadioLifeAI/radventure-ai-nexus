@@ -93,8 +93,9 @@ export function useCaseProfileFormHandlers({ categories, difficulties }: { categ
   function handleCorrectChange(idx: number) {
     setForm((prev: any) => ({ ...prev, correct_answer_index: idx }));
   }
-  function handleImageChange(url: string | null) {
-    setForm((prev: any) => ({ ...prev, image_url: url || "" }));
+  function handleImageChange(imagesArr: { url: string; legend: string }[]) {
+    // Images agora sempre array de objetos
+    setForm((prev: any) => ({ ...prev, image_url: imagesArr }));
   }
 
   // Sugestões IA e automações vêm do utils

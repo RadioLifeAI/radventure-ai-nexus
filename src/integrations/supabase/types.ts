@@ -259,7 +259,7 @@ export type Database = {
           explanation: string | null
           findings: string | null
           id: string
-          image_url: string | null
+          image_url: Json | null
           main_question: string | null
           manual_hint: string | null
           max_elimination: number | null
@@ -297,7 +297,7 @@ export type Database = {
           explanation?: string | null
           findings?: string | null
           id?: string
-          image_url?: string | null
+          image_url?: Json | null
           main_question?: string | null
           manual_hint?: string | null
           max_elimination?: number | null
@@ -335,7 +335,7 @@ export type Database = {
           explanation?: string | null
           findings?: string | null
           id?: string
-          image_url?: string | null
+          image_url?: Json | null
           main_question?: string | null
           manual_hint?: string | null
           max_elimination?: number | null
