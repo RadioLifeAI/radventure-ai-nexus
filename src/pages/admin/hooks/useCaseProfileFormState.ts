@@ -30,7 +30,8 @@ const INITIAL_FORM = {
   manual_hint: "",
   skip_penalty_points: 0,
   elimination_penalty_points: 0,
-  ai_tutor_level: "desligado"
+  ai_tutor_level: "desligado",
+  case_number: null as number | null
 };
 
 export function useCaseProfileFormState() {
@@ -40,3 +41,4 @@ export function useCaseProfileFormState() {
 
   return { form, setForm, resetForm };
 }
+

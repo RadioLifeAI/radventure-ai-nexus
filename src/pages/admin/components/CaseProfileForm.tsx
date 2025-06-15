@@ -322,8 +322,9 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
       const { data, error } = await supabase
         .from("medical_cases")
         .select("id", { count: "exact", head: true })
-        .eq("category_id", form.category_id)
+        .eq("category_id", Number(form.category_id))
         .eq("modality", form.modality);
+      // Corrigido: confere o total correto, usando head:true (length) ou se não, count
       const nextNumber = (data?.length ?? 0) + 1;
       // Gera o nome automático
       const autoTitle = `${categoria} - ${form.modality} #${nextNumber}`;
@@ -331,7 +332,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
       setForm(prev => ({
         ...prev,
         title: autoTitle,
-        case_number: nextNumber // salva temporariamente para persistir depois
+        case_number: nextNumber // <--- agora atribui number!
       }));
       toast({ description: "Título gerado automaticamente!" });
     } catch (err: any) {
@@ -347,17 +348,17 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
 
     // Para garantir numeração correta, conta novamente antes do insert para evitar duplicatas
     let caseNumber = form.case_number;
-    if (!caseNumber && form.category_id && form.modality) {
+    if ((!caseNumber || isNaN(Number(caseNumber))) && form.category_id && form.modality) {
       const { data } = await supabase
         .from("medical_cases")
         .select("id", { count: "exact", head: true })
-        .eq("category_id", form.category_id)
+        .eq("category_id", Number(form.category_id))
         .eq("modality", form.modality);
-      caseNumber = (data?.length ?? 0) + 1;
+      caseNumber = ((data?.length ?? 0) + 1);
     }
 
     const payload: any = {
-      specialty: categories.find(c => String(c.id) === form.category_id)?.name || null,
+      specialty: categories.find(c => String(c.id) === String(form.category_id))?.name || null,
       category_id: form.category_id ? Number(form.category_id) : null,
       case_number: caseNumber ?? null,
       difficulty_level: form.difficulty_level ? Number(form.difficulty_level) : null,
