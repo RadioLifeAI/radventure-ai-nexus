@@ -3,6 +3,7 @@ import { AdminSidebar } from "@/components/AdminSidebar";
 import { Routes, Route, Outlet } from "react-router-dom";
 import CasosMedicos from "./admin/CasosMedicos";
 import GestaoCasos from "./admin/GestaoCasos";
+import CreateEvent from "./admin/CreateEvent";
 
 export default function AdminPanel() {
   // Aqui poderá ser checado o usuário logado/admin futuramente
@@ -20,7 +21,7 @@ export default function AdminPanel() {
           <Routes>
             <Route path="casos-medicos" element={<CasosMedicos />} />
             <Route path="gestao-casos" element={<GestaoCasos />} />
-            {/* Coloque aqui outras rotas para outros módulos do admin futuramente */}
+            <Route path="create-event" element={<CreateEvent />} />
           </Routes>
           {/* <Outlet /> */}
         </section>

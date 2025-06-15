@@ -91,16 +91,19 @@ export type Database = {
           case_id: string
           event_id: string
           id: string
+          sequence: number | null
         }
         Insert: {
           case_id: string
           event_id: string
           id?: string
+          sequence?: number | null
         }
         Update: {
           case_id?: string
           event_id?: string
           id?: string
+          sequence?: number | null
         }
         Relationships: [
           {
@@ -115,6 +118,48 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_final_rankings: {
+        Row: {
+          created_at: string | null
+          event_id: string | null
+          id: string
+          radcoins_awarded: number | null
+          rank: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          radcoins_awarded?: number | null
+          rank: number
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          radcoins_awarded?: number | null
+          rank?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_final_rankings_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_final_rankings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -185,11 +230,19 @@ export type Database = {
       }
       events: {
         Row: {
+          auto_start: boolean | null
+          banner_url: string | null
+          case_filters: Json | null
           created_at: string
           created_by: string | null
           description: string | null
+          duration_minutes: number | null
+          event_type: string | null
           id: string
+          max_participants: number | null
           name: string
+          number_of_cases: number | null
+          prize_distribution: Json | null
           prize_radcoins: number
           scheduled_end: string
           scheduled_start: string
@@ -197,11 +250,19 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auto_start?: boolean | null
+          banner_url?: string | null
+          case_filters?: Json | null
           created_at?: string
           created_by?: string | null
           description?: string | null
+          duration_minutes?: number | null
+          event_type?: string | null
           id?: string
+          max_participants?: number | null
           name: string
+          number_of_cases?: number | null
+          prize_distribution?: Json | null
           prize_radcoins?: number
           scheduled_end: string
           scheduled_start: string
@@ -209,11 +270,19 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auto_start?: boolean | null
+          banner_url?: string | null
+          case_filters?: Json | null
           created_at?: string
           created_by?: string | null
           description?: string | null
+          duration_minutes?: number | null
+          event_type?: string | null
           id?: string
+          max_participants?: number | null
           name?: string
+          number_of_cases?: number | null
+          prize_distribution?: Json | null
           prize_radcoins?: number
           scheduled_end?: string
           scheduled_start?: string
