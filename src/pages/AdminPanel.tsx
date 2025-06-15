@@ -4,6 +4,7 @@ import { Routes, Route, Outlet } from "react-router-dom";
 import CasosMedicos from "./admin/CasosMedicos";
 import GestaoCasos from "./admin/GestaoCasos";
 import CreateEvent from "./admin/CreateEvent";
+import EventsManagement from "./admin/EventsManagement";
 
 export default function AdminPanel() {
   // Aqui poderá ser checado o usuário logado/admin futuramente
@@ -22,6 +23,7 @@ export default function AdminPanel() {
             <Route path="casos-medicos" element={<CasosMedicos />} />
             <Route path="gestao-casos" element={<GestaoCasos />} />
             <Route path="create-event" element={<CreateEvent />} />
+            <Route path="events" element={<EventsManagement />} />
           </Routes>
           {/* <Outlet /> */}
         </section>
