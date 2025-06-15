@@ -226,6 +226,7 @@ Com base no DIAGNÓSTICO de referência abaixo, preencha somente o JSON com todo
   "explanation": ""
 }
 Importante:
++ Cada campo em "answer_feedbacks" deve ser um feedback em TOM INCENTIVADOR e MOTIVACIONAL, dirigido ao usuário que respondeu, com no MÁXIMO 100 caracteres cada, NUNCA repita textos prontos.
 + Só relacione achados radiológicos e contexto clínico, nunca repita textos intro ou genéricos.
 + O campo "explanation" deve ter apenas 1-2 frases.
 + O diagnóstico correto deve ser a alternativa A, e as demais, diferenciais relevantes.
@@ -264,13 +265,16 @@ Importante:
       const jsonString = match ? match[0] : raw;
       const payload = JSON.parse(jsonString);
 
-      // --- LIMIT explanation and feedbacks to 200 chars
+      // --- LIMIT explanation and feedbacks ---
       if (typeof payload.explanation === "string") {
         payload.explanation = payload.explanation.trim().slice(0, 200);
       }
       if (Array.isArray(payload.answer_feedbacks)) {
+        // Garanta que cada feedback está motivacional (AI tenta) e até 100 chars
         payload.answer_feedbacks = payload.answer_feedbacks.map((f: string) =>
-          typeof f === "string" ? f.trim().slice(0, 200) : ""
+          typeof f === "string"
+            ? f.trim().slice(0, 100)
+            : ""
         );
       }
       if (Array.isArray(payload.answer_short_tips)) {
