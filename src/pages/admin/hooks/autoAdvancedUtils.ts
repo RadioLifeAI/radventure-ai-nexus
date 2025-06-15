@@ -11,6 +11,31 @@ export function buildAutoAdvancedFields(suggestion: any = {}, form: any = {}) {
     ? suggestion.answer_options.length
     : 4;
 
+  // Determina dificuldade
+  const diffLevel = typeof suggestion.difficulty !== "undefined"
+    ? Number(suggestion.difficulty)
+    : typeof form.difficulty_level !== "undefined"
+      ? Number(form.difficulty_level)
+      : 2;
+
+  // Nível Tutor AI baseado na dificuldade
+  let ai_tutor_level = "desligado";
+  // Fácil = detalhado; intermediário = básico; difícil/'infernal' = desligado/básico
+  if (diffLevel <= 1) ai_tutor_level = "detalhado";
+  else if (diffLevel === 2) ai_tutor_level = "basico";
+  else if (diffLevel >= 3) ai_tutor_level = "basico";
+
+  // Penalidade dinâmica: mais alta para fácil, mais leve para difícil
+  let skip_penalty_points = 2;
+  let elimination_penalty_points = 1;
+  if (diffLevel <= 1) {
+    skip_penalty_points = 3;
+    elimination_penalty_points = 2;
+  } else if (diffLevel >= 3) {
+    skip_penalty_points = 1;
+    elimination_penalty_points = 0;
+  }
+
   return {
     can_skip: true,
     max_elimination: Math.max(1, nOptions - 2),
@@ -20,8 +45,8 @@ export function buildAutoAdvancedFields(suggestion: any = {}, form: any = {}) {
       (suggestion.findings
         ? `Atenção ao achado: ${String(suggestion.findings).slice(0, 120)}`
         : "Considere a integração entre achados e quadro clínico!"),
-    skip_penalty_points: 2,
-    elimination_penalty_points: 1,
-    ai_tutor_level: "basico",
+    skip_penalty_points,
+    elimination_penalty_points,
+    ai_tutor_level,
   };
 }

@@ -55,7 +55,6 @@ export function useCaseProfileFormUtils({
       // REVISA O DIAGNÓSTICO antes de enviar aos prompts para IA!
       const diagnosisCorrigido = await getDiagnosisReviewedByAI(form.diagnosis_internal);
 
-      // Se mudou algo, atualize o campo antes das requisições seguintes
       if (diagnosisCorrigido && diagnosisCorrigido !== form.diagnosis_internal) {
         setForm((prev: any) => ({ ...prev, diagnosis_internal: diagnosisCorrigido }));
       }
@@ -81,7 +80,26 @@ export function useCaseProfileFormUtils({
         categoriaId = match ? String(match.id) : "";
       }
 
-      // --- MODALIDADE/SUBTIPO --- (já existente)
+      // Busca dificuldade mais próxima
+      let dificuldadeId = "";
+      if (suggestion.difficulty) {
+        const byLevel = difficulties.find(
+          (diff: any) => String(diff.level) === String(suggestion.difficulty)
+        );
+        if (byLevel) {
+          dificuldadeId = String(byLevel.level);
+        } else {
+          // Se veio descrição, tenta encontrar por ela
+          if (suggestion.difficulty_description) {
+            const byDescr = difficulties.find(
+              (diff: any) => normalizeString(diff.description ?? "") === normalizeString(suggestion.difficulty_description)
+            );
+            if (byDescr) dificuldadeId = String(byDescr.level);
+          }
+        }
+      }
+
+      // --- MODALIDADE/SUBTIPO (igual antes) ---
       const ALL_MODALITIES = [
         "Tomografia Computadorizada (TC)",
         "Ressonância Magnética (RM)",
@@ -93,7 +111,6 @@ export function useCaseProfileFormUtils({
         "Fluoroscopia",
         "Densitometria Óssea (DMO)"
       ];
-
       const ALL_SUBTYPES = [
         // Tomografia Computadorizada (TC)
         "Angio-TC de Crânio", "Angio-TC de Pescoço e Carótidas", "Angio-TC de Tórax", "Angio-TC de Aorta", "Angio-TC de Artérias Coronárias", "Angio-TC de Vasos Abdominais", "Angio-TC de Membros Inferiores/Superiores", "TC Crânio", "TC Seios da Face", "TC Pescoço", "TC Tórax", "TC Abdome Total", "TC Pelve", "Uro-TC", "Entero-TC", "TC Coluna", "TC Musculoesquelético",
@@ -124,10 +141,18 @@ export function useCaseProfileFormUtils({
         newSubtype = suggestion.subtype;
       }
 
-      // Usar util de advanced auto fill:
-      const autoAdvanced = buildAutoAdvancedFields(suggestion, form);
+      // NOVO: define pontos baseado na difficulty sugerida (se houver!)
+      let pontosSugeridos = "10";
+      if (suggestion.points !== undefined && suggestion.points !== null) {
+        pontosSugeridos = String(suggestion.points);
+      } else if (dificuldadeId) {
+        pontosSugeridos = String(suggestPointsByDifficulty(dificuldadeId));
+      }
 
-      // SHUFFLE LOGIC FIX: ensure we compute the shuffle variable:
+      // Usar util de advanced auto fill (agora dinâmica!):
+      const autoAdvanced = buildAutoAdvancedFields(suggestion, { ...form, difficulty_level: dificuldadeId });
+
+      // SHUFFLE LOGIC (igual)
       const shuffle = shuffleAlternativesWithFeedback(
         Array.isArray(suggestion.answer_options) ? suggestion.answer_options.slice(0, 4) : ["", "", "", ""],
         Array.isArray(suggestion.answer_feedbacks) ? suggestion.answer_feedbacks.slice(0, 4) : ["", "", "", ""],
@@ -141,15 +166,12 @@ export function useCaseProfileFormUtils({
           if (Array.isArray(a)) return a.map(safeStr).concat(Array(fallbackLen).fill("")).slice(0, fallbackLen);
           return Array(fallbackLen).fill("");
         };
+
         return {
           ...prev,
           category_id: categoriaId,
-          difficulty_level: suggestion.difficulty
-            ? safeStr(
-                difficulties.find(({ level }: any) => safeStr(level) === safeStr(suggestion.difficulty))?.level ?? ""
-              )
-            : "",
-          points: suggestion.points !== undefined ? safeStr(suggestion.points) : "10",
+          difficulty_level: dificuldadeId,
+          points: pontosSugeridos,
           modality: newModality,
           subtype: newSubtype,
           findings: safeStr(suggestion.findings ?? ""),
@@ -163,7 +185,7 @@ export function useCaseProfileFormUtils({
           answer_options: shuffle.options,
           answer_short_tips: shuffle.tips,
           correct_answer_index: shuffle.correctIdx,
-          // Avançados direto do utilitário!
+          // NOVO: Avançados recalculados a cada solicitação!
           ...autoAdvanced
         };
       });
@@ -196,7 +218,7 @@ export function useCaseProfileFormUtils({
       setTimeout(() => setHighlightedFields([]), 2500);
       toast({
         title: "Campos preenchidos por IA!",
-        description: "Incluindo configurações avançadas e alternativas já embaralhadas. Revise as sugestões — principalmente a explicação curta, integração dos achados e quadro clínico."
+        description: "Todos os campos do formulário, incluindo categoria, dificuldade e configurações avançadas, foram preenchidos automaticamente com base na sugestão da IA. Revise as sugestões — especialmente explicação curta, integração de achados e quadro clínico."
       });
     } catch (err: any) {
       toast({
