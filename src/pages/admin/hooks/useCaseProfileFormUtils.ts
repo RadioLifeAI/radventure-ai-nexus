@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export function useCaseProfileFormUtils({
@@ -53,8 +52,6 @@ export function useCaseProfileFormUtils({
       }
 
       // --- NOVA LÓGICA para garantir os selects corretos de modalidade/subtipo ---
-      // Importa as opções do componente para comparação
-      // Como os MODALIDADADES estão apenas no componente, copiamos aqui o array para validação
       const ALL_MODALITIES = [
         "Tomografia Computadorizada (TC)",
         "Ressonância Magnética (RM)",
@@ -67,7 +64,6 @@ export function useCaseProfileFormUtils({
         "Densitometria Óssea (DMO)"
       ];
 
-      // Subtipos possíveis (flattened)
       const ALL_SUBTYPES = [
         // Tomografia Computadorizada (TC)
         "Angio-TC de Crânio", "Angio-TC de Pescoço e Carótidas", "Angio-TC de Tórax", "Angio-TC de Aorta", "Angio-TC de Artérias Coronárias", "Angio-TC de Vasos Abdominais", "Angio-TC de Membros Inferiores/Superiores", "TC Crânio", "TC Seios da Face", "TC Pescoço", "TC Tórax", "TC Abdome Total", "TC Pelve", "Uro-TC", "Entero-TC", "TC Coluna", "TC Musculoesquelético",
@@ -94,12 +90,12 @@ export function useCaseProfileFormUtils({
       if (suggestion.modality && ALL_MODALITIES.includes(suggestion.modality)) {
         newModality = suggestion.modality;
       }
-      // Se a IA sugeriu um subtipo válido, use-o; senão mantenha o anterior
       let newSubtype = form.subtype;
       if (suggestion.subtype && ALL_SUBTYPES.includes(suggestion.subtype)) {
         newSubtype = suggestion.subtype;
       }
 
+      // ATENÇÃO: para "findings", SEMPRE usar a sugestão da IA, mesmo que já exista preenchido!
       setForm((prev: any) => {
         const safeStr = (v: any) => (v === null || v === undefined ? "" : String(v));
         const safeArr = (a: any[] | undefined, fallbackLen = 4) => {
@@ -118,7 +114,7 @@ export function useCaseProfileFormUtils({
           points: suggestion.points !== undefined ? safeStr(suggestion.points) : "10",
           modality: newModality,
           subtype: newSubtype,
-          findings: safeStr(suggestion.findings ?? ""),
+          findings: safeStr(suggestion.findings ?? ""), // SEMPRE usa sugestão IA
           patient_clinical_info: safeStr(suggestion.patient_clinical_info ?? ""),
           explanation: safeStr(suggestion.explanation ?? ""),
           patient_age: safeStr(suggestion.patient_age ?? ""),
@@ -151,7 +147,7 @@ export function useCaseProfileFormUtils({
       setTimeout(() => setHighlightedFields([]), 2500);
       toast({
         title: "Campos preenchidos por IA!",
-        description: "Revise as sugestões e use os botões secundários para refinar cada campo.",
+        description: "Revise as sugestões — inclusive 'Achados Radiológicos'. Use os botões secundários para refinar cada campo.",
       });
     } catch (err: any) {
       toast({
