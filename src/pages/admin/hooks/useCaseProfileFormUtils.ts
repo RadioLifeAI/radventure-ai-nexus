@@ -10,7 +10,12 @@ export function useCaseProfileFormUtils({
   setHighlightedFields,
 }: any) {
   function normalizeString(str: string = "") {
-    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    return str
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .toLowerCase()
+      .trim();
   }
   function suggestPointsByDifficulty(level: string) {
     switch (level) {
@@ -45,20 +50,28 @@ export function useCaseProfileFormUtils({
       let categoriaId = "";
       let categoriaWarning = "";
       if (suggestion.category) {
-        const normalizedAI = normalizeString(suggestion.category);
-        const match = categories.find((cat: any) => normalizeString(cat.name) === normalizedAI)
-          || categories.find((cat: any) => normalizeString(cat.name).includes(normalizedAI))
-          || categories.find((cat: any) => normalizedAI.includes(normalizeString(cat.name)));
+        const normalizedAI = normalizeString(String(suggestion.category));
+        const match =
+          categories.find((cat: any) => normalizeString(cat.name) === normalizedAI) ||
+          categories.find((cat: any) => normalizedAI.includes(normalizeString(cat.name))) ||
+          categories.find((cat: any) => normalizeString(cat.name).includes(normalizedAI));
         if (match) {
           categoriaId = String(match.id);
         } else {
-          categoriaId = "";
-          categoriaWarning = `A categoria sugerida pela IA ("${suggestion.category}") não foi encontrada nas categorias cadastradas. Preencha manualmente.`;
-          toast({ variant: "destructive", title: "Categoria não encontrada!", description: categoriaWarning });
+          // tentativas fuzzy
+          const close = categories.find((cat: any) =>
+            normalizeString(cat.name).includes(normalizedAI.slice(0, 4))
+          );
+          categoriaId = close ? String(close.id) : "";
+          if (!categoriaId) {
+            categoriaWarning =
+              `A categoria sugerida pela IA ("${suggestion.category}") não foi encontrada nas categorias cadastradas. Preencha manualmente.`;
+            toast({ variant: "destructive", title: "Categoria não encontrada!", description: categoriaWarning });
+          }
         }
       }
 
-      // --- NOVA LÓGICA para garantir os selects corretos de modalidade/subtipo ---
+      // --- MELHORIA: Mapeamento tolerante da modalidade e subtipo ---
       const ALL_MODALITIES = [
         "Tomografia Computadorizada (TC)",
         "Ressonância Magnética (RM)",
@@ -70,6 +83,28 @@ export function useCaseProfileFormUtils({
         "Fluoroscopia",
         "Densitometria Óssea (DMO)"
       ];
+      const ALL_MODALITIES_NORMALIZED = ALL_MODALITIES.map(normalizeString);
+
+      let newModality = "";
+      if (suggestion.modality && suggestion.modality.trim()) {
+        const aiMod = normalizeString(suggestion.modality);
+        const idxExact = ALL_MODALITIES_NORMALIZED.findIndex(m => m === aiMod);
+        if (idxExact > -1) {
+          newModality = ALL_MODALITIES[idxExact];
+        } else {
+          // fuzzy: busca que contém ou é contido
+          const idxPartial = ALL_MODALITIES_NORMALIZED.findIndex(m => m.includes(aiMod) || aiMod.includes(m));
+          if (idxPartial > -1) {
+            newModality = ALL_MODALITIES[idxPartial];
+          } else {
+            // fallback: primeira modalidade cujo nome contém ao menos 4 letras do fornecido pela IA
+            const idxStarts = ALL_MODALITIES_NORMALIZED.findIndex(m => m.startsWith(aiMod.slice(0, 5)));
+            newModality = idxStarts > -1 ? ALL_MODALITIES[idxStarts] : form.modality || "";
+          }
+        }
+      } else {
+        newModality = form.modality || "";
+      }
 
       const ALL_SUBTYPES = [
         // Tomografia Computadorizada (TC)
@@ -91,15 +126,27 @@ export function useCaseProfileFormUtils({
         // Densitometria Óssea (DMO)
         "Densitometria de Coluna e Fêmur", "Densitometria de Corpo Inteiro"
       ];
+      const ALL_SUBTYPES_NORMALIZED = ALL_SUBTYPES.map(normalizeString);
 
-      // Se a IA sugeriu uma modalidade válida, use-a; senão mantenha a anterior
-      let newModality = form.modality;
-      if (suggestion.modality && ALL_MODALITIES.includes(suggestion.modality)) {
-        newModality = suggestion.modality;
-      }
-      let newSubtype = form.subtype;
-      if (suggestion.subtype && ALL_SUBTYPES.includes(suggestion.subtype)) {
-        newSubtype = suggestion.subtype;
+      let newSubtype = "";
+      if (suggestion.subtype && suggestion.subtype.trim()) {
+        const aiSub = normalizeString(suggestion.subtype);
+        const idxExactS = ALL_SUBTYPES_NORMALIZED.findIndex(s => s === aiSub);
+        if (idxExactS > -1) {
+          newSubtype = ALL_SUBTYPES[idxExactS];
+        } else {
+          // fuzzy: busca contém
+          const idxPartialS = ALL_SUBTYPES_NORMALIZED.findIndex(s => s.includes(aiSub) || aiSub.includes(s));
+          if (idxPartialS > -1) {
+            newSubtype = ALL_SUBTYPES[idxPartialS];
+          } else {
+            // tentativa de 4 primeiras letras
+            const idxStartsS = ALL_SUBTYPES_NORMALIZED.findIndex(s => s.startsWith(aiSub.slice(0, 6)));
+            newSubtype = idxStartsS > -1 ? ALL_SUBTYPES[idxStartsS] : form.subtype || "";
+          }
+        }
+      } else {
+        newSubtype = form.subtype || "";
       }
 
       // ATENÇÃO: para "findings", SEMPRE usar a sugestão da IA, mesmo que já exista preenchido!
