@@ -53,7 +53,14 @@ export function useCaseProfileFormHandlers({ categories, difficulties }: { categ
         points: utils.suggestPointsByDifficulty(value),
       }));
     } else if (type === "checkbox") {
-      setForm((prev: any) => ({ ...prev, [name]: checked }));
+      setForm((prev: any) => {
+        // Chama handleSuggestHint ao ativar AI Hint (apenas quando ativado, não ao desmarcar)
+        if (name === "ai_hint_enabled" && checked && !prev.ai_hint_enabled) {
+          // Chamando sugerir dica de IA logo após atualização de estado
+          setTimeout(() => utils.handleSuggestHint(), 0);
+        }
+        return { ...prev, [name]: checked };
+      });
     } else {
       setForm((prev: any) => ({ ...prev, [name]: value }));
     }
