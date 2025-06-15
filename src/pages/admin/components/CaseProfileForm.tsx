@@ -98,9 +98,8 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
 
   // --- NOVA FUNÇÃO: AUTO-PREENCHIMENTO DOS CAMPOS BASEADO EM DIAGNÓSTICO ---
   function handleAutoFillCaseDetails() {
-    // Usar o campo diagnóstico (title) para gerar exemplos
     const diag = form.title?.trim() || "Patologia não especificada";
-    // Exemplos mockados, em produção integrar API/IA aqui
+    // Exemplos mock
     const findingsExamples: Record<string, string> = {
       "Pneumonia": "Infiltrado pulmonar difuso em lobo inferior direito, broncogramas aéreos visíveis.",
       "DPOC": "Hipertransparência pulmonar, achatamento de diafragma, aumento do espaço retroesternal.",
@@ -115,7 +114,18 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
       "Parada Cardíaca": "Homem 52 anos, hipertenso, apresenta dispneia intensa e ortopneia.",
       "Patologia não especificada": "Quadro clínico compatível com doença pulmonar não especificada."
     };
-    // Preenchimento randômico para idade, gênero, sintomas
+
+    // Mock automação dos campos avançados:
+    const advancedMock = {
+      can_skip: Math.random() < 0.5, // aleatório true/false
+      max_elimination: 2,
+      ai_hint_enabled: Math.random() < 0.7, // mais provável ativado
+      skip_penalty_points: 5,
+      elimination_penalty_points: 3,
+      ai_tutor_level: ["desligado", "basico", "detalhado"][Math.floor(Math.random() * 3)]
+    };
+
+    // Preenchimento aleatório permanecem iguais:
     const randomAge = Math.floor(Math.random() * 50) + 20;
     const genders = ["Masculino", "Feminino", "Outro"];
     const randomGender = genders[Math.floor(Math.random() * genders.length)];
@@ -128,7 +138,15 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
       patient_clinical_info: summaryExamples[diag] || summaryExamples["Patologia não especificada"],
       patient_age: String(randomAge),
       patient_gender: randomGender,
-      symptoms_duration: randomSymptoms
+      symptoms_duration: randomSymptoms,
+      // opções AVANÇADAS automáticas
+      can_skip: advancedMock.can_skip,
+      max_elimination: advancedMock.max_elimination,
+      ai_hint_enabled: advancedMock.ai_hint_enabled,
+      skip_penalty_points: advancedMock.skip_penalty_points,
+      elimination_penalty_points: advancedMock.elimination_penalty_points,
+      ai_tutor_level: advancedMock.ai_tutor_level
+      // Não preenche manual_hint para deixar para o botão separado (ajustes finos)
     }));
   }
 
@@ -377,7 +395,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
               onClick={handleAutoFillCaseDetails}
               variant="secondary"
               className="mb-1"
-              title="Preencher achados, resumo, idade, gênero e sintomas de forma automática"
+              title="Preencher achados, resumo, idade, gênero, sintomas e opções avançadas de forma automática"
             >
               Auto-preencher detalhes do caso
             </Button>
@@ -474,6 +492,19 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         </button>
         {showAdvanced && (
           <div className="border rounded-lg p-4 bg-gray-50 mt-3 space-y-4">
+            {/* NOVO botão para gerar configurações avançadas a partir dos dados já preenchidos */}
+            <div className="flex mb-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAutoFillCaseDetails}
+                title="Sugerir configuração avançada automaticamente via IA/api (mock)"
+              >
+                Gerar configurações avançadas automaticamente
+              </Button>
+            </div>
+            {/* ... keep existing code (os campos avançados em grid) the same ... */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="font-semibold">Permitir pular questão?</label>
