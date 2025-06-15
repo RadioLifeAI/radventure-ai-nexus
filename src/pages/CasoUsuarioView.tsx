@@ -26,6 +26,45 @@ function getLetter(idx: number) {
   return String.fromCharCode(65 + idx);
 }
 
+// Hook para embaralhar as alternativas somente para visualização do usuário:
+function useShuffledAnswers(caso: any) {
+  const [shuffled, setShuffled] = useState<{
+    options: string[];
+    feedbacks: string[];
+    shortTips: string[];
+    correctIndex: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!caso || !Array.isArray(caso.answer_options)) {
+      setShuffled(null);
+      return;
+    }
+    // Junta todas as infos relevantes numa lista
+    const zipped = caso.answer_options.map((answer: string, idx: number) => ({
+      answer,
+      feedback: caso.answer_feedbacks?.[idx] ?? "",
+      shortTip: caso.answer_short_tips?.[idx] ?? "",
+      isCorrect: idx === caso.correct_answer_index,
+    }));
+    // Shuffle
+    for (let i = zipped.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [zipped[i], zipped[j]] = [zipped[j], zipped[i]];
+    }
+    // Descobre o novo índice da correta
+    const newCorrectIdx = zipped.findIndex(x => x.isCorrect);
+    setShuffled({
+      options: zipped.map(x => x.answer),
+      feedbacks: zipped.map(x => x.feedback),
+      shortTips: zipped.map(x => x.shortTip),
+      correctIndex: newCorrectIdx,
+    });
+  // Executa shuffle toda vez que o caso (ou suas alternativas) mudar
+  }, [caso?.answer_options, caso?.correct_answer_index, caso?.answer_feedbacks, caso?.answer_short_tips, caso]);
+  return shuffled;
+}
+
 export default function CasoUsuarioView() {
   const { id } = useParams();
   const [caso, setCaso] = useState<any>(null);
@@ -63,8 +102,12 @@ export default function CasoUsuarioView() {
     if (id) fetchCaso();
   }, [id]);
 
-  // Calcula feedback
-  const acertou = selected === caso?.correct_answer_index && answered && selected !== null;
+  // NOVO: usa alternativas embaralhadas só na visualização do usuário
+  const shuffled = useShuffledAnswers(caso);
+
+  // Descobre índices corretos de acordo com o shuffle
+  const correctIdx = shuffled?.correctIndex ?? caso?.correct_answer_index;
+  const acertou = selected === correctIdx && answered && selected !== null;
   const feedbackMsg = randomFeedback(acertou);
   const showFeedback = answered && selected !== null;
 
@@ -143,14 +186,14 @@ export default function CasoUsuarioView() {
               <div className="mb-2 text-[16px] font-medium">{caso.main_question}</div>
               <div>
                 <div className="flex flex-col gap-3 mb-4">
-                  {(caso.answer_options || []).map((opt: string, idx: number) => (
+                  {(shuffled?.options || caso.answer_options || []).map((opt: string, idx: number) => (
                     <button
                       key={idx}
                       className={clsx(
                         "w-full text-left px-4 py-3 rounded shadow border font-medium transition",
                         !answered
                           ? "hover:bg-cyan-50 border-cyan-200"
-                          : idx === caso.correct_answer_index
+                          : idx === correctIdx
                             ? "bg-green-50 border-green-400 text-green-800 font-bold"
                             : idx === selected
                               ? "bg-red-50 border-red-400 text-red-600 font-bold"
@@ -199,7 +242,7 @@ export default function CasoUsuarioView() {
                     <span>
                       <b>❌ Resposta incorreta.</b>
                       <div className="mt-1 text-sm">
-                        {(caso.answer_feedbacks && caso.answer_feedbacks[selected!]) ||
+                        {(shuffled?.feedbacks?.[selected!] ?? caso.answer_feedbacks?.[selected!]) ||
                           caso.explanation ||
                           "Explicação não disponível para esta alternativa."}
                       </div>
@@ -260,3 +303,4 @@ function Loader() {
     </svg>
   );
 }
+
