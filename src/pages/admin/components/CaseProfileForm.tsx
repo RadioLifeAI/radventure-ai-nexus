@@ -129,12 +129,24 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
       const diagnosis_internal = form.diagnosis_internal ?? "";
 
       // Garante salvação de array JSON (até 6) [{url, legend}]
-      const image_url = Array.isArray(form.image_url)
-        ? form.image_url.slice(0, 6).map((img: any) => ({
-            url: img?.url ?? "",
-            legend: img?.legend ?? ""
-          }))
-        : [];
+      let image_url_arr: any[] = [];
+      // If current value is array, use as is. If string (legacy), try to parse, else empty array
+      if (Array.isArray(form.image_url)) {
+        image_url_arr = form.image_url;
+      } else if (typeof form.image_url === "string" && form.image_url.trim() !== "") {
+        try {
+          const parsed = JSON.parse(form.image_url);
+          image_url_arr = Array.isArray(parsed) ? parsed : [];
+        } catch {
+          image_url_arr = [];
+        }
+      } else {
+        image_url_arr = [];
+      }
+      const image_url = image_url_arr.slice(0, 6).map((img: any) => ({
+        url: img?.url ?? "",
+        legend: img?.legend ?? ""
+      }));
 
       const payload: any = {
         specialty: selectedCategory ? selectedCategory.name : null,

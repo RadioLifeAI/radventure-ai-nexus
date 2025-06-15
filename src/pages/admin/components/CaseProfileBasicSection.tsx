@@ -36,8 +36,22 @@ export function CaseProfileBasicSection({
   autoTitlePreview, onGenerateAutoTitle
 }: Props) {
   function handleImagesChange(imgArr: { url: string; legend: string }[]) {
-    handleImageChange(imgArr); // já passa array!
-  }  
+    handleImageChange(imgArr);
+  }
+  // Display fallback for legacy: always pass array!
+  const imagesValue = Array.isArray(form.image_url)
+    ? form.image_url
+    : (typeof form.image_url === "string" && form.image_url.trim() !== ""
+      ? (() => {
+        try {
+          const arr = JSON.parse(form.image_url);
+          return Array.isArray(arr) ? arr : [];
+        } catch {
+          return [];
+        }
+      })()
+      : []);
+
   return (
     <>
       {/* Pré-visualização & botões */}
@@ -248,7 +262,7 @@ export function CaseProfileBasicSection({
         {/* Imagem */}
         <div className="pt-3 min-w-[240px] flex flex-col items-center">
           <ImageUploadWithZoom
-            value={Array.isArray(form.image_url) ? form.image_url : []}
+            value={imagesValue}
             onChange={handleImagesChange}
           />
         </div>
