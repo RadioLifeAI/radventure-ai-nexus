@@ -127,8 +127,6 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         subtype: form.subtype || null,
         title: form.title,
         findings: form.findings,
-        patient_age: form.patient_age,
-        patient_gender: form.patient_gender,
         symptoms_duration: form.symptoms_duration,
         patient_clinical_info: form.patient_clinical_info,
         main_question: form.main_question,
@@ -149,6 +147,10 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
+      // REMOVE campos inexistentes patient_age / patient_gender
+      delete payload.patient_age;
+      delete payload.patient_gender;
+
       Object.keys(payload).forEach(k => {
         if (typeof payload[k] === "string" && payload[k] === "") payload[k] = null;
       });

@@ -43,12 +43,19 @@ export function useCaseProfileFormUtils({
 
       const suggestion = data?.suggestion || {};
       let categoriaId = "";
+      let categoriaWarning = "";
       if (suggestion.category) {
         const normalizedAI = normalizeString(suggestion.category);
         const match = categories.find((cat: any) => normalizeString(cat.name) === normalizedAI)
-          || categories.find((cat: any) => normalizeString(cat.name).startsWith(normalizedAI))
-          || categories.find((cat: any) => normalizedAI.startsWith(normalizeString(cat.name)));
-        categoriaId = match ? String(match.id) : "";
+          || categories.find((cat: any) => normalizeString(cat.name).includes(normalizedAI))
+          || categories.find((cat: any) => normalizedAI.includes(normalizeString(cat.name)));
+        if (match) {
+          categoriaId = String(match.id);
+        } else {
+          categoriaId = "";
+          categoriaWarning = `A categoria sugerida pela IA ("${suggestion.category}") não foi encontrada nas categorias cadastradas. Preencha manualmente.`;
+          toast({ variant: "destructive", title: "Categoria não encontrada!", description: categoriaWarning });
+        }
       }
 
       // --- NOVA LÓGICA para garantir os selects corretos de modalidade/subtipo ---
@@ -120,7 +127,7 @@ export function useCaseProfileFormUtils({
           answer_feedbacks: Array.isArray(suggestion.answer_feedbacks)
             ? suggestion.answer_feedbacks.map((f: string) => f ?? "").slice(0, 4)
             : ["", "", "", ""],
-          patient_age: safeStr(suggestion.patient_age ?? ""),
+          patient_age: safeStr(suggestion.patient_age ?? ""), // só para uso temporário, ignorado no salvamento
           patient_gender: safeStr(suggestion.patient_gender ?? ""),
           symptoms_duration: safeStr(suggestion.symptoms_duration ?? ""),
           main_question: safeStr(suggestion.main_question ?? ""),
