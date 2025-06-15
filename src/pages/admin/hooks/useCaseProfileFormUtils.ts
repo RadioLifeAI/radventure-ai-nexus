@@ -197,11 +197,22 @@ export function useCaseProfileFormUtils({
       toast({ description: "Preencha Achados, Pergunta Principal ou Diagnóstico para sugerir uma explicação." });
       return;
     }
+    // Geração IA/placeholder: explicação diretamente relacionada ao achado de imagem e quadro clínico
+    let summary = "";
+    if (form.findings && form.patient_clinical_info) {
+      summary = `Os achados de imagem (${form.findings}) associados ao quadro clínico (${form.patient_clinical_info}) são fundamentais para chegar ao diagnóstico correto neste caso.`;
+    } else if (form.findings) {
+      summary = `O principal achado radiológico (${form.findings}) é determinante para a conduta ou diagnóstico neste caso clínico.`;
+    } else if (form.patient_clinical_info) {
+      summary = `O quadro clínico apresentado (${form.patient_clinical_info}) direciona a investigação dos achados radiológicos relevantes.`;
+    } else {
+      summary = "A integração entre achados radiológicos e contexto clínico é essencial para o raciocínio diagnóstico.";
+    }
     setForm((prev: any) => ({
       ...prev,
-      explanation: "Explicação e feedback gerados automaticamente (placeholder IA/API)."
+      explanation: summary
     }));
-    toast({ description: "Explicação sugerida automaticamente (futuramente via IA, edite se desejar)." });
+    toast({ description: "Explicação sugerida automaticamente, focada na relação imagem/caso clínico." });
   }
   async function handleGenerateAutoTitle() {
     if (!form.category_id || !form.modality) {

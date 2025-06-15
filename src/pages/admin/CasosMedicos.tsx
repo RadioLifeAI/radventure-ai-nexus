@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { CaseProfileForm } from "./components/CaseProfileForm";
 import { MedicalCasesTable } from "./components/MedicalCasesTable";
@@ -76,7 +75,7 @@ export default function CasosMedicos() {
     supabase.from("medical_cases").select("modality").then(({ data }) => {
       if (data) {
         const setModal = Array.from(new Set(data.map(x => x.modality).filter(Boolean)));
-        setModalities(setModal);
+        setModalities(setModal.length ? setModal : []);
       }
     });
   }, []);
@@ -118,10 +117,13 @@ export default function CasosMedicos() {
               <SelectValue placeholder="Filtrar por modalidade" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas Modalidades</SelectItem>
-              {modalities.map((mod) => (
-                <SelectItem key={mod} value={mod}>{mod}</SelectItem>
-              ))}
+              <SelectItem value="all">
+                {modalities.length === 0 ? "Modalidade Principal" : "Todas Modalidades"}
+              </SelectItem>
+              {modalities.length > 0 &&
+                modalities.map((mod) => (
+                  <SelectItem key={mod} value={mod}>{mod}</SelectItem>
+                ))}
             </SelectContent>
           </Select>
         </div>
