@@ -1,10 +1,11 @@
-
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableHead, TableRow, TableHeader, TableBody, TableCell } from "@/components/ui/table";
 import { Plus, Sparkles } from "lucide-react";
+import { CaseCategoryFields } from "./components/CaseCategoryFields";
+import { QuizAnswersFields } from "./components/QuizAnswersFields";
 
 function getSuffixByCategory(categoryName: string) {
   if (!categoryName) return "";
@@ -45,6 +46,10 @@ export default function CasosMedicos() {
   const [feedback, setFeedback] = useState("");
   const [titleSuggested, setTitleSuggested] = useState("");
 
+  // Estados específicos do quiz
+  const [answers, setAnswers] = useState(["", "", "", ""]);
+  const [correctIndex, setCorrectIndex] = useState(0);
+
   const [form, setForm] = useState({
     category_id: "",
     category_name: "",
@@ -67,7 +72,6 @@ export default function CasosMedicos() {
   }, []);
 
   useEffect(() => {
-    // Pega o nome da modalidade também para sugestão de título
     if (selectedModality && modalities.length) {
       const found = modalities.find((m) => m.id == selectedModality);
       setForm((prev) => ({
@@ -96,7 +100,6 @@ export default function CasosMedicos() {
     const { name, value } = e.target;
     setForm((prev) => {
       let update = { ...prev, [name]: value };
-      // Salva também os nomes para facilitar sugestão de título
       if (name === "category_id") {
         const cat = categories.find((c) => String(c.id) === String(value));
         update.category_name = cat?.name || "";
@@ -109,7 +112,6 @@ export default function CasosMedicos() {
   }
 
   function handleSuggestTitle() {
-    // Sugere título básico usando categoria e modalidade, incrementando com número random
     const cat = form.category_name || categories.find((c) => String(c.id) === form.category_id)?.name || "";
     const mod = form.main_modality_name || modalities.find((m) => String(m.id) === form.main_modality_id)?.name || "";
     const suffix = getSuffixByCategory(cat) || "";
@@ -119,14 +121,24 @@ export default function CasosMedicos() {
     setForm((prev) => ({ ...prev, title: suggestion }));
   }
 
+  // novos handlers para alternativas
+  function handleAnswerChange(idx: number, value: string) {
+    setAnswers(a => a.map((v, i) => i === idx ? value : v));
+  }
+  function handleCorrectIndexChange(idx: number) {
+    setCorrectIndex(idx);
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
 
-    // Monta objeto para o banco, apenas colunas reais
     const insertObj: any = {
       title: form.title,
-      // Campos opcionais, só envia se tiver valor
+      // Quiz specifics:
+      alternatives: answers,
+      alternative_correct_index: correctIndex,
+      // Banco:
       category_id: form.category_id ? Number(form.category_id) : null,
       main_modality_id: form.main_modality_id ? Number(form.main_modality_id) : null,
       subtype_id: form.subtype_id ? Number(form.subtype_id) : null,
@@ -165,6 +177,8 @@ export default function CasosMedicos() {
       });
       setSelectedModality(null);
       setTitleSuggested("");
+      setAnswers(["", "", "", ""]);
+      setCorrectIndex(0);
       setTimeout(() => setFeedback(""), 1800);
     } else {
       setFeedback("Erro ao cadastrar o caso.");
@@ -179,17 +193,17 @@ export default function CasosMedicos() {
         <Plus className="text-cyan-600" /> Criar Novo Caso Médico
       </h2>
       <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md mb-10 flex flex-col gap-4 max-w-4xl">
+        {/* CATEGORIAS, MODALIDADE, SUBTIPO */}
+        <CaseCategoryFields
+          categories={categories}
+          modalities={modalities}
+          subtypes={subtypes}
+          selectedModality={selectedModality}
+          form={form}
+          handleFormChange={handleFormChange}
+        />
+        {/* DIFICULDADE */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="font-semibold">Categoria *</label>
-            <select className="w-full border rounded px-2 py-2"
-              name="category_id" value={form.category_id} onChange={handleFormChange} required>
-              <option value="">Selecione a categoria</option>
-              {categories.map((cat: any) => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
-              ))}
-            </select>
-          </div>
           <div>
             <label className="font-semibold">Dificuldade</label>
             <select className="w-full border rounded px-2 py-2"
@@ -200,6 +214,7 @@ export default function CasosMedicos() {
               <option value="3">Difícil</option>
             </select>
           </div>
+          {/* TÍTULO COM SUGESTÃO */}
           <div>
             <label className="font-semibold">Título do Caso</label>
             <div className="flex gap-2">
@@ -212,28 +227,14 @@ export default function CasosMedicos() {
           </div>
         </div>
         <hr className="my-2"/>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="font-semibold">Modalidade Principal *</label>
-            <select className="w-full border rounded px-2 py-2"
-              name="main_modality_id" value={form.main_modality_id} onChange={handleFormChange} required>
-              <option value="">Selecione a modalidade</option>
-              {modalities.map((mod: any) => (
-                <option key={mod.id} value={mod.id}>{mod.name}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="font-semibold">Subtipo</label>
-            <select className="w-full border rounded px-2 py-2"
-              name="subtype_id" value={form.subtype_id} onChange={handleFormChange} disabled={!selectedModality}>
-              <option value="">Selecione o subtipo</option>
-              {subtypes.map((sub: any) => (
-                <option key={sub.id} value={sub.id}>{sub.name}</option>
-              ))}
-            </select>
-          </div>
-        </div>
+        {/* ALTERNATIVAS DO QUIZ */}
+        <QuizAnswersFields
+          answers={answers}
+          correctIndex={correctIndex}
+          handleAnswerChange={handleAnswerChange}
+          handleCorrectIndexChange={handleCorrectIndexChange}
+        />
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="font-semibold">Idade do Paciente</label>
@@ -250,16 +251,16 @@ export default function CasosMedicos() {
             </select>
           </div>
         </div>
-        {/* ÁREA PARA RESPOSTA/FEEDBACK/COMENTÁRIO */}
+        {/* FEEDBACK/COMENTÁRIO */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="font-semibold">Resposta Esperada</label>
+            <label className="font-semibold">Comentário Final</label>
             <textarea
               className="w-full border rounded px-2 py-2 resize-none min-h-[48px]"
-              name="resposta"
-              value={form.resposta}
+              name="comentario_final"
+              value={form.comentario_final}
               onChange={handleFormChange}
-              placeholder="Descreva a resposta esperada para este caso"
+              placeholder="Comentário adicional pós-feedback"
             />
           </div>
           <div>
@@ -273,13 +274,13 @@ export default function CasosMedicos() {
             />
           </div>
           <div>
-            <label className="font-semibold">Comentário Final</label>
+            <label className="font-semibold">Observação Interna</label>
             <textarea
               className="w-full border rounded px-2 py-2 resize-none min-h-[48px]"
-              name="comentario_final"
-              value={form.comentario_final}
+              name="resposta"
+              value={form.resposta}
               onChange={handleFormChange}
-              placeholder="Comentário adicional pós-feedback"
+              placeholder="Observação interna do caso (opcional)"
             />
           </div>
         </div>
@@ -290,6 +291,7 @@ export default function CasosMedicos() {
           )}
         </div>
       </form>
+
       <h3 className="text-xl font-bold mb-3">Casos Cadastrados</h3>
       <div className="bg-white rounded shadow overflow-x-auto">
         <Table>
