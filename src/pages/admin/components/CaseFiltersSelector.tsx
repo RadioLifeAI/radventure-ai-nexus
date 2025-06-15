@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Filter } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { MODALIDADES_SUBTYPES, ModalityOption } from "./modalitiesSubtypes";
 
 type Option = { value: string; label: string };
 
@@ -10,6 +11,7 @@ type CaseFilters = {
   category?: string[];
   difficulty?: string[];
   modality?: string[];
+  subtype?: string[]; // adicionando subtipo
 };
 
 export type CaseFiltersSelectorProps = {
@@ -35,11 +37,8 @@ export function CaseFiltersSelector({ value, onChange }: CaseFiltersSelectorProp
       setDifficulties(
         (diffData || []).map((d: any) => ({ value: `${d.level}`, label: d.description }))
       );
-      // Modalidades
-      const { data: modData } = await supabase.from("imaging_modalities").select("name").order("name");
-      setModalities(
-        (modData || []).map((m: any) => ({ value: m.name, label: m.name }))
-      );
+      // Modalidades via utilitário fixo 
+      setModalities(MODALIDADES_SUBTYPES.map(({ value, label }) => ({ value, label })));
     }
     fetchOptions();
   }, []);
@@ -51,12 +50,31 @@ export function CaseFiltersSelector({ value, onChange }: CaseFiltersSelectorProp
       [type]: checked
         ? [...old, val]
         : old.filter((v: string) => v !== val),
+      // Limpando subtipo se modalidade for alterada!
+      ...(type === "modality" && !checked ? { subtype: [] } : {})
+    });
+  }
+
+  function handleSubtypeCheck(subVal: string, checked: boolean) {
+    const old = value.subtype || [];
+    onChange({
+      ...value,
+      subtype: checked
+        ? [...old, subVal]
+        : old.filter((v: string) => v !== subVal),
     });
   }
 
   function handleClear() {
     onChange({});
   }
+
+  // Modalidades selecionadas no filtro
+  const selectedModalities = value.modality || [];
+  // Subtipos disponíveis SOMENTE das modalidades selecionadas
+  const availableSubtypes = MODALIDADES_SUBTYPES
+    .filter(mod => selectedModalities.includes(mod.value))
+    .flatMap(mod => mod.subtypes);
 
   return (
     <div className="rounded-xl border p-6 bg-white mb-4 flex flex-col gap-4 max-w-2xl mx-auto">
@@ -126,6 +144,24 @@ export function CaseFiltersSelector({ value, onChange }: CaseFiltersSelectorProp
           ))}
         </div>
       </div>
+
+      {/* Subtipo (cascata, aparece ao selecionar uma Modalidade) */}
+      {selectedModalities.length > 0 && (
+        <div>
+          <div className="font-bold mb-1">Subtipo (opcional)</div>
+          <div className="grid grid-cols-3 gap-2">
+            {availableSubtypes.map((sub) => (
+              <label key={sub.value} className="flex items-center gap-2 font-normal">
+                <Checkbox
+                  checked={!!value.subtype?.includes(sub.value)}
+                  onCheckedChange={checked => handleSubtypeCheck(sub.value, Boolean(checked))}
+                />
+                {sub.label}
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
