@@ -31,7 +31,11 @@ export default function Casos() {
         query = query.eq('modality', filters.modality);
       }
       if (filters.difficulty) {
-        query = query.eq('difficulty_level', filters.difficulty);
+        // Convert string to number for difficulty filter
+        const difficultyLevel = parseInt(filters.difficulty);
+        if (!isNaN(difficultyLevel)) {
+          query = query.eq('difficulty_level', difficultyLevel);
+        }
       }
       if (filters.searchTerm) {
         query = query.ilike('title', `%${filters.searchTerm}%`);

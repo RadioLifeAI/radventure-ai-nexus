@@ -91,11 +91,12 @@ export function useCaseProgress(caseId: string, userId?: string) {
           }
         });
 
-        // Update user profile points
+        // Update user profile points using the correct function
         if (isCorrect && points > 0) {
-          await supabase.rpc('increment_user_points', {
-            user_id: userId,
-            points_to_add: points
+          await supabase.rpc('process_case_completion', {
+            p_user_id: userId,
+            p_case_id: caseId,
+            p_points: points
           });
         }
       } catch (error) {

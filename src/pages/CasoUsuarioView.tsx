@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -149,7 +150,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
                       alt={`Imagem do caso ${idx + 1}`}
                       className="object-contain max-h-[215px] min-w-[150px] rounded"
                     />
-                    {answered && img.legend && (
+                    {isAnswered && img.legend && (
                       <div className="text-xs text-center text-blue-900 mt-2 bg-blue-50 border border-blue-200 rounded px-2 py-1">
                         {img.legend}
                       </div>
@@ -309,11 +310,16 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
                     : "bg-yellow-50 border-yellow-600 text-yellow-900"
                 )}
               >
-                <div className="flex items-center gap-2 mb-2 text-2xl font-bold">
-                  {performance.isCorrect
-                    ? feedbackMsg.title
-                    : feedbackMsg.title + " ❌"} {feedbackMsg.icon}
-                </div>
+                {(() => {
+                  const feedbackMsg = randomFeedback(performance.isCorrect);
+                  return (
+                    <div className="flex items-center gap-2 mb-2 text-2xl font-bold">
+                      {performance.isCorrect
+                        ? feedbackMsg.title
+                        : feedbackMsg.title + " ❌"} {feedbackMsg.icon}
+                    </div>
+                  );
+                })()}
                 <div>
                   {performance.isCorrect ? (
                     <span>
