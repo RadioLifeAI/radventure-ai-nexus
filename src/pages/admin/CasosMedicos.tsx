@@ -21,8 +21,8 @@ async function gerarCasosFake() {
     ["Parabéns pela assertividade!", "Resposta incompleta.", "Estude mais sobre o tema.", "Conferir imagem com atenção."]
   ];
   const getRand = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)];
-  
-  // Seleciona apenas campos compatíveis com a tabela
+
+  // Gerar os casos com apenas os campos existentes no banco
   const mockCases = Array.from({ length: 10 }).map((_, idx) => ({
     title: getRand(TITULOS) + " #" + (Math.floor(Math.random() * 1000)),
     specialty: getRand(SPECIALTIES),
@@ -32,8 +32,6 @@ async function gerarCasosFake() {
     modality: getRand(MODALIDADES),
     subtype: "",
     findings: "Achado típico evidente na imagem em " + getRand(MODALIDADES),
-    patient_age: (27 + idx).toString(),
-    patient_gender: idx % 2 === 0 ? "Masculino" : "Feminino",
     symptoms_duration: (idx + 1) + " dias",
     patient_clinical_info: "Paciente com quadro clínico sugestivo para o diagnóstico.",
     main_question: getRand(QUES),
@@ -52,13 +50,13 @@ async function gerarCasosFake() {
     ai_tutor_level: "desligado"
   }));
 
-  // Remover campos que não existem na tabela (como case_number)
+  // Remover campos "extras" que não existem mais na tabela
   const sanitizedCases = mockCases.map((c) => {
-    // seleciona apenas os campos realmente aceitos pela tabela (ajuste conforme necessário!)
+    // Listar somente os campos permitidos pelo schema atual
     const {
       title, specialty, category_id, difficulty_level, points, modality, subtype, findings,
-      patient_age, patient_gender, symptoms_duration, patient_clinical_info, main_question,
-      answer_options, answer_feedbacks, answer_short_tips, correct_answer_index, image_url, explanation, 
+      symptoms_duration, patient_clinical_info, main_question, answer_options,
+      answer_feedbacks, answer_short_tips, correct_answer_index, image_url, explanation,
       can_skip, max_elimination, ai_hint_enabled, manual_hint, skip_penalty_points, elimination_penalty_points,
       ai_tutor_level
     } = c;
@@ -71,8 +69,6 @@ async function gerarCasosFake() {
       modality,
       subtype,
       findings,
-      patient_age,
-      patient_gender,
       symptoms_duration,
       patient_clinical_info,
       main_question,
