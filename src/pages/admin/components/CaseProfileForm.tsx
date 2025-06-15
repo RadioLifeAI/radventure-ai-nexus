@@ -6,7 +6,7 @@ import { ImageUploadWithZoom } from "./ImageUploadWithZoom";
 import { supabase } from "@/integrations/supabase/client";
 import { CaseModalityFields } from "./CaseModalityFields";
 import { toast } from "@/components/ui/use-toast";
-import ReactTooltip from "react-tooltip";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { CasePreviewModal } from "./CasePreviewModal";
 
 const GENDER_OPTIONS = [
@@ -364,17 +364,20 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     setTimeout(() => setFeedback(""), 2300);
   }
 
-  // Tooltips helper
+  // Substitute the old renderTooltipTip to use shadcn/ui Tooltip
   function renderTooltipTip(id: string, text: string) {
+    // shadcn/ui Tooltip doesn't require id - just show tooltip on hover
     return (
-      <>
-        <span data-tip data-for={id} className="ml-1 text-cyan-700 cursor-help">
-          ⓘ
-        </span>
-        <ReactTooltip id={id} place="top" type="info" effect="solid">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="ml-1 text-cyan-700 cursor-help align-middle">
+            ⓘ
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="top">
           <span className="text-xs">{text}</span>
-        </ReactTooltip>
-      </>
+        </TooltipContent>
+      </Tooltip>
     );
   }
 

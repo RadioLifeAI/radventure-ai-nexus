@@ -2,7 +2,7 @@
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
-import { BadgeHelpCircle } from "lucide-react";
+import { HelpCircle } from "lucide-react";
 
 interface CasePreviewModalProps {
   open: boolean;
@@ -21,7 +21,7 @@ export function CasePreviewModal({ open, onClose, form, categories, difficulties
         <DialogHeader>
           <DialogTitle>
             Pré-visualização do Caso
-            <BadgeHelpCircle className="inline-block ml-2 text-cyan-600" size={20} />
+            <HelpCircle className="inline-block ml-2 text-cyan-600" size={20} />
           </DialogTitle>
         </DialogHeader>
         <div className="flex flex-col md:flex-row gap-6">
@@ -70,3 +70,4 @@ export function CasePreviewModal({ open, onClose, form, categories, difficulties
     </Dialog>
   );
 }
+
