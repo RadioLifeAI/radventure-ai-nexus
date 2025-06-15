@@ -31,7 +31,9 @@ const INITIAL_FORM = {
   skip_penalty_points: 0,
   elimination_penalty_points: 0,
   ai_tutor_level: "desligado",
-  case_number: null as number | null
+  case_number: null as number | null,
+  // Adicionando campo para diagnóstico interno da questão/caso
+  title_diagnosis: ""
 };
 
 export function useCaseProfileFormState() {
