@@ -20,75 +20,43 @@ async function gerarCasosFake() {
     ["Boa! Diagnóstico frequente.", "Não é o achado esperado.", "Fique atento às variantes.", "Analise o contexto clínico."],
     ["Parabéns pela assertividade!", "Resposta incompleta.", "Estude mais sobre o tema.", "Conferir imagem com atenção."]
   ];
+  const GENDERS = ["Masculino", "Feminino"];
   const getRand = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)];
 
-  // Gerar os casos com apenas os campos existentes no banco
-  const mockCases = Array.from({ length: 10 }).map((_, idx) => ({
-    title: getRand(TITULOS) + " #" + (Math.floor(Math.random() * 1000)),
-    specialty: getRand(SPECIALTIES),
-    category_id: 1,
-    difficulty_level: (Math.floor(Math.random() * 4) + 1),
-    points: (Math.floor(Math.random() * 3) + 1) * 10,
-    modality: getRand(MODALIDADES),
-    subtype: "",
-    findings: "Achado típico evidente na imagem em " + getRand(MODALIDADES),
-    symptoms_duration: (idx + 1) + " dias",
-    patient_clinical_info: "Paciente com quadro clínico sugestivo para o diagnóstico.",
-    main_question: getRand(QUES),
-    answer_options: ["Alternativa A", "Alternativa B", "Alternativa C", "Alternativa D"],
-    answer_feedbacks: getRand(FEEDBACKS),
-    answer_short_tips: ["Reflita sobre anatomia.", "Atenção para o contexto.", "Revise epidemiologia.", ""],
-    correct_answer_index: Math.floor(Math.random() * 4),
-    image_url: "",
-    explanation: "Explicação resumo para aprendizado.",
-    can_skip: true,
-    max_elimination: 1,
-    ai_hint_enabled: false,
-    manual_hint: "Dica extra para o usuário.",
-    skip_penalty_points: 0,
-    elimination_penalty_points: 0,
-    ai_tutor_level: "desligado"
-  }));
-
-  // Remover campos "extras" que não existem mais na tabela
-  const sanitizedCases = mockCases.map((c) => {
-    // Listar somente os campos permitidos pelo schema atual
-    const {
-      title, specialty, category_id, difficulty_level, points, modality, subtype, findings,
-      symptoms_duration, patient_clinical_info, main_question, answer_options,
-      answer_feedbacks, answer_short_tips, correct_answer_index, image_url, explanation,
-      can_skip, max_elimination, ai_hint_enabled, manual_hint, skip_penalty_points, elimination_penalty_points,
-      ai_tutor_level
-    } = c;
+  const mockCases = Array.from({ length: 10 }).map((_, idx) => {
+    const answer_options = ["Alternativa A", "Alternativa B", "Alternativa C", "Alternativa D"];
     return {
-      title,
-      specialty,
-      category_id,
-      difficulty_level,
-      modality,
-      subtype,
-      findings,
-      symptoms_duration,
-      patient_clinical_info,
-      main_question,
+      title: getRand(TITULOS) + " #" + (Math.floor(Math.random() * 1000)),
+      specialty: getRand(SPECIALTIES),
+      category_id: 1,
+      difficulty_level: (Math.floor(Math.random() * 4) + 1),
+      modality: getRand(MODALIDADES),
+      findings: "Achado típico evidente na imagem em " + getRand(MODALIDADES),
+      symptoms_duration: (idx + 1) + " dias",
+      patient_clinical_info: "Paciente com quadro clínico sugestivo para o diagnóstico.",
+      main_question: getRand(QUES),
       answer_options,
-      answer_feedbacks,
-      answer_short_tips,
-      correct_answer_index,
-      image_url,
-      explanation,
-      can_skip,
-      max_elimination,
-      ai_hint_enabled,
-      manual_hint,
-      skip_penalty_points,
-      elimination_penalty_points,
-      ai_tutor_level
+      answer_feedbacks: getRand(FEEDBACKS),
+      answer_short_tips: ["Reflita sobre anatomia.", "Atenção para o contexto.", "Revise epidemiologia.", ""],
+      correct_answer_index: Math.floor(Math.random() * 4),
+      image_url: "",
+      explanation: "Explicação resumo para aprendizado.",
+      can_skip: true,
+      max_elimination: 1,
+      ai_hint_enabled: false,
+      manual_hint: "Dica extra para o usuário.",
+      skip_penalty_points: 0,
+      elimination_penalty_points: 0,
+      ai_tutor_level: "desligado",
+      patient_age: 25 + idx,
+      patient_gender: getRand(GENDERS),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
   });
 
   try {
-    const { error } = await supabase.from("medical_cases").insert(sanitizedCases);
+    const { error } = await supabase.from("medical_cases").insert(mockCases);
     if (!error) {
       toast({ title: "Casos de teste gerados!" });
       window.location.reload();
