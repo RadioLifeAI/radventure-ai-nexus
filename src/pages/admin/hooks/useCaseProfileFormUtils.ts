@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { buildAutoAdvancedFields } from "./autoAdvancedUtils";
 import { shuffleAlternativesWithFeedback } from "./shuffleUtils";
+import { normalizeString, suggestPointsByDifficulty, safeStr, safeArr } from "./caseFormHelpers";
 
 export function useCaseProfileFormUtils({
   form,
@@ -11,9 +12,6 @@ export function useCaseProfileFormUtils({
   toast,
   setHighlightedFields
 }: any) {
-  function normalizeString(str: string = "") {
-    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-  }
   function suggestPointsByDifficulty(level: string) {
     switch (level) {
       case "1": return "10";
