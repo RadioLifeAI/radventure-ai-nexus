@@ -126,34 +126,38 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         throw new Error(data.error || data.raw || "Falha na chamada IA.");
       }
       const suggestion = data.suggestion || {};
-      setForm(prev => ({
-        ...prev,
-        category_id:
-          suggestion.category
-            ? String(categories.find(({ name }) => name === suggestion.category)?.id ?? "")
+      setForm(prev => {
+        // Defensive helpers to ensure string fields for TS & consistency
+        const safeStr = (v: any) => (v === null || v === undefined ? "" : String(v));
+        return {
+          ...prev,
+          category_id: suggestion.category
+            ? safeStr(categories.find(({ name }) => name === suggestion.category)?.id ?? "")
             : "",
-        difficulty_level:
-          suggestion.difficulty
-            ? String(
-                difficulties.find(({ level }) => String(level) === String(suggestion.difficulty))?.level ?? ""
+          difficulty_level: suggestion.difficulty
+            ? safeStr(
+                difficulties.find(({ level }) => safeStr(level) === safeStr(suggestion.difficulty))?.level ?? ""
               )
             : "",
-        points: suggestion.points?.toString() ?? "10",
-        modality: suggestion.modality ?? "",
-        subtype: suggestion.subtype ?? "",
-        findings: suggestion.findings ?? "",
-        patient_clinical_info: suggestion.patient_clinical_info ?? "",
-        explanation: suggestion.explanation ?? "",
-        patient_age: suggestion.patient_age ?? "",
-        patient_gender: suggestion.patient_gender ?? "",
-        symptoms_duration: suggestion.symptoms_duration ?? "",
-        main_question: suggestion.main_question ?? "",
-        answer_options: Array.isArray(suggestion.answer_options)
-          ? suggestion.answer_options.concat(["", "", "", ""]).slice(0, 4)
-          : ["", "", "", ""],
-        correct_answer_index: 0,
-        // mantém outras opções já preenchidas no form
-      }));
+          points: suggestion.points !== undefined ? safeStr(suggestion.points) : "10",
+          modality: safeStr(suggestion.modality ?? ""),
+          subtype: safeStr(suggestion.subtype ?? ""),
+          findings: safeStr(suggestion.findings ?? ""),
+          patient_clinical_info: safeStr(suggestion.patient_clinical_info ?? ""),
+          explanation: safeStr(suggestion.explanation ?? ""),
+          patient_age: safeStr(suggestion.patient_age ?? ""),
+          patient_gender: safeStr(suggestion.patient_gender ?? ""),
+          symptoms_duration: safeStr(suggestion.symptoms_duration ?? ""),
+          main_question: safeStr(suggestion.main_question ?? ""),
+          answer_options: Array.isArray(suggestion.answer_options)
+            ? suggestion.answer_options.map(safeStr).concat(["", "", "", ""]).slice(0, 4)
+            : ["", "", "", ""],
+          // Always reset or keep old feedback/tips
+          answer_feedbacks: prev.answer_feedbacks,
+          answer_short_tips: prev.answer_short_tips,
+          correct_answer_index: 0,
+        };
+      });
       setHighlightedFields([
         "category_id",
         "difficulty_level",
