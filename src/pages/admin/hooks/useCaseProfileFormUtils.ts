@@ -10,12 +10,7 @@ export function useCaseProfileFormUtils({
   setHighlightedFields,
 }: any) {
   function normalizeString(str: string = "") {
-    return str
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-zA-Z0-9]/g, "")
-      .toLowerCase()
-      .trim();
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
   }
   function suggestPointsByDifficulty(level: string) {
     switch (level) {
@@ -27,32 +22,16 @@ export function useCaseProfileFormUtils({
     }
   }
   async function handleAutoFillCaseDetails() {
-    if (!form.title?.trim() && !form.findings?.trim()) {
-      toast({ description: "Preencha o campo Diagnóstico ou Achados Radiológicos para sugerir os detalhes." });
+    if (!form.title?.trim()) {
+      toast({ description: "Por favor, preencha o campo Diagnóstico para sugerir todos os detalhes." });
       return;
     }
     setSubmitting(true);
     try {
-      // NOVO PROMPT — EXTREMAMENTE CLARO SOBRE DEFINIÇÕES:
-      const contextForAI = `
-IMPORTANTE: Você é um especialista em radiologia. Preencha obrigatoriamente os campos abaixo, utilizando o diagnóstico (title) e a descrição dos achados radiológicos (findings) como ponto de partida para as sugestões. SIGA AS INSTRUÇÕES RIGOROSAMENTE:
-
-- "Modalidade" = tipo do exame de imagem realizado (Exemplos: Tomografia Computadorizada, Ressonância Magnética, Radiografia, Ultrassonografia, Mamografia, etc).
-- "Subtipo" = região do corpo ou protocolo do exame, SEMPRE relacionada à modalidade (Exemplos: Tórax, Abdome Total, Articulações, RM Encéfalo, TC Tórax, US Abdome Superior, etc).
-- "Categoria" = ESPECIALIDADE MÉDICA relacionada à REGIÃO DO CORPO OU ÓRGÃO envolvido (Exemplos: "Torácica" para pulmão, "Neuro" para cérebro/encéfalo, "Musculoesquelético" para articulações, "Abdome" para fígado/intestino, "Mama" para mama, etc). NÃO confundir categoria com modalidade.
-⚠️ Se a patologia envolver o pulmão, sempre sugira categoria "Torácica". Se for cérebro, "Neuro". Musculatura/articulações: "Musculoesquelético". Mama: "Mama". Abdome: "Abdome" e assim por diante.
-⚠️ NÃO escreva diagnósticos, hipóteses ou sugestões diagnósticas no campo de achados radiológicos ou resumo clínico — apenas descrição objetiva e contextual.
-⚠️ NÃO confunda Modalidade com Subtipo! Modalidade é o TIPO, Subtipo é a REGIÃO/PROTOCOLO.
-- Siga fielmente os campos dos exemplos abaixo, evitando generalizações, e utilize o diagnóstico e achados para INFERIR e PREENCHER o máximo de campos possível. Se não for possível inferir, deixe em branco.
-`;
-
-      const body: any = { 
-        diagnosis: form.title,
-        findings: form.findings?.trim() || "",
-        modality: form.modality?.trim() || "",
-        subtype: form.subtype?.trim() || "",
-        systemPrompt: contextForAI
-      };
+      const body: any = { diagnosis: form.title };
+      if (form.findings?.trim()) body.findings = form.findings.trim();
+      if (form.modality?.trim()) body.modality = form.modality.trim();
+      if (form.subtype?.trim()) body.subtype = form.subtype.trim();
 
       const { data, error } = await supabase.functions.invoke("case-autofill", {
         body
@@ -63,51 +42,16 @@ IMPORTANTE: Você é um especialista em radiologia. Preencha obrigatoriamente os
       }
 
       const suggestion = data?.suggestion || {};
-
-      // MATCHS: Função mais tolerant para categoria
-      let categoriaId = form.category_id || "";
-      let categoriaWarning = "";
-
-      if (!categoriaId && suggestion.category) {
-        // Busca flexível: remove acentos, espaço, caixa, etc.
-        const normalize = (str: string) =>
-          (str || "")
-            .toLocaleLowerCase()
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .replace(/[^a-z0-9]/g, "")
-            .trim();
-
-        const aiCatNorm = normalize(String(suggestion.category));
-
-        // Busca EXATA pelo nome
-        let foundCat = categories.find(cat => normalize(cat.name) === aiCatNorm);
-        // Procura por "contém" (match parcial)
-        if (!foundCat) {
-          foundCat = categories.find(cat =>
-            aiCatNorm.includes(normalize(cat.name)) ||
-            normalize(cat.name).includes(aiCatNorm)
-          );
-        }
-        // Fuzzy: 4 primeiras letras
-        if (!foundCat && aiCatNorm.length >= 4) {
-          foundCat = categories.find(cat =>
-            normalize(cat.name).slice(0, 4) === aiCatNorm.slice(0, 4)
-          );
-        }
-
-        if (!foundCat && categories.length) {
-          categoriaWarning = `A categoria sugerida pela IA ("${suggestion.category}") não correspondeu a nenhuma categoria existente. Ajuste manualmente.`;
-          toast({ 
-            variant: "destructive",
-            title: "Categoria não localizada automaticamente!",
-            description: categoriaWarning
-          });
-        }
-        categoriaId = foundCat ? String(foundCat.id) : "";
+      let categoriaId = "";
+      if (suggestion.category) {
+        const normalizedAI = normalizeString(suggestion.category);
+        const match = categories.find((cat: any) => normalizeString(cat.name) === normalizedAI)
+          || categories.find((cat: any) => normalizeString(cat.name).startsWith(normalizedAI))
+          || categories.find((cat: any) => normalizedAI.startsWith(normalizeString(cat.name)));
+        categoriaId = match ? String(match.id) : "";
       }
 
-      // Modalidade: preencher APENAS se não houver no form!
+      // --- NOVA LÓGICA para garantir os selects corretos de modalidade/subtipo ---
       const ALL_MODALITIES = [
         "Tomografia Computadorizada (TC)",
         "Ressonância Magnética (RM)",
@@ -119,68 +63,39 @@ IMPORTANTE: Você é um especialista em radiologia. Preencha obrigatoriamente os
         "Fluoroscopia",
         "Densitometria Óssea (DMO)"
       ];
-      const ALL_MODALITIES_NORMALIZED = ALL_MODALITIES.map(m =>
-        m.replace(/\(.+\)/, "").toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "").trim()
-      );
-      let newModality = form.modality || "";
-      if (!newModality && suggestion.modality && suggestion.modality.trim()) {
-        const aiMod = suggestion.modality.replace(/\(.+\)/, "").toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "").trim();
-        let idx = ALL_MODALITIES_NORMALIZED.findIndex(m => m === aiMod);
-        if (idx === -1) {
-          idx = ALL_MODALITIES_NORMALIZED.findIndex(m => m.includes(aiMod) || aiMod.includes(m));
-        }
-        if (idx === -1 && aiMod.length > 3) {
-          idx = ALL_MODALITIES_NORMALIZED.findIndex(m => m.startsWith(aiMod.slice(0, 4)));
-        }
-        newModality = idx > -1 ? ALL_MODALITIES[idx] : "";
-        if (!newModality) {
-          toast({ variant: "destructive", title: "Modalidade não localizada", description: `Não foi possível definir modalidade a partir de "${suggestion.modality}".` });
-        }
-      }
 
-      // Subtipo: só se form.subtype não existe.
-      // ... mesma abordagem: super lista + fuzzy ...
       const ALL_SUBTYPES = [
         // Tomografia Computadorizada (TC)
         "Angio-TC de Crânio", "Angio-TC de Pescoço e Carótidas", "Angio-TC de Tórax", "Angio-TC de Aorta", "Angio-TC de Artérias Coronárias", "Angio-TC de Vasos Abdominais", "Angio-TC de Membros Inferiores/Superiores", "TC Crânio", "TC Seios da Face", "TC Pescoço", "TC Tórax", "TC Abdome Total", "TC Pelve", "Uro-TC", "Entero-TC", "TC Coluna", "TC Musculoesquelético",
-        // RM
+        // Ressonância Magnética (RM)
         "RM Encéfalo", "Angio-RM de Crânio", "RM Sela Túrcica / Hipófise", "RM Órbitas", "RM Pescoço", "RM Tórax", "RM Mama", "RM Cardíaca", "RM Abdome Superior", "Colangio-RM", "Entero-RM", "RM Pelve", "RM Coluna", "RM ATM", "RM Musculoesquelético", "Artro-RM",
-        // US
+        // Ultrassonografia (US)
         "US Abdominal Total", "US Abdome Superior", "US Rins e Vias Urinárias", "US Pélvico (Suprapúbico)", "US Pélvico Transvaginal", "US Próstata", "US Obstétrico", "US Mama e Axilas", "US Tireoide e Cervical", "US Glândulas Salivares", "US Musculoesquelético", "US Partes Moles", "US Doppler Vascular", "Ecocardiograma Transtorácico",
-        // RX
+        // Radiografia (RX)
         "RX Tórax", "RX Abdome Simples e Agudo", "RX Coluna", "RX Crânio e Face", "RX de Extremidades", "RX Pelve e Bacia", "RX Escanometria", "RX Panorâmica de Mandíbula",
-        // MMG
+        // Mamografia (MMG)
         "Mamografia Digital Bilateral", "Mamografia Diagnóstica", "Tomossíntese Mamária", "Mamografia com Contraste",
-        // MN
+        // Medicina Nuclear (MN)
         "Cintilografia Óssea", "Cintilografia Miocárdica", "Cintilografia Renal", "Cintilografia de Tireoide", "PET-CT Oncológico", "PET-CT com PSMA", "PET-CT com FDG",
-        // RI
+        // Radiologia Intervencionista (RI)
         "Angioplastia e Stent", "Biópsia Guiada", "Drenagem de Abscessos", "Quimioembolização Hepática", "Ablação por Radiofrequência", "Vertebroplastia",
         // Fluoroscopia
         "Estudo Contrastado do Esôfago, Estômago e Duodeno (EED)", "Trânsito Intestinal", "Enema Opaco", "Histerossalpingografia (HSG)", "Uretrocistografia Miccional",
-        // DMO
+        // Densitometria Óssea (DMO)
         "Densitometria de Coluna e Fêmur", "Densitometria de Corpo Inteiro"
       ];
-      const normalizeSub = (s: string) => (s || "").toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "").trim();
-      const ALL_SUBTYPES_NORMALIZED = ALL_SUBTYPES.map(normalizeSub);
 
-      let newSubtype = form.subtype || "";
-      if (!newSubtype && suggestion.subtype && suggestion.subtype.trim()) {
-        const aiSub = normalizeSub(suggestion.subtype);
-        let idx = ALL_SUBTYPES_NORMALIZED.findIndex(s => s === aiSub);
-        if (idx === -1) {
-          idx = ALL_SUBTYPES_NORMALIZED.findIndex(s =>
-            s.includes(aiSub) || aiSub.includes(s)
-          );
-        }
-        if (idx === -1 && aiSub.length > 3) {
-          idx = ALL_SUBTYPES_NORMALIZED.findIndex(s => s.startsWith(aiSub.slice(0, 4)));
-        }
-        newSubtype = idx > -1 ? ALL_SUBTYPES[idx] : "";
-        if (!newSubtype && suggestion.subtype && suggestion.subtype.trim()) {
-          toast({ variant: "destructive", title: "Subtipo não localizado", description: `Não foi possível selecionar um subtipo a partir de "${suggestion.subtype}". Ajuste manualmente.` });
-        }
+      // Se a IA sugeriu uma modalidade válida, use-a; senão mantenha a anterior
+      let newModality = form.modality;
+      if (suggestion.modality && ALL_MODALITIES.includes(suggestion.modality)) {
+        newModality = suggestion.modality;
+      }
+      let newSubtype = form.subtype;
+      if (suggestion.subtype && ALL_SUBTYPES.includes(suggestion.subtype)) {
+        newSubtype = suggestion.subtype;
       }
 
+      // ATENÇÃO: para "findings", SEMPRE usar a sugestão da IA, mesmo que já exista preenchido!
       setForm((prev: any) => {
         const safeStr = (v: any) => (v === null || v === undefined ? "" : String(v));
         const safeArr = (a: any[] | undefined, fallbackLen = 4) => {
@@ -190,14 +105,14 @@ IMPORTANTE: Você é um especialista em radiologia. Preencha obrigatoriamente os
 
         return {
           ...prev,
-          category_id: categoriaId, // só sobrescreve se estava vazio!
+          category_id: categoriaId,
           difficulty_level: suggestion.difficulty
             ? safeStr(
                 difficulties.find(({ level }: any) => safeStr(level) === safeStr(suggestion.difficulty))?.level ?? ""
               )
             : "",
           points: suggestion.points !== undefined ? safeStr(suggestion.points) : "10",
-          modality: newModality, // só sobrescreve se não havia!
+          modality: newModality,
           subtype: newSubtype,
           findings: safeStr(suggestion.findings ?? ""), // SEMPRE usa sugestão IA
           patient_clinical_info: safeStr(suggestion.patient_clinical_info ?? ""),
@@ -205,7 +120,7 @@ IMPORTANTE: Você é um especialista em radiologia. Preencha obrigatoriamente os
           answer_feedbacks: Array.isArray(suggestion.answer_feedbacks)
             ? suggestion.answer_feedbacks.map((f: string) => f ?? "").slice(0, 4)
             : ["", "", "", ""],
-          patient_age: safeStr(suggestion.patient_age ?? ""), // só para uso temporário, ignorado no salvamento
+          patient_age: safeStr(suggestion.patient_age ?? ""),
           patient_gender: safeStr(suggestion.patient_gender ?? ""),
           symptoms_duration: safeStr(suggestion.symptoms_duration ?? ""),
           main_question: safeStr(suggestion.main_question ?? ""),
@@ -214,7 +129,6 @@ IMPORTANTE: Você é um especialista em radiologia. Preencha obrigatoriamente os
           correct_answer_index: 0,
         };
       });
-
       setHighlightedFields([
         "category_id",
         "difficulty_level",
@@ -233,10 +147,9 @@ IMPORTANTE: Você é um especialista em radiologia. Preencha obrigatoriamente os
         "answer_short_tips",
       ]);
       setTimeout(() => setHighlightedFields([]), 2500);
-
       toast({
         title: "Campos preenchidos por IA!",
-        description: "Revise as sugestões — especialmente categoria/especialidade, modalidade, subtipo e explicação clínica.",
+        description: "Revise as sugestões — principalmente a explicação curta, focada na integração entre achados radiológicos e o contexto clínico.",
       });
     } catch (err: any) {
       toast({
