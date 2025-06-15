@@ -92,20 +92,36 @@ export function CaseProfileBasicSection({
       </div>
       {/* Modalidade/Subtipo */}
       <CaseModalityFields value={{ modality: form.modality, subtype: form.subtype }} onChange={handleModalityChange} />
-      {/* Diagnóstico e botões */}
+      {/* Título gerado automático */}
+      <div className="mb-2">
+        <label className="font-semibold block flex items-center gap-2">
+          Título do Caso (gerado automaticamente)
+          <span className="text-xs text-cyan-700">(Preenchido automaticamente ao salvar. Usado para identificar o caso, não é o diagnóstico.)</span>
+        </label>
+        <input
+          className="w-full border rounded px-2 py-2 bg-gray-100 text-gray-700 font-mono"
+          value={
+            form.title
+              ? form.title
+              : "(Será definido automaticamente após salvar: Caso [ABREV] [NUM])"
+          }
+          readOnly
+          tabIndex={-1}
+        />
+      </div>
+      {/* Diagnóstico apenas para referência interna */}
       <div className="flex flex-col md:flex-row gap-6">
         <div className="flex-1 space-y-3">
           <div className="flex items-end gap-2">
             <div className="flex-1">
-              {/* LABEL "Diagnóstico" e observação */}
               <label className="font-semibold">
-                Diagnóstico*{" "}
-                <span className="text-xs text-muted-foreground">(Não será exibido ao usuário, apenas referência interna)</span>
+                Diagnóstico (interno)*{" "}
+                <span className="text-xs text-muted-foreground">(Não será exibido no título do caso)</span>
               </label>
               <Input
                 name="title"
-                value={form.title}
-                onChange={handleFormChange}
+                value={form.title_diagnosis ?? ""}
+                onChange={e => setForm((prev: any) => ({ ...prev, title_diagnosis: e.target.value }))}
                 placeholder="Ex: Tuberculose pulmonar"
                 required
                 className={highlightedFields.includes("title") ? "ring-2 ring-cyan-400" : ""}

@@ -50,7 +50,10 @@ export function MedicalCasesTable({ cases, onDelete, onEdit }: MedicalCasesTable
                   <span className="text-xs text-muted-foreground">N/A</span>
                 )}
               </TableCell>
-              <TableCell>{item.title}</TableCell>
+              <TableCell>
+                {/* Sempre mostrar título gerado */}
+                {item.title}
+              </TableCell>
               <TableCell>{item.specialty || "-"}</TableCell>
               <TableCell>{item.modality || "-"}</TableCell>
               <TableCell>{item.created_at ? new Date(item.created_at).toLocaleString("pt-BR") : ""}</TableCell>

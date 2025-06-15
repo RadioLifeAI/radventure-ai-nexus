@@ -105,7 +105,6 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
-
     try {
       // Conta novamente antes do insert para evitar duplicatas
       let caseNumber = form.case_number;
@@ -117,10 +116,10 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
           .eq("modality", form.modality);
         caseNumber = ((data?.length ?? 0) + 1);
       }
-
       const selectedCategory = categories.find(c => String(c.id) === String(form.category_id));
+      const diagnosis_internal = form.title_diagnosis ?? "";
+
       const payload: any = {
-        // Grava specialty sempre igual ao nome da categoria selecionada
         specialty: selectedCategory ? selectedCategory.name : null,
         category_id: form.category_id ? Number(form.category_id) : null,
         case_number: caseNumber ?? null,
@@ -128,7 +127,8 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         points: form.points ? Number(form.points) : null,
         modality: form.modality || null,
         subtype: form.subtype || null,
-        title: form.title,
+        // title será ignorado pelo trigger (deve vir null)
+        title: null,
         findings: form.findings,
         patient_age: form.patient_age,
         patient_gender: form.patient_gender,
@@ -150,15 +150,20 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         ai_tutor_level: form.ai_tutor_level,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        // diagnóstico interno salvo apenas no payload, não exibido
+        title_diagnosis: diagnosis_internal
       };
       Object.keys(payload).forEach(k => {
         if (typeof payload[k] === "string" && payload[k] === "") payload[k] = null;
       });
 
-      const { error } = await supabase.from("medical_cases").insert([payload]);
+      const { error, data: saved } = await supabase.from("medical_cases").insert([payload]).select();
       if (!error) {
+        // Após insert, pega title auto-gerado
+        const autoTitle = saved?.[0]?.title ?? "";
+        setForm((prev: any) => ({ ...prev, title: autoTitle }));
         setFeedback("Caso cadastrado com sucesso!");
-        toast({ title: "Caso cadastrado com sucesso!" });
+        toast({ title: `Caso criado! Título: ${autoTitle}` });
         resetForm();
         onCreated?.();
       } else {
