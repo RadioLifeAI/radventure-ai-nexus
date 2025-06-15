@@ -63,9 +63,9 @@ async function gerarCasosFake() {
 }
 
 export default function CasosMedicos() {
-  // Estado dos filtros
-  const [categoryFilter, setCategoryFilter] = useState("");
-  const [modalityFilter, setModalityFilter] = useState("");
+  // Estado dos filtros (usar "all" como padrão)
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [modalityFilter, setModalityFilter] = useState("all");
   const [specialties, setSpecialties] = useState<{id: number, name: string}[]>([]);
   const [modalities, setModalities] = useState<string[]>([]);
 
@@ -81,8 +81,12 @@ export default function CasosMedicos() {
     });
   }, []);
 
+  // Traduzir "all" para "" (sem filtro) ao passar para o hook
+  const filterCategory = categoryFilter === "all" ? "" : categoryFilter;
+  const filterModality = modalityFilter === "all" ? "" : modalityFilter;
+
   // Chamar o hook de casos passando os filtros
-  const { cases, loading, refreshCases, deleteCase, editCase } = useMedicalCases({ categoryFilter, modalityFilter });
+  const { cases, loading, refreshCases, deleteCase, editCase } = useMedicalCases({ categoryFilter: filterCategory, modalityFilter: filterModality });
 
   return (
     <div>
@@ -101,7 +105,7 @@ export default function CasosMedicos() {
               <SelectValue placeholder="Filtrar por especialidade" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todas Especialidades</SelectItem>
+              <SelectItem value="all">Todas Especialidades</SelectItem>
               {specialties.map((cat) => (
                 <SelectItem key={cat.id} value={String(cat.name)}>{cat.name}</SelectItem>
               ))}
@@ -114,7 +118,7 @@ export default function CasosMedicos() {
               <SelectValue placeholder="Filtrar por modalidade" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todas Modalidades</SelectItem>
+              <SelectItem value="all">Todas Modalidades</SelectItem>
               {modalities.map((mod) => (
                 <SelectItem key={mod} value={mod}>{mod}</SelectItem>
               ))}
