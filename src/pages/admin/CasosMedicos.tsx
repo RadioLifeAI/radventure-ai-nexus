@@ -65,7 +65,6 @@ async function gerarCasosFake() {
       specialty,
       category_id,
       difficulty_level,
-      points,
       modality,
       subtype,
       findings,
