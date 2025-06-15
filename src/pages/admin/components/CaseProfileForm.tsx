@@ -188,7 +188,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         handleFormChange={handleFormChange}
         handleSuggestExplanation={handleSuggestExplanation}
         renderTooltipTip={renderTooltipTip}
-        handleSuggestHint={handleSuggestHint}
+        handleSuggestHint={handleSuggestHint} {/* Make sure this prop is ALWAYS passed */}
       />
       <div className="mt-7">
         <button
