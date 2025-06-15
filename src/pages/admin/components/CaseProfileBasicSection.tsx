@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,18 +24,19 @@ type Props = {
   undoClinical: any;
   undoDiagnosis: any;
   setForm: any;
+  autoTitlePreview?: string;
+  onGenerateAutoTitle?: () => void;
 };
 
 export function CaseProfileBasicSection({
   form, highlightedFields, categories, difficulties, handleFormChange,
   handleModalityChange, handleAutoFillCaseDetails, handleSuggestDiagnosis, handleSuggestHint, handleImageChange, renderTooltipTip,
   handleSuggestFindings, handleSuggestClinicalInfo,
-  undoFindings, undoClinical, undoDiagnosis, setForm
+  undoFindings, undoClinical, undoDiagnosis, setForm,
+  autoTitlePreview, onGenerateAutoTitle
 }: Props) {
-  // Novo: adaptador para array de imagens
   function handleImagesChange(imgArr: { url: string; legend: string }[]) {
-    // propaga nova lista para o form
-    handleImageChange(imgArr); // form.image_url agora é array de {url,legend}
+    handleImageChange(imgArr);
   }  
   return (
     <>
@@ -97,18 +97,31 @@ export function CaseProfileBasicSection({
       <div className="mb-2">
         <label className="font-semibold block flex items-center gap-2">
           Título do Caso (gerado automaticamente)
-          <span className="text-xs text-cyan-700">(Será preenchido automaticamente ao selecionar categoria/mod. Visualização para admin.)</span>
+          <span className="text-xs text-cyan-700">(Será preenchido ao selecionar categoria/mod. Se necessário, clique para auto gerar.)</span>
         </label>
-        <input
-          className="w-full border rounded px-2 py-2 bg-gray-100 text-gray-700 font-mono"
-          value={
-            form.title
+        <div className="flex flex-row items-center gap-2">
+          <input
+            className="w-full border rounded px-2 py-2 bg-gray-100 text-gray-700 font-mono"
+            value={
+              form.title
               ? form.title
-              : "(Será definido automaticamente após salvar: Caso [ABREV] [NUM])"
-          }
-          readOnly
-          tabIndex={-1}
-        />
+              : (autoTitlePreview || "(Será definido automaticamente após salvar: Caso [ABREV] [NUM])")
+            }
+            readOnly
+            tabIndex={-1}
+          />
+          {onGenerateAutoTitle && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={onGenerateAutoTitle}
+              title="Gerar título automaticamente"
+            >
+              Gerar título
+            </Button>
+          )}
+        </div>
       </div>
       {/* Diagnóstico apenas para referência interna */}
       <div className="flex flex-col md:flex-row gap-6">

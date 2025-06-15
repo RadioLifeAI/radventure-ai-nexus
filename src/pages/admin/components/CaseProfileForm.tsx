@@ -71,13 +71,12 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     handleRandomizeOptions
   } = handlers;
 
-  // --- NOVO: preview automático do título
+  // NOVO: usar preview e função de gerar título
   useEffect(() => {
     const categoria = categories.find(c => String(c.id) === String(form.category_id));
     setCategoryForTitle(categoria ? categoria.name : "");
     setModalityForTitle(form.modality);
     if (form.category_id && form.modality) {
-      // Busca quantos casos já existem nessa combinação, para prever o novo número
       supabase.from("medical_cases")
         .select("id", { count: "exact", head: true })
         .eq("category_id", Number(form.category_id))
@@ -90,7 +89,6 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     }
   }, [form.category_id, form.modality, categories, form.modality]);
 
-  // Função para gerar a abreviação igual ao trigger do banco
   function abbreviateCategory(catName: string) {
     if (!catName) return "";
     if (catName.toLowerCase().includes("neuro")) return "Neuro";
@@ -98,8 +96,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     if (catName.toLowerCase().includes("derma")) return "Derma";
     return catName.replace(/[^a-zA-Z0-9]/g, "").substring(0,5);
   }
-
-  // Novo: gerar preview do título
+  // Manter preview calculado para exibir
   const autoTitlePreview =
     categoryForTitle && caseNumberPreview
       ? `Caso ${abbreviateCategory(categoryForTitle)} ${caseNumberPreview}`
@@ -222,7 +219,8 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         onPreview={() => setShowPreview(true)}
         onSuggestTitle={onSuggestDiagnosis}
         onAutoFill={handleAutoFillCaseDetails}
-        onGenerateAutoTitle={handleGenerateCaseTitleAuto}
+        // REMOVER este botão daqui (Gerar título automático será ao lado do campo)
+        onGenerateAutoTitle={null}
         showPreview={showPreview}
       />
       <CaseProfileBasicSection
@@ -243,6 +241,9 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         undoClinical={undoClinical}
         undoDiagnosis={undoDiagnosis}
         setForm={setForm}
+        autoTitlePreview={autoTitlePreview}
+        onGenerateAutoTitle={handleGenerateCaseTitleAuto}
+        // passa preview e handler para o campo de título
       />
       <label className="font-semibold block mt-3">
         Pergunta Principal *
