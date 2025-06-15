@@ -113,11 +113,16 @@ function buildPromptFullCase({ diagnosis, findings, modality, subtype }) {
     if (subtype) contextIntro += `Subtipo: ${subtype}. `;
     if (findings) contextIntro += `Achados radiológicos: ${findings}. `;
   }
+  // --- MODIFICAÇÃO PARA VARIAR IDADE, GÊNERO E DURAÇÃO
   const finalSystemPrompt = `
 ${contextIntro}
 Com base no DIAGNÓSTICO de referência abaixo, preencha somente o JSON com todos os campos do caso clínico de maneira FUNDAMENTADA E COMPLETA, detalhando SEM ENROLAR e evitando resumir excessivamente, e sempre integrando achados, contexto e raciocínio.
 
 ${FEEDBACK_INSTRUCTION}
+
+IMPORTANTE:
++ GERE uma faixa adequada de valores para cada novo caso nos campos "patient_age", "patient_gender", "symptoms_duration" — NÃO repita os mesmos valores do exemplo e use variação conforme o diagnóstico e quadro!
++ Exemplos válidos: "patient_age": "40" | "72" | "15", "patient_gender": "Masculino" ou "Feminino", "symptoms_duration": "2 semanas", "48 horas", "5 meses", etc.
 
 Estruture assim:
 {
@@ -128,9 +133,9 @@ Estruture assim:
   "subtype": "",
   "findings": "",
   "patient_clinical_info": "",
-  "patient_age": "33",
-  "patient_gender": "Feminino",
-  "symptoms_duration": "7 dias",
+  "patient_age": "",
+  "patient_gender": "",
+  "symptoms_duration": "",
   "main_question": "",
   "answer_options": ["", "", "", ""],
   "answer_feedbacks": ["", "", "", ""],
