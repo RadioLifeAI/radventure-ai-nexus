@@ -1,13 +1,26 @@
-
 import React from "react";
 import { Table, TableHead, TableRow, TableHeader, TableBody, TableCell } from "@/components/ui/table";
 import { Edit, Trash, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import EventDetailsModal from "./EventDetailsModal";
+import EventEditModal from "./EventEditModal";
 
 // Permite administração básica dos eventos
-export function EventManagementTable({ events, onDelete }: { events: any[], onDelete: (id: string) => void }) {
+export function EventManagementTable({ events, onDelete, onUpdate }: { events: any[], onDelete: (id: string) => void, onUpdate: (ev: any) => void }) {
+  const [selected, setSelected] = useState<any>(null);
+  const [showView, setShowView] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+
+  // Demo/mock ranking
+  const mockRanking = [
+    { user_id: "a1", username: "Alice", points: 123 },
+    { user_id: "b2", username: "Bruno", points: 95 },
+    { user_id: "c3", username: "Carla", points: 83 },
+  ];
+
   return (
-    <div className="bg-white rounded shadow overflow-x-auto">
+    <div className="bg-white rounded shadow overflow-x-auto relative">
       <Table>
         <TableHeader>
           <TableRow>
@@ -48,27 +61,23 @@ export function EventManagementTable({ events, onDelete }: { events: any[], onDe
               <TableCell>{event.max_participants || "-"}</TableCell>
               <TableCell>
                 <div className="flex gap-2">
-                  {/* Preview / Visualizar (a implementar modais futuros) */}
+                  {/* Visualizar com modal gamificado */}
                   <Button
                     size="sm"
                     variant="ghost"
                     title="Visualizar evento"
-                    asChild
+                    onClick={() => { setSelected(event); setShowView(true); }}
                   >
-                    <a href={`/admin/events/${event.id}`}>
-                      <Eye />
-                    </a>
+                    <Eye />
                   </Button>
-                  {/* Editar evento (pode abrir form futuro) */}
+                  {/* Editar evento com modal */}
                   <Button
                     size="sm"
                     variant="outline"
-                    asChild
                     title="Editar evento"
+                    onClick={() => { setSelected(event); setShowEdit(true); }}
                   >
-                    <a href={`/admin/create-event?edit=${event.id}`}>
-                      <Edit />
-                    </a>
+                    <Edit />
                   </Button>
                   {/* Excluir */}
                   <Button
@@ -92,6 +101,24 @@ export function EventManagementTable({ events, onDelete }: { events: any[], onDe
           )}
         </TableBody>
       </Table>
+
+      {/* MODAIS COMPLEXOS */}
+      {showView && selected && (
+        <EventDetailsModal
+          open={showView}
+          onClose={() => setShowView(false)}
+          event={selected}
+          ranking={mockRanking}
+        />
+      )}
+      {showEdit && selected && (
+        <EventEditModal
+          open={showEdit}
+          onClose={() => setShowEdit(false)}
+          event={selected}
+          onSave={ev => { onUpdate(ev); setShowEdit(false); }}
+        />
+      )}
     </div>
   );
 }

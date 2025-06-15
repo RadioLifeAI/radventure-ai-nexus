@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { EventManagementTable } from "./components/EventManagementTable";
@@ -40,6 +39,12 @@ export default function EventsManagement() {
     }
   }
 
+  async function handleUpdate(ev: any) {
+    if (!ev?.id) return;
+    setEvents(events => events.map(e => e.id === ev.id ? { ...e, ...ev } : e));
+    toast({ title: "Evento atualizado", description: "As informações do evento foram salvas." });
+  }
+
   return (
     <div className="p-4 max-w-5xl mx-auto animate-fade-in">
       <div className="flex items-center justify-between mb-6">
@@ -53,7 +58,7 @@ export default function EventsManagement() {
           <Loader2 className="animate-spin mr-2" /> <span>Carregando eventos...</span>
         </div>
       ) : (
-        <EventManagementTable events={events} onDelete={handleDelete} />
+        <EventManagementTable events={events} onDelete={handleDelete} onUpdate={handleUpdate} />
       )}
     </div>
   );
