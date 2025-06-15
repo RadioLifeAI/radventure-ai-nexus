@@ -187,7 +187,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         ai_tutor_level: form.ai_tutor_level,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        title_diagnosis: diagnosis_internal
+        diagnosis_internal
       };
       Object.keys(payload).forEach(k => {
         if (typeof payload[k] === "string" && payload[k] === "") payload[k] = null;
