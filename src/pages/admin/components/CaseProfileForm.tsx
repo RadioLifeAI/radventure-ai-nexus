@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -5,8 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { ImageUploadWithZoom } from "./ImageUploadWithZoom";
 import { supabase } from "@/integrations/supabase/client";
 import { CaseModalityFields } from "./CaseModalityFields";
+import { toast } from "@/components/ui/use-toast";
 
-type Option = { value: string, feedback: string };
 const GENDER_OPTIONS = [
   { value: "", label: "Selecione..." },
   { value: "Masculino", label: "Masculino" },
@@ -43,12 +44,9 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
 
   // Carregar selects de categorias e dificuldades
   useEffect(() => {
-    // Carregar categorias
     supabase.from("medical_specialties")
       .select("id, name")
       .then(({ data }) => data && setCategories(data));
-
-    // Carregar níveis de dificuldade
     supabase.from("difficulties")
       .select("id, level, description")
       .order("level", { ascending: true })
@@ -64,10 +62,6 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     setForm((prev) => ({ ...prev, modality: val.modality, subtype: val.subtype }));
   }
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  }
   function handleOptionChange(idx: number, val: string) {
     setForm((prev) => {
       const opts = [...prev.answer_options];
@@ -87,6 +81,37 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
   }
   function handleImageChange(url: string | null) {
     setForm((prev) => ({ ...prev, image_url: url || "" }));
+  }
+
+  // Botão: Sugerir título (futuro: chamar IA ou API - atualmente só placeholder)
+  async function handleSuggestTitle() {
+    if (!form.findings && !form.patient_clinical_info) {
+      toast({ description: "Preencha Achados Radiológicos e/ou Resumo Clínico para sugerir um título." });
+      return;
+    }
+    // Placeholder: apenas exemplo de sugestão.
+    setForm(prev => ({ ...prev, title: "Título sugerido pelo sistema (placeholder)" }));
+    toast({ description: "Título sugerido automaticamente (personalize se desejar)." });
+  }
+
+  // Botão: Gerar alternativas (futuro: chamar IA ou API - atualmente só placeholder)
+  async function handleSuggestAlternatives() {
+    if (!form.findings && !form.patient_clinical_info) {
+      toast({ description: "Preencha Achados Radiológicos e Resumo Clínico para gerar alternativas." });
+      return;
+    }
+    // Placeholder: apenas exemplo de sugestão.
+    setForm(prev => ({
+      ...prev,
+      answer_options: [
+        "Diagnóstico A (sugerido pela IA)",
+        "Diagnóstico B (sugerido pela IA)",
+        "Diagnóstico C (sugerido pela IA)",
+        "Diagnóstico D (sugerido pela IA)"
+      ],
+      correct_answer_index: 0
+    }));
+    toast({ description: "Alternativas sugeridas automaticamente (personalize se desejar)." });
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -156,7 +181,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         <div>
           <label className="font-semibold block">Categoria *</label>
           <select
-            className="w-full border rounded px-2 py-2"
+            className="w-full border rounded px-2 py-2 bg-white"
             name="category_id"
             value={form.category_id}
             onChange={handleFormChange}
@@ -171,7 +196,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         <div>
           <label className="font-semibold block">Dificuldade *</label>
           <select
-            className="w-full border rounded px-2 py-2"
+            className="w-full border rounded px-2 py-2 bg-white"
             name="difficulty_level"
             value={form.difficulty_level}
             onChange={handleFormChange}
@@ -204,34 +229,40 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
 
       <div className="flex flex-col md:flex-row gap-6">
         <div className="flex-1 space-y-3">
-          <label className="font-semibold">Título *</label>
-          <Input name="title" value={form.title} onChange={handleChange} placeholder="Ex: PAF pulmonar em paciente jovem" required />
-
+          <div className="flex items-end gap-2">
+            <div className="flex-1">
+              <label className="font-semibold">Título *</label>
+              <Input name="title" value={form.title} onChange={handleFormChange} placeholder="Ex: PAF pulmonar em paciente jovem" required />
+            </div>
+            <Button type="button" onClick={handleSuggestTitle} variant="secondary" className="mb-1">
+              Sugerir Título
+            </Button>
+          </div>
           <label className="font-semibold mt-3">Achados radiológicos *</label>
-          <Textarea name="findings" value={form.findings} onChange={handleChange} placeholder="Descreva os achados..." required />
+          <Textarea name="findings" value={form.findings} onChange={handleFormChange} placeholder="Descreva os achados..." required />
 
           <label className="font-semibold mt-3">Resumo Clínico *</label>
-          <Textarea name="patient_clinical_info" value={form.patient_clinical_info} onChange={handleChange} placeholder="Breve histórico do paciente..." required />
+          <Textarea name="patient_clinical_info" value={form.patient_clinical_info} onChange={handleFormChange} placeholder="Breve histórico do paciente..." required />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-3">
             <div>
               <label className="font-semibold">Idade</label>
-              <Input name="patient_age" value={form.patient_age} onChange={handleChange} placeholder="Ex: 37" />
+              <Input name="patient_age" value={form.patient_age} onChange={handleFormChange} placeholder="Ex: 37" />
             </div>
             <div>
               <label className="font-semibold">Gênero</label>
               <select
-                className="w-full border rounded px-2 py-2"
+                className="w-full border rounded px-2 py-2 bg-white"
                 name="patient_gender"
                 value={form.patient_gender}
-                onChange={handleChange}
+                onChange={handleFormChange}
               >
                 {GENDER_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
               </select>
             </div>
             <div>
               <label className="font-semibold">Duração dos sintomas</label>
-              <Input name="symptoms_duration" value={form.symptoms_duration} onChange={handleChange} placeholder="Ex: 1 semana" />
+              <Input name="symptoms_duration" value={form.symptoms_duration} onChange={handleFormChange} placeholder="Ex: 1 semana" />
             </div>
           </div>
         </div>
@@ -240,10 +271,15 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         </div>
       </div>
       <label className="font-semibold block mt-3">Pergunta Principal *</label>
-      <Input name="main_question" value={form.main_question} onChange={handleChange} placeholder="Ex: Qual é o diagnóstico mais provável?" required />
-
+      <Input name="main_question" value={form.main_question} onChange={handleFormChange} placeholder="Ex: Qual é o diagnóstico mais provável?" required />
+      
       <div>
-        <label className="font-semibold">Alternativas do Quiz *</label>
+        <div className="flex items-end gap-2 mb-1">
+          <label className="font-semibold">Alternativas do Quiz *</label>
+          <Button type="button" onClick={handleSuggestAlternatives} variant="secondary">
+            Gerar Alternativas
+          </Button>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
           {["A", "B", "C", "D"].map((letter, idx) => (
             <div key={idx} className="flex flex-col border rounded-lg px-4 py-2 gap-2 bg-gray-50">
@@ -273,7 +309,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
 
       <div>
         <label className="font-semibold">Explicação e Feedback Geral *</label>
-        <Textarea name="explanation" value={form.explanation} onChange={handleChange} placeholder="Explique o caso e a resposta correta..." required />
+        <Textarea name="explanation" value={form.explanation} onChange={handleFormChange} placeholder="Explique o caso e a resposta correta..." required />
       </div>
       <Button type="submit" disabled={submitting}>Salvar Caso</Button>
       {feedback && (
@@ -282,3 +318,4 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     </form>
   );
 }
+
