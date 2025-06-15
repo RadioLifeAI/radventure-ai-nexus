@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import {
   Activity,
@@ -22,7 +23,7 @@ import {
   Droplets,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { HeaderNav } from "@/components/HeaderNav";
 import { UserProfile } from "@/components/UserProfile";
 import { EventsSectionPlayer } from "@/components/EventsSectionPlayer";
@@ -230,10 +231,18 @@ const medicalSpecialties = [
 ];
 
 // Componente Card de Especialidade
-function SpecialtyCard({ icon, name, description, bg, cases }: any) {
+function SpecialtyCard({ icon, name, description, bg, cases, specialty }: any) {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    // Navigate to cases page with specialty filter
+    navigate(`/casos?specialty=${encodeURIComponent(specialty || name)}`);
+  };
+
   return (
     <div
-      className={`rounded-2xl shadow hover:shadow-lg transition-all duration-200 ${bg} p-5 flex flex-col justify-between min-h-[140px]`}
+      className={`rounded-2xl shadow hover:shadow-lg transition-all duration-200 ${bg} p-5 flex flex-col justify-between min-h-[140px] cursor-pointer hover:scale-105`}
+      onClick={handleClick}
     >
       <div className="flex gap-3 items-center">
         <div className="rounded-xl bg-white shadow p-2 flex items-center justify-center">{icon}</div>
@@ -302,7 +311,7 @@ export default function Dashboard() {
             icon={<Activity />}
             title="Central de Casos"
             description="Resolva desafios reais, aprenda e suba de nível!"
-            link="#"
+            link="/casos"
             color="text-[#11d3fc]"
           />
           <ActionCard
@@ -316,7 +325,7 @@ export default function Dashboard() {
             icon={<Calendar />}
             title="Eventos"
             description="Participe de eventos exclusivos e concorra no ranking."
-            link="#"
+            link="/eventos"
             color="text-[#11d3fc]"
           />
         </section>
@@ -326,11 +335,15 @@ export default function Dashboard() {
           <h2 className="font-extrabold text-2xl text-white mb-2">Diagnóstico por Imagem</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-4">
             {imagingCategories.map((cat) => (
-              <div key={cat.name}
-                className={`flex flex-col items-center justify-center p-4 rounded-xl shadow ${cat.bg} hover:scale-105 transition cursor-pointer`}>
-                {cat.icon}
-                <span className="mt-2 text-base font-semibold text-gray-700">{cat.name}</span>
-              </div>
+              <SpecialtyCard
+                key={cat.name}
+                icon={cat.icon}
+                name={cat.name}
+                description=""
+                bg={cat.bg}
+                cases={0}
+                specialty={cat.name}
+              />
             ))}
           </div>
         </section>
@@ -340,11 +353,15 @@ export default function Dashboard() {
           <h2 className="font-extrabold text-2xl text-white mb-2">Especialidades Médicas</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-4">
             {medicalSpecialties.map((spec) => (
-              <div key={spec.name}
-                className={`flex flex-col items-center justify-center p-4 rounded-xl shadow ${spec.bg} hover:scale-105 transition cursor-pointer`}>
-                {spec.icon}
-                <span className="mt-2 text-base font-semibold text-gray-700">{spec.name}</span>
-              </div>
+              <SpecialtyCard
+                key={spec.name}
+                icon={spec.icon}
+                name={spec.name}
+                description=""
+                bg={spec.bg}
+                cases={0}
+                specialty={spec.name}
+              />
             ))}
           </div>
         </section>

@@ -14,6 +14,7 @@ import Eventos from "./pages/Eventos";
 import RankingEventos from "./pages/RankingEventos";
 import Rankings from "./pages/Rankings";
 import Estatisticas from "./pages/Estatisticas";
+import Casos from "./pages/Casos";
 
 const queryClient = new QueryClient();
 
@@ -28,7 +29,7 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/admin/*" element={<AdminPanel />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/casos" element={<Casos />} />
           <Route path="/caso/:id" element={<CasoUsuarioView />} />
           <Route path="/eventos" element={<Eventos />} />
           <Route path="/ranking-eventos" element={<RankingEventos />} />

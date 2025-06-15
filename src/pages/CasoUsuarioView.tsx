@@ -1,6 +1,5 @@
-
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowDown, Sparkles, Sword, Smile, Frown, Lightbulb, Book } from "lucide-react";
@@ -9,6 +8,9 @@ import { useShuffledAnswers } from "@/hooks/useShuffledAnswers";
 import { Loader } from "@/components/Loader";
 import { getLetter } from "@/utils/quiz";
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import { HelpSystem } from "@/components/cases/HelpSystem";
+import { FeedbackModal } from "@/components/cases/FeedbackModal";
+import { useCaseProgress } from "@/hooks/useCaseProgress";
 
 // FEEDBACKS GAMIFICADOS
 const FEEDBACKS = [
@@ -35,12 +37,36 @@ type CasoUsuarioViewProps = {
 
 export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
   const urlParams = useParams();
+  const [searchParams] = useSearchParams();
   const id = props.idProp || urlParams.id;
   const [caso, setCaso] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<number | null>(null);
-  const [answered, setAnswered] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [performance, setPerformance] = useState<any>(null);
+
+  // Get current user for progress tracking
+  const [user, setUser] = useState<any>(null);
+
+  const {
+    helpUsed,
+    eliminatedOptions,
+    isAnswered,
+    helpCredits,
+    eliminateOption,
+    skipCase,
+    useAIHint,
+    submitAnswer
+  } = useCaseProgress(id || '', user?.id);
+
+  useEffect(() => {
+    async function getUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    }
+    getUser();
+  }, []);
 
   useEffect(() => {
     async function fetchCaso() {
@@ -71,11 +97,25 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
   }, [id]);
 
   const shuffled = useShuffledAnswers(caso);
-
   const correctIdx = shuffled?.correctIndex ?? caso?.correct_answer_index;
-  const acertou = selected === correctIdx && answered && selected !== null;
-  const feedbackMsg = randomFeedback(acertou);
-  const showFeedback = answered && selected !== null;
+
+  const handleAnswerSubmit = async () => {
+    if (selected === null || isAnswered) return;
+    
+    const result = await submitAnswer(selected, caso);
+    setPerformance(result);
+    setShowFeedback(true);
+  };
+
+  const handleNextCase = () => {
+    // Navigate to next case or back to cases page
+    window.location.href = '/casos';
+  };
+
+  const handleReviewCase = () => {
+    setShowFeedback(false);
+    // Could implement a review mode here
+  };
 
   let caseImages: Array<{ url: string; legend?: string }> = [];
   try {
@@ -221,31 +261,37 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
               <div className="mb-3 text-[19px] font-semibold text-gray-900">{caso.main_question}</div>
               <div>
                 <div className="flex flex-col gap-3 mb-5">
-                  {(shuffled?.options || caso.answer_options || []).map((opt: string, idx: number) => (
-                    <button
-                      key={idx}
-                      className={clsx(
-                        "w-full text-left px-6 py-4 rounded shadow border font-bold transition text-xl",
-                        !answered
-                          ? "hover:bg-cyan-50 border-cyan-200"
-                          : idx === correctIdx
-                            ? "bg-green-50 border-green-400 text-green-800 font-extrabold"
-                            : idx === selected
-                              ? "bg-red-50 border-red-400 text-red-600 font-extrabold"
-                              : "opacity-75"
-                      )}
-                      disabled={answered}
-                      tabIndex={0}
-                      onClick={() => setSelected(idx)}
-                      aria-label={`Selecionar alternativa ${getLetter(idx)}`}
-                    >
-                      <span className="font-bold mr-2">{getLetter(idx)})</span> {opt}
-                    </button>
-                  ))}
+                  {(shuffled?.options || caso.answer_options || []).map((opt: string, idx: number) => {
+                    const isEliminated = eliminatedOptions.includes(idx);
+                    
+                    return (
+                      <button
+                        key={idx}
+                        className={clsx(
+                          "w-full text-left px-6 py-4 rounded shadow border font-bold transition text-xl",
+                          isEliminated 
+                            ? "opacity-30 bg-gray-100 line-through cursor-not-allowed"
+                            : !isAnswered
+                              ? "hover:bg-cyan-50 border-cyan-200"
+                              : idx === correctIdx
+                                ? "bg-green-50 border-green-400 text-green-800 font-extrabold"
+                                : idx === selected
+                                  ? "bg-red-50 border-red-400 text-red-600 font-extrabold"
+                                  : "opacity-75"
+                        )}
+                        disabled={isAnswered || isEliminated}
+                        tabIndex={0}
+                        onClick={() => !isEliminated && setSelected(idx)}
+                        aria-label={`Selecionar alternativa ${getLetter(idx)}`}
+                      >
+                        <span className="font-bold mr-2">{getLetter(idx)})</span> {opt}
+                      </button>
+                    );
+                  })}
                 </div>
                 <Button
-                  disabled={selected === null || answered}
-                  onClick={() => setAnswered(true)}
+                  disabled={selected === null || isAnswered}
+                  onClick={handleAnswerSubmit}
                   className="w-full bg-cyan-700 hover:bg-cyan-800 text-white font-bold shadow text-lg py-3"
                   size="lg"
                 >
@@ -254,20 +300,22 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
               </div>
             </section>
             {/* Feedback Gamificado */}
-            {showFeedback && (
+            {showFeedback && performance && (
               <section
                 className={clsx(
                   "mt-2 p-6 rounded-xl shadow border text-xl animate-scale-in",
-                  acertou
+                  performance.isCorrect
                     ? "bg-green-50 border-green-600 text-green-900"
                     : "bg-yellow-50 border-yellow-600 text-yellow-900"
                 )}
               >
                 <div className="flex items-center gap-2 mb-2 text-2xl font-bold">
-                  {feedbackMsg.title} {feedbackMsg.icon}
+                  {performance.isCorrect
+                    ? feedbackMsg.title
+                    : feedbackMsg.title + " ❌"} {feedbackMsg.icon}
                 </div>
                 <div>
-                  {acertou ? (
+                  {performance.isCorrect ? (
                     <span>
                       <b>✅ Resposta correta!</b>
                       <div className="mt-2 text-lg">{caso.explanation || "Explicação não disponível para este caso."}</div>
@@ -288,7 +336,21 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
           </>
         )}
       </main>
+
+      {/* Feedback Modal */}
+      {showFeedback && performance && (
+        <FeedbackModal
+          open={showFeedback}
+          onClose={() => setShowFeedback(false)}
+          isCorrect={performance.isCorrect}
+          correctAnswer={shuffled?.options?.[correctIdx] || caso?.answer_options?.[correctIdx] || ''}
+          selectedAnswer={shuffled?.options?.[selected!] || caso?.answer_options?.[selected!] || ''}
+          explanation={caso?.explanation || 'Explicação não disponível.'}
+          performance={performance}
+          onNextCase={handleNextCase}
+          onReviewCase={handleReviewCase}
+        />
+      )}
     </div>
   );
 }
-// Fim das alterações
