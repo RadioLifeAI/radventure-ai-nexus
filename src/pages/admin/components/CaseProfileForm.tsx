@@ -43,6 +43,15 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
   // Adiciona controle para destacar campos autocompletados
   const [highlightedFields, setHighlightedFields] = useState<string[]>([]);
 
+  // Função utilitária para normalizar nomes de categoria (remove acentos e caixa alta/baixa)
+  function normalizeString(str: string = "") {
+    return str
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+  }
+
   // Lógica para sugestão automática de pontos conforme dificuldade
   function suggestPointsByDifficulty(level: string) {
     switch (level) {
@@ -96,7 +105,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
       if (form.modality?.trim()) body.modality = form.modality.trim();
       if (form.subtype?.trim()) body.subtype = form.subtype.trim();
 
-      // Chama a função edge mandando o contexto clínico aprimorado
+      // Novidade aqui: procurar categoria pelo nome (tenta achar de forma bem tolerante)
       const { data, error } = await supabase.functions.invoke("case-autofill", {
         body
       });
@@ -106,6 +115,18 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
       }
 
       const suggestion = data?.suggestion || {};
+      
+      // Novidade aqui: procurar categoria pelo nome (tenta achar de forma bem tolerante)
+      let categoriaId = "";
+      if (suggestion.category) {
+        const normalizedAI = normalizeString(suggestion.category);
+        const match = categories.find(cat => normalizeString(cat.name) === normalizedAI)
+          // fallback para startsWith (caso a IA retorne "Neurologia - adulto")
+          || categories.find(cat => normalizeString(cat.name).startsWith(normalizedAI))
+          || categories.find(cat => normalizedAI.startsWith(normalizeString(cat.name)));
+        categoriaId = match ? String(match.id) : "";
+      }
+
       setForm(prev => {
         // Defensive helpers to ensure string fields para TS & consistência
         const safeStr = (v: any) => (v === null || v === undefined ? "" : String(v));
@@ -116,9 +137,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
 
         return {
           ...prev,
-          category_id: suggestion.category
-            ? safeStr(categories.find(({ name }) => name === suggestion.category)?.id ?? "")
-            : "",
+          category_id: categoriaId,
           difficulty_level: suggestion.difficulty
             ? safeStr(
                 difficulties.find(({ level }) => safeStr(level) === safeStr(suggestion.difficulty))?.level ?? ""

@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
@@ -23,10 +22,11 @@ serve(async (req) => {
       );
     }
 
-    // Novo: monta contexto dinâmico para enriquecer o prompt
-    let contextIntro = `Você é um especialista em radiologia e vai ajudar a montar casos clínicos baseando-se no diagnóstico principal e possíveis informações já fornecidas pelo usuário.`;
+    // Contexto reforçado: pedi para IA sempre retornar categoria com o nome exato entre aspas
+    let contextIntro = `Você é um especialista que prepara casos clínicos para ensino e treino. Sempre, ao sugerir a especialidade médica (categoria), utilize exatamente um dos seguintes nomes: "Neurorradiologia", "Coluna", "Cabeça e Pescoço", "Tórax", "Abdome", "Musculoesquelético", "Intervencionista", "Medicina de Emergência", "Pediatria", "Trauma", "Saúde da Mulher", "Obstetrícia", "Ginecologia", "Hematologia", "Gastrointestinal", "Hepatobiliar", "Dermatologia", "Otorrinolaringologia", "Oncologia", "Urologia", "Vascular", "Cirurgia", "Clínica Médica", "Reumatologia", "Nefrologia", "Cardiologia", "Neurologia", "Endocrinologia", "Infectologia", "Psiquiatria", "Outros".\n`;
+    contextIntro += `O diagnóstico principal deve ser sua referência, mas refine as sugestões considerando também as demais informações abaixo, se disponíveis.\n`;
     if (findings || modality || subtype) {
-      contextIntro += ` Além do diagnóstico, considere também as informações já conhecidas para refinar as sugestões: `;
+      contextIntro += `Informações adicionais já conhecidas: `;
       if (modality) contextIntro += `Modalidade: ${modality}. `;
       if (subtype) contextIntro += `Subtipo: ${subtype}. `;
       if (findings) contextIntro += `Achados radiológicos: ${findings}. `;
@@ -35,7 +35,8 @@ serve(async (req) => {
     const systemPrompt = `
 ${contextIntro}
 Dado o diagnóstico de referência, gere sugestões detalhadas para os seguintes campos do formulário do caso clínico:
-- categoria (nome da especialidade médica, ex: "Pneumologia")
+
+- categoria (nome da especialidade médica da lista acima, sempre igual — ex: "Pneumologia", "Neurologia", etc)
 - dificuldade (1 a 4)
 - pontos (sugira um número, ex: 10, 20, 30, 50 proporcional à dificuldade)
 - modalidade principal (ex: RX Tórax, TC Crânio etc)
@@ -52,8 +53,8 @@ Dado o diagnóstico de referência, gere sugestões detalhadas para os seguintes
   * meta-dica breve (campo answer_short_tips: lista de 4 sugestões ou dicas curtas para reflexão)
 - explicação detalhada (campo explanation, orientando e fundamentando a resposta correta)
 IMPORTANTE:
-- Sempre preencha os campos answer_feedbacks e answer_short_tips com 4 itens, sendo cada um referente a uma alternativa.
-- O diagnóstico principal deve ser a opção A nas alternativas.
+- Sempre preencha os campos answer_feedbacks e answer_short_tips com 4 itens, cada um correspondente exatamente às alternativas de diagnóstico.
+- O diagnóstico principal sempre na opção A das alternativas.
 - Retorne todos os dados em JSON diretamente, neste formato:
 {
   "category": "...",
