@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { HeaderNav } from "@/components/HeaderNav";
 import { UserProfile } from "@/components/UserProfile";
+import { EventsSectionPlayer } from "@/components/EventsSectionPlayer";
 
 // Especialidades por Imagem
 const imageSpecialties = [
@@ -279,12 +280,21 @@ export default function Dashboard() {
     ranking: 7,
   };
 
+  // handler para futura navegação ao evento
+  function handleEnterEvent(eventId: string) {
+    // Aqui em breve: navegação para página/quadro do evento
+    alert(`Entrar no evento ${eventId}: (implementar página de evento/quiz...)`);
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white w-full">
       <HeaderNav />
       <main className="flex-1 flex flex-col gap-4 px-2 md:px-16 pt-4 pb-10">
         {/* Perfil principal */}
         <UserProfile user={user} />
+
+        {/* NOVA SEÇÃO DE EVENTOS GAMIFICADOS */}
+        <EventsSectionPlayer onEnterEvent={handleEnterEvent} />
 
         {/* Actions Cards */}
         <section className="w-full grid grid-cols-1 sm:grid-cols-3 gap-6 mt-2 mb-4">
