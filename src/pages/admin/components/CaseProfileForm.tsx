@@ -410,6 +410,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         handleAutoFillCaseDetails={handleAutoFillCaseDetails}
         handleSuggestTitle={handleSuggestTitle}
         handleImageChange={handleImageChange}
+        renderTooltipTip={renderTooltipTip}
       />
       <label className="font-semibold block mt-3">
         Pergunta Principal *
