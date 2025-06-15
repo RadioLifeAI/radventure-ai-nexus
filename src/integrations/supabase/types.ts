@@ -263,7 +263,9 @@ export type Database = {
           max_elimination: number | null
           meta: Json | null
           modality: string | null
+          patient_age: string | null
           patient_clinical_info: string | null
+          patient_gender: string | null
           skip_penalty_points: number | null
           specialty: string | null
           symptoms_duration: string | null
@@ -295,7 +297,9 @@ export type Database = {
           max_elimination?: number | null
           meta?: Json | null
           modality?: string | null
+          patient_age?: string | null
           patient_clinical_info?: string | null
+          patient_gender?: string | null
           skip_penalty_points?: number | null
           specialty?: string | null
           symptoms_duration?: string | null
@@ -327,7 +331,9 @@ export type Database = {
           max_elimination?: number | null
           meta?: Json | null
           modality?: string | null
+          patient_age?: string | null
           patient_clinical_info?: string | null
+          patient_gender?: string | null
           skip_penalty_points?: number | null
           specialty?: string | null
           symptoms_duration?: string | null
