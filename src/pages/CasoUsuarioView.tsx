@@ -17,6 +17,16 @@ const FEEDBACKS = [
   { title: "Continue praticando! 🔄", icon: <Frown className="text-lg text-red-500 inline ml-1" /> }
 ];
 
+function randomFeedback(acertou: boolean) {
+  if (acertou) {
+    // Pick between first two feedbacks for correct answer
+    const ok = FEEDBACKS.slice(0, 2);
+    return ok[Math.floor(Math.random() * ok.length)];
+  }
+  // Pick between last two feedbacks for incorrect answer
+  return FEEDBACKS[2 + Math.floor(Math.random() * 2)];
+}
+
 type CasoUsuarioViewProps = {
   idProp?: string;
   isAdminView?: boolean;
