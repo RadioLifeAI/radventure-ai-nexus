@@ -129,15 +129,20 @@ export function useCaseProfileFormUtils({
         : (form.difficulty_level || "1");
       const nOptions = Array.isArray(suggestion.answer_options) ? suggestion.answer_options.length : 4;
 
-      // (Valores sugeridos podem ser adaptados conforme o quiz)
+      // SUGESTÕES PARA OS CAMPOS AVANÇADOS E DICA
       const autoAdvanced = {
         can_skip: true,
         max_elimination: Math.max(1, nOptions - 2), // pelo menos 1, máximo (n-2)
         ai_hint_enabled: true,
-        manual_hint: suggestion.manual_hint ?? "",
+        manual_hint: suggestion.manual_hint ?? (
+          // fallback se não veio do suggestion
+          suggestion.findings
+            ? `Atenção ao achado: ${suggestion.findings.slice(0,120)}`
+            : "Considere a integração entre achados e quadro clínico!"
+        ),
         skip_penalty_points: 2,
         elimination_penalty_points: 1,
-        ai_tutor_level: "basico", // ou dynamic
+        ai_tutor_level: "basico",
       };
 
       // --------- EMBARALHAR alternativas ---------
