@@ -187,7 +187,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
   }
 
   return (
-    <form className="w-full" onSubmit={handlers.handleSubmit}>
+    <form className="w-full" onSubmit={handleSubmit}>
       <CaseProfileFormPreviewModal open={showPreview} onClose={() => setShowPreview(false)} form={form} categories={categories} difficulties={difficulties} />
       <h2 className="text-xl font-bold mb-2">Criar Novo Caso Médico</h2>
       <CaseProfileFormTitleSection
