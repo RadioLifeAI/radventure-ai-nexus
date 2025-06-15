@@ -23,6 +23,8 @@ const adminMenu = [
   { label: "Criar Eventos", icon: <Calendar size={20} />, to: "/admin/create-event" },
   { label: "Gestão de Eventos", icon: <BookOpen size={20} />, to: "/admin/events" },
   { label: "Casos Médicos", icon: <FileText size={20} />, to: "/admin/casos-medicos" },
+  // Novo item logo abaixo:
+  { label: "Gestão de Casos", icon: <Settings size={20} />, to: "/admin/gestao-casos" },
   { label: "Usuários", icon: <Users size={20} />, to: "/admin/usuarios" },
   { label: "Assinaturas", icon: <CreditCard size={20} />, to: "/admin/assinaturas" },
   { label: "Recompensas", icon: <Gift size={20} />, to: "/admin/recompensas" },
