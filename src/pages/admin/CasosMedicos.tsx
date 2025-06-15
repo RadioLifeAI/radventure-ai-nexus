@@ -1,15 +1,13 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { CaseProfileForm } from "./components/CaseProfileForm";
 import { MedicalCasesTable } from "./components/MedicalCasesTable";
 import { useMedicalCases } from "./hooks/useMedicalCases";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
-/**
- * Função para gerar rapidamente 10 casos fake no banco (para testes)
- */
 async function gerarCasosFake() {
   const TITULOS = [
     "Pneumonia em Imagem", "Fratura de Úmero", "Lesão Pulmonar", "Apendicite Aguda",
@@ -65,18 +63,65 @@ async function gerarCasosFake() {
 }
 
 export default function CasosMedicos() {
-  const { cases, loading, refreshCases, deleteCase, editCase } = useMedicalCases();
+  // Estado dos filtros
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [modalityFilter, setModalityFilter] = useState("");
+  const [specialties, setSpecialties] = useState<{id: number, name: string}[]>([]);
+  const [modalities, setModalities] = useState<string[]>([]);
+
+  // Buscar as opções de especialidade/modealidade ao iniciar
+  useEffect(() => {
+    supabase.from("medical_specialties").select("id, name").then(({ data }) => setSpecialties(data || []));
+    // Modalidades são um campo texto livre, buscar distintas salvas
+    supabase.from("medical_cases").select("modality").then(({ data }) => {
+      if (data) {
+        const setModal = Array.from(new Set(data.map(x => x.modality).filter(Boolean)));
+        setModalities(setModal);
+      }
+    });
+  }, []);
+
+  // Chamar o hook de casos passando os filtros
+  const { cases, loading, refreshCases, deleteCase, editCase } = useMedicalCases({ categoryFilter, modalityFilter });
 
   return (
     <div>
-      {/* Botão temporário para gerar casos fake, remova se não quiser mais */}
+      {/* Botão temporário para gerar casos fake */}
       <div className="mb-3">
         <Button type="button" variant="secondary" onClick={gerarCasosFake}>
           Gerar 10 Casos Dummy
         </Button>
       </div>
       <CaseProfileForm onCreated={refreshCases} />
-      <h3 className="text-xl font-bold mb-3 mt-12">Casos Cadastrados</h3>
+      <h3 className="text-xl font-bold mb-5 mt-12">Casos Cadastrados</h3>
+      <div className="flex flex-col md:flex-row gap-4 mb-4">
+        <div>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-56">
+              <SelectValue placeholder="Filtrar por especialidade" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Todas Especialidades</SelectItem>
+              {specialties.map((cat) => (
+                <SelectItem key={cat.id} value={String(cat.name)}>{cat.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Select value={modalityFilter} onValueChange={setModalityFilter}>
+            <SelectTrigger className="w-56">
+              <SelectValue placeholder="Filtrar por modalidade" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Todas Modalidades</SelectItem>
+              {modalities.map((mod) => (
+                <SelectItem key={mod} value={mod}>{mod}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
       <MedicalCasesTable cases={cases} onDelete={deleteCase} onEdit={editCase} />
     </div>
   );

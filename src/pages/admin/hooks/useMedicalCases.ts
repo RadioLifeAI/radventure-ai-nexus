@@ -6,19 +6,29 @@ import { toast } from "@/components/ui/use-toast";
 
 /**
  * Hook para carregar casos médicos e inserir MOCKS se necessário.
- * Agora com sincronização em tempo real.
+ * Agora com sincronização em tempo real e filtros.
  */
-export function useMedicalCases() {
+export function useMedicalCases({ categoryFilter = "", modalityFilter = "" } = {}) {
   const [cases, setCases] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   async function fetchCases() {
     setLoading(true);
-    const { data } = await supabase
+    let query = supabase
       .from("medical_cases")
-      .select("id, title, created_at, image_url")
+      .select("id, title, created_at, image_url, specialty, modality")
       .order("created_at", { ascending: false });
-    setCases(data || []);
+    // Filtros
+    if (categoryFilter) query = query.eq("specialty", categoryFilter);
+    if (modalityFilter) query = query.eq("modality", modalityFilter);
+
+    const { data, error } = await query;
+    if (error) {
+      toast({ title: "Erro ao buscar casos!", variant: "destructive" });
+      setCases([]);
+    } else {
+      setCases(data || []);
+    }
     setLoading(false);
   }
 
@@ -48,7 +58,6 @@ export function useMedicalCases() {
     const channel = supabase
       .channel('schema-db-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'medical_cases' }, () => {
-        // Refaz a busca dos casos sempre que houver alteração!
         fetchCases();
       })
       .subscribe();
@@ -57,7 +66,7 @@ export function useMedicalCases() {
       mounted = false;
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [categoryFilter, modalityFilter]); // refaz busca ao mudar filtro
 
   async function refreshCases() {
     await fetchCases();
@@ -76,7 +85,7 @@ export function useMedicalCases() {
   // Função para editar caso (por hora só imprime no console)
   const editCase = useCallback((id: string) => {
     console.log("Editar caso:", id);
-    toast({ title: "Em breve: modal de edição do caso." }); // Placeholder
+    toast({ title: "Em breve: modal de edição do caso." });
   }, []);
 
   return { cases, loading, refreshCases, deleteCase, editCase };

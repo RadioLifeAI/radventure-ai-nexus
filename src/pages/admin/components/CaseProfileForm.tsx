@@ -84,60 +84,67 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     e.preventDefault();
     setSubmitting(true);
 
-    // Para garantir numeração correta, conta novamente antes do insert para evitar duplicatas
-    let caseNumber = form.case_number;
-    if ((!caseNumber || isNaN(Number(caseNumber))) && form.category_id && form.modality) {
-      const { data } = await supabase
-        .from("medical_cases")
-        .select("id", { count: "exact", head: true })
-        .eq("category_id", Number(form.category_id))
-        .eq("modality", form.modality);
-      caseNumber = ((data?.length ?? 0) + 1);
-    }
+    try {
+      // Para garantir numeração correta, conta novamente antes do insert para evitar duplicatas
+      let caseNumber = form.case_number;
+      if ((!caseNumber || isNaN(Number(caseNumber))) && form.category_id && form.modality) {
+        const { data } = await supabase
+          .from("medical_cases")
+          .select("id", { count: "exact", head: true })
+          .eq("category_id", Number(form.category_id))
+          .eq("modality", form.modality);
+        caseNumber = ((data?.length ?? 0) + 1);
+      }
 
-    const payload: any = {
-      specialty: categories.find(c => String(c.id) === String(form.category_id))?.name || null,
-      category_id: form.category_id ? Number(form.category_id) : null,
-      case_number: caseNumber ?? null,
-      difficulty_level: form.difficulty_level ? Number(form.difficulty_level) : null,
-      points: form.points ? Number(form.points) : null,
-      modality: form.modality || null,
-      subtype: form.subtype || null,
-      title: form.title,
-      findings: form.findings,
-      patient_age: form.patient_age,
-      patient_gender: form.patient_gender,
-      symptoms_duration: form.symptoms_duration,
-      patient_clinical_info: form.patient_clinical_info,
-      main_question: form.main_question,
-      explanation: form.explanation,
-      answer_options: form.answer_options,
-      answer_feedbacks: form.answer_feedbacks,
-      answer_short_tips: form.answer_short_tips,
-      correct_answer_index: form.correct_answer_index,
-      image_url: form.image_url,
-      // Novos campos
-      can_skip: form.can_skip,
-      max_elimination: form.max_elimination,
-      ai_hint_enabled: form.ai_hint_enabled,
-      manual_hint: form.manual_hint,
-      skip_penalty_points: form.skip_penalty_points,
-      elimination_penalty_points: form.elimination_penalty_points,
-      ai_tutor_level: form.ai_tutor_level,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    Object.keys(payload).forEach(k => {
-      if (typeof payload[k] === "string" && payload[k] === "") payload[k] = null;
-    });
+      const payload: any = {
+        specialty: categories.find(c => String(c.id) === String(form.category_id))?.name || null,
+        category_id: form.category_id ? Number(form.category_id) : null,
+        case_number: caseNumber ?? null,
+        difficulty_level: form.difficulty_level ? Number(form.difficulty_level) : null,
+        points: form.points ? Number(form.points) : null,
+        modality: form.modality || null,
+        subtype: form.subtype || null,
+        title: form.title,
+        findings: form.findings,
+        patient_age: form.patient_age,
+        patient_gender: form.patient_gender,
+        symptoms_duration: form.symptoms_duration,
+        patient_clinical_info: form.patient_clinical_info,
+        main_question: form.main_question,
+        explanation: form.explanation,
+        answer_options: form.answer_options,
+        answer_feedbacks: form.answer_feedbacks,
+        answer_short_tips: form.answer_short_tips,
+        correct_answer_index: form.correct_answer_index,
+        image_url: form.image_url,
+        // Novos campos
+        can_skip: form.can_skip,
+        max_elimination: form.max_elimination,
+        ai_hint_enabled: form.ai_hint_enabled,
+        manual_hint: form.manual_hint,
+        skip_penalty_points: form.skip_penalty_points,
+        elimination_penalty_points: form.elimination_penalty_points,
+        ai_tutor_level: form.ai_tutor_level,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      Object.keys(payload).forEach(k => {
+        if (typeof payload[k] === "string" && payload[k] === "") payload[k] = null;
+      });
 
-    const { error } = await supabase.from("medical_cases").insert([payload]);
-    if (!error) {
-      setFeedback("Caso cadastrado com sucesso!");
-      resetForm();
-      onCreated?.();
-    } else {
+      const { error } = await supabase.from("medical_cases").insert([payload]);
+      if (!error) {
+        setFeedback("Caso cadastrado com sucesso!");
+        toast({ title: "Caso cadastrado com sucesso!" });
+        resetForm();
+        onCreated?.();
+      } else {
+        setFeedback("Erro ao cadastrar caso.");
+        toast({ title: "Erro ao cadastrar caso!", variant: "destructive" });
+      }
+    } catch (err: any) {
       setFeedback("Erro ao cadastrar caso.");
+      toast({ title: "Erro ao cadastrar caso!", variant: "destructive" });
     }
     setSubmitting(false);
     setTimeout(() => setFeedback(""), 2300);

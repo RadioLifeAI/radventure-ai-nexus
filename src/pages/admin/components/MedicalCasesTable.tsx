@@ -19,6 +19,8 @@ export function MedicalCasesTable({ cases, onDelete, onEdit }: MedicalCasesTable
             <TableHead>ID</TableHead>
             <TableHead>Imagem</TableHead>
             <TableHead>Título</TableHead>
+            <TableHead>Especialidade</TableHead>
+            <TableHead>Modalidade</TableHead>
             <TableHead>Criado em</TableHead>
             <TableHead>Ações</TableHead>
           </TableRow>
@@ -35,6 +37,8 @@ export function MedicalCasesTable({ cases, onDelete, onEdit }: MedicalCasesTable
                 )}
               </TableCell>
               <TableCell>{item.title}</TableCell>
+              <TableCell>{item.specialty || "-"}</TableCell>
+              <TableCell>{item.modality || "-"}</TableCell>
               <TableCell>{item.created_at ? new Date(item.created_at).toLocaleString("pt-BR") : ""}</TableCell>
               <TableCell>
                 <div className="flex gap-2">
@@ -60,7 +64,7 @@ export function MedicalCasesTable({ cases, onDelete, onEdit }: MedicalCasesTable
           ))}
           {!cases.length && (
             <TableRow>
-              <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+              <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                 Nenhum caso cadastrado ainda.
               </TableCell>
             </TableRow>
