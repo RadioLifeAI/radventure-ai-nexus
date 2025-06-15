@@ -1,4 +1,3 @@
-
 // prompts.ts
 
 const DIAG_NOT_REVEALED = "REGRAS IMPORTANTES: NUNCA integre, cite, sugira ou deduza o diagnóstico principal nos campos do caso clínico, inclusive achados, resumo clínico, pergunta principal, alternativas etc. Os campos devem fornecer apenas contexto, sem nunca revelar, sugerir ou favorecer o diagnóstico correto. Redija como em um caso real, SEM ENTREGAR a resposta.";
@@ -68,6 +67,11 @@ export function buildPromptFullCase({ diagnosis, findings, modality, subtype }) 
   let contextIntro = `Você é um especialista em radiologia e diagnóstico por imagem que elabora casos clínico-radiológicos integrando contexto clínico, achados de imagem e opções pedagógicas para quizzes.`;
   contextIntro += ` Nas explicações e feedbacks, responda DE FORMA OBJETIVA, SEM frases genéricas, sempre explicando a relação entre os achados radiológicos, sintomas e contexto. Nunca diga o diagnóstico diretamente.`;
   contextIntro += ` REGRAS: NUNCA revele, cite, sugira ou deduza o diagnóstico principal nos campos do caso clínico (achados, resumo clínico, pergunta principal, alternativas, etc).`;
+  // Aqui deixamos a instrução explícita:
+  contextIntro += `\nIMPORTANTE:`
+    + `\n- O campo "category" corresponde à ESPECIALIDADE MÉDICA principal à qual o caso se refere (por exemplo: Pneumologia, Neurologia, Gastroenterologia).`
+    + `\n- O campo "modality" corresponde ao EXAME DE IMAGEM principal no qual os achados radiológicos do caso estão baseados (por exemplo: Radiografia de Tórax, Tomografia Computadorizada, Ressonância Magnética).`;
+
   if (findings || modality || subtype) {
     contextIntro += ` Dados do caso: `;
     if (modality) contextIntro += `Modalidade: ${modality}. `;
