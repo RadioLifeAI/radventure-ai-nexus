@@ -56,6 +56,19 @@ Importante: Não explique na resposta geral, use só os campos acima. A alternat
         const match = raw.match(/\{[\s\S]*\}/);
         const jsonString = match ? match[0] : raw;
         const payload = JSON.parse(jsonString);
+
+        // Trimming feedbacks and explanations to 200 chars
+        if (Array.isArray(payload.answer_feedbacks)) {
+          payload.answer_feedbacks = payload.answer_feedbacks.map((f: string) =>
+            typeof f === "string" ? f.trim().slice(0, 200) : ""
+          );
+        }
+        if (Array.isArray(payload.answer_short_tips)) {
+          payload.answer_short_tips = payload.answer_short_tips.map((f: string) =>
+            typeof f === "string" ? f.trim().slice(0, 200) : ""
+          );
+        }
+
         return new Response(JSON.stringify({ suggestion: payload }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
@@ -136,6 +149,22 @@ Importante:
       const match = raw.match(/\{[\s\S]*\}/);
       const jsonString = match ? match[0] : raw;
       const payload = JSON.parse(jsonString);
+
+      // --- LIMIT explanation and feedbacks to 200 chars
+      if (typeof payload.explanation === "string") {
+        payload.explanation = payload.explanation.trim().slice(0, 200);
+      }
+      if (Array.isArray(payload.answer_feedbacks)) {
+        payload.answer_feedbacks = payload.answer_feedbacks.map((f: string) =>
+          typeof f === "string" ? f.trim().slice(0, 200) : ""
+        );
+      }
+      if (Array.isArray(payload.answer_short_tips)) {
+        payload.answer_short_tips = payload.answer_short_tips.map((f: string) =>
+          typeof f === "string" ? f.trim().slice(0, 200) : ""
+        );
+      }
+
       return new Response(JSON.stringify({ suggestion: payload }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
