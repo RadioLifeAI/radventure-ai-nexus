@@ -22,11 +22,11 @@ serve(async (req) => {
       );
     }
 
-    // Contexto reforçado: pedi para IA sempre retornar categoria com o nome exato entre aspas
-    let contextIntro = `Você é um especialista que prepara casos clínicos para ensino e treino. Sempre, ao sugerir a especialidade médica (categoria), utilize exatamente um dos seguintes nomes: "Neurorradiologia", "Coluna", "Cabeça e Pescoço", "Tórax", "Abdome", "Musculoesquelético", "Intervencionista", "Medicina de Emergência", "Pediatria", "Trauma", "Saúde da Mulher", "Obstetrícia", "Ginecologia", "Hematologia", "Gastrointestinal", "Hepatobiliar", "Dermatologia", "Otorrinolaringologia", "Oncologia", "Urologia", "Vascular", "Cirurgia", "Clínica Médica", "Reumatologia", "Nefrologia", "Cardiologia", "Neurologia", "Endocrinologia", "Infectologia", "Psiquiatria", "Outros".\n`;
-    contextIntro += `O diagnóstico principal deve ser sua referência, mas refine as sugestões considerando também as demais informações abaixo, se disponíveis.\n`;
+    // Contexto reforçado: persona para IA
+    let contextIntro = `Você é um especialista em radiologia e diagnóstico por imagem, focado em criar casos clínico-radiológicos concisos para quizzes de ensino. Suas explicações e feedbacks devem ser diretos, breves e sempre relacionar os achados de imagem com o quadro clínico apresentado. Sempre que sugerir a especialidade médica (categoria), utilize exatamente um dos seguintes nomes (entre aspas): "Neurorradiologia", "Coluna", "Cabeça e Pescoço", "Tórax", "Abdome", "Musculoesquelético", "Intervencionista", "Medicina de Emergência", "Pediatria", "Trauma", "Saúde da Mulher", "Obstetrícia", "Ginecologia", "Hematologia", "Gastrointestinal", "Hepatobiliar", "Dermatologia", "Otorrinolaringologia", "Oncologia", "Urologia", "Vascular", "Cirurgia", "Clínica Médica", "Reumatologia", "Nefrologia", "Cardiologia", "Neurologia", "Endocrinologia", "Infectologia", "Psiquiatria", "Outros".\n`;
+    contextIntro += `O diagnóstico principal deve ser referência, sempre buscando explicação curta e voltada à integração dos achados de imagem e sintomas.`;
     if (findings || modality || subtype) {
-      contextIntro += `Informações adicionais já conhecidas: `;
+      contextIntro += ` Informações adicionais já conhecidas: `;
       if (modality) contextIntro += `Modalidade: ${modality}. `;
       if (subtype) contextIntro += `Subtipo: ${subtype}. `;
       if (findings) contextIntro += `Achados radiológicos: ${findings}. `;
@@ -34,45 +34,27 @@ serve(async (req) => {
 
     const systemPrompt = `
 ${contextIntro}
-Dado o diagnóstico de referência, gere sugestões detalhadas para os seguintes campos do formulário do caso clínico:
-
-- categoria (nome da especialidade médica da lista acima, sempre igual — ex: "Pneumologia", "Neurologia", etc)
-- dificuldade (1 a 4)
-- pontos (sugira um número, ex: 10, 20, 30, 50 proporcional à dificuldade)
-- modalidade principal (ex: RX Tórax, TC Crânio etc)
-- subtipo (um subtipo da modalidade, se existir)
-- achados radiológicos (texto resumindo os principais achados)
-- resumo clínico (texto)
-- idade provável
-- gênero provável (Masculino, Feminino, Outro)
-- duração estimada dos sintomas
-- pergunta principal (texto)
-- alternativas de resposta (lista de 4 diagnósticos possíveis, o diagnóstico correto deve ser a opção A)
-- para cada alternativa, forneça:
-  * feedback detalhado (campo answer_feedbacks: lista de 4 feedbacks explicando cada alternativa)
-  * meta-dica breve (campo answer_short_tips: lista de 4 sugestões ou dicas curtas para reflexão)
-- explicação detalhada (campo explanation, orientando e fundamentando a resposta correta)
-IMPORTANTE:
-- Sempre preencha os campos answer_feedbacks e answer_short_tips com 4 itens, cada um correspondente exatamente às alternativas de diagnóstico.
-- O diagnóstico principal sempre na opção A das alternativas.
-- Retorne todos os dados em JSON diretamente, neste formato:
+Com base no diagnóstico de referência abaixo, gere todos os campos do formulário do caso clínico para quiz, sempre sendo breve e prático nas explicações, e focando na integração dos achados de imagem e sintomas. Ao preencher o campo "explanation" (explicação/feedback), faça resposta curta, objetiva e que mostre somente a relação núcleo “achado de imagem + quadro clínico”. Estruture a resposta somente com os campos do JSON abaixo:
 {
-  "category": "...",
+  "category": "",
   "difficulty": 2,
   "points": 20,
-  "modality": "...",
-  "subtype": "...",
-  "findings": "...",
-  "patient_clinical_info": "...",
+  "modality": "",
+  "subtype": "",
+  "findings": "",
+  "patient_clinical_info": "",
   "patient_age": "33",
   "patient_gender": "Feminino",
   "symptoms_duration": "7 dias",
-  "main_question": "...",
-  "answer_options": ["Diagnóstico correto", "Alternativa 1", ...],
-  "answer_feedbacks": ["Feedback para A", "Feedback para B", "Feedback para C", "Feedback para D"],
-  "answer_short_tips": ["Dica breve A", "Dica breve B", "Dica breve C", "Dica breve D"],
-  "explanation": "..."
+  "main_question": "",
+  "answer_options": ["", "", "", ""],
+  "answer_feedbacks": ["", "", "", ""],
+  "answer_short_tips": ["", "", "", ""],
+  "explanation": ""
 }
+IMPORTANTE:
++- Nunca faça textos longos no campo “explanation”. Resuma ao máximo, valorize integração e raciocínio clínico-radiológico.
++- O diagnóstico correto sempre deve ser a opção A das alternativas.
 `;
 
     const completionRes = await fetch("https://api.openai.com/v1/chat/completions", {

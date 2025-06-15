@@ -147,7 +147,7 @@ export function useCaseProfileFormUtils({
       setTimeout(() => setHighlightedFields([]), 2500);
       toast({
         title: "Campos preenchidos por IA!",
-        description: "Revise as sugestões — inclusive 'Achados Radiológicos'. Use os botões secundários para refinar cada campo.",
+        description: "Revise as sugestões — principalmente a explicação curta, focada na integração entre achados radiológicos e o contexto clínico.",
       });
     } catch (err: any) {
       toast({
@@ -197,22 +197,22 @@ export function useCaseProfileFormUtils({
       toast({ description: "Preencha Achados, Pergunta Principal ou Diagnóstico para sugerir uma explicação." });
       return;
     }
-    // Geração IA/placeholder: explicação diretamente relacionada ao achado de imagem e quadro clínico
+    // Nova lógica: explicação ainda mais curta; persona IA
     let summary = "";
     if (form.findings && form.patient_clinical_info) {
-      summary = `Os achados de imagem (${form.findings}) associados ao quadro clínico (${form.patient_clinical_info}) são fundamentais para chegar ao diagnóstico correto neste caso.`;
+      summary = `Como especialista em radiologia, destaco: os achados de imagem (${form.findings}) integrados ao quadro clínico (${form.patient_clinical_info}) facilitam diretamente o diagnóstico neste caso.`;
     } else if (form.findings) {
-      summary = `O principal achado radiológico (${form.findings}) é determinante para a conduta ou diagnóstico neste caso clínico.`;
+      summary = `Os achados radiológicos (${form.findings}) são o principal guia diagnóstico neste cenário clínico.`;
     } else if (form.patient_clinical_info) {
-      summary = `O quadro clínico apresentado (${form.patient_clinical_info}) direciona a investigação dos achados radiológicos relevantes.`;
+      summary = `O resumo clínico apresentado (${form.patient_clinical_info}) direciona a análise dos achados de imagem.`;
     } else {
-      summary = "A integração entre achados radiológicos e contexto clínico é essencial para o raciocínio diagnóstico.";
+      summary = "A integração entre achados radiológicos e contexto clínico é essencial para a correta solução do caso.";
     }
     setForm((prev: any) => ({
       ...prev,
       explanation: summary
     }));
-    toast({ description: "Explicação sugerida automaticamente, focada na relação imagem/caso clínico." });
+    toast({ description: "Explicação curta sugerida automaticamente, focada em integração clínica-radiológica." });
   }
   async function handleGenerateAutoTitle() {
     if (!form.category_id || !form.modality) {
