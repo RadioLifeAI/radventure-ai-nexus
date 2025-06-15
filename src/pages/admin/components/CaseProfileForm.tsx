@@ -133,9 +133,9 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
       // If current value is array, use as is. If string (legacy), try to parse, else empty array
       if (Array.isArray(form.image_url)) {
         image_url_arr = form.image_url;
-      } else if (typeof form.image_url === "string" && form.image_url.trim() !== "") {
+      } else if (typeof form.image_url === "string" && (form.image_url as string).trim() !== "") {
         try {
-          const parsed = JSON.parse(form.image_url);
+          const parsed = JSON.parse(form.image_url as string);
           image_url_arr = Array.isArray(parsed) ? parsed : [];
         } catch {
           image_url_arr = [];
