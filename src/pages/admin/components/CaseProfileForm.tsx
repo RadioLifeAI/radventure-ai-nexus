@@ -238,6 +238,19 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     toast({ description: "Dica sugerida automaticamente (futuramente via IA, edite se desejar)." });
   }
 
+  // NOVA FUNÇÃO: Gerar explicação automaticamente (placeholder IA/API)
+  async function handleSuggestExplanation() {
+    if (!form.findings && !form.main_question && !form.title) {
+      toast({ description: "Preencha Achados, Pergunta Principal ou Diagnóstico para sugerir uma explicação." });
+      return;
+    }
+    setForm(prev => ({
+      ...prev,
+      explanation: "Explicação e feedback gerados automaticamente (placeholder IA/API)."
+    }));
+    toast({ description: "Explicação sugerida automaticamente (futuramente via IA, edite se desejar)." });
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
@@ -479,7 +492,25 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
 
       <div>
         <label className="font-semibold">Explicação e Feedback Geral *</label>
-        <Textarea name="explanation" value={form.explanation} onChange={handleFormChange} placeholder="Explique o caso e a resposta correta..." required />
+        <div className="flex gap-2 items-end">
+          <Textarea
+            name="explanation"
+            value={form.explanation}
+            onChange={handleFormChange}
+            placeholder="Explique o caso e a resposta correta..."
+            required
+          />
+          {/* Novo botão para sugestão automática da explicação */}
+          <Button
+            type="button"
+            onClick={handleSuggestExplanation}
+            variant="secondary"
+            className="mb-1 mt-2"
+            title="Gerar explicação geral automaticamente via IA"
+          >
+            Gerar Explicação
+          </Button>
+        </div>
       </div>
       {/* ================== SEÇÃO AVANÇADA ===================== */}
       <div className="mt-7">
