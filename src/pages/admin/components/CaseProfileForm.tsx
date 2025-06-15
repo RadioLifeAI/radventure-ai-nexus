@@ -6,6 +6,8 @@ import { ImageUploadWithZoom } from "./ImageUploadWithZoom";
 import { supabase } from "@/integrations/supabase/client";
 import { CaseModalityFields } from "./CaseModalityFields";
 import { toast } from "@/components/ui/use-toast";
+import ReactTooltip from "react-tooltip";
+import { CasePreviewModal } from "./CasePreviewModal";
 
 const GENDER_OPTIONS = [
   { value: "", label: "Selecione..." },
@@ -56,6 +58,9 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  // Adiciona controle para destacar campos autocompletados
+  const [highlightedFields, setHighlightedFields] = useState<string[]>([]);
 
   // Lógica para sugestão automática de pontos conforme dificuldade
   function suggestPointsByDifficulty(level: string) {
@@ -152,6 +157,19 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
       elimination_penalty_points: advancedMock.elimination_penalty_points,
       ai_tutor_level: advancedMock.ai_tutor_level
     }));
+
+    // Destaca os campos preenchidos (e limpa após 2s)
+    setHighlightedFields([
+      "findings", "patient_clinical_info", "explanation", "patient_age", "patient_gender", "symptoms_duration",
+      "can_skip", "max_elimination", "ai_hint_enabled", "skip_penalty_points", "elimination_penalty_points", "ai_tutor_level"
+    ]);
+    setTimeout(() => setHighlightedFields([]), 2000);
+
+    // Feedback gamificado visual
+    toast({
+      title: "Detalhes preenchidos!",
+      description: "Campos sugeridos para o caso. Revise e personalize para maior desafio!",
+    });
   }
 
   function handleFormChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
@@ -255,6 +273,21 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     toast({ description: "Explicação sugerida automaticamente (futuramente via IA, edite se desejar)." });
   }
 
+  // --- EMBARALHAMENTO DE ALTERNATIVAS ---
+  function getShuffledAlternatives() {
+    // Retorna novas alternativas embaralhadas (apenas cópia, sem alterar o form ainda)
+    const indices = [0, 1, 2, 3];
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    return indices.map(idx => ({
+      answer: form.answer_options[idx],
+      idx,
+      isCorrect: idx === form.correct_answer_index
+    }));
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
@@ -331,9 +364,32 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     setTimeout(() => setFeedback(""), 2300);
   }
 
+  // Tooltips helper
+  function renderTooltipTip(id: string, text: string) {
+    return (
+      <>
+        <span data-tip data-for={id} className="ml-1 text-cyan-700 cursor-help">
+          ⓘ
+        </span>
+        <ReactTooltip id={id} place="top" type="info" effect="solid">
+          <span className="text-xs">{text}</span>
+        </ReactTooltip>
+      </>
+    );
+  }
+
   return (
     <form className="bg-white rounded-lg shadow p-6 max-w-3xl mx-auto space-y-5" onSubmit={handleSubmit}>
+      <CasePreviewModal open={showPreview} onClose={() => setShowPreview(false)} form={form} categories={categories} difficulties={difficulties} />
+
       <h2 className="text-xl font-bold mb-2">Criar Novo Caso Médico</h2>
+      {/* Pré-visualização */}
+      <div className="mb-3 flex gap-2">
+        <Button type="button" onClick={() => setShowPreview(true)} variant="outline">
+          Pré-visualizar Caso como Usuário
+        </Button>
+      </div>
+
       {/* Linha Categoria/Dificuldade/Pontos */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
         <div>
@@ -400,6 +456,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
                 onChange={handleFormChange}
                 placeholder="Ex: Tuberculose pulmonar"
                 required
+                className={highlightedFields.includes("title") ? "ring-2 ring-cyan-400" : ""}
               />
             </div>
             {/* Botão Sugerir Título (mantido) */}
@@ -418,20 +475,20 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
             </Button>
           </div>
           <label className="font-semibold mt-3">Achados radiológicos *</label>
-          <Textarea name="findings" value={form.findings} onChange={handleFormChange} placeholder="Descreva os achados..." required />
+          <Textarea name="findings" value={form.findings} onChange={handleFormChange} placeholder="Descreva os achados..." required className={highlightedFields.includes("findings") ? "ring-2 ring-cyan-400" : ""} />
 
           <label className="font-semibold mt-3">Resumo Clínico *</label>
-          <Textarea name="patient_clinical_info" value={form.patient_clinical_info} onChange={handleFormChange} placeholder="Breve histórico do paciente..." required />
+          <Textarea name="patient_clinical_info" value={form.patient_clinical_info} onChange={handleFormChange} placeholder="Breve histórico do paciente..." required className={highlightedFields.includes("patient_clinical_info") ? "ring-2 ring-cyan-400" : ""} />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-3">
             <div>
               <label className="font-semibold">Idade</label>
-              <Input name="patient_age" value={form.patient_age} onChange={handleFormChange} placeholder="Ex: 37" />
+              <Input name="patient_age" value={form.patient_age} onChange={handleFormChange} placeholder="Ex: 37" className={highlightedFields.includes("patient_age") ? "ring-2 ring-cyan-400" : ""} />
             </div>
             <div>
               <label className="font-semibold">Gênero</label>
               <select
-                className="w-full border rounded px-2 py-2 bg-white"
+                className={`w-full border rounded px-2 py-2 bg-white ${highlightedFields.includes("patient_gender") ? "ring-2 ring-cyan-400" : ""}`}
                 name="patient_gender"
                 value={form.patient_gender}
                 onChange={handleFormChange}
@@ -441,7 +498,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
             </div>
             <div>
               <label className="font-semibold">Duração dos sintomas</label>
-              <Input name="symptoms_duration" value={form.symptoms_duration} onChange={handleFormChange} placeholder="Ex: 1 semana" />
+              <Input name="symptoms_duration" value={form.symptoms_duration} onChange={handleFormChange} placeholder="Ex: 1 semana" className={highlightedFields.includes("symptoms_duration") ? "ring-2 ring-cyan-400" : ""} />
             </div>
           </div>
         </div>
@@ -449,19 +506,25 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
           <ImageUploadWithZoom value={form.image_url} onChange={handleImageChange} />
         </div>
       </div>
-      <label className="font-semibold block mt-3">Pergunta Principal *</label>
+      <label className="font-semibold block mt-3">
+        Pergunta Principal *
+        {renderTooltipTip("tip-main-question", "Esta pergunta será apresentada ao usuário e guiará o raciocínio clínico.")}
+      </label>
       <Input name="main_question" value={form.main_question} onChange={handleFormChange} placeholder="Ex: Qual é o diagnóstico mais provável?" required />
-      
+
       <div>
         <div className="flex items-end gap-2 mb-1">
-          <label className="font-semibold">Alternativas do Quiz *</label>
+          <label className="font-semibold">
+            Alternativas do Quiz *
+            {renderTooltipTip("tip-alternatives", "Varie as alternativas para aumentar o nível de desafio! Em breve, será possível embaralhar as opções no modo revisão.")}
+          </label>
           <Button type="button" onClick={handleSuggestAlternatives} variant="secondary">
             Gerar Alternativas
           </Button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
           {["A", "B", "C", "D"].map((letter, idx) => (
-            <div key={idx} className="flex flex-col border rounded-lg px-4 py-2 gap-2 bg-gray-50">
+            <div key={idx} className={`flex flex-col border rounded-lg px-4 py-2 gap-2 bg-gray-50 ${highlightedFields.includes(`answer_option_${idx}`) ? "ring-2 ring-cyan-400" : ""}`}>
               <div className="flex items-center gap-2">
                 <input type="radio" name="correct_option" checked={form.correct_answer_index === idx} onChange={() => handleCorrectChange(idx)}
                   className="accent-cyan-600" aria-label={`Selecionar alternativa ${letter} como correta`} />
@@ -481,21 +544,26 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
                 className="text-xs"
                 rows={2}
               />
-              {/* --- NOVO campo: short_tip --- */}
-              <Input
-                value={form.answer_short_tips[idx]}
-                onChange={e => handleShortTipChange(idx, e.target.value)}
-                placeholder={`Meta-dica para alternativa ${letter} (opcional, ex: "Confunde com doença X")`}
-                className="text-xs"
-                maxLength={80}
-              />
+              <div className="flex items-center">
+                <Input
+                  value={form.answer_short_tips[idx]}
+                  onChange={e => handleShortTipChange(idx, e.target.value)}
+                  placeholder={`Meta-dica para alternativa ${letter} (opcional, ex: "Confunde com doença X")`}
+                  className="text-xs"
+                  maxLength={80}
+                />
+                {renderTooltipTip(`tip-short-tip-${idx}`, "Meta-dicas são pistas breves para o usuário refletir, por exemplo: 'Cuidado! Confunde com doença X'.")}
+              </div>
             </div>
           ))}
         </div>
       </div>
 
       <div>
-        <label className="font-semibold">Explicação e Feedback Geral *</label>
+        <label className="font-semibold">
+          Explicação e Feedback Geral *
+          {renderTooltipTip("tip-explanation", "Forneça uma explicação detalhada para aprendizado do usuário quando ele concluir o caso.")}
+        </label>
         <div className="flex gap-2 items-end">
           <Textarea
             name="explanation"
@@ -503,6 +571,7 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
             onChange={handleFormChange}
             placeholder="Explique o caso e a resposta correta..."
             required
+            className={highlightedFields.includes("explanation") ? "ring-2 ring-cyan-400" : ""}
           />
           {/* Novo botão para sugestão automática da explicação */}
           <Button
