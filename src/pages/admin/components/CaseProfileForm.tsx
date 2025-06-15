@@ -1,22 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { useCaseProfileFormState } from "../hooks/useCaseProfileFormState";
+import { useCaseProfileFormHandlers } from "../hooks/useCaseProfileFormHandlers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { ImageUploadWithZoom } from "./ImageUploadWithZoom";
-import { supabase } from "@/integrations/supabase/client";
-import { CaseModalityFields } from "./CaseModalityFields";
 import { toast } from "@/components/ui/use-toast";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { CasePreviewModal } from "./CasePreviewModal";
 import { CaseProfileBasicSection } from "./CaseProfileBasicSection";
 import { CaseProfileAlternativesSection } from "./CaseProfileAlternativesSection";
 import { CaseProfileExplanationSectionContainer } from "./CaseProfileExplanationSectionContainer";
 import { CaseProfileAdvancedConfigContainer } from "./CaseProfileAdvancedConfigContainer";
-import { useCaseProfileFormHandlers } from "../hooks/useCaseProfileFormHandlers";
-import { CaseProfileFormActions } from "./CaseProfileFormActions";
-import { CaseProfileFormLayout } from "./CaseProfileFormLayout";
 import { useFieldUndo } from "../hooks/useFieldUndo";
+import { useCaseTitleGenerator } from "../hooks/useCaseTitleGenerator";
+import { CaseProfileFormTitleSection } from "./CaseProfileFormTitleSection";
+import { CaseProfileFormPreviewModal } from "./CaseProfileFormPreviewModal";
+import { supabase } from "@/integrations/supabase/client";
 
 const GENDER_OPTIONS = [
   { value: "", label: "Selecione..." },
@@ -32,10 +28,8 @@ const AI_TUTOR_LEVELS = [
 ];
 
 export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
-  const [categories, setCategories] = useState<{id: number, name: string}[]>([]);
-  const [difficulties, setDifficulties] = useState<{id: number, level: number, description: string | null}[]>([]);
-  const [categoryForTitle, setCategoryForTitle] = useState<string>("");
-  const [modalityForTitle, setModalityForTitle] = useState<string>("");
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
+  const [difficulties, setDifficulties] = useState<{ id: number; level: number; description: string | null }[]>([]);
 
   useEffect(() => {
     supabase.from("medical_specialties")
@@ -70,48 +64,30 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     handleRandomizeOptions
   } = handlers;
 
-  function abbreviateCategory(catName: string) {
-    if (!catName) return "";
-    if (catName.toLowerCase().includes("neuro")) return "Neuro";
-    if (catName.toLowerCase().includes("cardio")) return "Cardio";
-    if (catName.toLowerCase().includes("derma")) return "Derma";
-    return catName.replace(/[^a-zA-Z0-9]/g, "").substring(0,5);
-  }
+  // ==== NOVO: Gerador de título de caso modular ====
+  const { generateTitle, abbreviateCategory, generateRandomCaseNumber } = useCaseTitleGenerator(categories);
 
-  // Geração do número aleatório de 6 dígitos para título
-  function generateRandomCaseNumber() {
-    return Math.floor(100000 + Math.random() * 900000);
-  }
-
-  // NOVO: Título preview gerado com aleatório
+  // Preview do título automático
   const autoTitlePreview =
-    categoryForTitle && form.modality
-      ? `Caso ${abbreviateCategory(categoryForTitle)} ${form.case_number || generateRandomCaseNumber()}`
+    form.category_id && form.modality
+      ? `Caso ${abbreviateCategory(categories.find(c => String(c.id) === String(form.category_id))?.name || "")} ${form.case_number || generateRandomCaseNumber()}`
       : "(Será definido automaticamente após salvar: Caso [ABREV] [NUM ALEATÓRIO])";
 
-  // Garante geração automática do número e título ao selecionar categoria/mod (sem sobrescrever input manual)
+  // Lógica de auto-geração de título ao trocar categoria/modality
   useEffect(() => {
-    if (form.category_id && form.modality) {
-      if (!form.case_number) { // Gera apenas se não existe ainda
-        const categoria = categories.find(c => String(c.id) === String(form.category_id));
-        const abrev = abbreviateCategory(categoria?.name || "");
-        const randomCaseNum = generateRandomCaseNumber();
-        setForm((prev: any) => ({
-          ...prev,
-          case_number: randomCaseNum,
-          title: `Caso ${abrev} ${randomCaseNum}`
-        }));
-      }
+    if (form.category_id && form.modality && (!form.case_number || !form.title)) {
+      const { title, case_number } = generateTitle(form.category_id, form.modality);
+      setForm((prev: any) => ({ ...prev, title, case_number }));
     }
     // eslint-disable-next-line
   }, [form.category_id, form.modality]);
 
-  // Hooks de undo para campos
+  // Hooks de undo
   const undoFindings = useFieldUndo(handlers.form.findings);
   const undoClinical = useFieldUndo(handlers.form.patient_clinical_info);
   const undoDiagnosis = useFieldUndo(handlers.form.diagnosis_internal);
 
-  // Funções auxiliares para o CaseProfileBasicSection passar aos botões
+  // Funções auxiliares
   const onSuggestFindings = async () => {
     undoFindings.handleBeforeChange(handlers.form.findings);
     await handlers.handleSuggestFindings();
@@ -211,10 +187,11 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
   }
 
   return (
-    <form className="w-full" onSubmit={handleSubmit}>
-      <CasePreviewModal open={showPreview} onClose={() => setShowPreview(false)} form={form} categories={categories} difficulties={difficulties} />
+    <form className="w-full" onSubmit={handlers.handleSubmit}>
+      <CaseProfileFormPreviewModal open={showPreview} onClose={() => setShowPreview(false)} form={form} categories={categories} difficulties={difficulties} />
       <h2 className="text-xl font-bold mb-2">Criar Novo Caso Médico</h2>
-      <CaseProfileFormActions
+      <CaseProfileFormTitleSection
+        autoTitlePreview={autoTitlePreview}
         onPreview={() => setShowPreview(true)}
         onSuggestTitle={onSuggestDiagnosis}
         onAutoFill={handleAutoFillCaseDetails}
@@ -233,8 +210,8 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         handleSuggestHint={handleSuggestHint}
         handleImageChange={handleImageChange}
         renderTooltipTip={renderTooltipTip}
-        handleSuggestFindings={handleSuggestFindings}
-        handleSuggestClinicalInfo={handleSuggestClinicalInfo}
+        handleSuggestFindings={onSuggestFindings}
+        handleSuggestClinicalInfo={onSuggestClinical}
         undoFindings={undoFindings}
         undoClinical={undoClinical}
         undoDiagnosis={undoDiagnosis}
