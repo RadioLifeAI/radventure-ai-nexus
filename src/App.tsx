@@ -9,6 +9,9 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import AdminPanel from "./pages/AdminPanel";
 import CasoUsuarioView from "./pages/CasoUsuarioView";
+import Eventos from "./pages/Eventos";
+import RankingEventos from "./pages/RankingEventos";
+import Rankings from "./pages/Rankings";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +28,9 @@ const App = () => (
           <Route path="/admin/*" element={<AdminPanel />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="/caso/:id" element={<CasoUsuarioView />} />
+          <Route path="/eventos" element={<Eventos />} />
+          <Route path="/ranking-eventos" element={<RankingEventos />} />
+          <Route path="/rankings" element={<Rankings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
