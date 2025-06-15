@@ -246,6 +246,8 @@ export type Database = {
           answer_short_tips: string[] | null
           author_id: string | null
           can_skip: boolean | null
+          case_number: number | null
+          category_id: number | null
           correct_answer_index: number | null
           created_at: string
           created_by: string | null
@@ -276,6 +278,8 @@ export type Database = {
           answer_short_tips?: string[] | null
           author_id?: string | null
           can_skip?: boolean | null
+          case_number?: number | null
+          category_id?: number | null
           correct_answer_index?: number | null
           created_at?: string
           created_by?: string | null
@@ -306,6 +310,8 @@ export type Database = {
           answer_short_tips?: string[] | null
           author_id?: string | null
           can_skip?: boolean | null
+          case_number?: number | null
+          category_id?: number | null
           correct_answer_index?: number | null
           created_at?: string
           created_by?: string | null
@@ -329,6 +335,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "medical_cases_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "medical_specialties"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "medical_cases_created_by_fkey"
             columns: ["created_by"]

@@ -308,12 +308,58 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
     }));
   }
 
+  // NOVO: Função para buscar o próximo número do caso para categoria/modalidade selecionados
+  async function handleGenerateAutoTitle() {
+    if (!form.category_id || !form.modality) {
+      toast({ description: "Selecione uma categoria e modalidade primeiro." });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      // Busca a categoria (label)
+      const categoria = categories.find(c => String(c.id) === String(form.category_id))?.name || "";
+      // Conta quantos casos existem naquela categoria+modalidade para gerar o próximo número
+      const { data, error } = await supabase
+        .from("medical_cases")
+        .select("id", { count: "exact", head: true })
+        .eq("category_id", form.category_id)
+        .eq("modality", form.modality);
+      const nextNumber = (data?.length ?? 0) + 1;
+      // Gera o nome automático
+      const autoTitle = `${categoria} - ${form.modality} #${nextNumber}`;
+
+      setForm(prev => ({
+        ...prev,
+        title: autoTitle,
+        case_number: nextNumber // salva temporariamente para persistir depois
+      }));
+      toast({ description: "Título gerado automaticamente!" });
+    } catch (err: any) {
+      toast({ variant: "destructive", description: "Falha ao gerar o título automático." });
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
+
+    // Para garantir numeração correta, conta novamente antes do insert para evitar duplicatas
+    let caseNumber = form.case_number;
+    if (!caseNumber && form.category_id && form.modality) {
+      const { data } = await supabase
+        .from("medical_cases")
+        .select("id", { count: "exact", head: true })
+        .eq("category_id", form.category_id)
+        .eq("modality", form.modality);
+      caseNumber = (data?.length ?? 0) + 1;
+    }
+
     const payload: any = {
       specialty: categories.find(c => String(c.id) === form.category_id)?.name || null,
       category_id: form.category_id ? Number(form.category_id) : null,
+      case_number: caseNumber ?? null,
       difficulty_level: form.difficulty_level ? Number(form.difficulty_level) : null,
       points: form.points ? Number(form.points) : null,
       modality: form.modality || null,
@@ -388,6 +434,10 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         </Button>
         <Button type="button" onClick={handleAutoFillCaseDetails} variant="secondary" className="mb-1">
           Auto-preencher detalhes do caso
+        </Button>
+        {/* NOVO: Botão de gerar título automático */}
+        <Button type="button" onClick={handleGenerateAutoTitle} variant="secondary" className="mb-1">
+          Gerar título automático
         </Button>
       </div>
       <CaseProfileBasicSection
