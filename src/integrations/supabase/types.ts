@@ -252,6 +252,8 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string | null
+          diagnosis_internal: string | null
+          difficulty_description: string | null
           difficulty_level: number | null
           elimination_penalty_points: number | null
           explanation: string | null
@@ -288,6 +290,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          diagnosis_internal?: string | null
+          difficulty_description?: string | null
           difficulty_level?: number | null
           elimination_penalty_points?: number | null
           explanation?: string | null
@@ -324,6 +328,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          diagnosis_internal?: string | null
+          difficulty_description?: string | null
           difficulty_level?: number | null
           elimination_penalty_points?: number | null
           explanation?: string | null
