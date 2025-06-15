@@ -106,6 +106,11 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
       setForm(prev => {
         // Defensive helpers to ensure string fields for TS & consistency
         const safeStr = (v: any) => (v === null || v === undefined ? "" : String(v));
+        const safeArr = (a: any[] | undefined, fallbackLen = 4) => {
+          if (Array.isArray(a)) return a.map(safeStr).concat(Array(fallbackLen).fill("")).slice(0, fallbackLen);
+          return Array(fallbackLen).fill("");
+        };
+
         return {
           ...prev,
           category_id: suggestion.category
@@ -126,12 +131,10 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
           patient_gender: safeStr(suggestion.patient_gender ?? ""),
           symptoms_duration: safeStr(suggestion.symptoms_duration ?? ""),
           main_question: safeStr(suggestion.main_question ?? ""),
-          answer_options: Array.isArray(suggestion.answer_options)
-            ? suggestion.answer_options.map(safeStr).concat(["", "", "", ""]).slice(0, 4)
-            : ["", "", "", ""],
-          // Always reset or keep old feedback/tips
-          answer_feedbacks: prev.answer_feedbacks,
-          answer_short_tips: prev.answer_short_tips,
+          answer_options: safeArr(suggestion.answer_options, 4),
+          // Atualizado: preencher também os feedbacks e metadicas se vierem na suggestion
+          answer_feedbacks: safeArr(suggestion.answer_feedbacks, 4),
+          answer_short_tips: safeArr(suggestion.answer_short_tips, 4),
           correct_answer_index: 0,
         };
       });
@@ -149,6 +152,8 @@ export function CaseProfileForm({ onCreated }: { onCreated?: () => void }) {
         "symptoms_duration",
         "main_question",
         "answer_options",
+        "answer_feedbacks",
+        "answer_short_tips",
       ]);
       setTimeout(() => setHighlightedFields([]), 2500);
       toast({
