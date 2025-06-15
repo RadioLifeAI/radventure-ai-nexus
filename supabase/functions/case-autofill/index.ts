@@ -27,11 +27,14 @@ serve(async (req) => {
   try {
     const { diagnosis, findings, modality, subtype, withAlternativesOnly, withHintOnly, systemPrompt, withFindingsOnly, withClinicalInfoOnly } = await req.json();
 
+    // NOVA REGRA DE OURO PARA TODOS OS PROMPTS
+    const DIAG_NOT_REVEALED = "REGRAS IMPORTANTES: NUNCA integre, cite, sugira ou deduza o diagnóstico principal nos campos do caso clínico, inclusive achados, resumo clínico, pergunta principal, alternativas etc. Os campos devem fornecer apenas contexto, sem nunca revelar, sugerir ou favorecer o diagnóstico correto. Redija como em um caso real, SEM ENTREGAR a resposta.";
+
     // NOVO: Só gerar achados radiológicos
     if (withFindingsOnly) {
       const promptFindings = systemPrompt
-        ? systemPrompt
-        : `Você é especialista em radiologia. Gere uma descrição de achados radiológicos concisa (máx. 200 caracteres), integrando diagnóstico e modalidade.`;
+        ? `${systemPrompt}\n${DIAG_NOT_REVEALED}`
+        : `Você é especialista em radiologia. Gere uma descrição de achados radiológicos concisa (máx. 200 caracteres), integrando diagnóstico e modalidade. ${DIAG_NOT_REVEALED}`;
       const completionRes = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -68,8 +71,8 @@ serve(async (req) => {
     // NOVO: Só gerar resumo clínico (patient_clinical_info)
     if (withClinicalInfoOnly) {
       const promptClinical = systemPrompt
-        ? systemPrompt
-        : `Você é especialista em radiologia. Gere um resumo clínico objetivo e sucinto (máximo 300 caracteres), integrando diagnóstico e modalidade.`;
+        ? `${systemPrompt}\n${DIAG_NOT_REVEALED}`
+        : `Você é especialista em radiologia. Gere um resumo clínico objetivo e sucinto (máximo 300 caracteres), integrando diagnóstico e modalidade. ${DIAG_NOT_REVEALED}`;
       const completionRes = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -105,8 +108,8 @@ serve(async (req) => {
 
     if (withHintOnly) {
       const promptHint = systemPrompt 
-        ? systemPrompt 
-        : `Você é um especialista em radiologia. Forneça uma dica super concisa (máx. 200 caracteres) para ajudar o estudante a resolver o caso, integrando achado radiológico e contexto clínico. Não seja genérico.`;
+        ? `${systemPrompt}\n${DIAG_NOT_REVEALED}`
+        : `Você é um especialista em radiologia. Forneça uma dica super concisa (máx. 200 caracteres) para ajudar o estudante a resolver o caso, integrando achado radiológico e contexto clínico. Não seja genérico. ${DIAG_NOT_REVEALED}`;
       const completionRes = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -143,7 +146,8 @@ serve(async (req) => {
 
     if (withAlternativesOnly) {
       // Solicita apenas alternativas usando o contexto diferencial
-      const contextIntro = `Você é um especialista em radiologia e diagnóstico por imagem, focado em criar casos clínico-radiológicos objetivos para quizzes. Sugira os três principais diagnósticos diferenciais, além do diagnóstico principal fornecido, levando em conta obrigatoriamente os achados radiológicos (${findings ?? "não especificado"}) e os dados clínicos disponíveis. Siga exatamente este formato JSON:
+      const contextIntro = `Você é um especialista em radiologia e diagnóstico por imagem, focado em criar casos clínico-radiológicos objetivos para quizzes. Sugira os três principais diagnósticos diferenciais, além do diagnóstico principal fornecido, levando em conta obrigatoriamente os achados radiológicos (${findings ?? "não especificado"}) e os dados clínicos disponíveis. ${DIAG_NOT_REVEALED}
+Siga exatamente este formato JSON:
 {
   "answer_options": ["Diagnóstico Principal", "Diagnóstico Diferencial 1", "Diagnóstico Diferencial 2", "Diagnóstico Diferencial 3"],
   "answer_feedbacks": ["Feedback para o principal", "Feedback diferencial 1", "Feedback diferencial 2", "Feedback diferencial 3"],
@@ -206,9 +210,10 @@ Importante: Não explique na resposta geral, use só os campos acima. A alternat
     }
 
     // --- CONTEXTO MAIS RESUMIDO E OBJETIVO PARA EXPLICAÇÃO E TODO O AUTO-PREENCHIMENTO ---
-    let contextIntro = `Você é um especialista em radiologia e diagnóstico por imagem que elabora casos clínico-radiológicos objetivamente para quizzes de ensino, valorizando sempre integração entre achados de imagem e quadro clínico.` +
-      ` Nas explicações e feedbacks, responda DE FORMA EXTREMAMENTE BREVE, SEM frases genéricas, usando sempre apenas a relação entre os achados radiológicos e sintomas ou contexto clínico.`;
+    let contextIntro = `Você é um especialista em radiologia e diagnóstico por imagem que elabora casos clínico-radiológicos objetivamente para quizzes de ensino, valorizando sempre integração entre achados de imagem e quadro clínico.`;
+    contextIntro += ` Nas explicações e feedbacks, responda DE FORMA EXTREMAMENTE BREVE, SEM frases genéricas, usando sempre apenas a relação entre os achados radiológicos e sintomas ou contexto clínico.`;
     contextIntro += ` Nunca faça textos longos ou divagações.`;
+    contextIntro += ` ${DIAG_NOT_REVEALED}`;
     if (findings || modality || subtype) {
       contextIntro += ` Dados do caso: `;
       if (modality) contextIntro += `Modalidade: ${modality}. `;
