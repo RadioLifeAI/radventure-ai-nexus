@@ -26,6 +26,19 @@ interface UserBenefit {
   expires_at: string | null;
 }
 
+interface UserSubscription {
+  tier: string;
+  status: string;
+}
+
+interface UserProfile {
+  id: string;
+  full_name: string;
+  email: string;
+  username: string;
+  subscriptions: UserSubscription[];
+}
+
 interface UserWithBenefits {
   id: string;
   full_name: string;
@@ -83,9 +96,9 @@ export function UserBenefitsVerification({ onUserSelected }: UserBenefitsVerific
       if (benefitsError) throw benefitsError;
 
       // Processar dados e identificar discrepâncias
-      const processedUsers: UserWithBenefits[] = profiles?.map(profile => {
+      const processedUsers: UserWithBenefits[] = (profiles as UserProfile[])?.map(profile => {
         const subscription = profile.subscriptions?.[0];
-        // Fix: Access tier correctly from subscription object - subscription is an object with tier property
+        // Fix: Properly access tier from subscription object
         const tier = subscription?.tier || "Free";
         const actualBenefit = benefits?.find(b => b.user_id === profile.id);
         
