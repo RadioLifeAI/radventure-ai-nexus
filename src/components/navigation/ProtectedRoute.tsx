@@ -18,22 +18,26 @@ export function ProtectedRoute({
   const { user, loading } = useAuth();
   const location = useLocation();
 
-  console.log('ProtectedRoute - Loading:', loading, 'User:', !!user, 'RequireAuth:', requireAuth);
+  console.log('ProtectedRoute - Path:', location.pathname, 'Loading:', loading, 'User:', !!user, 'RequireAuth:', requireAuth);
 
+  // Sempre mostrar loading enquanto estiver carregando
   if (loading) {
     return <LoadingPage />;
   }
 
-  // If authentication is required but user is not authenticated
+  // Se autenticação é obrigatória mas usuário não está autenticado
   if (requireAuth && !user) {
     console.log('Redirecting to auth - user not authenticated');
     return <Navigate to={redirectTo} state={{ from: location }} replace />;
   }
 
-  // If user is authenticated but trying to access auth pages
-  if (!requireAuth && user && (location.pathname === '/auth' || location.pathname === '/login')) {
-    console.log('Redirecting to dashboard - user already authenticated');
-    return <Navigate to="/dashboard" replace />;
+  // Se usuário está autenticado mas tentando acessar páginas de auth
+  if (!requireAuth && user) {
+    const authPaths = ['/auth', '/login'];
+    if (authPaths.includes(location.pathname)) {
+      console.log('Redirecting to dashboard - user already authenticated');
+      return <Navigate to="/dashboard" replace />;
+    }
   }
 
   return <>{children}</>;

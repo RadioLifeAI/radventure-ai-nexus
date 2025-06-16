@@ -1,20 +1,30 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import type { AdminRole, PermissionAction, ResourceType } from "@/types/admin";
 
 export function useAdminPermissions() {
+  const { user, loading: authLoading } = useAuth();
   const [userRoles, setUserRoles] = useState<AdminRole[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchUserRoles() {
+      // Aguarda a autenticação completar antes de buscar roles
+      if (authLoading) return;
+      
+      setLoading(true);
+      
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        if (!user?.id) {
+          console.log('No user authenticated, setting empty roles');
+          setUserRoles([]);
           setLoading(false);
           return;
         }
+
+        console.log('Fetching admin roles for user:', user.id);
 
         const { data, error } = await supabase
           .from('admin_user_roles')
@@ -24,20 +34,23 @@ export function useAdminPermissions() {
 
         if (error) {
           console.error('Error fetching user roles:', error);
-          setLoading(false);
-          return;
+          // Em caso de erro, assumir usuário normal (não admin)
+          setUserRoles([]);
+        } else {
+          const roles = data?.map(r => r.admin_role as AdminRole) || [];
+          console.log('User roles fetched:', roles);
+          setUserRoles(roles);
         }
-
-        setUserRoles(data?.map(r => r.admin_role as AdminRole) || []);
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Unexpected error fetching roles:', error);
+        setUserRoles([]);
       } finally {
         setLoading(false);
       }
     }
 
     fetchUserRoles();
-  }, []);
+  }, [user?.id, authLoading]);
 
   const hasPermission = (resource: ResourceType, action: PermissionAction): boolean => {
     // DEV e ADMIN_DEV têm acesso total
@@ -134,6 +147,6 @@ export function useAdminPermissions() {
     userRoles,
     hasPermission,
     isAdmin,
-    loading
+    loading: loading || authLoading
   };
 }

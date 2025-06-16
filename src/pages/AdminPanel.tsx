@@ -10,9 +10,10 @@ import CasosMedicos from "./admin/CasosMedicos";
 import GestaoCasos from "./admin/GestaoCasos";
 import CreateEvent from "./admin/CreateEvent";
 import EventsManagement from "./admin/EventsManagement";
-import { Loader } from "@/components/Loader";
+import { LoadingPage } from "@/components/navigation/LoadingPage";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Shield, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 function AdminDashboard() {
   return (
@@ -118,30 +119,35 @@ function AdminEventsManagement() {
 }
 
 export default function AdminPanel() {
-  const { isAdmin, loading, hasPermission } = useAdminPermissions();
+  const { isAdmin, loading, userRoles } = useAdminPermissions();
+
+  console.log('AdminPanel - Loading:', loading, 'IsAdmin:', isAdmin, 'Roles:', userRoles);
 
   if (loading) {
-    return <Loader />;
+    return <LoadingPage />;
   }
 
   if (!isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center max-w-md mx-auto">
+        <div className="text-center max-w-md mx-auto p-6">
           <div className="bg-red-100 rounded-full p-4 mx-auto w-16 h-16 flex items-center justify-center mb-4">
             <Shield className="text-red-600" size={32} />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Acesso Negado</h1>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 mb-4">
             Você não tem permissões administrativas para acessar este painel.
           </p>
-          <a 
-            href="/dashboard" 
-            className="inline-flex items-center gap-2 bg-cyan-600 text-white px-4 py-2 rounded-lg hover:bg-cyan-700 transition"
-          >
-            <Shield size={16} />
+          <Alert className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Se você deveria ter acesso administrativo, entre em contato com o suporte ou verifique suas permissões.
+            </AlertDescription>
+          </Alert>
+          <Button onClick={() => window.location.href = '/dashboard'}>
+            <Shield size={16} className="mr-2" />
             Voltar ao Dashboard
-          </a>
+          </Button>
         </div>
       </div>
     );
@@ -170,6 +176,12 @@ export default function AdminPanel() {
           {/* Outras rotas podem ser adicionadas aqui */}
           <Route path="/*" element={
             <div className="p-8">
+              <AdminHeader 
+                title="Seção em Desenvolvimento"
+                breadcrumbs={[
+                  { label: "Admin", href: "/admin" }
+                ]}
+              />
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>

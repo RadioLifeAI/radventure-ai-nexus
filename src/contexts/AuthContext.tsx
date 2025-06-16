@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -64,35 +63,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+    let retryTimeout: NodeJS.Timeout;
 
     const initializeAuth = async () => {
       try {
-        // Get initial session
-        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+        console.log('AuthContext: Starting initialization');
+        
+        // Get initial session with timeout
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Session timeout')), 10000)
+        );
+
+        const { data: { session: initialSession }, error } = await Promise.race([
+          sessionPromise,
+          timeoutPromise
+        ]) as any;
         
         if (error) {
           console.error('Error getting initial session:', error);
-          if (mounted) {
-            setLoading(false);
-          }
+          if (mounted) setLoading(false);
           return;
         }
 
-        if (mounted) {
-          setSession(initialSession);
-          setUser(initialSession?.user ?? null);
+        if (!mounted) return;
 
-          if (initialSession?.user) {
-            const profileData = await fetchProfile(initialSession.user.id);
-            setProfile(profileData);
-          }
-          
-          setLoading(false);
+        console.log('AuthContext: Initial session loaded:', !!initialSession);
+        
+        setSession(initialSession);
+        setUser(initialSession?.user ?? null);
+
+        if (initialSession?.user) {
+          const profileData = await fetchProfile(initialSession.user.id);
+          if (mounted) setProfile(profileData);
         }
+        
+        if (mounted) setLoading(false);
       } catch (error) {
         console.error('Error initializing auth:', error);
         if (mounted) {
           setLoading(false);
+          // Retry after 3 seconds on failure
+          retryTimeout = setTimeout(() => {
+            if (mounted) initializeAuth();
+          }, 3000);
         }
       }
     };
@@ -100,7 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.id);
+        console.log('AuthContext: Auth state changed:', event, !!session?.user);
         
         if (!mounted) return;
 
@@ -109,10 +123,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         if (session?.user) {
           const profileData = await fetchProfile(session.user.id);
-          setProfile(profileData);
+          if (mounted) setProfile(profileData);
         } else {
           setProfile(null);
         }
+
+        // Ensure loading is false after auth state change
+        if (mounted) setLoading(false);
       }
     );
 
@@ -121,6 +138,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       mounted = false;
+      if (retryTimeout) clearTimeout(retryTimeout);
       subscription.unsubscribe();
     };
   }, []);
