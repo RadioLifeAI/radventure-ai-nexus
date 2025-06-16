@@ -116,3 +116,129 @@ export type AdminUserRole = {
   assigned_by?: string;
   assigned_at: string;
 };
+
+export type Permission = {
+  resource: ResourceType;
+  action: PermissionAction;
+};
+
+export type RolePermissions = {
+  [key in AdminRole]: Permission[];
+};
+
+// Sistema de permissões por role
+export const ROLE_PERMISSIONS: RolePermissions = {
+  DEV: [
+    { resource: 'USERS', action: 'MANAGE' },
+    { resource: 'CASES', action: 'MANAGE' },
+    { resource: 'EVENTS', action: 'MANAGE' },
+    { resource: 'SUBSCRIPTIONS', action: 'MANAGE' },
+    { resource: 'ANALYTICS', action: 'MANAGE' },
+    { resource: 'SETTINGS', action: 'MANAGE' },
+    { resource: 'AI_TUTOR', action: 'MANAGE' },
+    { resource: 'CONTENT', action: 'MANAGE' },
+    { resource: 'PAYMENTS', action: 'MANAGE' },
+    { resource: 'SUPPORT', action: 'MANAGE' },
+  ],
+  ADMIN_DEV: [
+    { resource: 'USERS', action: 'MANAGE' },
+    { resource: 'CASES', action: 'MANAGE' },
+    { resource: 'EVENTS', action: 'MANAGE' },
+    { resource: 'SUBSCRIPTIONS', action: 'MANAGE' },
+    { resource: 'ANALYTICS', action: 'MANAGE' },
+    { resource: 'SETTINGS', action: 'MANAGE' },
+    { resource: 'AI_TUTOR', action: 'MANAGE' },
+    { resource: 'CONTENT', action: 'MANAGE' },
+    { resource: 'PAYMENTS', action: 'MANAGE' },
+    { resource: 'SUPPORT', action: 'MANAGE' },
+  ],
+  TechAdmin: [
+    { resource: 'USERS', action: 'READ' },
+    { resource: 'CASES', action: 'MANAGE' },
+    { resource: 'EVENTS', action: 'MANAGE' },
+    { resource: 'ANALYTICS', action: 'READ' },
+    { resource: 'AI_TUTOR', action: 'MANAGE' },
+    { resource: 'SETTINGS', action: 'UPDATE' },
+  ],
+  SHIELD_MASTER: [
+    { resource: 'USERS', action: 'MANAGE' },
+    { resource: 'SETTINGS', action: 'MANAGE' },
+    { resource: 'ANALYTICS', action: 'READ' },
+  ],
+  LORE_CRAFTER: [
+    { resource: 'CASES', action: 'MANAGE' },
+    { resource: 'CONTENT', action: 'MANAGE' },
+    { resource: 'AI_TUTOR', action: 'MANAGE' },
+  ],
+  SPEED_WIZARD: [
+    { resource: 'ANALYTICS', action: 'READ' },
+    { resource: 'SETTINGS', action: 'UPDATE' },
+  ],
+  DATA_SEER: [
+    { resource: 'ANALYTICS', action: 'MANAGE' },
+    { resource: 'USERS', action: 'READ' },
+  ],
+  GROWTH_HACKER: [
+    { resource: 'ANALYTICS', action: 'READ' },
+    { resource: 'EVENTS', action: 'MANAGE' },
+    { resource: 'USERS', action: 'READ' },
+  ],
+  LOOT_KEEPER: [
+    { resource: 'SUBSCRIPTIONS', action: 'MANAGE' },
+    { resource: 'PAYMENTS', action: 'MANAGE' },
+    { resource: 'ANALYTICS', action: 'READ' },
+  ],
+  HELP_RANGER: [
+    { resource: 'SUPPORT', action: 'MANAGE' },
+    { resource: 'USERS', action: 'READ' },
+  ],
+  LAW_GUARDIAN: [
+    { resource: 'USERS', action: 'READ' },
+    { resource: 'SETTINGS', action: 'READ' },
+    { resource: 'ANALYTICS', action: 'READ' },
+  ],
+  WebSecuritySpecialist: [
+    { resource: 'USERS', action: 'READ' },
+    { resource: 'SETTINGS', action: 'UPDATE' },
+    { resource: 'ANALYTICS', action: 'READ' },
+  ],
+  ContentEditor: [
+    { resource: 'CONTENT', action: 'MANAGE' },
+    { resource: 'CASES', action: 'MANAGE' },
+  ],
+  WebPerformanceSpecialist: [
+    { resource: 'ANALYTICS', action: 'READ' },
+    { resource: 'SETTINGS', action: 'UPDATE' },
+  ],
+  WebAnalyticsManager: [
+    { resource: 'ANALYTICS', action: 'MANAGE' },
+  ],
+  DigitalMarketingSpecialist: [
+    { resource: 'ANALYTICS', action: 'READ' },
+    { resource: 'EVENTS', action: 'CREATE' },
+  ],
+  EcommerceManager: [
+    { resource: 'SUBSCRIPTIONS', action: 'READ' },
+    { resource: 'PAYMENTS', action: 'READ' },
+    { resource: 'ANALYTICS', action: 'READ' },
+  ],
+  CustomerSupportCoordinator: [
+    { resource: 'SUPPORT', action: 'MANAGE' },
+    { resource: 'USERS', action: 'READ' },
+  ],
+  ComplianceOfficer: [
+    { resource: 'USERS', action: 'READ' },
+    { resource: 'ANALYTICS', action: 'READ' },
+    { resource: 'SETTINGS', action: 'READ' },
+  ],
+};
+
+// Função helper para verificar permissões
+export function hasPermission(roles: AdminRole[], resource: ResourceType, action: PermissionAction): boolean {
+  return roles.some(role => 
+    ROLE_PERMISSIONS[role]?.some(permission => 
+      permission.resource === resource && 
+      (permission.action === action || permission.action === 'MANAGE')
+    )
+  );
+}

@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { UserProfile } from "@/types/admin";
+import { UserProfile, AdminRole, ROLE_PERMISSIONS } from "@/types/admin";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Crown, Coins, Zap, Shield, Trophy, Gift, Settings, User } from "lucide-react";
@@ -43,6 +43,14 @@ interface SubscriptionPlan {
   display_name: string;
 }
 
+interface UserRole {
+  id: string;
+  admin_role: AdminRole;
+  is_active: boolean;
+  assigned_at: string;
+  assigned_by?: string;
+}
+
 export function UserEditModal({ user, isOpen, onClose, onUserUpdated }: UserEditModalProps) {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
@@ -50,6 +58,7 @@ export function UserEditModal({ user, isOpen, onClose, onUserUpdated }: UserEdit
   const [availableTitles, setAvailableTitles] = useState<any[]>([]);
   const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
   const [currentSubscription, setCurrentSubscription] = useState<any>(null);
+  const [userRoles, setUserRoles] = useState<UserRole[]>([]);
 
   // Form states
   const [formData, setFormData] = useState({
@@ -103,7 +112,9 @@ export function UserEditModal({ user, isOpen, onClose, onUserUpdated }: UserEdit
           bonus_points_multiplier: benefits.bonus_points_multiplier,
           has_premium_features: benefits.has_premium_features,
           custom_title: benefits.custom_title || "",
-          badge_collection: Array.isArray(benefits.badge_collection) ? benefits.badge_collection : [],
+          badge_collection: Array.isArray(benefits.badge_collection) 
+            ? benefits.badge_collection.filter((item): item is string => typeof item === 'string')
+            : [],
           expires_at: benefits.expires_at
         });
       }
@@ -116,7 +127,7 @@ export function UserEditModal({ user, isOpen, onClose, onUserUpdated }: UserEdit
 
       setAvailableTitles(titles || []);
 
-      // Carregar planos de assinatura (sem tier)
+      // Carregar planos de assinatura
       const { data: plans } = await supabase
         .from("subscription_plans")
         .select("id, name, display_name")
@@ -135,6 +146,15 @@ export function UserEditModal({ user, isOpen, onClose, onUserUpdated }: UserEdit
         .single();
 
       setCurrentSubscription(subscription);
+
+      // Carregar roles administrativos do usuário
+      const { data: roles } = await supabase
+        .from("admin_user_roles")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("is_active", true);
+
+      setUserRoles(roles || []);
 
     } catch (error) {
       console.error("Erro ao carregar dados do usuário:", error);
@@ -212,6 +232,44 @@ export function UserEditModal({ user, isOpen, onClose, onUserUpdated }: UserEdit
       toast.error(`Erro ao sincronizar benefícios: ${error.message}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const addRole = async (role: AdminRole) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from("admin_user_roles")
+        .insert({
+          user_id: user.id,
+          admin_role: role,
+          is_active: true,
+          assigned_at: new Date().toISOString(),
+        });
+
+      if (error) throw error;
+
+      toast.success(`Role ${role} adicionado com sucesso!`);
+      loadUserData();
+    } catch (error: any) {
+      toast.error(`Erro ao adicionar role: ${error.message}`);
+    }
+  };
+
+  const removeRole = async (roleId: string) => {
+    try {
+      const { error } = await supabase
+        .from("admin_user_roles")
+        .update({ is_active: false })
+        .eq("id", roleId);
+
+      if (error) throw error;
+
+      toast.success("Role removido com sucesso!");
+      loadUserData();
+    } catch (error: any) {
+      toast.error(`Erro ao remover role: ${error.message}`);
     }
   };
 
@@ -624,6 +682,62 @@ export function UserEditModal({ user, isOpen, onClose, onUserUpdated }: UserEdit
                       <SelectItem value="ADMIN">Administrador</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <Separator />
+
+                <div>
+                  <Label>Roles Administrativos Atuais</Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {userRoles.map((role) => (
+                      <Badge
+                        key={role.id}
+                        variant="secondary"
+                        className="cursor-pointer"
+                        onClick={() => removeRole(role.id)}
+                      >
+                        {role.admin_role} ×
+                      </Badge>
+                    ))}
+                    {userRoles.length === 0 && (
+                      <p className="text-gray-500">Nenhum role administrativo</p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Adicionar Role</Label>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    {Object.keys(ROLE_PERMISSIONS).map((role) => (
+                      <Button
+                        key={role}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => addRole(role as AdminRole)}
+                        disabled={userRoles.some(r => r.admin_role === role)}
+                      >
+                        {role}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div>
+                  <Label>Permissões por Role</Label>
+                  {userRoles.map((role) => (
+                    <div key={role.id} className="mt-2 p-3 bg-gray-50 rounded">
+                      <h4 className="font-semibold">{role.admin_role}</h4>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {ROLE_PERMISSIONS[role.admin_role as AdminRole]?.map((permission, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {permission.resource}: {permission.action}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
                 <Button onClick={handleSaveProfile} disabled={loading}>
