@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -63,18 +62,38 @@ export function AchievementManagement() {
   const { data: userAchievements = [] } = useQuery({
     queryKey: ["user-achievements"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First get user achievements
+      const { data: achievements, error: achievementsError } = await supabase
         .from("user_achievements")
-        .select(`
-          *,
-          achievement:achievement_system(*),
-          user:profiles(full_name, username)
-        `)
+        .select("*")
         .order("unlocked_at", { ascending: false })
         .limit(50);
 
-      if (error) throw error;
-      return data;
+      if (achievementsError) throw achievementsError;
+
+      // Then get related data separately to avoid relation issues
+      const userIds = [...new Set(achievements?.map(a => a.user_id))];
+      const achievementIds = [...new Set(achievements?.map(a => a.achievement_id))];
+
+      const [usersData, achievementSystemData] = await Promise.all([
+        userIds.length > 0 ? supabase
+          .from("profiles")
+          .select("id, full_name, username")
+          .in("id", userIds) : Promise.resolve({ data: [] }),
+        achievementIds.length > 0 ? supabase
+          .from("achievement_system")
+          .select("id, name, rarity")
+          .in("id", achievementIds) : Promise.resolve({ data: [] })
+      ]);
+
+      // Combine the data manually
+      const enrichedAchievements = achievements?.map(achievement => ({
+        ...achievement,
+        user: usersData.data?.find(u => u.id === achievement.user_id),
+        achievement: achievementSystemData.data?.find(a => a.id === achievement.achievement_id)
+      }));
+
+      return enrichedAchievements || [];
     },
   });
 

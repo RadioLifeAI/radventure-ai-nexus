@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -147,14 +146,20 @@ export function UserEditModal({ user, isOpen, onClose, onUserUpdated }: UserEdit
 
       setCurrentSubscription(subscription);
 
-      // Carregar roles administrativos do usuário
+      // Carregar roles administrativos do usuário - fix the type casting
       const { data: roles } = await supabase
         .from("admin_user_roles")
         .select("*")
         .eq("user_id", user.id)
         .eq("is_active", true);
 
-      setUserRoles(roles || []);
+      // Cast admin_role to AdminRole type to fix the TypeScript error
+      const typedRoles: UserRole[] = roles?.map(role => ({
+        ...role,
+        admin_role: role.admin_role as AdminRole
+      })) || [];
+
+      setUserRoles(typedRoles);
 
     } catch (error) {
       console.error("Erro ao carregar dados do usuário:", error);
