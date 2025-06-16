@@ -14,10 +14,23 @@ interface CaseFiltersType {
   specialty?: string;
   difficulty?: number;
   modality?: string;
+  searchTerm?: string;
+}
+
+interface Filters {
+  specialty: string;
+  modality: string;
+  difficulty: string;
+  searchTerm: string;
 }
 
 export default function Casos() {
-  const [filters, setFilters] = useState<CaseFiltersType>({});
+  const [filters, setFilters] = useState<Filters>({
+    specialty: "",
+    modality: "",
+    difficulty: "",
+    searchTerm: ""
+  });
 
   const { data: cases, isLoading, error } = useQuery({
     queryKey: ['medical-cases', filters],
@@ -27,9 +40,7 @@ export default function Casos() {
       let query = supabase
         .from('medical_cases')
         .select(`
-          *,
-          category:medical_specialties(name),
-          difficulty:difficulties(level, description)
+          *
         `)
         .order('created_at', { ascending: false });
 
@@ -39,11 +50,15 @@ export default function Casos() {
       }
       
       if (filters.difficulty) {
-        query = query.eq('difficulty_level', filters.difficulty);
+        query = query.eq('difficulty_level', parseInt(filters.difficulty));
       }
       
       if (filters.modality) {
         query = query.eq('modality', filters.modality);
+      }
+
+      if (filters.searchTerm) {
+        query = query.ilike('title', `%${filters.searchTerm}%`);
       }
 
       const { data, error } = await query;
@@ -57,6 +72,10 @@ export default function Casos() {
       return data || [];
     },
   });
+
+  const handleFiltersChange = (newFilters: Filters) => {
+    setFilters(newFilters);
+  };
 
   if (isLoading) {
     return <Loader />;
@@ -98,7 +117,10 @@ export default function Casos() {
 
         {/* Filters */}
         <div className="mb-6">
-          <CaseFilters onFiltersChange={setFilters} />
+          <CaseFilters 
+            filters={filters} 
+            onFiltersChange={handleFiltersChange} 
+          />
         </div>
 
         {/* Cases Grid */}

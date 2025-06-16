@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, TrendingUp } from "lucide-react";
+import { Search, Filter } from "lucide-react";
 
 type Filters = {
   specialty: string;
@@ -43,11 +43,11 @@ export function CaseFilters({ filters, onFiltersChange, stats }: Props) {
   const hasActiveFilters = Object.values(filters).some(value => value !== "");
 
   return (
-    <Card className="bg-white/10 backdrop-blur-sm border-cyan-200/20">
+    <Card className="bg-white shadow-sm border">
       <CardContent className="p-6">
         <div className="flex items-center gap-2 mb-4">
-          <Filter className="text-cyan-400" size={20} />
-          <h2 className="text-lg font-semibold text-white">Filtros de Busca</h2>
+          <Filter className="text-cyan-600" size={20} />
+          <h2 className="text-lg font-semibold text-gray-900">Filtros de Busca</h2>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
@@ -57,12 +57,12 @@ export function CaseFilters({ filters, onFiltersChange, stats }: Props) {
               placeholder="Buscar casos..."
               value={filters.searchTerm}
               onChange={(e) => updateFilter("searchTerm", e.target.value)}
-              className="pl-10 bg-white/20 border-white/30 text-white placeholder:text-gray-300"
+              className="pl-10"
             />
           </div>
           
           <Select value={filters.specialty} onValueChange={(value) => updateFilter("specialty", value)}>
-            <SelectTrigger className="bg-white/20 border-white/30 text-white">
+            <SelectTrigger>
               <SelectValue placeholder="Especialidade" />
             </SelectTrigger>
             <SelectContent>
@@ -81,7 +81,7 @@ export function CaseFilters({ filters, onFiltersChange, stats }: Props) {
           </Select>
           
           <Select value={filters.modality} onValueChange={(value) => updateFilter("modality", value)}>
-            <SelectTrigger className="bg-white/20 border-white/30 text-white">
+            <SelectTrigger>
               <SelectValue placeholder="Modalidade" />
             </SelectTrigger>
             <SelectContent>
@@ -93,7 +93,7 @@ export function CaseFilters({ filters, onFiltersChange, stats }: Props) {
           </Select>
           
           <Select value={filters.difficulty} onValueChange={(value) => updateFilter("difficulty", value)}>
-            <SelectTrigger className="bg-white/20 border-white/30 text-white">
+            <SelectTrigger>
               <SelectValue placeholder="Dificuldade" />
             </SelectTrigger>
             <SelectContent>
@@ -109,14 +109,14 @@ export function CaseFilters({ filters, onFiltersChange, stats }: Props) {
         
         {hasActiveFilters && (
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-300">Filtros ativos:</span>
+            <span className="text-sm text-gray-600">Filtros ativos:</span>
             {filters.specialty && <Badge variant="secondary">{filters.specialty}</Badge>}
             {filters.modality && <Badge variant="secondary">{filters.modality}</Badge>}
             {filters.difficulty && <Badge variant="secondary">Nível {filters.difficulty}</Badge>}
             {filters.searchTerm && <Badge variant="secondary">"{filters.searchTerm}"</Badge>}
             <button 
               onClick={clearFilters}
-              className="text-xs text-cyan-400 hover:text-cyan-300 underline ml-2"
+              className="text-xs text-cyan-600 hover:text-cyan-700 underline ml-2"
             >
               Limpar filtros
             </button>

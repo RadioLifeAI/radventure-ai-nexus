@@ -39,13 +39,12 @@ export function CasesGrid({ cases }: CasesGridProps) {
             title: caseItem.title,
             specialty: caseItem.specialty || caseItem.category?.name || 'Não especificado',
             modality: caseItem.modality || 'Não especificado',
-            difficulty: caseItem.difficulty_level || caseItem.difficulty?.level || 1,
-            difficultyDescription: caseItem.difficulty_description || caseItem.difficulty?.description || 'Iniciante',
-            imageUrl: Array.isArray(caseItem.image_url) && caseItem.image_url.length > 0 
+            difficulty_level: caseItem.difficulty_level || caseItem.difficulty?.level || 1,
+            points: caseItem.points || 10,
+            image_url: Array.isArray(caseItem.image_url) && caseItem.image_url.length > 0 
               ? caseItem.image_url[0] 
               : null,
-            points: caseItem.points || 10,
-            createdAt: caseItem.created_at
+            created_at: caseItem.created_at
           }}
         />
       ))}
