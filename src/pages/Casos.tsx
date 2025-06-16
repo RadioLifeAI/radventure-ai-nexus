@@ -2,150 +2,108 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { HeaderNav } from "@/components/HeaderNav";
 import { CasesGrid } from "@/components/cases/CasesGrid";
 import { CaseFilters } from "@/components/cases/CaseFilters";
-import { SpecialtyQuickAccess } from "@/components/cases/SpecialtyQuickAccess";
-import { BackButton } from "@/components/navigation/BackButton";
 import { Loader } from "@/components/Loader";
-import { AlertCircle, BookOpen } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-
-interface CaseFiltersType {
-  specialty?: string;
-  difficulty?: number;
-  modality?: string;
-  searchTerm?: string;
-}
-
-interface Filters {
-  specialty: string;
-  modality: string;
-  difficulty: string;
-  searchTerm: string;
-}
+import { Brain, BookOpen } from "lucide-react";
 
 export default function Casos() {
-  const [filters, setFilters] = useState<Filters>({
+  const [filters, setFilters] = useState({
     specialty: "",
     modality: "",
     difficulty: "",
     searchTerm: ""
   });
 
-  const { data: cases, isLoading, error } = useQuery({
+  const { data: cases, isLoading } = useQuery({
     queryKey: ['medical-cases', filters],
     queryFn: async () => {
-      console.log('Fetching cases with filters:', filters);
-      
       let query = supabase
         .from('medical_cases')
-        .select(`
-          *
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      // Apply filters
       if (filters.specialty) {
         query = query.eq('specialty', filters.specialty);
       }
-      
-      if (filters.difficulty) {
-        query = query.eq('difficulty_level', parseInt(filters.difficulty));
-      }
-      
       if (filters.modality) {
         query = query.eq('modality', filters.modality);
       }
-
+      if (filters.difficulty) {
+        // Convert string to number for difficulty filter
+        const difficultyLevel = parseInt(filters.difficulty);
+        if (!isNaN(difficultyLevel)) {
+          query = query.eq('difficulty_level', difficultyLevel);
+        }
+      }
       if (filters.searchTerm) {
         query = query.ilike('title', `%${filters.searchTerm}%`);
       }
 
       const { data, error } = await query;
-      
-      if (error) {
-        console.error('Error fetching cases:', error);
-        throw error;
-      }
-      
-      console.log('Fetched cases:', data);
+      if (error) throw error;
       return data || [];
-    },
+    }
   });
 
-  const handleFiltersChange = (newFilters: Filters) => {
-    setFilters(newFilters);
-  };
+  const { data: stats } = useQuery({
+    queryKey: ['cases-stats'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('medical_cases')
+        .select('specialty, modality, difficulty_level');
+      
+      if (error) throw error;
+      
+      const specialtyCount = data?.reduce((acc: any, case_: any) => {
+        acc[case_.specialty] = (acc[case_.specialty] || 0) + 1;
+        return acc;
+      }, {}) || {};
 
-  if (isLoading) {
-    return <Loader />;
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Alert className="max-w-md">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Erro ao carregar casos médicos. Tente novamente mais tarde.
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
+      return {
+        total: data?.length || 0,
+        bySpecialty: specialtyCount
+      };
+    }
+  });
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-cyan-600 to-blue-600 text-white">
-        <div className="container mx-auto px-4 py-8">
-          <BackButton to="/dashboard" className="text-cyan-100 hover:text-white mb-4" />
-          <div className="flex items-center gap-3 mb-2">
-            <BookOpen size={32} />
-            <h1 className="text-3xl font-bold">Casos Médicos</h1>
+    <div className="min-h-screen bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white">
+      <HeaderNav />
+      
+      <main className="container mx-auto px-4 py-8">
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <Brain className="text-cyan-400" size={40} />
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+              Central de Casos
+            </h1>
           </div>
-          <p className="text-cyan-100">
-            Pratique com casos reais e aprimore suas habilidades diagnósticas
+          <p className="text-cyan-100 text-lg">
+            Resolva casos reais, aprenda e suba de nível!
           </p>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="container mx-auto px-4 py-8">
-        {/* Quick Access Cards */}
-        <SpecialtyQuickAccess />
-
-        {/* Filters */}
-        <div className="mb-6">
-          <CaseFilters 
-            filters={filters} 
-            onFiltersChange={handleFiltersChange} 
-          />
-        </div>
-
-        {/* Cases Grid */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">
-              Casos Disponíveis ({cases?.length || 0})
-            </h2>
-          </div>
           
-          {cases && cases.length > 0 ? (
-            <CasesGrid cases={cases} />
-          ) : (
-            <div className="text-center py-12">
-              <BookOpen className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Nenhum caso encontrado
-              </h3>
-              <p className="text-gray-600">
-                Ajuste os filtros ou tente novamente mais tarde.
-              </p>
+          {stats && (
+            <div className="flex items-center justify-center gap-6 mt-4">
+              <div className="flex items-center gap-2">
+                <BookOpen size={20} className="text-yellow-400" />
+                <span className="text-yellow-400 font-semibold">{stats.total} casos disponíveis</span>
+              </div>
             </div>
           )}
         </div>
-      </div>
+
+        <CaseFilters filters={filters} onFiltersChange={setFilters} stats={stats} />
+
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <Loader />
+          </div>
+        ) : (
+          <CasesGrid cases={cases || []} />
+        )}
+      </main>
     </div>
   );
 }

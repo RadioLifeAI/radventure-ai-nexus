@@ -1,239 +1,377 @@
 
-import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { HeaderNav } from '@/components/HeaderNav';
-import { WelcomeModal } from '@/components/onboarding/WelcomeModal';
-import { ProfileCompleteness } from '@/components/profile/ProfileCompleteness';
-import { ProtectedRoute } from '@/components/navigation/ProtectedRoute';
-import { useFirstTimeUser } from '@/hooks/useFirstTimeUser';
-import { useCaseStats } from '@/hooks/useCaseStats';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Link } from 'react-router-dom';
-import { 
-  Users, 
-  Calendar, 
-  Trophy, 
-  Zap, 
-  Target, 
-  TrendingUp,
-  Award,
-  Clock,
-  Play,
-  BookOpen
-} from 'lucide-react';
+import React, { useState } from "react";
+import {
+  Activity,
+  BookOpen,
+  Calendar,
+  Headphones,
+  Image as ImageIcon,
+  FileText,
+  SquarePlus,
+  SquareCheck,
+  SquareMinus,
+  Square,
+  Circle,
+  Stethoscope,
+  Baby,
+  Shield,
+  Brain,
+  HeartPulse,
+  Users,
+  TestTube,
+  Syringe,
+  Droplets,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link, useNavigate } from "react-router-dom";
+import { HeaderNav } from "@/components/HeaderNav";
+import { UserProfile } from "@/components/UserProfile";
+import { EventsSectionPlayer } from "@/components/EventsSectionPlayer";
 
-function DashboardContent() {
-  const { profile } = useAuth();
-  const { showWelcome, markTutorialAsSeen } = useFirstTimeUser();
-  const { specialties, loading: loadingStats } = useCaseStats();
+// Especialidades por Imagem
+const imageSpecialties = [
+  {
+    name: "Tórax",
+    description: "Radiologia torácica",
+    icon: <SquareCheck size={36} className="text-[#13c7a7]" />,
+    bg: "bg-gradient-to-t from-[#e5f6f5] to-white",
+    cases: 1,
+  },
+  {
+    name: "Abdome",
+    description: "Radiologia abdominal",
+    icon: <FileText size={36} className="text-[#f29e3b]" />,
+    bg: "bg-gradient-to-t from-[#fff7ed] to-white",
+    cases: 0,
+  },
+  {
+    name: "Neuro",
+    description: "Neuroimagem",
+    icon: <Brain size={36} className="text-[#8f5cf7]" />,
+    bg: "bg-gradient-to-t from-[#f4f0fd] to-white",
+    cases: 11,
+  },
+  {
+    name: "Musculoesquelético",
+    description: "Traumatologia e ortopedia",
+    icon: <SquarePlus size={36} className="text-[#414c64]" />,
+    bg: "bg-gradient-to-t from-[#ecf2fb] to-white",
+    cases: 0,
+  },
+  {
+    name: "Coluna",
+    description: "Radiologia da coluna",
+    icon: <SquareMinus size={36} className="text-[#757575]" />,
+    bg: "bg-gradient-to-t from-[#e7e7ea] to-white",
+    cases: 0,
+  },
+];
 
-  const quickActions = [
-    {
-      title: "Resolver Casos",
-      description: "Pratique com casos reais",
-      icon: <Users className="text-blue-400" size={24} />,
-      link: "/casos",
-      color: "from-blue-500 to-cyan-600"
-    },
-    {
-      title: "Eventos Ativos",
-      description: "Participe de competições",
-      icon: <Calendar className="text-green-400" size={24} />,
-      link: "/eventos",
-      color: "from-green-500 to-emerald-600"
-    },
-    {
-      title: "Ver Rankings",
-      description: "Compare seu desempenho",
-      icon: <Trophy className="text-yellow-400" size={24} />,
-      link: "/rankings",
-      color: "from-yellow-500 to-orange-600"
-    }
-  ];
+// Diagnóstico por Imagem (Categorias radiológicas principais)
+const imagingCategories = [
+  {
+    name: "Neurorradiologia",
+    icon: <Brain size={33} className="text-[#8f5cf7]" />,
+    bg: "bg-gradient-to-t from-[#f4f0fd] to-white",
+  },
+  {
+    name: "Coluna",
+    icon: <SquareMinus size={33} className="text-[#757575]" />,
+    bg: "bg-gradient-to-t from-[#e7e7ea] to-white",
+  },
+  {
+    name: "Cabeça e Pescoço",
+    icon: <Shield size={33} className="text-[#11d3fc]" />,
+    bg: "bg-gradient-to-t from-[#e5f6f5] to-white",
+  },
+  {
+    name: "Tórax",
+    icon: <HeartPulse size={33} className="text-[#13c7a7]" />,
+    bg: "bg-gradient-to-t from-[#e5f6f5] to-white",
+  },
+  {
+    name: "Abdome",
+    icon: <FileText size={33} className="text-[#f29e3b]" />,
+    bg: "bg-gradient-to-t from-[#fff7ed] to-white",
+  },
+  {
+    name: "Musculoesquelético",
+    icon: <SquarePlus size={33} className="text-[#414c64]" />,
+    bg: "bg-gradient-to-t from-[#ecf2fb] to-white",
+  },
+  {
+    name: "Intervencionista",
+    icon: <Syringe size={33} className="text-[#db1c69]" />,
+    bg: "bg-gradient-to-t from-[#ffe1ed] to-white",
+  },
+];
 
-  const stats = [
-    {
-      label: "Total de Pontos",
-      value: profile?.total_points || 0,
-      icon: <Target className="text-cyan-400" size={20} />,
-      change: "+12%"
-    },
-    {
-      label: "RadCoins",
-      value: profile?.radcoin_balance || 0,
-      icon: <Zap className="text-yellow-400" size={20} />,
-      change: "+5"
-    },
-    {
-      label: "Sequência Atual",
-      value: profile?.current_streak || 0,
-      icon: <TrendingUp className="text-green-400" size={20} />,
-      change: "dias"
-    }
-  ];
+// Especialidades Médicas (completa e atualizada)
+const medicalSpecialties = [
+  {
+    name: "Medicina de Emergência",
+    icon: <Activity size={32} className="text-[#fd8a42]" />,
+    bg: "bg-gradient-to-t from-[#fff1e5] to-white",
+  },
+  {
+    name: "Pediatria",
+    icon: <Baby size={32} className="text-[#25bfff]" />,
+    bg: "bg-gradient-to-t from-[#e6fafd] to-white",
+  },
+  {
+    name: "Trauma",
+    icon: <TestTube size={32} className="text-[#9e90fa]" />,
+    bg: "bg-gradient-to-t from-[#efe9ff] to-white",
+  },
+  {
+    name: "Saúde da Mulher",
+    icon: <HeartPulse size={32} className="text-[#db1c69]" />,
+    bg: "bg-gradient-to-t from-[#ffe1ed] to-white",
+  },
+  {
+    name: "Obstetrícia",
+    icon: <Baby size={32} className="text-[#17bbea]" />,
+    bg: "bg-gradient-to-t from-[#e6f7fb] to-white",
+  },
+  {
+    name: "Ginecologia",
+    icon: <Users size={32} className="text-[#ff3276]" />,
+    bg: "bg-gradient-to-t from-[#ffe7ee] to-white",
+  },
+  {
+    name: "Hematologia",
+    icon: <Droplets size={32} className="text-[#ed212c]" />,
+    bg: "bg-gradient-to-t from-[#ffe6e7] to-white",
+  },
+  {
+    name: "Gastrointestinal",
+    icon: <TestTube size={32} className="text-[#35b37c]" />,
+    bg: "bg-gradient-to-t from-[#e5fff5] to-white",
+  },
+  {
+    name: "Hepatobiliar",
+    icon: <FileText size={32} className="text-[#aa7f4f]" />,
+    bg: "bg-gradient-to-t from-[#fff7ed] to-white",
+  },
+  {
+    name: "Dermatologia",
+    icon: <Shield size={32} className="text-[#f29e3b]" />,
+    bg: "bg-gradient-to-t from-[#fff7ed] to-white",
+  },
+  {
+    name: "Otorrinolaringologia",
+    icon: <Headphones size={32} className="text-[#22b5bf]" />,
+    bg: "bg-gradient-to-t from-[#e5f6f5] to-white",
+  },
+  {
+    name: "Oncologia",
+    icon: <TestTube size={32} className="text-[#693bff]" />,
+    bg: "bg-gradient-to-t from-[#efe9ff] to-white",
+  },
+  {
+    name: "Urologia",
+    icon: <Droplets size={32} className="text-[#2797ed]" />,
+    bg: "bg-gradient-to-t from-[#e6f7fb] to-white",
+  },
+  {
+    name: "Vascular",
+    icon: <Users size={32} className="text-[#e8417a]" />,
+    bg: "bg-gradient-to-t from-[#fbe6f7] to-white",
+  },
+  {
+    name: "Cirurgia",
+    icon: <SquarePlus size={32} className="text-[#112dfc]" />,
+    bg: "bg-gradient-to-t from-[#e6e9fd] to-white",
+  },
+  {
+    name: "Clínica Médica",
+    icon: <Stethoscope size={32} className="text-[#214461]" />,
+    bg: "bg-gradient-to-t from-[#e6fafd] to-white",
+  },
+  {
+    name: "Reumatologia",
+    icon: <HeartPulse size={32} className="text-[#8fcc18]" />,
+    bg: "bg-gradient-to-t from-[#f6ffe5] to-white",
+  },
+  {
+    name: "Nefrologia",
+    icon: <Droplets size={32} className="text-[#179ad6]" />,
+    bg: "bg-gradient-to-t from-[#e6fafd] to-white",
+  },
+  {
+    name: "Cardiologia",
+    icon: <HeartPulse size={32} className="text-[#fc2d1a]" />,
+    bg: "bg-gradient-to-t from-[#ffe5e5] to-white",
+  },
+  {
+    name: "Neurologia",
+    icon: <Brain size={32} className="text-[#965cf1]" />,
+    bg: "bg-gradient-to-t from-[#f4f0fd] to-white",
+  },
+  {
+    name: "Endocrinologia",
+    icon: <TestTube size={32} className="text-[#ffa101]" />,
+    bg: "bg-gradient-to-t from-[#fffbe5] to-white",
+  },
+  {
+    name: "Infectologia",
+    icon: <Shield size={32} className="text-[#67d01c]" />,
+    bg: "bg-gradient-to-t from-[#e7fbe6] to-white",
+  },
+  {
+    name: "Psiquiatria",
+    icon: <Brain size={32} className="text-[#b815f6]" />,
+    bg: "bg-gradient-to-t from-[#fdeaff] to-white",
+  },
+  {
+    name: "Outros",
+    icon: <Circle size={32} className="text-[#757575]" />,
+    bg: "bg-gradient-to-t from-[#ededed] to-white",
+  },
+];
+
+// Componente Card de Especialidade
+function SpecialtyCard({ icon, name, description, bg, cases, specialty }: any) {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    // Navigate to cases page with specialty filter
+    navigate(`/casos?specialty=${encodeURIComponent(specialty || name)}`);
+  };
 
   return (
-    <ProtectedRoute>
-      <div className="min-h-screen bg-gradient-to-br from-[#111C44] via-[#162850] to-[#0286d0]">
-        <HeaderNav />
-        
-        <main className="container mx-auto px-6 py-8">
-          {/* Welcome Section */}
-          <div className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-              Bem-vindo de volta, {profile?.full_name?.split(' ')[0] || 'Doutor'}! 👋
-            </h1>
-            <p className="text-cyan-200 text-lg">
-              Continue sua jornada de aprendizado em radiologia
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            {/* Profile Completeness */}
-            <div className="lg:col-span-1">
-              <ProfileCompleteness />
-            </div>
-
-            {/* Quick Stats */}
-            <div className="lg:col-span-2">
-              <Card className="bg-gradient-to-r from-slate-800 to-slate-900 border-cyan-500/30">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <TrendingUp className="text-cyan-400" size={20} />
-                    Suas Estatísticas
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-3 gap-4">
-                    {stats.map((stat, index) => (
-                      <div key={index} className="text-center p-4 bg-slate-700/50 rounded-lg">
-                        <div className="flex justify-center mb-2">
-                          {stat.icon}
-                        </div>
-                        <div className="text-2xl font-bold text-white mb-1">
-                          {stat.value}
-                        </div>
-                        <div className="text-sm text-gray-300">
-                          {stat.label}
-                        </div>
-                        <Badge variant="outline" className="mt-2 border-cyan-500 text-cyan-300">
-                          {stat.change}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            {quickActions.map((action, index) => (
-              <Card key={index} className={`bg-gradient-to-r ${action.color} border-none hover:scale-105 transition-transform duration-300`}>
-                <CardContent className="p-6 text-center text-white">
-                  <div className="flex justify-center mb-4">
-                    {action.icon}
-                  </div>
-                  <h3 className="text-xl font-bold mb-2">{action.title}</h3>
-                  <p className="text-white/80 mb-4">{action.description}</p>
-                  <Button asChild className="bg-white/20 hover:bg-white/30 text-white border-white/30">
-                    <Link to={action.link}>
-                      <Play size={16} className="mr-2" />
-                      Acessar
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Especialidades Disponíveis - Acesso Rápido por Especialidade */}
-          <Card className="bg-gradient-to-r from-slate-800 to-slate-900 border-cyan-500/30 mb-8">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <BookOpen className="text-cyan-400" size={20} />
-                Acesso Rápido por Especialidade
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loadingStats ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {[...Array(8)].map((_, i) => (
-                    <div key={i} className="bg-slate-700/50 rounded-lg p-3 animate-pulse">
-                      <div className="h-4 bg-gray-600 rounded mb-2"></div>
-                      <div className="h-3 bg-gray-600 rounded w-2/3"></div>
-                    </div>
-                  ))}
-                </div>
-              ) : specialties.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {specialties.map((specialty) => (
-                    <Link
-                      key={specialty.id}
-                      to={`/casos?specialty=${specialty.id}`}
-                      className="bg-slate-700/50 hover:bg-slate-600/50 rounded-lg p-3 transition-colors group"
-                    >
-                      <div className="text-white font-medium text-sm mb-1 group-hover:text-cyan-300">
-                        {specialty.name}
-                      </div>
-                      <div className="text-gray-400 text-xs flex items-center gap-1">
-                        <Users size={12} />
-                        {specialty.caseCount} caso{specialty.caseCount !== 1 ? 's' : ''}
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <BookOpen className="mx-auto text-gray-500 mb-3" size={48} />
-                  <p className="text-gray-400">Nenhum caso disponível no momento</p>
-                  <p className="text-gray-500 text-sm mt-1">
-                    Novos casos serão adicionados em breve
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Recent Activity */}
-          <Card className="bg-gradient-to-r from-slate-800 to-slate-900 border-cyan-500/30">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Clock className="text-cyan-400" size={20} />
-                Atividade Recente
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 p-3 bg-slate-700/50 rounded-lg">
-                  <Award className="text-yellow-400" size={20} />
-                  <div className="flex-1">
-                    <p className="text-white font-medium">Bem-vindo ao RadVenture!</p>
-                    <p className="text-gray-300 text-sm">Você se juntou à nossa comunidade</p>
-                  </div>
-                  <Badge variant="outline" className="border-cyan-500 text-cyan-300">
-                    Agora
-                  </Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </main>
-
-        {/* Welcome Modal */}
-        <WelcomeModal
-          isOpen={showWelcome}
-          onClose={() => markTutorialAsSeen()}
-          onComplete={() => markTutorialAsSeen()}
-        />
+    <div
+      className={`rounded-2xl shadow hover:shadow-lg transition-all duration-200 ${bg} p-5 flex flex-col justify-between min-h-[140px] cursor-pointer hover:scale-105`}
+      onClick={handleClick}
+    >
+      <div className="flex gap-3 items-center">
+        <div className="rounded-xl bg-white shadow p-2 flex items-center justify-center">{icon}</div>
+        <div>
+          <div className="font-bold text-lg text-gray-800">{name}</div>
+          <div className="text-sm text-gray-500">{description}</div>
+        </div>
       </div>
-    </ProtectedRoute>
+      <div className="flex items-center justify-between mt-5">
+        <span className="text-xs font-semibold text-gray-600">
+          {cases} caso{cases === 1 ? "" : "s"} disponível{cases === 1 ? "" : "is"}
+        </span>
+        <Button size="sm" className="bg-gradient-to-r from-[#11d3fc] to-[#26b2fe] text-white font-bold px-4 py-1 rounded-lg shadow hover:scale-105 transition outline-none border-none">
+          Começar
+        </Button>
+      </div>
+    </div>
   );
 }
 
+// Cards Ações rápidas logo abaixo do perfil
+function ActionCard({ icon, title, description, link, color }: any) {
+  return (
+    <div className="bg-[#161f38] rounded-2xl shadow-lg flex flex-col items-center p-6 min-h-[186px]">
+      <div className={`mb-2`}>{React.cloneElement(icon, { size: 38, className: color })}</div>
+      <span className="mt-2 text-lg font-extrabold text-white drop-shadow-sm text-center">{title}</span>
+      <span className="mt-1 text-sm text-cyan-100 text-center">{description}</span>
+      <Button asChild size="sm" variant="outline"
+        className={`mt-4 border-none text-[#11d3fc] bg-white hover:bg-[#d1f6fd] font-bold px-4 rounded-xl shadow`}
+      >
+        <Link to={link || "#"}>{title === "Central de Casos" ? (<><Activity size={15} className="mr-1" />Explorar</>) : title === "Crie sua Jornada" ? "Nova Jornada" : "Ver Eventos"}</Link>
+      </Button>
+    </div>
+  )
+}
+
 export default function Dashboard() {
-  return <DashboardContent />;
+  const user = {
+    name: "Dra. Maria Futurista",
+    city: "São Paulo",
+    state: "SP",
+    totalPoints: 3690,
+    avatar: "https://randomuser.me/api/portraits/women/90.jpg",
+    ranking: 7,
+  };
+
+  // handler para futura navegação ao evento
+  function handleEnterEvent(eventId: string) {
+    // Aqui em breve: navegação para página/quadro do evento
+    alert(`Entrar no evento ${eventId}: (implementar página de evento/quiz...)`);
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white w-full">
+      <HeaderNav />
+      <main className="flex-1 flex flex-col gap-4 px-2 md:px-16 pt-4 pb-10">
+        {/* Perfil principal */}
+        <UserProfile user={user} />
+
+        {/* NOVA SEÇÃO DE EVENTOS GAMIFICADOS */}
+        <EventsSectionPlayer onEnterEvent={handleEnterEvent} />
+
+        {/* Actions Cards */}
+        <section className="w-full grid grid-cols-1 sm:grid-cols-3 gap-6 mt-2 mb-4">
+          <ActionCard
+            icon={<Activity />}
+            title="Central de Casos"
+            description="Resolva desafios reais, aprenda e suba de nível!"
+            link="/casos"
+            color="text-[#11d3fc]"
+          />
+          <ActionCard
+            icon={<BookOpen />}
+            title="Crie sua Jornada"
+            description="Personalize seu aprendizado com módulos e trilhas temáticas."
+            link="#"
+            color="text-[#a189fa]"
+          />
+          <ActionCard
+            icon={<Calendar />}
+            title="Eventos"
+            description="Participe de eventos exclusivos e concorra no ranking."
+            link="/eventos"
+            color="text-[#11d3fc]"
+          />
+        </section>
+
+        {/* Filtros de Diagnóstico por Imagem */}
+        <section className="w-full mt-4">
+          <h2 className="font-extrabold text-2xl text-white mb-2">Diagnóstico por Imagem</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-4">
+            {imagingCategories.map((cat) => (
+              <SpecialtyCard
+                key={cat.name}
+                icon={cat.icon}
+                name={cat.name}
+                description=""
+                bg={cat.bg}
+                cases={0}
+                specialty={cat.name}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* Especialidades Médicas */}
+        <section className="w-full mt-8 mb-4">
+          <h2 className="font-extrabold text-2xl text-white mb-2">Especialidades Médicas</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-4">
+            {medicalSpecialties.map((spec) => (
+              <SpecialtyCard
+                key={spec.name}
+                icon={spec.icon}
+                name={spec.name}
+                description=""
+                bg={spec.bg}
+                cases={0}
+                specialty={spec.name}
+              />
+            ))}
+          </div>
+        </section>
+      </main>
+      {/* Footer */}
+      <footer className="bg-gradient-to-t from-[#131f3a] to-transparent px-4 py-10 text-center mt-auto">
+        <span className="text-cyan-100 text-sm">
+          Powered by RadVenture · Experiência para médicos do futuro 🚀
+        </span>
+      </footer>
+    </div>
+  );
 }

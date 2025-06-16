@@ -2,51 +2,36 @@
 import React from "react";
 import { CaseCard } from "./CaseCard";
 
-interface Case {
+type Case = {
   id: string;
   title: string;
-  specialty?: string;
-  modality?: string;
-  difficulty_level?: number;
-  difficulty_description?: string;
-  image_url?: any;
-  points?: number;
+  specialty: string;
+  modality: string;
+  difficulty_level: number;
+  points: number;
+  image_url: any;
   created_at: string;
-  category?: { name: string };
-  difficulty?: { level: number; description: string };
-}
+};
 
-interface CasesGridProps {
+type Props = {
   cases: Case[];
-}
+};
 
-export function CasesGrid({ cases }: CasesGridProps) {
-  if (!cases || cases.length === 0) {
+export function CasesGrid({ cases }: Props) {
+  if (cases.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-600">Nenhum caso disponível no momento.</p>
+        <div className="text-6xl mb-4">🔍</div>
+        <h3 className="text-xl font-semibold text-white mb-2">Nenhum caso encontrado</h3>
+        <p className="text-cyan-100">Tente ajustar os filtros ou explore outras especialidades</p>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {cases.map((caseItem) => (
-        <CaseCard 
-          key={caseItem.id} 
-          case={{
-            id: caseItem.id,
-            title: caseItem.title,
-            specialty: caseItem.specialty || caseItem.category?.name || 'Não especificado',
-            modality: caseItem.modality || 'Não especificado',
-            difficulty_level: caseItem.difficulty_level || caseItem.difficulty?.level || 1,
-            points: caseItem.points || 10,
-            image_url: Array.isArray(caseItem.image_url) && caseItem.image_url.length > 0 
-              ? caseItem.image_url[0] 
-              : null,
-            created_at: caseItem.created_at
-          }}
-        />
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+      {cases.map((case_) => (
+        <CaseCard key={case_.id} case={case_} />
       ))}
     </div>
   );

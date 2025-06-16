@@ -30,26 +30,18 @@ export function CaseFiltersSelector({ value, onChange }: CaseFiltersSelectorProp
       // Especialidades médicas
       const { data: catData } = await supabase.from("medical_specialties").select("name").order("name");
       setSpecialties(
-        (catData || [])
-          .filter((c: any) => c.name && c.name.trim() !== "") // Filter out empty names
-          .map((c: any) => ({ value: c.name, label: c.name }))
+        (catData || []).map((c: any) => ({ value: c.name, label: c.name }))
       );
-      
       // Dificuldades
       const { data: diffData } = await supabase.from("difficulties").select("level, description").order("level");
       setDifficulties(
-        (diffData || [])
-          .filter((d: any) => d.level && d.description && d.description.trim() !== "") // Filter out empty values
-          .map((d: any) => ({ value: `${d.level}`, label: d.description }))
+        (diffData || []).map((d: any) => ({ value: `${d.level}`, label: d.description }))
       );
     }
     fetchOptions();
   }, []);
 
   function handleCheck(type: keyof CaseFilters, val: string, checked: boolean) {
-    // Ensure we don't add empty values
-    if (!val || val.trim() === "") return;
-    
     const old = value[type] || [];
     onChange({
       ...value,
@@ -62,9 +54,6 @@ export function CaseFiltersSelector({ value, onChange }: CaseFiltersSelectorProp
   }
 
   function handleSubtypeCheck(subVal: string, checked: boolean) {
-    // Ensure we don't add empty values
-    if (!subVal || subVal.trim() === "") return;
-    
     const old = value.subtype || [];
     onChange({
       ...value,
@@ -84,7 +73,7 @@ export function CaseFiltersSelector({ value, onChange }: CaseFiltersSelectorProp
     .filter((m) => selectedModalities.includes(m.value))
     .map((m) => ({
       modality: m.label,
-      subtypes: m.subtypes.filter((s) => s.value && s.value.trim() !== ""), // Filter out empty subtypes
+      subtypes: m.subtypes,
     }))
     .filter(m => m.subtypes.length > 0);
 
@@ -151,19 +140,17 @@ export function CaseFiltersSelector({ value, onChange }: CaseFiltersSelectorProp
               <div className="text-sm text-gray-500 p-2">Carregando modalidades...</div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-40 overflow-auto pr-2">
-                {modalitiesOptions
-                  .filter((opt) => opt.value && opt.value.trim() !== "") // Filter out empty values
-                  .map((opt) => (
-                    <label key={opt.value} className="flex items-center gap-2 font-normal">
-                      <Checkbox
-                        checked={!!value.modality?.includes(opt.value)}
-                        onCheckedChange={checked =>
-                          handleCheck("modality", opt.value, Boolean(checked))
-                        }
-                      />
-                      {opt.label}
-                    </label>
-                  ))}
+                {modalitiesOptions.map((opt) => (
+                  <label key={opt.value} className="flex items-center gap-2 font-normal">
+                    <Checkbox
+                      checked={!!value.modality?.includes(opt.value)}
+                      onCheckedChange={checked =>
+                        handleCheck("modality", opt.value, Boolean(checked))
+                      }
+                    />
+                    {opt.label}
+                  </label>
+                ))}
               </div>
             )}
           </AccordionContent>
