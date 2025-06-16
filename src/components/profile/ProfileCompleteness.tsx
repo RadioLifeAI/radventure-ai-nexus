@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,12 +31,13 @@ export function ProfileCompleteness({ onEditProfile }: ProfileCompletenessProps)
       if (!profile?.id) return;
 
       try {
-        // Verificar se já recebeu a recompensa de boas-vindas
+        // Verificar se já recebeu a recompensa de boas-vindas usando tipo válido
         const { data, error } = await supabase
           .from('radcoin_transactions_log')
           .select('id')
           .eq('user_id', profile.id)
-          .eq('tx_type', 'WELCOME_BONUS')
+          .eq('tx_type', 'admin_grant')
+          .eq('metadata->reason', 'welcome_bonus')
           .maybeSingle();
 
         if (error) {
@@ -82,12 +82,12 @@ export function ProfileCompleteness({ onEditProfile }: ProfileCompletenessProps)
       // Atualizar saldo
       await updateProfile({ radcoin_balance: newBalance });
 
-      // Registrar transação
+      // Registrar transação usando tipo válido
       await supabase
         .from('radcoin_transactions_log')
         .insert({
           user_id: profile.id,
-          tx_type: 'WELCOME_BONUS',
+          tx_type: 'admin_grant',
           amount: welcomeBonus,
           balance_after: newBalance,
           metadata: { reason: 'welcome_bonus' }

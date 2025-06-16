@@ -8,6 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { UserProfile } from '@/types/admin';
 import { Loader2 } from 'lucide-react';
+import type { Database } from '@/integrations/supabase/types';
+
+type AcademicStage = Database['public']['Enums']['academic_stage'];
 
 interface ProfileEditModalProps {
   open: boolean;
@@ -37,7 +40,13 @@ export function ProfileEditModal({ open, onClose, profile, onSave }: ProfileEdit
     setError(null);
 
     try {
-      const { error } = await onSave(formData);
+      // Converter academic_stage para o tipo correto
+      const updates: Partial<UserProfile> = {
+        ...formData,
+        academic_stage: formData.academic_stage as AcademicStage
+      };
+      
+      const { error } = await onSave(updates);
       
       if (error) {
         setError('Erro ao atualizar perfil. Tente novamente.');
