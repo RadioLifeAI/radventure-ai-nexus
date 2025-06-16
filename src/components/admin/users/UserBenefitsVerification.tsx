@@ -85,6 +85,7 @@ export function UserBenefitsVerification({ onUserSelected }: UserBenefitsVerific
       // Processar dados e identificar discrepâncias
       const processedUsers: UserWithBenefits[] = profiles?.map(profile => {
         const subscription = profile.subscriptions?.[0];
+        // Fix: Access tier correctly from subscription object
         const tier = subscription?.tier || "Free";
         const actualBenefit = benefits?.find(b => b.user_id === profile.id);
         
