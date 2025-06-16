@@ -1,4 +1,3 @@
-
 export type AdminRole = 
   | 'DEV'
   | 'TechAdmin'
@@ -23,21 +22,30 @@ export type AdminRole =
 export type PermissionAction = 'CREATE' | 'READ' | 'UPDATE' | 'DELETE' | 'MANAGE';
 export type ResourceType = 'USERS' | 'CASES' | 'EVENTS' | 'SUBSCRIPTIONS' | 'ANALYTICS' | 'SETTINGS' | 'AI_TUTOR' | 'CONTENT' | 'PAYMENTS' | 'SUPPORT';
 
-export type UserProfile = {
+export interface UserProfile {
   id: string;
-  email: string;
-  username: string;
-  full_name: string;
   type: 'USER' | 'ADMIN';
-  academic_stage: 'Student' | 'Intern' | 'Resident' | 'Specialist';
-  medical_specialty: string;
+  email?: string;
+  username?: string;
+  full_name?: string;
+  nickname?: string;
+  bio?: string;
+  avatar_url?: string;
+  country_code?: string;
+  city?: string;
+  state?: string;
+  birthdate?: string;
+  college?: string;
+  preferences?: any;
+  academic_specialty?: string;
+  medical_specialty?: string;
+  academic_stage?: 'first_year' | 'second_year' | 'third_year' | 'fourth_year' | 'fifth_year' | 'sixth_year' | 'intern' | 'resident' | 'doctor' | 'specialist';
   total_points: number;
   radcoin_balance: number;
+  current_streak: number;
   created_at: string;
-  city: string;
-  state: string;
-  bio?: string;
-};
+  updated_at: string;
+}
 
 export type SubscriptionPlan = {
   id: string;

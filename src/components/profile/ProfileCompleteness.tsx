@@ -71,7 +71,6 @@ export function ProfileCompleteness({ onEditProfile }: ProfileCompletenessProps)
       profile.avatar_url,
       profile.city,
       profile.state,
-      // Adicione outros campos conforme necessário
     ];
 
     const completedFields = fields.filter(field => field && field.trim() !== '').length;
@@ -82,7 +81,6 @@ export function ProfileCompleteness({ onEditProfile }: ProfileCompletenessProps)
     const percentage = calculateCompleteness();
     setCompletionPercentage(percentage);
 
-    // Verificar se há recompensas disponíveis
     const availableRewards = completionRewards.filter(
       reward => percentage >= reward.percentage && !claimedRewards.includes(reward.percentage)
     );
@@ -98,23 +96,25 @@ export function ProfileCompleteness({ onEditProfile }: ProfileCompletenessProps)
     if (!profile) return;
 
     try {
-      // Atualizar saldo de RadCoins
+      const newBalance = (profile.radcoin_balance || 0) + reward.radcoins;
+      
+      // Update RadCoins balance
       const { error } = await supabase
         .from('profiles')
         .update({ 
-          radcoin_balance: (profile.radcoin_balance || 0) + reward.radcoins 
+          radcoin_balance: newBalance
         })
         .eq('id', profile.id);
 
       if (!error) {
-        // Registrar transação
+        // Log the transaction using correct enum value
         await supabase
           .from('radcoin_transactions_log')
           .insert({
             user_id: profile.id,
             amount: reward.radcoins,
-            tx_type: 'PROFILE_COMPLETION',
-            balance_after: (profile.radcoin_balance || 0) + reward.radcoins,
+            tx_type: 'admin_grant', // Using valid enum value
+            balance_after: newBalance,
             metadata: {
               completion_percentage: reward.percentage,
               reward_type: 'profile_completeness'
@@ -128,13 +128,6 @@ export function ProfileCompleteness({ onEditProfile }: ProfileCompletenessProps)
     } catch (error) {
       console.error('Error claiming reward:', error);
     }
-  };
-
-  const getCompletionColor = () => {
-    if (completionPercentage >= 75) return 'from-green-500 to-emerald-600';
-    if (completionPercentage >= 50) return 'from-yellow-500 to-orange-600';
-    if (completionPercentage >= 25) return 'from-blue-500 to-cyan-600';
-    return 'from-gray-500 to-slate-600';
   };
 
   const getMissingFields = () => {
@@ -169,7 +162,7 @@ export function ProfileCompleteness({ onEditProfile }: ProfileCompletenessProps)
             </div>
             <Progress 
               value={completionPercentage} 
-              className={`h-3 bg-slate-700 transition-all duration-500`}
+              className="h-3 bg-slate-700 transition-all duration-500"
             />
           </div>
 
