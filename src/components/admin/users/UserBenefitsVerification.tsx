@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,17 +27,18 @@ interface UserBenefit {
   expires_at: string | null;
 }
 
-interface UserSubscription {
-  tier: string;
-  status: string;
-}
-
 interface UserProfile {
   id: string;
   full_name: string;
   email: string;
   username: string;
-  subscriptions: UserSubscription[];
+  type: string;
+}
+
+interface UserSubscription {
+  tier: string;
+  status: string;
+  user_id: string;
 }
 
 interface UserWithBenefits {
@@ -77,29 +79,51 @@ export function UserBenefitsVerification({ onUserSelected }: UserBenefitsVerific
   const loadUsers = async () => {
     setLoading(true);
     try {
-      // Buscar usuários com suas assinaturas
+      console.log("Carregando usuários...");
+
+      // Buscar usuários (sem JOIN com subscriptions para evitar erro de relação)
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
-        .select(`
-          id, full_name, email, username,
-          subscriptions(tier, status)
-        `)
+        .select("id, full_name, email, username, type")
         .limit(100);
 
-      if (profilesError) throw profilesError;
+      if (profilesError) {
+        console.error("Erro ao buscar profiles:", profilesError);
+        throw profilesError;
+      }
+
+      console.log("Profiles encontrados:", profiles?.length);
+
+      // Buscar assinaturas separadamente
+      const { data: subscriptions, error: subscriptionsError } = await supabase
+        .from("subscriptions")
+        .select("user_id, tier, status")
+        .eq("status", "active");
+
+      if (subscriptionsError) {
+        console.error("Erro ao buscar assinaturas:", subscriptionsError);
+        // Não lançar erro aqui, pois usuários podem não ter assinaturas
+      }
+
+      console.log("Assinaturas encontradas:", subscriptions?.length);
 
       // Buscar benefícios atuais dos usuários
       const { data: benefits, error: benefitsError } = await supabase
         .from("user_benefits")
         .select("*");
 
-      if (benefitsError) throw benefitsError;
+      if (benefitsError) {
+        console.error("Erro ao buscar benefícios:", benefitsError);
+        throw benefitsError;
+      }
+
+      console.log("Benefícios encontrados:", benefits?.length);
 
       // Processar dados e identificar discrepâncias
-      const processedUsers: UserWithBenefits[] = (profiles as UserProfile[])?.map(profile => {
-        const subscription = profile.subscriptions?.[0];
-        // Fix: Properly access tier from subscription object
-        const tier = subscription?.tier || "Free";
+      const processedUsers: UserWithBenefits[] = profiles?.map(profile => {
+        // Encontrar assinatura ativa do usuário
+        const userSubscription = subscriptions?.find(sub => sub.user_id === profile.id);
+        const tier = userSubscription?.tier || "Free";
         const actualBenefit = benefits?.find(b => b.user_id === profile.id);
         
         // Definir benefícios esperados baseado no tier
@@ -109,6 +133,8 @@ export function UserBenefitsVerification({ onUserSelected }: UserBenefitsVerific
         const hasDiscrepancy = actualBenefit ? 
           !compareBenefits(expectedBenefits, actualBenefit) : 
           true; // Se não tem benefícios cadastrados, há discrepância
+
+        console.log(`Usuário ${profile.full_name}: tier=${tier}, hasDiscrepancy=${hasDiscrepancy}`);
 
         return {
           id: profile.id,
@@ -122,8 +148,10 @@ export function UserBenefitsVerification({ onUserSelected }: UserBenefitsVerific
         };
       }) || [];
 
+      console.log("Usuários processados:", processedUsers.length);
       setUsers(processedUsers);
     } catch (error: any) {
+      console.error("Erro completo ao carregar usuários:", error);
       toast.error(`Erro ao carregar usuários: ${error.message}`);
     } finally {
       setLoading(false);
@@ -192,15 +220,21 @@ export function UserBenefitsVerification({ onUserSelected }: UserBenefitsVerific
   const syncUserBenefits = async (userId: string) => {
     setLoading(true);
     try {
+      console.log(`Sincronizando benefícios para usuário: ${userId}`);
+      
       const { error } = await supabase.rpc("sync_user_benefits", {
         p_user_id: userId
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro na função sync_user_benefits:", error);
+        throw error;
+      }
 
       toast.success("Benefícios sincronizados com sucesso!");
       loadUsers(); // Recarregar lista
     } catch (error: any) {
+      console.error("Erro ao sincronizar benefícios:", error);
       toast.error(`Erro ao sincronizar benefícios: ${error.message}`);
     } finally {
       setLoading(false);
@@ -211,8 +245,10 @@ export function UserBenefitsVerification({ onUserSelected }: UserBenefitsVerific
     setLoading(true);
     try {
       const usersWithDiscrepancy = users.filter(u => u.has_discrepancy);
+      console.log(`Sincronizando ${usersWithDiscrepancy.length} usuários com discrepâncias`);
       
       for (const user of usersWithDiscrepancy) {
+        console.log(`Sincronizando usuário: ${user.full_name}`);
         await supabase.rpc("sync_user_benefits", {
           p_user_id: user.id
         });
@@ -221,6 +257,7 @@ export function UserBenefitsVerification({ onUserSelected }: UserBenefitsVerific
       toast.success(`${usersWithDiscrepancy.length} usuários sincronizados!`);
       loadUsers();
     } catch (error: any) {
+      console.error("Erro na sincronização em lote:", error);
       toast.error(`Erro na sincronização em lote: ${error.message}`);
     } finally {
       setLoading(false);

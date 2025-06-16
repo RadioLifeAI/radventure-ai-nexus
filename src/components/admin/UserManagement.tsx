@@ -9,9 +9,10 @@ import { UserFilters } from "./users/UserFilters";
 import { UsersTable } from "./users/UsersTable";
 import { UserEditModal } from "./users/UserEditModal";
 import { UserBenefitsVerification } from "./users/UserBenefitsVerification";
+import { AdminRoleAuditLog } from "./users/AdminRoleAuditLog";
 import type { UserProfile } from "@/types/admin";
 import { toast } from "sonner";
-import { Users, Settings } from "lucide-react";
+import { Users, Settings, History } from "lucide-react";
 
 export function UserManagement() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -22,6 +23,8 @@ export function UserManagement() {
   const { data: users = [], isLoading, refetch } = useQuery({
     queryKey: ["admin-users", searchTerm, filterType],
     queryFn: async () => {
+      console.log("Carregando usuários para gestão...");
+      
       let query = supabase
         .from("profiles")
         .select("*")
@@ -38,7 +41,12 @@ export function UserManagement() {
       }
 
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao carregar usuários:", error);
+        throw error;
+      }
+      
+      console.log("Usuários carregados:", data?.length);
       return data as UserProfile[];
     },
   });
@@ -50,6 +58,8 @@ export function UserManagement() {
 
   const handleBanUser = async (userId: string) => {
     try {
+      console.log("Banindo usuário:", userId);
+      
       // Implementar lógica de banimento
       const { error } = await supabase
         .from("profiles")
@@ -64,6 +74,7 @@ export function UserManagement() {
       toast.success("Usuário foi restrito com sucesso!");
       refetch();
     } catch (error: any) {
+      console.error("Erro ao restringir usuário:", error);
       toast.error(`Erro ao restringir usuário: ${error.message}`);
     }
   };
@@ -105,6 +116,10 @@ export function UserManagement() {
             <Settings className="h-4 w-4" />
             Verificação de Benefícios
           </TabsTrigger>
+          <TabsTrigger value="audit" className="flex items-center gap-2">
+            <History className="h-4 w-4" />
+            Log de Auditoria
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="users" className="space-y-6">
@@ -135,6 +150,10 @@ export function UserManagement() {
 
         <TabsContent value="benefits" className="space-y-6">
           <UserBenefitsVerification />
+        </TabsContent>
+
+        <TabsContent value="audit" className="space-y-6">
+          <AdminRoleAuditLog />
         </TabsContent>
       </Tabs>
 

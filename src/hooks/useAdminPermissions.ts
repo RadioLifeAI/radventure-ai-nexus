@@ -20,45 +20,65 @@ export function useAdminPermissions() {
         return;
       }
 
-      // Verificar se é admin no perfil
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("type")
-        .eq("id", user.id)
-        .single();
+      console.log("Verificando permissões para usuário:", user.id);
 
-      if (profile?.type === "ADMIN") {
-        setIsAdmin(true);
+      // Verificar se é admin usando a nova função segura
+      const { data: isAdminResult, error: adminError } = await supabase
+        .rpc("is_user_admin", { user_id: user.id });
 
+      if (adminError) {
+        console.error("Erro ao verificar admin:", adminError);
+        throw adminError;
+      }
+
+      console.log("Resultado is_user_admin:", isAdminResult);
+      setIsAdmin(isAdminResult || false);
+
+      if (isAdminResult) {
         // Carregar roles específicos
-        const { data: roles } = await supabase
+        const { data: roles, error: rolesError } = await supabase
           .from("admin_user_roles")
           .select("admin_role")
           .eq("user_id", user.id)
           .eq("is_active", true);
 
+        if (rolesError) {
+          console.error("Erro ao carregar roles:", rolesError);
+          throw rolesError;
+        }
+
         const adminRoles = roles?.map(r => r.admin_role as AdminRole) || [];
+        console.log("Roles encontrados:", adminRoles);
         
         // Se não tem roles específicos mas é ADMIN, dar acesso básico
         if (adminRoles.length === 0) {
           adminRoles.push("TechAdmin");
+          console.log("Nenhum role específico encontrado, usando TechAdmin padrão");
         }
 
         setUserRoles(adminRoles);
+      } else {
+        setUserRoles([]);
       }
     } catch (error) {
       console.error("Erro ao carregar permissões:", error);
+      setIsAdmin(false);
+      setUserRoles([]);
     } finally {
       setLoading(false);
     }
   };
 
   const checkPermission = (resource: ResourceType, action: PermissionAction): boolean => {
-    return isAdmin && hasPermission(userRoles, resource, action);
+    const hasPermissionResult = isAdmin && hasPermission(userRoles, resource, action);
+    console.log(`Verificando permissão: ${resource}.${action} = ${hasPermissionResult}`);
+    return hasPermissionResult;
   };
 
   const hasAnyAdminRole = (): boolean => {
-    return isAdmin && userRoles.length > 0;
+    const hasRole = isAdmin && userRoles.length > 0;
+    console.log(`hasAnyAdminRole: ${hasRole} (isAdmin: ${isAdmin}, roles: ${userRoles.length})`);
+    return hasRole;
   };
 
   return {

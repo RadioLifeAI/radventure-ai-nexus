@@ -84,6 +84,44 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_role_changes_log: {
+        Row: {
+          action: string
+          admin_role: string
+          changed_by: string | null
+          created_at: string
+          id: string
+          reason: string | null
+          target_user_id: string
+        }
+        Insert: {
+          action: string
+          admin_role: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          target_user_id: string
+        }
+        Update: {
+          action?: string
+          admin_role?: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          target_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_role_changes_log_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_roles: {
         Row: {
           assigned_at: string
@@ -1209,6 +1247,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      is_user_admin: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
       log_signup_event: {
         Args: {
           p_user_id: string
@@ -1229,6 +1271,10 @@ export type Database = {
       sync_user_benefits: {
         Args: { p_user_id: string }
         Returns: undefined
+      }
+      user_has_admin_role: {
+        Args: { user_id: string; role_name: string }
+        Returns: boolean
       }
     }
     Enums: {
