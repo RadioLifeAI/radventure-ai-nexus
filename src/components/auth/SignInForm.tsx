@@ -6,32 +6,88 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Mail, Lock } from 'lucide-react';
+import { Loader2, Mail, Lock, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 export function SignInForm() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
 
+  const getErrorMessage = (error: any) => {
+    if (!error) return '';
+    
+    const message = error.message || '';
+    
+    if (message.includes('Invalid login credentials')) {
+      return 'Email ou senha incorretos. Verifique suas credenciais.';
+    }
+    if (message.includes('Email not confirmed')) {
+      return 'Email não confirmado. Verifique sua caixa de entrada.';
+    }
+    if (message.includes('Too many requests')) {
+      return 'Muitas tentativas. Aguarde alguns minutos.';
+    }
+    
+    return 'Erro no login. Tente novamente.';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess(false);
+
+    if (!formData.email.trim() || !formData.password) {
+      setError('Por favor, preencha todos os campos');
+      return;
+    }
+
     setLoading(true);
 
-    const { error } = await signIn(formData.email, formData.password);
+    try {
+      console.log('Attempting signin for:', formData.email);
+      
+      const { error } = await signIn(formData.email.trim(), formData.password);
 
-    if (error) {
-      setError(error.message === 'Invalid login credentials' 
-        ? 'Email ou senha incorretos' 
-        : error.message);
-    } else {
-      navigate('/dashboard');
+      if (error) {
+        const errorMessage = getErrorMessage(error);
+        setError(errorMessage);
+        
+        toast({
+          title: "Erro no login",
+          description: errorMessage,
+          variant: "destructive"
+        });
+      } else {
+        setSuccess(true);
+        
+        toast({
+          title: "Login realizado!",
+          description: "Bem-vindo de volta! Redirecionando...",
+        });
+        
+        // Redirect after a brief delay
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1000);
+      }
+    } catch (unexpectedError) {
+      console.error('Unexpected error during signin:', unexpectedError);
+      setError('Erro inesperado. Tente novamente.');
+      
+      toast({
+        title: "Erro inesperado",
+        description: "Algo deu errado. Tente novamente.",
+        variant: "destructive"
+      });
     }
 
     setLoading(false);
@@ -39,7 +95,22 @@ export function SignInForm() {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    setError('');
   };
+
+  if (success) {
+    return (
+      <Card className="w-full max-w-md mx-auto bg-white/10 border-green-500/30 backdrop-blur-md">
+        <CardContent className="pt-6">
+          <div className="text-center">
+            <CheckCircle className="mx-auto h-16 w-16 text-green-400 mb-4" />
+            <h3 className="text-xl font-bold text-white mb-2">Login Realizado!</h3>
+            <p className="text-green-200">Redirecionando...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full max-w-md mx-auto bg-white/10 border-cyan-500/30 backdrop-blur-md">

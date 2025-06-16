@@ -34,6 +34,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchProfile = async (userId: string) => {
     try {
+      console.log('Fetching profile for user:', userId);
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -45,9 +47,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return null;
       }
 
+      console.log('Profile fetched successfully:', data);
       return data;
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Unexpected error fetching profile:', error);
       return null;
     }
   };
@@ -63,10 +66,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.id);
+        
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
+          // Defer profile fetching to avoid blocking
           setTimeout(async () => {
             const profileData = await fetchProfile(session.user.id);
             setProfile(profileData);
@@ -81,6 +87,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session?.user?.id);
+      
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -98,49 +106,107 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string, userData: any) => {
-    const redirectUrl = `${window.location.origin}/dashboard`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: userData
+    try {
+      console.log('Starting signup process for:', email);
+      console.log('User data provided:', userData);
+      
+      const redirectUrl = `${window.location.origin}/dashboard`;
+      
+      // Map the user data correctly to match database schema
+      const mappedUserData = {
+        full_name: userData.full_name || '',
+        academic_stage: userData.academic_stage || 'Student',
+        medical_specialty: userData.medical_specialty || '',
+        email: email
+      };
+      
+      console.log('Mapped user data:', mappedUserData);
+      
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: mappedUserData
+        }
+      });
+      
+      if (error) {
+        console.error('Signup error:', error);
+        return { error };
       }
-    });
-    
-    return { error };
+      
+      console.log('Signup successful:', data);
+      return { error: null };
+      
+    } catch (error) {
+      console.error('Unexpected signup error:', error);
+      return { error };
+    }
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-    
-    return { error };
+    try {
+      console.log('Starting signin process for:', email);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) {
+        console.error('Signin error:', error);
+        return { error };
+      }
+      
+      console.log('Signin successful:', data);
+      return { error: null };
+      
+    } catch (error) {
+      console.error('Unexpected signin error:', error);
+      return { error };
+    }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
-    setProfile(null);
+    try {
+      console.log('Starting signout process');
+      
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+      
+      console.log('Signout successful');
+    } catch (error) {
+      console.error('Signout error:', error);
+    }
   };
 
   const updateProfile = async (updates: Partial<UserProfile>) => {
     if (!user?.id) return { error: 'User not authenticated' };
 
-    const { error } = await supabase
-      .from('profiles')
-      .update(updates)
-      .eq('id', user.id);
+    try {
+      console.log('Updating profile for user:', user.id, 'with data:', updates);
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', user.id);
 
-    if (!error) {
+      if (error) {
+        console.error('Profile update error:', error);
+        return { error };
+      }
+
       await refreshProfile();
+      console.log('Profile updated successfully');
+      return { error: null };
+      
+    } catch (error) {
+      console.error('Unexpected profile update error:', error);
+      return { error };
     }
-
-    return { error };
   };
 
   const value = {
