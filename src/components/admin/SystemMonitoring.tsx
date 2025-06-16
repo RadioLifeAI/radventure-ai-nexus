@@ -1,19 +1,13 @@
 
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Activity, Server, Database, Zap, AlertTriangle, 
-  CheckCircle, Clock, TrendingUp, Users, HardDrive
-} from "lucide-react";
+import { Activity, Zap, AlertTriangle, TrendingUp } from "lucide-react";
+import { SystemMetrics } from "./monitoring/SystemMetrics";
+import { SystemLogs } from "./monitoring/SystemLogs";
 
 export function SystemMonitoring() {
-  // Temporariamente removido verificação de permissão principal
-  // Componente agora acessível sem restrições para implementação
-
   // Query para métricas do sistema
   const { data: systemMetrics } = useQuery({
     queryKey: ['system-metrics'],
@@ -69,25 +63,6 @@ export function SystemMonitoring() {
     refetchInterval: 10000 // Atualiza a cada 10 segundos
   });
 
-  const getStatusColor = (value: number, thresholds: { warning: number, danger: number }) => {
-    if (value >= thresholds.danger) return 'text-red-600';
-    if (value >= thresholds.warning) return 'text-yellow-600';
-    return 'text-green-600';
-  };
-
-  const getLogLevelBadge = (level: string) => {
-    switch (level) {
-      case 'error':
-        return <Badge variant="destructive">Error</Badge>;
-      case 'warning':
-        return <Badge className="bg-yellow-500">Warning</Badge>;
-      case 'info':
-        return <Badge variant="secondary">Info</Badge>;
-      default:
-        return <Badge>{level}</Badge>;
-    }
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -117,111 +92,7 @@ export function SystemMonitoring() {
         </TabsList>
 
         <TabsContent value="overview">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Tempo de Resposta</CardTitle>
-                <Clock className="h-4 w-4 text-blue-600" />
-              </CardHeader>
-              <CardContent>
-                <div className={`text-2xl font-bold ${getStatusColor(systemMetrics?.responseTime || 0, { warning: 200, danger: 500 })}`}>
-                  {systemMetrics?.responseTime}ms
-                </div>
-                <p className="text-xs text-gray-600">Média dos últimos 5min</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Usuários Ativos</CardTitle>
-                <Users className="h-4 w-4 text-green-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">
-                  {systemMetrics?.activeUsers?.toLocaleString()}
-                </div>
-                <p className="text-xs text-gray-600">Online agora</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Uso de CPU</CardTitle>
-                <Server className="h-4 w-4 text-orange-600" />
-              </CardHeader>
-              <CardContent>
-                <div className={`text-2xl font-bold ${getStatusColor(systemMetrics?.cpuUsage || 0, { warning: 70, danger: 90 })}`}>
-                  {systemMetrics?.cpuUsage}%
-                </div>
-                <p className="text-xs text-gray-600">Média dos servidores</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Uso de Memória</CardTitle>
-                <HardDrive className="h-4 w-4 text-purple-600" />
-              </CardHeader>
-              <CardContent>
-                <div className={`text-2xl font-bold ${getStatusColor(systemMetrics?.memoryUsage || 0, { warning: 80, danger: 95 })}`}>
-                  {systemMetrics?.memoryUsage}%
-                </div>
-                <p className="text-xs text-gray-600">RAM utilizada</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Conexões DB</CardTitle>
-                <Database className="h-4 w-4 text-blue-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-600">
-                  {systemMetrics?.databaseConnections}
-                </div>
-                <p className="text-xs text-gray-600">Conexões ativas</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Taxa de Erro</CardTitle>
-                <AlertTriangle className="h-4 w-4 text-red-600" />
-              </CardHeader>
-              <CardContent>
-                <div className={`text-2xl font-bold ${getStatusColor(systemMetrics?.errorRate || 0, { warning: 1, danger: 5 })}`}>
-                  {systemMetrics?.errorRate}%
-                </div>
-                <p className="text-xs text-gray-600">Últimas 24h</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Throughput</CardTitle>
-                <TrendingUp className="h-4 w-4 text-green-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">
-                  {systemMetrics?.throughput}
-                </div>
-                <p className="text-xs text-gray-600">Requests/min</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Status Geral</CardTitle>
-                <CheckCircle className="h-4 w-4 text-green-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">
-                  Saudável
-                </div>
-                <p className="text-xs text-gray-600">Todos os serviços</p>
-              </CardContent>
-            </Card>
-          </div>
+          <SystemMetrics metrics={systemMetrics} />
         </TabsContent>
 
         <TabsContent value="performance">
@@ -246,40 +117,7 @@ export function SystemMonitoring() {
         </TabsContent>
 
         <TabsContent value="logs">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5" />
-                Logs do Sistema
-              </CardTitle>
-              <CardDescription>
-                Logs em tempo real de todos os serviços
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {systemLogs?.map((log) => (
-                  <div key={log.id} className="border rounded-lg p-4 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {getLogLevelBadge(log.level)}
-                        <span className="font-medium">{log.service}</span>
-                      </div>
-                      <span className="text-sm text-gray-500">
-                        {log.timestamp.toLocaleTimeString('pt-BR')}
-                      </span>
-                    </div>
-                    <p className="text-sm">{log.message}</p>
-                    {log.details && (
-                      <pre className="text-xs bg-gray-100 p-2 rounded overflow-x-auto">
-                        {JSON.stringify(log.details, null, 2)}
-                      </pre>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <SystemLogs logs={systemLogs || []} />
         </TabsContent>
 
         <TabsContent value="alerts">

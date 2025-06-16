@@ -1,26 +1,16 @@
-
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  LineChart, Line, PieChart, Pie, Cell
-} from "recharts";
-import { 
-  Users, Brain, Trophy, TrendingUp, AlertCircle, DollarSign, 
-  Target, Zap, Eye, Calendar, Sparkles, Crown
-} from "lucide-react";
-// import { useAdminPermissions } from "@/hooks/useAdminPermissions"; // Temporariamente removido
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Sparkles, Crown } from "lucide-react";
+import { KPICards } from "./analytics/KPICards";
+import { ChartsSection } from "./analytics/ChartsSection";
+import { EngagementMetrics } from "./analytics/EngagementMetrics";
 
 export function DashboardAnalytics() {
-  // const { hasPermission } = useAdminPermissions(); // Temporariamente removido
   const [selectedMetric, setSelectedMetric] = useState('overview');
 
   // Queries para diferentes métricas
@@ -40,7 +30,6 @@ export function DashboardAnalytics() {
       
       return { totalUsers, activeUsers, totalPoints, totalRadcoins, userData: data };
     },
-    // enabled: hasPermission('ANALYTICS', 'READ') // Temporariamente removido
   });
 
   const { data: caseStats } = useQuery({
@@ -60,7 +49,6 @@ export function DashboardAnalytics() {
       
       return { totalCases, specialtyDistribution, caseData: data };
     },
-    // enabled: hasPermission('CASES', 'READ') // Temporariamente removido
   });
 
   const { data: eventStats } = useQuery({
@@ -78,52 +66,7 @@ export function DashboardAnalytics() {
       
       return { totalEvents, activeEvents, totalPrizes, eventData: data };
     },
-    // enabled: hasPermission('EVENTS', 'READ') // Temporariamente removido
   });
-
-  // Temporariamente removido a verificação de permissão principal
-  // if (!hasPermission('ANALYTICS', 'READ')) {
-  //   return (
-  //     <div className="flex items-center justify-center h-64">
-  //       <div className="text-center">
-  //         <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
-  //         <h3 className="text-lg font-semibold text-gray-900 mb-2">Acesso Negado</h3>
-  //         <p className="text-gray-600">Você não tem permissão para visualizar analytics.</p>
-  //       </div>
-  //     </div>
-  //   );
-  // }
-
-  const kpiCards = [
-    {
-      title: "Usuários Totais",
-      value: userStats?.totalUsers || 0,
-      change: "+12%",
-      icon: Users,
-      color: "bg-blue-500"
-    },
-    {
-      title: "Casos Ativos",
-      value: caseStats?.totalCases || 0,
-      change: "+8%",
-      icon: Brain,
-      color: "bg-green-500"
-    },
-    {
-      title: "Eventos Ativos",
-      value: eventStats?.activeEvents || 0,
-      change: "+15%",
-      icon: Trophy,
-      color: "bg-purple-500"
-    },
-    {
-      title: "RadCoins Circulantes",
-      value: userStats?.totalRadcoins || 0,
-      change: "+22%",
-      icon: DollarSign,
-      color: "bg-yellow-500"
-    }
-  ];
 
   return (
     <div className="space-y-6">
@@ -146,27 +89,7 @@ export function DashboardAnalytics() {
       </div>
 
       {/* KPIs Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {kpiCards.map((kpi, index) => (
-          <Card key={index} className="relative overflow-hidden group hover:shadow-lg transition-all duration-300">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                {kpi.title}
-              </CardTitle>
-              <div className={`p-2 rounded-lg ${kpi.color} text-white`}>
-                <kpi.icon className="h-4 w-4" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{kpi.value.toLocaleString()}</div>
-              <p className="text-xs text-green-600 font-medium">
-                {kpi.change} vs mês anterior
-              </p>
-              <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-current to-transparent opacity-20 group-hover:opacity-40 transition-opacity" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <KPICards userStats={userStats} caseStats={caseStats} eventStats={eventStats} />
 
       {/* Tabs para diferentes visualizações */}
       <Tabs value={selectedMetric} onValueChange={setSelectedMetric} className="space-y-4">
@@ -178,93 +101,8 @@ export function DashboardAnalytics() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Gráfico de Crescimento de Usuários */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-green-500" />
-                  Crescimento de Usuários
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={[
-                    { month: 'Jan', users: 120 },
-                    { month: 'Fev', users: 150 },
-                    { month: 'Mar', users: 180 },
-                    { month: 'Abr', users: 220 },
-                    { month: 'Mai', users: 280 },
-                    { month: 'Jun', users: 350 }
-                  ]}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="users" stroke="#8884d8" strokeWidth={3} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            {/* Distribuição de Especialidades */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-blue-500" />
-                  Especialidades Mais Populares
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={Object.entries(caseStats?.specialtyDistribution || {}).map(([name, value]) => ({ name, value }))}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {Object.entries(caseStats?.specialtyDistribution || {}).map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Métricas de Engajamento */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Zap className="h-5 w-5 text-yellow-500" />
-                Métricas de Engajamento
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <div className="text-sm text-gray-600 mb-2">Taxa de Conclusão</div>
-                  <Progress value={75} className="mb-2" />
-                  <div className="text-xs text-gray-500">75% dos casos são concluídos</div>
-                </div>
-                <div>
-                  <div className="text-sm text-gray-600 mb-2">Tempo Médio por Caso</div>
-                  <Progress value={60} className="mb-2" />
-                  <div className="text-xs text-gray-500">3.2 minutos em média</div>
-                </div>
-                <div>
-                  <div className="text-sm text-gray-600 mb-2">Retenção Semanal</div>
-                  <Progress value={85} className="mb-2" />
-                  <div className="text-xs text-gray-500">85% retornam na semana</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <ChartsSection caseStats={caseStats} />
+          <EngagementMetrics />
         </TabsContent>
 
         <TabsContent value="users">
@@ -324,7 +162,6 @@ export function DashboardAnalytics() {
               <CardDescription>Performance e qualidade do conteúdo</CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Conteúdo de análise de casos */}
               <div className="text-center text-gray-500 py-8">
                 Análise detalhada de casos será implementada aqui
               </div>
@@ -339,7 +176,6 @@ export function DashboardAnalytics() {
               <CardDescription>Participação e engajamento em eventos</CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Conteúdo de análise de eventos */}
               <div className="text-center text-gray-500 py-8">
                 Analytics de eventos será implementado aqui
               </div>

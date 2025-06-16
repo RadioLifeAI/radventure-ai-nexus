@@ -1,24 +1,21 @@
+
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Users, UserCheck, UserX, Crown, Shield, Edit, Trash2, 
-  Plus, Search, Filter, Download, Ban
-} from "lucide-react";
-// import { useAdminPermissions } from "@/hooks/useAdminPermissions"; // Temporariamente removido
+import { Users, Crown } from "lucide-react";
 import type { UserProfile } from "@/types/admin";
+import { UserFilters } from "./users/UserFilters";
+import { UserStatsCards } from "./users/UserStatsCards";
+import { UsersTable } from "./users/UsersTable";
 
 export function UserManagement() {
-  // const { hasPermission } = useAdminPermissions(); // Temporariamente removido
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
@@ -47,21 +44,7 @@ export function UserManagement() {
       if (error) throw error;
       return data as UserProfile[];
     },
-    // enabled: hasPermission('USERS', 'READ') // Temporariamente removido
   });
-
-  // Temporariamente removido verificação de permissão principal
-  // if (!hasPermission('USERS', 'READ')) {
-  //   return (
-  //     <div className="flex items-center justify-center h-64">
-  //       <div className="text-center">
-  //         <Shield className="mx-auto h-12 w-12 text-red-500 mb-4" />
-  //         <h3 className="text-lg font-semibold text-gray-900 mb-2">Acesso Negado</h3>
-  //         <p className="text-gray-600">Você não tem permissão para gerenciar usuários.</p>
-  //       </div>
-  //     </div>
-  //   );
-  // }
 
   // Mutation para atualizar usuário
   const updateUserMutation = useMutation({
@@ -148,40 +131,11 @@ export function UserManagement() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Usuários Ativos</CardTitle>
-            <UserCheck className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{activeUsers}</div>
-            <p className="text-xs text-gray-600">Últimos 30 dias</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Administradores</CardTitle>
-            <Crown className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">{adminUsers}</div>
-            <p className="text-xs text-gray-600">Com privilégios especiais</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Taxa de Conversão</CardTitle>
-            <UserX className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">68%</div>
-            <p className="text-xs text-gray-600">Free para Premium</p>
-          </CardContent>
-        </Card>
-      </div>
+      <UserStatsCards 
+        totalUsers={totalUsers}
+        activeUsers={activeUsers}
+        adminUsers={adminUsers}
+      />
 
       {/* Filters e Search */}
       <Card>
@@ -191,137 +145,22 @@ export function UserManagement() {
               <CardTitle>Lista de Usuários</CardTitle>
               <CardDescription>Gerencie todos os usuários da plataforma</CardDescription>
             </div>
-            <div className="flex gap-2">
-              {/* Mantendo verificação granular para botões específicos */}
-              {/* {hasPermission('USERS', 'CREATE') && ( */}
-                <Button className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Novo Usuário
-                </Button>
-              {/* )} */}
-              <Button variant="outline" className="gap-2">
-                <Download className="h-4 w-4" />
-                Exportar
-              </Button>
-            </div>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Buscar por nome, email ou username..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <Select value={filterType} onValueChange={(value: "all" | "USER" | "ADMIN") => setFilterType(value)}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filtrar por tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os tipos</SelectItem>
-                <SelectItem value="USER">Usuários</SelectItem>
-                <SelectItem value="ADMIN">Administradores</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <UserFilters
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            filterType={filterType}
+            setFilterType={setFilterType}
+          />
 
-          {/* Tabela de usuários */}
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Usuário</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Especialidade</TableHead>
-                  <TableHead>Pontos</TableHead>
-                  <TableHead>RadCoins</TableHead>
-                  <TableHead>Data Cadastro</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
-                      Carregando usuários...
-                    </TableCell>
-                  </TableRow>
-                ) : filteredUsers.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
-                      Nenhum usuário encontrado
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredUsers.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{user.full_name || user.username}</div>
-                          <div className="text-sm text-gray-600">{user.email}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={user.type === 'ADMIN' ? 'destructive' : 'secondary'}>
-                          {user.type}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {user.medical_specialty || 'Não informado'}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-mono text-sm">
-                          {user.total_points?.toLocaleString() || 0}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-mono text-sm text-yellow-600">
-                          {user.radcoin_balance?.toLocaleString() || 0}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {new Date(user.created_at).toLocaleDateString('pt-BR')}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          {/* Mantendo verificação granular para ações específicas */}
-                          {/* {hasPermission('USERS', 'UPDATE') && ( */}
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEditUser(user)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          {/* )} */}
-                          {/* {hasPermission('USERS', 'DELETE') && ( */}
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => toggleBanMutation.mutate({ userId: user.id, banned: true })}
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              <Ban className="h-4 w-4" />
-                            </Button>
-                          {/* )} */}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+          <UsersTable
+            users={filteredUsers}
+            isLoading={isLoading}
+            onEditUser={handleEditUser}
+            onBanUser={(userId) => toggleBanMutation.mutate({ userId, banned: true })}
+          />
         </CardContent>
       </Card>
 

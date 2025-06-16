@@ -1,22 +1,17 @@
+
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  DollarSign, CreditCard, Edit, Trash2, Plus, 
-  TrendingUp, Users, Crown, Star
-} from "lucide-react";
+import { DollarSign, Plus, Crown, TrendingUp, Users } from "lucide-react";
 import type { SubscriptionPlan } from "@/types/admin";
+import { SubscriptionStats } from "./subscription/SubscriptionStats";
+import { PlanForm } from "./subscription/PlanForm";
+import { PlansTable } from "./subscription/PlansTable";
 
 export function SubscriptionManagement() {
   const { toast } = useToast();
@@ -60,8 +55,8 @@ export function SubscriptionManagement() {
       
       const totalSubscriptions = data.length;
       const activeSubscriptions = data.filter(sub => sub.status === 'active').length;
-      const monthlyRevenue = 0; // Calcular baseado nos planos
-      const churnRate = 0; // Calcular baseado nos cancelamentos
+      const monthlyRevenue = 0;
+      const churnRate = 0;
       
       return {
         totalSubscriptions,
@@ -169,120 +164,6 @@ export function SubscriptionManagement() {
     setIsEditModalOpen(true);
   };
 
-  const PlanForm = ({ plan, onSubmit }: { plan?: SubscriptionPlan, onSubmit: (data: any) => void }) => (
-    <form onSubmit={(e) => {
-      e.preventDefault();
-      const formData = new FormData(e.target as HTMLFormElement);
-      
-      const planData = {
-        ...plan,
-        name: formData.get('name') as string,
-        display_name: formData.get('display_name') as string,
-        description: formData.get('description') as string,
-        price_monthly: parseFloat(formData.get('price_monthly') as string),
-        price_yearly: parseFloat(formData.get('price_yearly') as string),
-        sort_order: parseInt(formData.get('sort_order') as string),
-        is_active: formData.get('is_active') === 'on',
-        features: {},
-        limits: {}
-      };
-      
-      onSubmit(planData);
-    }}>
-      <div className="grid gap-4 py-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="name">Nome do Plano</Label>
-            <Input
-              id="name"
-              name="name"
-              defaultValue={plan?.name || ''}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="display_name">Nome de Exibição</Label>
-            <Input
-              id="display_name"
-              name="display_name"
-              defaultValue={plan?.display_name || ''}
-              required
-            />
-          </div>
-        </div>
-        
-        <div>
-          <Label htmlFor="description">Descrição</Label>
-          <Textarea
-            id="description"
-            name="description"
-            defaultValue={plan?.description || ''}
-            rows={3}
-            placeholder="Descrição do plano..."
-          />
-        </div>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="price_monthly">Preço Mensal (R$)</Label>
-            <Input
-              id="price_monthly"
-              name="price_monthly"
-              type="number"
-              step="0.01"
-              min="0"
-              defaultValue={plan?.price_monthly || 0}
-            />
-          </div>
-          <div>
-            <Label htmlFor="price_yearly">Preço Anual (R$)</Label>
-            <Input
-              id="price_yearly"
-              name="price_yearly"
-              type="number"
-              step="0.01"
-              min="0"
-              defaultValue={plan?.price_yearly || 0}
-            />
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="sort_order">Ordem de Exibição</Label>
-            <Input
-              id="sort_order"
-              name="sort_order"
-              type="number"
-              min="0"
-              defaultValue={plan?.sort_order || 0}
-            />
-          </div>
-          <div className="flex items-center space-x-2 pt-6">
-            <Switch
-              id="is_active"
-              name="is_active"
-              defaultChecked={plan?.is_active ?? true}
-            />
-            <Label htmlFor="is_active">Plano Ativo</Label>
-          </div>
-        </div>
-      </div>
-      
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={() => {
-          setIsEditModalOpen(false);
-          setIsCreateModalOpen(false);
-        }}>
-          Cancelar
-        </Button>
-        <Button type="submit" disabled={planMutation.isPending}>
-          {planMutation.isPending ? 'Salvando...' : 'Salvar'}
-        </Button>
-      </div>
-    </form>
-  );
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -318,137 +199,25 @@ export function SubscriptionManagement() {
                   <CardTitle>Planos de Assinatura</CardTitle>
                   <CardDescription>Gerencie os planos disponíveis na plataforma</CardDescription>
                 </div>
-                {/* Mantendo verificação granular para botões específicos */}
-                {/* {hasPermission('SUBSCRIPTIONS', 'CREATE') && ( */}
-                  <Button onClick={() => setIsCreateModalOpen(true)} className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    Novo Plano
-                  </Button>
-                {/* )} */}
+                <Button onClick={() => setIsCreateModalOpen(true)} className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Novo Plano
+                </Button>
               </div>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead>Mensal</TableHead>
-                    <TableHead>Anual</TableHead>
-                    <TableHead>Ordem</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8">
-                        Carregando planos...
-                      </TableCell>
-                    </TableRow>
-                  ) : plans?.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8">
-                        Nenhum plano encontrado
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    plans?.map((plan) => (
-                      <TableRow key={plan.id}>
-                        <TableCell className="font-medium">{plan.display_name}</TableCell>
-                        <TableCell className="max-w-xs truncate">{plan.description}</TableCell>
-                        <TableCell>R$ {plan.price_monthly.toFixed(2)}</TableCell>
-                        <TableCell>R$ {plan.price_yearly.toFixed(2)}</TableCell>
-                        <TableCell>{plan.sort_order}</TableCell>
-                        <TableCell>
-                          <Badge variant={plan.is_active ? "default" : "secondary"}>
-                            {plan.is_active ? "Ativo" : "Inativo"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            {/* Mantendo verificação granular para ações específicas */}
-                            {/* {hasPermission('SUBSCRIPTIONS', 'UPDATE') && ( */}
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleEditPlan(plan)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            {/* )} */}
-                            {/* {hasPermission('SUBSCRIPTIONS', 'DELETE') && ( */}
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => deletePlanMutation.mutate(plan.id)}
-                                className="text-red-600 hover:text-red-700"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            {/* )} */}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+              <PlansTable 
+                plans={plans}
+                isLoading={isLoading}
+                onEditPlan={handleEditPlan}
+                onDeletePlan={(planId) => deletePlanMutation.mutate(planId)}
+              />
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="analytics">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Total de Assinaturas</CardTitle>
-                <Users className="h-4 w-4 text-blue-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-600">{subscriptionStats?.totalSubscriptions || 0}</div>
-                <p className="text-xs text-gray-600">Todas as assinaturas</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Assinaturas Ativas</CardTitle>
-                <Star className="h-4 w-4 text-green-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">{subscriptionStats?.activeSubscriptions || 0}</div>
-                <p className="text-xs text-gray-600">Atualmente ativas</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Receita Mensal</CardTitle>
-                <DollarSign className="h-4 w-4 text-yellow-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-yellow-600">
-                  R$ {(subscriptionStats?.monthlyRevenue || 0).toFixed(2)}
-                </div>
-                <p className="text-xs text-gray-600">Receita recorrente</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Taxa de Churn</CardTitle>
-                <TrendingUp className="h-4 w-4 text-red-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-red-600">
-                  {(subscriptionStats?.churnRate || 0).toFixed(1)}%
-                </div>
-                <p className="text-xs text-gray-600">Cancelamentos mensais</p>
-              </CardContent>
-            </Card>
-          </div>
+          <SubscriptionStats stats={subscriptionStats} />
 
           <Card>
             <CardHeader>
@@ -499,7 +268,9 @@ export function SubscriptionManagement() {
           {selectedPlan && (
             <PlanForm 
               plan={selectedPlan} 
-              onSubmit={(data) => planMutation.mutate(data)} 
+              onSubmit={(data) => planMutation.mutate(data)}
+              onCancel={() => setIsEditModalOpen(false)}
+              isLoading={planMutation.isPending}
             />
           )}
         </DialogContent>
@@ -515,7 +286,11 @@ export function SubscriptionManagement() {
             </DialogDescription>
           </DialogHeader>
           
-          <PlanForm onSubmit={(data) => planMutation.mutate(data)} />
+          <PlanForm 
+            onSubmit={(data) => planMutation.mutate(data)}
+            onCancel={() => setIsCreateModalOpen(false)}
+            isLoading={planMutation.isPending}
+          />
         </DialogContent>
       </Dialog>
     </div>
