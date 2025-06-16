@@ -1,10 +1,10 @@
 
 import React, { useEffect } from 'react';
+import { AuthPage } from '@/components/auth/AuthPage';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { AuthPage } from '@/components/auth/AuthPage';
 
-const Login = () => {
+export default function Auth() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -16,5 +16,3 @@ const Login = () => {
 
   return <AuthPage />;
 }
-
-export default Login;

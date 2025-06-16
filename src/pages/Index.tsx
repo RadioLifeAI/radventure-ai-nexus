@@ -1,8 +1,12 @@
+
 import { Button } from "@/components/ui/button";
 import { Rocket, Globe, Users, ShieldCheck, TrendingUp, Award } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Index() {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white flex flex-col">
       {/* Header */}
@@ -12,15 +16,21 @@ export default function Index() {
           <span className="text-2xl font-bold tracking-tight">RadVenture</span>
         </div>
         <nav className="mt-4 md:mt-0 flex gap-4 items-center">
-          <Link to="/login" className="text-cyan-100 hover:text-white transition text-base font-medium">Entrar</Link>
-          <Button asChild className="bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 font-bold px-5 py-2 rounded-lg">
-            <Link to="/login">Começar Agora</Link>
-          </Button>
-          <Button asChild variant="outline" className="border-cyan-400 text-cyan-200 hover:bg-cyan-900/30 hidden md:inline-flex">
-            <Link to="/dashboard">Ver Demo do Dashboard</Link>
-          </Button>
+          {user ? (
+            <Button asChild className="bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 font-bold px-5 py-2 rounded-lg">
+              <Link to="/dashboard">Ir para Dashboard</Link>
+            </Button>
+          ) : (
+            <>
+              <Link to="/auth" className="text-cyan-100 hover:text-white transition text-base font-medium">Entrar</Link>
+              <Button asChild className="bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 font-bold px-5 py-2 rounded-lg">
+                <Link to="/auth">Começar Agora</Link>
+              </Button>
+            </>
+          )}
         </nav>
       </header>
+      
       {/* Hero */}
       <section className="flex-1 flex flex-col items-center justify-center text-center px-4 pt-12 pb-9 md:py-20">
         <h1 className="text-3xl md:text-6xl font-extrabold mb-6 animate-fade-in">
@@ -30,15 +40,20 @@ export default function Index() {
           O futuro da educação médica gamificada está aqui. Resolva casos, evolua na carreira e conquiste prêmios em uma plataforma global para especialistas do amanhã.
         </p>
         <div className="flex gap-4 justify-center mb-12">
-          <Button asChild className="bg-gradient-to-r from-cyan-400 to-blue-500 font-bold px-7 py-3 text-lg drop-shadow-lg hover:scale-105 transition hover:bg-cyan-500">
-            <Link to="/login">Começar Gratuito</Link>
-          </Button>
-          <Button variant="outline" className="border-cyan-300 text-cyan-100 hover:bg-cyan-700 hover:text-white font-bold px-7 py-3 text-lg drop-shadow-md">
-            Ver Demo
-          </Button>
-          <Button asChild variant="outline" className="border-cyan-400 text-cyan-200 hover:bg-cyan-900/30 md:hidden font-bold px-7 py-3 text-lg">
-            <Link to="/dashboard">Dashboard</Link>
-          </Button>
+          {user ? (
+            <Button asChild className="bg-gradient-to-r from-cyan-400 to-blue-500 font-bold px-7 py-3 text-lg drop-shadow-lg hover:scale-105 transition hover:bg-cyan-500">
+              <Link to="/dashboard">Continuar Jornada</Link>
+            </Button>
+          ) : (
+            <>
+              <Button asChild className="bg-gradient-to-r from-cyan-400 to-blue-500 font-bold px-7 py-3 text-lg drop-shadow-lg hover:scale-105 transition hover:bg-cyan-500">
+                <Link to="/auth">Começar Gratuito</Link>
+              </Button>
+              <Button asChild variant="outline" className="border-cyan-300 text-cyan-100 hover:bg-cyan-700 hover:text-white font-bold px-7 py-3 text-lg drop-shadow-md">
+                <Link to="/dashboard">Ver Prévia</Link>
+              </Button>
+            </>
+          )}
         </div>
       </section>
 
@@ -49,7 +64,6 @@ export default function Index() {
           Tudo o que você precisa para aprender radiologia de forma divertida, segura e avançada.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-7">
-          {/* Gamecards */}
           <div className="bg-black/80 rounded-xl p-6 flex flex-col items-center shadow-lg">
             <Award className="text-yellow-400 mb-3" size={32}/>
             <span className="font-bold text-lg mb-1">Desafios Gamificados</span>
@@ -90,7 +104,7 @@ export default function Index() {
           Junte-se agora à revolução global gamificada para estudantes e médicos de radiologia. Seu próximo desafio começa aqui!
         </p>
         <Button asChild className="bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 px-9 py-3 text-lg font-bold">
-          <Link to="/login">Começar Agora – É Grátis</Link>
+          <Link to="/auth">Começar Agora – É Grátis</Link>
         </Button>
       </footer>
     </div>
