@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -63,27 +64,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
-    let retryTimeout: NodeJS.Timeout;
+    let hasInitialized = false;
+
+    const handleAuthStateChange = async (event: string, session: Session | null) => {
+      console.log('AuthContext: Auth state changed:', event, !!session?.user);
+      
+      if (!mounted) return;
+
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        setTimeout(async () => {
+          if (mounted) {
+            const profileData = await fetchProfile(session.user.id);
+            if (mounted) setProfile(profileData);
+          }
+        }, 0);
+      } else {
+        setProfile(null);
+      }
+
+      if (mounted && hasInitialized) {
+        setLoading(false);
+      }
+    };
 
     const initializeAuth = async () => {
       try {
         console.log('AuthContext: Starting initialization');
         
-        // Get initial session with timeout
-        const sessionPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Session timeout')), 10000)
-        );
+        // Set up auth state listener first
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
-        const { data: { session: initialSession }, error } = await Promise.race([
-          sessionPromise,
-          timeoutPromise
-        ]) as any;
+        // Get initial session
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Error getting initial session:', error);
-          if (mounted) setLoading(false);
-          return;
         }
 
         if (!mounted) return;
@@ -94,52 +112,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(initialSession?.user ?? null);
 
         if (initialSession?.user) {
-          const profileData = await fetchProfile(initialSession.user.id);
-          if (mounted) setProfile(profileData);
+          setTimeout(async () => {
+            if (mounted) {
+              const profileData = await fetchProfile(initialSession.user.id);
+              if (mounted) setProfile(profileData);
+            }
+          }, 0);
         }
         
+        hasInitialized = true;
         if (mounted) setLoading(false);
+
+        return () => {
+          subscription.unsubscribe();
+        };
       } catch (error) {
         console.error('Error initializing auth:', error);
         if (mounted) {
+          hasInitialized = true;
           setLoading(false);
-          // Retry after 3 seconds on failure
-          retryTimeout = setTimeout(() => {
-            if (mounted) initializeAuth();
-          }, 3000);
         }
       }
     };
 
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('AuthContext: Auth state changed:', event, !!session?.user);
-        
-        if (!mounted) return;
-
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          const profileData = await fetchProfile(session.user.id);
-          if (mounted) setProfile(profileData);
-        } else {
-          setProfile(null);
-        }
-
-        // Ensure loading is false after auth state change
-        if (mounted) setLoading(false);
-      }
-    );
-
     // Initialize auth
-    initializeAuth();
+    const cleanup = initializeAuth();
 
     return () => {
       mounted = false;
-      if (retryTimeout) clearTimeout(retryTimeout);
-      subscription.unsubscribe();
+      cleanup?.then(cleanupFn => cleanupFn?.());
     };
   }, []);
 
@@ -199,14 +200,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('Starting signout process');
       
-      await supabase.auth.signOut();
+      // Clear state immediately
       setUser(null);
       setSession(null);
       setProfile(null);
       
+      // Sign out from Supabase
+      await supabase.auth.signOut();
+      
+      // Force redirect to auth page
+      window.location.href = '/auth';
+      
       console.log('Signout successful');
     } catch (error: any) {
       console.error('Signout error:', error);
+      // Even if signout fails, clear local state and redirect
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+      window.location.href = '/auth';
     }
   };
 
