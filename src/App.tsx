@@ -9,7 +9,6 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import AdminPanel from "./pages/AdminPanel";
-import AdminDashboardAdvanced from "./pages/admin/AdminDashboardAdvanced";
 import CasoUsuarioView from "./pages/CasoUsuarioView";
 import Eventos from "./pages/Eventos";
 import RankingEventos from "./pages/RankingEventos";
@@ -30,7 +29,6 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/admin/*" element={<AdminPanel />} />
-          <Route path="/admin/dashboard-advanced" element={<AdminDashboardAdvanced />} />
           <Route path="/casos" element={<Casos />} />
           <Route path="/caso/:id" element={<CasoUsuarioView />} />
           <Route path="/eventos" element={<Eventos />} />

@@ -15,22 +15,27 @@ import {
   MessageSquare,
   Zap,
   BookOpen,
+  Trophy,
+  Brain,
+  BarChart3,
+  Monitor,
 } from "lucide-react";
 
-// Definição dos itens do menu admin (pode ser expandida depois)
+// Menu admin integrado com todas as funcionalidades
 const adminMenu = [
-  { label: "Analytics", icon: <LayoutDashboard size={20} />, to: "/admin/analytics" },
+  { label: "Analytics", icon: <BarChart3 size={20} />, to: "/admin/analytics" },
   { label: "Criar Eventos", icon: <Calendar size={20} />, to: "/admin/create-event" },
   { label: "Gestão de Eventos", icon: <BookOpen size={20} />, to: "/admin/events" },
   { label: "Casos Médicos", icon: <FileText size={20} />, to: "/admin/casos-medicos" },
-  // Novo item logo abaixo:
   { label: "Gestão de Casos", icon: <Settings size={20} />, to: "/admin/gestao-casos" },
   { label: "Usuários", icon: <Users size={20} />, to: "/admin/usuarios" },
   { label: "Assinaturas", icon: <CreditCard size={20} />, to: "/admin/assinaturas" },
+  { label: "Tutor IA", icon: <Brain size={20} />, to: "/admin/tutor-ia" },
+  { label: "Conquistas", icon: <Trophy size={20} />, to: "/admin/conquistas" },
+  { label: "Monitoramento", icon: <Monitor size={20} />, to: "/admin/monitoramento" },
   { label: "Recompensas", icon: <Gift size={20} />, to: "/admin/recompensas" },
   { label: "Configurações", icon: <Settings size={20} />, to: "/admin/configuracoes" },
   { label: "Textos da UI", icon: <MessageSquare size={20} />, to: "/admin/textos-ui" },
-  { label: "Tutor IA", icon: <Zap size={20} />, to: "/admin/tutor-ia" },
   { label: "Config. Assinatura", icon: <CreditCard size={20} />, to: "/admin/config-assinatura" },
   { label: "Config. Stripe", icon: <CreditCard size={20} />, to: "/admin/config-stripe" },
   { label: "Chaves API", icon: <KeyRound size={20} />, to: "/admin/chaves-api" },
