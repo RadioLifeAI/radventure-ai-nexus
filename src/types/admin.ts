@@ -1,4 +1,3 @@
-
 export type AdminRole = 
   | 'DEV'
   | 'TechAdmin'
@@ -44,7 +43,6 @@ export interface UserProfile {
   total_points: number;
   radcoin_balance: number;
   current_streak: number;
-  avatar_url?: string;
   created_at: string;
   updated_at: string;
 }
