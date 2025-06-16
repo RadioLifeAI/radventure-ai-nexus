@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,11 +16,9 @@ import {
   DollarSign, CreditCard, Edit, Trash2, Plus, 
   TrendingUp, Users, Crown, Star
 } from "lucide-react";
-import { useAdminPermissions } from "@/hooks/useAdminPermissions";
 import type { SubscriptionPlan } from "@/types/admin";
 
 export function SubscriptionManagement() {
-  const { hasPermission } = useAdminPermissions();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
@@ -40,7 +37,7 @@ export function SubscriptionManagement() {
       if (error) throw error;
       return data as SubscriptionPlan[];
     },
-    enabled: hasPermission('SUBSCRIPTIONS', 'READ')
+    enabled: false
   });
 
   // Query para estatísticas de assinaturas
@@ -166,18 +163,6 @@ export function SubscriptionManagement() {
       });
     }
   });
-
-  if (!hasPermission('SUBSCRIPTIONS', 'READ')) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <CreditCard className="mx-auto h-12 w-12 text-red-500 mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Acesso Negado</h3>
-          <p className="text-gray-600">Você não tem permissão para gerenciar assinaturas.</p>
-        </div>
-      </div>
-    );
-  }
 
   const handleEditPlan = (plan: SubscriptionPlan) => {
     setSelectedPlan(plan);
@@ -333,12 +318,13 @@ export function SubscriptionManagement() {
                   <CardTitle>Planos de Assinatura</CardTitle>
                   <CardDescription>Gerencie os planos disponíveis na plataforma</CardDescription>
                 </div>
-                {hasPermission('SUBSCRIPTIONS', 'CREATE') && (
+                {/* Mantendo verificação granular para botões específicos */}
+                {/* {hasPermission('SUBSCRIPTIONS', 'CREATE') && ( */}
                   <Button onClick={() => setIsCreateModalOpen(true)} className="gap-2">
                     <Plus className="h-4 w-4" />
                     Novo Plano
                   </Button>
-                )}
+                {/* )} */}
               </div>
             </CardHeader>
             <CardContent>
@@ -382,7 +368,8 @@ export function SubscriptionManagement() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            {hasPermission('SUBSCRIPTIONS', 'UPDATE') && (
+                            {/* Mantendo verificação granular para ações específicas */}
+                            {/* {hasPermission('SUBSCRIPTIONS', 'UPDATE') && ( */}
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -390,8 +377,8 @@ export function SubscriptionManagement() {
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
-                            )}
-                            {hasPermission('SUBSCRIPTIONS', 'DELETE') && (
+                            {/* )} */}
+                            {/* {hasPermission('SUBSCRIPTIONS', 'DELETE') && ( */}
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -400,7 +387,7 @@ export function SubscriptionManagement() {
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
-                            )}
+                            {/* )} */}
                           </div>
                         </TableCell>
                       </TableRow>

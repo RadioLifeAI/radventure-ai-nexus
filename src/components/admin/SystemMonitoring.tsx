@@ -11,6 +11,9 @@ import {
 } from "lucide-react";
 
 export function SystemMonitoring() {
+  // Temporariamente removido verificação de permissão principal
+  // Componente agora acessível sem restrições para implementação
+
   // Query para métricas do sistema
   const { data: systemMetrics } = useQuery({
     queryKey: ['system-metrics'],

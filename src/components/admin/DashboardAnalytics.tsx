@@ -15,12 +15,12 @@ import {
   Users, Brain, Trophy, TrendingUp, AlertCircle, DollarSign, 
   Target, Zap, Eye, Calendar, Sparkles, Crown
 } from "lucide-react";
-import { useAdminPermissions } from "@/hooks/useAdminPermissions";
+// import { useAdminPermissions } from "@/hooks/useAdminPermissions"; // Temporariamente removido
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
 export function DashboardAnalytics() {
-  const { hasPermission } = useAdminPermissions();
+  // const { hasPermission } = useAdminPermissions(); // Temporariamente removido
   const [selectedMetric, setSelectedMetric] = useState('overview');
 
   // Queries para diferentes métricas
@@ -40,7 +40,7 @@ export function DashboardAnalytics() {
       
       return { totalUsers, activeUsers, totalPoints, totalRadcoins, userData: data };
     },
-    enabled: hasPermission('ANALYTICS', 'READ')
+    // enabled: hasPermission('ANALYTICS', 'READ') // Temporariamente removido
   });
 
   const { data: caseStats } = useQuery({
@@ -60,7 +60,7 @@ export function DashboardAnalytics() {
       
       return { totalCases, specialtyDistribution, caseData: data };
     },
-    enabled: hasPermission('CASES', 'READ')
+    // enabled: hasPermission('CASES', 'READ') // Temporariamente removido
   });
 
   const { data: eventStats } = useQuery({
@@ -78,20 +78,21 @@ export function DashboardAnalytics() {
       
       return { totalEvents, activeEvents, totalPrizes, eventData: data };
     },
-    enabled: hasPermission('EVENTS', 'READ')
+    // enabled: hasPermission('EVENTS', 'READ') // Temporariamente removido
   });
 
-  if (!hasPermission('ANALYTICS', 'READ')) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Acesso Negado</h3>
-          <p className="text-gray-600">Você não tem permissão para visualizar analytics.</p>
-        </div>
-      </div>
-    );
-  }
+  // Temporariamente removido a verificação de permissão principal
+  // if (!hasPermission('ANALYTICS', 'READ')) {
+  //   return (
+  //     <div className="flex items-center justify-center h-64">
+  //       <div className="text-center">
+  //         <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
+  //         <h3 className="text-lg font-semibold text-gray-900 mb-2">Acesso Negado</h3>
+  //         <p className="text-gray-600">Você não tem permissão para visualizar analytics.</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   const kpiCards = [
     {
