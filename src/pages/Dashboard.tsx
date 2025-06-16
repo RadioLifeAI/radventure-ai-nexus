@@ -6,6 +6,7 @@ import { WelcomeModal } from '@/components/onboarding/WelcomeModal';
 import { ProfileCompleteness } from '@/components/profile/ProfileCompleteness';
 import { ProtectedRoute } from '@/components/navigation/ProtectedRoute';
 import { useFirstTimeUser } from '@/hooks/useFirstTimeUser';
+import { useCaseStats } from '@/hooks/useCaseStats';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,13 +20,14 @@ import {
   TrendingUp,
   Award,
   Clock,
-  Play
+  Play,
+  BookOpen
 } from 'lucide-react';
 
 function DashboardContent() {
   const { profile } = useAuth();
   const { showWelcome, markTutorialAsSeen } = useFirstTimeUser();
-  const [showProfileEdit, setShowProfileEdit] = useState(false);
+  const { specialties, loading: loadingStats } = useCaseStats();
 
   const quickActions = [
     {
@@ -91,7 +93,7 @@ function DashboardContent() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             {/* Profile Completeness */}
             <div className="lg:col-span-1">
-              <ProfileCompleteness onEditProfile={() => setShowProfileEdit(true)} />
+              <ProfileCompleteness />
             </div>
 
             {/* Quick Stats */}
@@ -147,6 +149,54 @@ function DashboardContent() {
               </Card>
             ))}
           </div>
+
+          {/* Especialidades Disponíveis - Acesso Rápido por Especialidade */}
+          <Card className="bg-gradient-to-r from-slate-800 to-slate-900 border-cyan-500/30 mb-8">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <BookOpen className="text-cyan-400" size={20} />
+                Acesso Rápido por Especialidade
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loadingStats ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {[...Array(8)].map((_, i) => (
+                    <div key={i} className="bg-slate-700/50 rounded-lg p-3 animate-pulse">
+                      <div className="h-4 bg-gray-600 rounded mb-2"></div>
+                      <div className="h-3 bg-gray-600 rounded w-2/3"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : specialties.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {specialties.map((specialty) => (
+                    <Link
+                      key={specialty.id}
+                      to={`/casos?specialty=${specialty.id}`}
+                      className="bg-slate-700/50 hover:bg-slate-600/50 rounded-lg p-3 transition-colors group"
+                    >
+                      <div className="text-white font-medium text-sm mb-1 group-hover:text-cyan-300">
+                        {specialty.name}
+                      </div>
+                      <div className="text-gray-400 text-xs flex items-center gap-1">
+                        <Users size={12} />
+                        {specialty.caseCount} caso{specialty.caseCount !== 1 ? 's' : ''}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <BookOpen className="mx-auto text-gray-500 mb-3" size={48} />
+                  <p className="text-gray-400">Nenhum caso disponível no momento</p>
+                  <p className="text-gray-500 text-sm mt-1">
+                    Novos casos serão adicionados em breve
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Recent Activity */}
           <Card className="bg-gradient-to-r from-slate-800 to-slate-900 border-cyan-500/30">

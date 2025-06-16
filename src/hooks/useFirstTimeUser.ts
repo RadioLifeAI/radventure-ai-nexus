@@ -3,36 +3,30 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
 export function useFirstTimeUser() {
-  const { user, profile } = useAuth();
-  const [isFirstTime, setIsFirstTime] = useState(false);
+  const { user } = useAuth();
   const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {
-    if (user && profile) {
-      // Verificar se é primeira vez baseado em quando a conta foi criada
-      const accountAge = Date.now() - new Date(user.created_at).getTime();
-      const isNewUser = accountAge < 5 * 60 * 1000; // 5 minutos
-      
-      // Verificar se já viu o tutorial (pode ser armazenado no localStorage)
-      const hasSeenTutorial = localStorage.getItem(`tutorial_seen_${user.id}`);
-      
-      const shouldShowWelcome = isNewUser && !hasSeenTutorial;
-      
-      setIsFirstTime(shouldShowWelcome);
-      setShowWelcome(shouldShowWelcome);
+    if (!user?.id) return;
+
+    const tutorialKey = `tutorial_completed_${user.id}`;
+    const hasSeenTutorial = localStorage.getItem(tutorialKey);
+    
+    // Só mostrar se nunca viu o tutorial
+    if (!hasSeenTutorial) {
+      setShowWelcome(true);
     }
-  }, [user, profile]);
+  }, [user?.id]);
 
   const markTutorialAsSeen = () => {
-    if (user) {
-      localStorage.setItem(`tutorial_seen_${user.id}`, 'true');
+    if (user?.id) {
+      const tutorialKey = `tutorial_completed_${user.id}`;
+      localStorage.setItem(tutorialKey, 'true');
       setShowWelcome(false);
-      setIsFirstTime(false);
     }
   };
 
   return {
-    isFirstTime,
     showWelcome,
     markTutorialAsSeen
   };

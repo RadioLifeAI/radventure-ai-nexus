@@ -1,9 +1,10 @@
 
 import { Link } from "react-router-dom";
-import { Calendar, Users, Trophy, Settings, Zap, ChevronDown, LogOut } from "lucide-react";
+import { Calendar, Users, Trophy, Settings, Zap, ChevronDown, LogOut, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import * as DropdownMenu from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAdminPermissions } from "@/hooks/useAdminPermissions";
 import { BackButton } from "./navigation/BackButton";
 
 const navLinks = [
@@ -31,6 +32,7 @@ const navLinks = [
 
 export function HeaderNav() {
   const { user, profile, signOut } = useAuth();
+  const { isAdmin } = useAdminPermissions();
 
   if (!user || !profile) {
     return null;
@@ -65,6 +67,19 @@ export function HeaderNav() {
       
       <div className="flex items-center gap-4">
         <BackButton className="hidden md:flex" />
+        
+        {/* Botão Admin - Mostrar apenas para usuários com permissões admin */}
+        {isAdmin && (
+          <Button 
+            asChild
+            className="bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow px-4 py-2 text-sm"
+          >
+            <Link to="/admin" className="flex items-center gap-2">
+              <Shield size={16} />
+              Admin
+            </Link>
+          </Button>
+        )}
         
         <Button className="bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-bold rounded-lg shadow px-5 py-2 text-base mr-2 hover:scale-105 transition">
           {profile.radcoin_balance || 0} RadCoins
@@ -117,6 +132,16 @@ export function HeaderNav() {
                 <Trophy size={17}/> Rankings
               </Link>
             </DropdownMenu.DropdownMenuItem>
+            {isAdmin && (
+              <>
+                <DropdownMenu.DropdownMenuSeparator />
+                <DropdownMenu.DropdownMenuItem asChild>
+                  <Link to="/admin" className="flex items-center gap-2 px-3 py-2 hover:bg-red-100/60 rounded text-red-600">
+                    <Shield size={17}/> Painel Admin
+                  </Link>
+                </DropdownMenu.DropdownMenuItem>
+              </>
+            )}
             <DropdownMenu.DropdownMenuSeparator />
             <DropdownMenu.DropdownMenuItem onClick={handleSignOut}>
               <div className="flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-100 rounded w-full">
