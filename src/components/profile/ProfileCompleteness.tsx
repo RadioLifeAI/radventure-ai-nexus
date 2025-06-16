@@ -31,19 +31,23 @@ export function ProfileCompleteness({ onEditProfile }: ProfileCompletenessProps)
       if (!profile?.id) return;
 
       try {
-        // Verificar se já recebeu a recompensa de boas-vindas usando tipo válido
+        // Verificar se já recebeu a recompensa de boas-vindas usando uma query mais simples
         const { data, error } = await supabase
           .from('radcoin_transactions_log')
-          .select('id')
+          .select('id, metadata')
           .eq('user_id', profile.id)
           .eq('tx_type', 'admin_grant')
-          .eq('metadata->reason', 'welcome_bonus')
-          .maybeSingle();
+          .limit(10);
 
         if (error) {
           console.error('Error checking welcome reward:', error);
         } else {
-          setHasClaimedWelcomeReward(!!data);
+          // Verificar se alguma transação tem o metadata de welcome_bonus
+          const hasWelcomeBonus = data?.some(transaction => {
+            const metadata = transaction.metadata as any;
+            return metadata && metadata.reason === 'welcome_bonus';
+          });
+          setHasClaimedWelcomeReward(!!hasWelcomeBonus);
         }
       } catch (error) {
         console.error('Error checking welcome reward:', error);
