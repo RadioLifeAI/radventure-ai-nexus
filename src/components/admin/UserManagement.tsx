@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,32 +17,6 @@ import {
 } from "lucide-react";
 import { useAdminPermissions } from "@/hooks/useAdminPermissions";
 import type { UserProfile } from "@/types/admin";
-
-// Define database profile type to match actual database structure
-interface DatabaseProfile {
-  id: string;
-  type: 'USER' | 'ADMIN';
-  email?: string;
-  username?: string;
-  full_name?: string;
-  nickname?: string;
-  bio?: string;
-  avatar_url?: string;
-  country_code?: string;
-  city?: string;
-  state?: string;
-  birthdate?: string;
-  college?: string;
-  preferences?: any;
-  academic_specialty?: string;
-  medical_specialty?: string;
-  academic_stage?: 'first_year' | 'second_year' | 'third_year' | 'fourth_year' | 'fifth_year' | 'sixth_year' | 'intern' | 'resident' | 'doctor' | 'specialist';
-  total_points: number;
-  radcoin_balance: number;
-  current_streak: number;
-  created_at: string;
-  updated_at: string;
-}
 
 export function UserManagement() {
   const { hasPermission } = useAdminPermissions();
@@ -78,7 +53,7 @@ export function UserManagement() {
 
   // Mutation para atualizar usuário
   const updateUserMutation = useMutation({
-    mutationFn: async (userData: Partial<DatabaseProfile> & { id: string }) => {
+    mutationFn: async (userData: Partial<UserProfile> & { id: string }) => {
       const { data, error } = await supabase
         .from('profiles')
         .update(userData)
@@ -367,7 +342,7 @@ export function UserManagement() {
                 full_name: formData.get('full_name') as string,
                 username: formData.get('username') as string,
                 medical_specialty: formData.get('medical_specialty') as string,
-                academic_stage: formData.get('academic_stage') as 'first_year' | 'second_year' | 'third_year' | 'fourth_year' | 'fifth_year' | 'sixth_year' | 'intern' | 'resident' | 'doctor' | 'specialist',
+                academic_stage: formData.get('academic_stage') as 'Student' | 'Intern' | 'Resident' | 'Specialist',
                 city: formData.get('city') as string,
                 state: formData.get('state') as string,
               });
@@ -408,16 +383,10 @@ export function UserManagement() {
                         <SelectValue placeholder="Selecione o estágio" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="first_year">1º Ano</SelectItem>
-                        <SelectItem value="second_year">2º Ano</SelectItem>
-                        <SelectItem value="third_year">3º Ano</SelectItem>
-                        <SelectItem value="fourth_year">4º Ano</SelectItem>
-                        <SelectItem value="fifth_year">5º Ano</SelectItem>
-                        <SelectItem value="sixth_year">6º Ano</SelectItem>
-                        <SelectItem value="intern">Interno</SelectItem>
-                        <SelectItem value="resident">Residente</SelectItem>
-                        <SelectItem value="doctor">Médico</SelectItem>
-                        <SelectItem value="specialist">Especialista</SelectItem>
+                        <SelectItem value="Student">Estudante</SelectItem>
+                        <SelectItem value="Intern">Interno</SelectItem>
+                        <SelectItem value="Resident">Residente</SelectItem>
+                        <SelectItem value="Specialist">Especialista</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

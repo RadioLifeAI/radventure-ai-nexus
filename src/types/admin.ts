@@ -40,10 +40,11 @@ export interface UserProfile {
   preferences?: any;
   academic_specialty?: string;
   medical_specialty?: string;
-  academic_stage?: 'first_year' | 'second_year' | 'third_year' | 'fourth_year' | 'fifth_year' | 'sixth_year' | 'intern' | 'resident' | 'doctor' | 'specialist';
+  academic_stage?: 'Student' | 'Intern' | 'Resident' | 'Specialist';
   total_points: number;
   radcoin_balance: number;
   current_streak: number;
+  avatar_url?: string;
   created_at: string;
   updated_at: string;
 }
