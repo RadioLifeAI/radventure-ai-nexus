@@ -41,7 +41,6 @@ interface SubscriptionPlan {
   id: string;
   name: string;
   display_name: string;
-  tier: "Free" | "Pro" | "Plus";
 }
 
 export function UserEditModal({ user, isOpen, onClose, onUserUpdated }: UserEditModalProps) {
@@ -94,7 +93,19 @@ export function UserEditModal({ user, isOpen, onClose, onUserUpdated }: UserEdit
         .single();
 
       if (benefits) {
-        setUserBenefits(benefits);
+        setUserBenefits({
+          ai_credits: benefits.ai_credits,
+          elimination_aids: benefits.elimination_aids,
+          skip_aids: benefits.skip_aids,
+          max_ai_hints_per_day: benefits.max_ai_hints_per_day,
+          max_eliminations_per_case: benefits.max_eliminations_per_case,
+          max_skips_per_session: benefits.max_skips_per_session,
+          bonus_points_multiplier: benefits.bonus_points_multiplier,
+          has_premium_features: benefits.has_premium_features,
+          custom_title: benefits.custom_title || "",
+          badge_collection: Array.isArray(benefits.badge_collection) ? benefits.badge_collection : [],
+          expires_at: benefits.expires_at
+        });
       }
 
       // Carregar títulos disponíveis
@@ -105,10 +116,10 @@ export function UserEditModal({ user, isOpen, onClose, onUserUpdated }: UserEdit
 
       setAvailableTitles(titles || []);
 
-      // Carregar planos de assinatura
+      // Carregar planos de assinatura (sem tier)
       const { data: plans } = await supabase
         .from("subscription_plans")
-        .select("*")
+        .select("id, name, display_name")
         .eq("is_active", true)
         .order("sort_order");
 

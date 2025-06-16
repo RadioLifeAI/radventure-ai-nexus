@@ -34,6 +34,7 @@ export type UserProfile = {
   total_points: number;
   radcoin_balance: number;
   created_at: string;
+  updated_at: string;
   city: string;
   state: string;
   bio?: string;
