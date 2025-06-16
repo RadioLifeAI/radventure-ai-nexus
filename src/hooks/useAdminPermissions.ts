@@ -11,7 +11,10 @@ export function useAdminPermissions() {
     async function fetchUserRoles() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        if (!user) {
+          setLoading(false);
+          return;
+        }
 
         const { data, error } = await supabase
           .from('admin_user_roles')
@@ -21,6 +24,7 @@ export function useAdminPermissions() {
 
         if (error) {
           console.error('Error fetching user roles:', error);
+          setLoading(false);
           return;
         }
 
@@ -86,7 +90,8 @@ export function useAdminPermissions() {
       'ContentEditor': [
         { resource: 'CASES', actions: ['MANAGE'] },
         { resource: 'CONTENT', actions: ['MANAGE'] },
-        { resource: 'EVENTS', actions: ['CREATE', 'UPDATE'] }
+        { resource: 'EVENTS', actions: ['CREATE', 'UPDATE'] },
+        { resource: 'AI_TUTOR', actions: ['MANAGE'] }
       ],
       'WebPerformanceSpecialist': [
         { resource: 'ANALYTICS', actions: ['READ'] },

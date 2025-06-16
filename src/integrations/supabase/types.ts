@@ -9,6 +9,51 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      achievement_system: {
+        Row: {
+          code: string
+          conditions: Json
+          created_at: string
+          description: string | null
+          icon_url: string | null
+          id: string
+          is_active: boolean
+          name: string
+          points_required: number | null
+          rarity: string
+          rewards: Json | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          conditions?: Json
+          created_at?: string
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          points_required?: number | null
+          rarity?: string
+          rewards?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          conditions?: Json
+          created_at?: string
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          points_required?: number | null
+          rarity?: string
+          rewards?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       achievements: {
         Row: {
           code: string
@@ -62,6 +107,151 @@ export type Database = {
           {
             foreignKeyName: "admin_roles_profile_id_fkey"
             columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_user_roles: {
+        Row: {
+          admin_role: string
+          assigned_at: string
+          assigned_by: string | null
+          id: string
+          is_active: boolean
+          user_id: string
+        }
+        Insert: {
+          admin_role: string
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          is_active?: boolean
+          user_id: string
+        }
+        Update: {
+          admin_role?: string
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          is_active?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_user_roles_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_tutor_config: {
+        Row: {
+          api_provider: string
+          config_name: string
+          created_at: string
+          id: string
+          is_active: boolean
+          max_tokens: number
+          model_name: string
+          prompt_template: string | null
+          temperature: number
+          updated_at: string
+        }
+        Insert: {
+          api_provider?: string
+          config_name: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_tokens?: number
+          model_name?: string
+          prompt_template?: string | null
+          temperature?: number
+          updated_at?: string
+        }
+        Update: {
+          api_provider?: string
+          config_name?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_tokens?: number
+          model_name?: string
+          prompt_template?: string | null
+          temperature?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_tutor_usage_logs: {
+        Row: {
+          case_id: string | null
+          config_id: string | null
+          cost: number | null
+          created_at: string
+          id: string
+          prompt_used: string | null
+          quality_rating: number | null
+          response_text: string | null
+          response_time_ms: number | null
+          tokens_used: number | null
+          user_id: string | null
+        }
+        Insert: {
+          case_id?: string | null
+          config_id?: string | null
+          cost?: number | null
+          created_at?: string
+          id?: string
+          prompt_used?: string | null
+          quality_rating?: number | null
+          response_text?: string | null
+          response_time_ms?: number | null
+          tokens_used?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          case_id?: string | null
+          config_id?: string | null
+          cost?: number | null
+          created_at?: string
+          id?: string
+          prompt_used?: string | null
+          quality_rating?: number | null
+          response_text?: string | null
+          response_time_ms?: number | null
+          tokens_used?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_tutor_usage_logs_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "medical_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_tutor_usage_logs_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "ai_tutor_config"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_tutor_usage_logs_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -588,6 +778,51 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_plans: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_name: string
+          features: Json | null
+          id: string
+          is_active: boolean
+          limits: Json | null
+          name: string
+          price_monthly: number
+          price_yearly: number
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_name: string
+          features?: Json | null
+          id?: string
+          is_active?: boolean
+          limits?: Json | null
+          name: string
+          price_monthly?: number
+          price_yearly?: number
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_name?: string
+          features?: Json | null
+          id?: string
+          is_active?: boolean
+          limits?: Json | null
+          name?: string
+          price_monthly?: number
+          price_yearly?: number
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           created_at: string
@@ -664,6 +899,54 @@ export type Database = {
             columns: ["achievement_id"]
             isOneToOne: false
             referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_achievements_progress: {
+        Row: {
+          achievement_id: string
+          completed_at: string | null
+          created_at: string
+          current_progress: number
+          id: string
+          is_completed: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          completed_at?: string | null
+          created_at?: string
+          current_progress?: number
+          id?: string
+          is_completed?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          completed_at?: string | null
+          created_at?: string
+          current_progress?: number
+          id?: string
+          is_completed?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_progress_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievement_system"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_achievements_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

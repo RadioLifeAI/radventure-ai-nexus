@@ -49,6 +49,9 @@ export type SubscriptionPlan = {
   features: Record<string, any>;
   limits: Record<string, any>;
   is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
 };
 
 export type AITutorConfig = {
@@ -60,6 +63,22 @@ export type AITutorConfig = {
   max_tokens: number;
   temperature: number;
   is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AITutorUsageLog = {
+  id: string;
+  config_id: string;
+  user_id: string;
+  case_id: string;
+  tokens_used: number;
+  cost: number;
+  response_time_ms: number;
+  quality_rating: number;
+  prompt_used: string;
+  response_text: string;
+  created_at: string;
 };
 
 export type Achievement = {
@@ -73,4 +92,26 @@ export type Achievement = {
   conditions: Record<string, any>;
   rewards?: Record<string, any>;
   is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type UserAchievementProgress = {
+  id: string;
+  user_id: string;
+  achievement_id: string;
+  current_progress: number;
+  is_completed: boolean;
+  completed_at?: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AdminUserRole = {
+  id: string;
+  user_id: string;
+  admin_role: string;
+  is_active: boolean;
+  assigned_by?: string;
+  assigned_at: string;
 };

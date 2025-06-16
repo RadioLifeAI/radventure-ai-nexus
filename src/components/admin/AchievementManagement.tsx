@@ -15,8 +15,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { 
-  Trophy, Star, Medal, Award, Edit, Trash2, 
-  Plus, Crown, Target, Gift, Zap
+  Trophy, Medal, Star, Edit, Trash2, Plus, 
+  Users, Award, Crown, Target
 } from "lucide-react";
 import { useAdminPermissions } from "@/hooks/useAdminPermissions";
 import type { Achievement } from "@/types/admin";
@@ -36,7 +36,7 @@ export function AchievementManagement() {
       const { data, error } = await supabase
         .from('achievement_system')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('rarity', { ascending: false });
       
       if (error) throw error;
       return data as Achievement[];
@@ -50,18 +50,30 @@ export function AchievementManagement() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('user_achievements_progress')
-        .select('achievement_id, is_completed')
-        .eq('is_completed', true);
+        .select('is_completed, achievement_id');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching achievement stats:', error);
+        return {
+          totalAchievements: 0,
+          completedAchievements: 0,
+          completionRate: 0,
+          activeUsers: 0
+        };
+      }
       
-      const completionsByAchievement = data.reduce((acc, progress) => {
-        acc[progress.achievement_id] = (acc[progress.achievement_id] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
+      const totalProgress = data.length;
+      const completedProgress = data.filter(prog => prog.is_completed).length;
+      const completionRate = totalProgress > 0 ? (completedProgress / totalProgress) * 100 : 0;
       
-      return { completionsByAchievement, totalCompletions: data.length };
-    }
+      return {
+        totalAchievements: achievements?.length || 0,
+        completedAchievements: completedProgress,
+        completionRate,
+        activeUsers: new Set(data.map(prog => prog.achievement_id)).size
+      };
+    },
+    enabled: !!achievements
   });
 
   // Mutation para criar/atualizar conquista
@@ -70,7 +82,18 @@ export function AchievementManagement() {
       if (achievementData.id) {
         const { data, error } = await supabase
           .from('achievement_system')
-          .update(achievementData)
+          .update({
+            code: achievementData.code,
+            name: achievementData.name,
+            description: achievementData.description,
+            icon_url: achievementData.icon_url,
+            rarity: achievementData.rarity,
+            points_required: achievementData.points_required,
+            conditions: achievementData.conditions,
+            rewards: achievementData.rewards,
+            is_active: achievementData.is_active,
+            updated_at: new Date().toISOString()
+          })
           .eq('id', achievementData.id)
           .select()
           .single();
@@ -80,7 +103,17 @@ export function AchievementManagement() {
       } else {
         const { data, error } = await supabase
           .from('achievement_system')
-          .insert(achievementData)
+          .insert({
+            code: achievementData.code!,
+            name: achievementData.name!,
+            description: achievementData.description,
+            icon_url: achievementData.icon_url,
+            rarity: achievementData.rarity || 'common',
+            points_required: achievementData.points_required,
+            conditions: achievementData.conditions || {},
+            rewards: achievementData.rewards || {},
+            is_active: achievementData.is_active ?? true
+          })
           .select()
           .single();
         
@@ -96,6 +129,15 @@ export function AchievementManagement() {
       });
       setIsEditModalOpen(false);
       setIsCreateModalOpen(false);
+      setSelectedAchievement(null);
+    },
+    onError: (error) => {
+      console.error('Error saving achievement:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar conquista. Tente novamente.",
+        variant: "destructive"
+      });
     }
   });
 
@@ -114,6 +156,14 @@ export function AchievementManagement() {
       toast({
         title: "Conquista excluída",
         description: "A conquista foi excluída com sucesso.",
+      });
+    },
+    onError: (error) => {
+      console.error('Error deleting achievement:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao excluir conquista. Tente novamente.",
+        variant: "destructive"
       });
     }
   });
@@ -135,23 +185,14 @@ export function AchievementManagement() {
     setIsEditModalOpen(true);
   };
 
-  const getRarityIcon = (rarity: string) => {
-    switch (rarity) {
-      case 'legendary': return <Crown className="h-4 w-4 text-yellow-500" />;
-      case 'epic': return <Medal className="h-4 w-4 text-purple-500" />;
-      case 'rare': return <Star className="h-4 w-4 text-blue-500" />;
-      case 'uncommon': return <Award className="h-4 w-4 text-green-500" />;
-      default: return <Target className="h-4 w-4 text-gray-500" />;
-    }
-  };
-
   const getRarityColor = (rarity: string) => {
     switch (rarity) {
-      case 'legendary': return 'border-yellow-500 bg-yellow-50';
-      case 'epic': return 'border-purple-500 bg-purple-50';
-      case 'rare': return 'border-blue-500 bg-blue-50';
-      case 'uncommon': return 'border-green-500 bg-green-50';
-      default: return 'border-gray-300 bg-gray-50';
+      case 'legendary': return 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white';
+      case 'epic': return 'bg-gradient-to-r from-purple-500 to-pink-500 text-white';
+      case 'rare': return 'bg-blue-500 text-white';
+      case 'uncommon': return 'bg-green-500 text-white';
+      case 'common': return 'bg-gray-500 text-white';
+      default: return 'bg-gray-500 text-white';
     }
   };
 
@@ -165,18 +206,12 @@ export function AchievementManagement() {
         code: formData.get('code') as string,
         name: formData.get('name') as string,
         description: formData.get('description') as string,
+        icon_url: formData.get('icon_url') as string,
         rarity: formData.get('rarity') as string,
-        points_required: parseInt(formData.get('points_required') as string) || null,
-        icon_url: formData.get('icon_url') as string || null,
+        points_required: parseInt(formData.get('points_required') as string) || undefined,
         is_active: formData.get('is_active') === 'on',
-        conditions: {
-          type: formData.get('condition_type') as string,
-          value: parseInt(formData.get('condition_value') as string) || 0,
-        },
-        rewards: {
-          radcoins: parseInt(formData.get('reward_radcoins') as string) || 0,
-          points: parseInt(formData.get('reward_points') as string) || 0,
-        }
+        conditions: {},
+        rewards: {}
       };
       
       onSubmit(achievementData);
@@ -184,13 +219,13 @@ export function AchievementManagement() {
       <div className="grid gap-4 py-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="code">Código Único</Label>
+            <Label htmlFor="code">Código da Conquista</Label>
             <Input
               id="code"
               name="code"
               defaultValue={achievement?.code || ''}
-              placeholder="ex: first_case_solved"
               required
+              placeholder="first_case"
             />
           </div>
           <div>
@@ -200,6 +235,7 @@ export function AchievementManagement() {
               name="name"
               defaultValue={achievement?.name || ''}
               required
+              placeholder="Primeiro Caso"
             />
           </div>
         </div>
@@ -210,11 +246,12 @@ export function AchievementManagement() {
             id="description"
             name="description"
             defaultValue={achievement?.description || ''}
-            rows={2}
+            rows={3}
+            placeholder="Descrição da conquista..."
           />
         </div>
         
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <Label htmlFor="rarity">Raridade</Label>
             <Select name="rarity" defaultValue={achievement?.rarity || 'common'}>
@@ -236,7 +273,21 @@ export function AchievementManagement() {
               id="points_required"
               name="points_required"
               type="number"
+              min="0"
               defaultValue={achievement?.points_required || ''}
+              placeholder="100"
+            />
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="icon_url">URL do Ícone</Label>
+            <Input
+              id="icon_url"
+              name="icon_url"
+              defaultValue={achievement?.icon_url || ''}
+              placeholder="https://example.com/icon.png"
             />
           </div>
           <div className="flex items-center space-x-2 pt-6">
@@ -245,65 +296,7 @@ export function AchievementManagement() {
               name="is_active"
               defaultChecked={achievement?.is_active ?? true}
             />
-            <Label htmlFor="is_active">Ativa</Label>
-          </div>
-        </div>
-        
-        <div>
-          <Label htmlFor="icon_url">URL do Ícone</Label>
-          <Input
-            id="icon_url"
-            name="icon_url"
-            defaultValue={achievement?.icon_url || ''}
-            placeholder="https://..."
-          />
-        </div>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="condition_type">Tipo de Condição</Label>
-            <Select name="condition_type" defaultValue={achievement?.conditions?.type || 'cases_solved'}>
-              <SelectTrigger>
-                <SelectValue placeholder="Tipo de condição" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="cases_solved">Casos Resolvidos</SelectItem>
-                <SelectItem value="streak">Sequência de Acertos</SelectItem>
-                <SelectItem value="points_earned">Pontos Ganhos</SelectItem>
-                <SelectItem value="events_won">Eventos Vencidos</SelectItem>
-                <SelectItem value="login_days">Dias de Login</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor="condition_value">Valor da Condição</Label>
-            <Input
-              id="condition_value"
-              name="condition_value"
-              type="number"
-              defaultValue={achievement?.conditions?.value || 0}
-            />
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="reward_radcoins">Recompensa (RadCoins)</Label>
-            <Input
-              id="reward_radcoins"
-              name="reward_radcoins"
-              type="number"
-              defaultValue={achievement?.rewards?.radcoins || 0}
-            />
-          </div>
-          <div>
-            <Label htmlFor="reward_points">Recompensa (Pontos)</Label>
-            <Input
-              id="reward_points"
-              name="reward_points"
-              type="number"
-              defaultValue={achievement?.rewards?.points || 0}
-            />
+            <Label htmlFor="is_active">Conquista Ativa</Label>
           </div>
         </div>
       </div>
@@ -325,19 +318,19 @@ export function AchievementManagement() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-yellow-600 to-orange-600 rounded-xl p-6 text-white">
+      <div className="bg-gradient-to-r from-amber-600 to-orange-600 rounded-xl p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2">
-              <Trophy className="text-yellow-200" />
+              <Trophy className="text-yellow-300" />
               Sistema de Conquistas
-              <Crown className="text-yellow-300" />
+              <Medal className="text-yellow-200" />
             </h1>
-            <p className="text-yellow-100 mt-2">Gerencie conquistas e recompensas</p>
+            <p className="text-amber-100 mt-2">Gerencie conquistas e recompensas gamificadas</p>
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold">{achievements?.length || 0}</div>
-            <div className="text-yellow-200">Conquistas Criadas</div>
+            <div className="text-amber-200">Conquistas Ativas</div>
           </div>
         </div>
       </div>
@@ -345,8 +338,8 @@ export function AchievementManagement() {
       <Tabs defaultValue="achievements" className="space-y-6">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="achievements">Conquistas</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="progress">Progresso</TabsTrigger>
-          <TabsTrigger value="rewards">Recompensas</TabsTrigger>
         </TabsList>
 
         <TabsContent value="achievements">
@@ -355,7 +348,7 @@ export function AchievementManagement() {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>Conquistas do Sistema</CardTitle>
-                  <CardDescription>Gerencie as conquistas disponíveis na plataforma</CardDescription>
+                  <CardDescription>Gerencie todas as conquistas disponíveis na plataforma</CardDescription>
                 </div>
                 {hasPermission('CONTENT', 'CREATE') && (
                   <Button onClick={() => setIsCreateModalOpen(true)} className="gap-2">
@@ -366,65 +359,141 @@ export function AchievementManagement() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {achievements?.map((achievement) => (
-                  <Card 
-                    key={achievement.id} 
-                    className={`relative border-2 ${getRarityColor(achievement.rarity)} ${!achievement.is_active ? 'opacity-60' : ''}`}
-                  >
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          {getRarityIcon(achievement.rarity)}
-                          <CardTitle className="text-lg">{achievement.name}</CardTitle>
-                        </div>
-                        <Badge variant={achievement.is_active ? "default" : "secondary"}>
-                          {achievement.is_active ? "Ativa" : "Inativa"}
-                        </Badge>
-                      </div>
-                      <CardDescription className="text-sm">{achievement.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <div className="space-y-2">
-                        <div className="text-sm">
-                          <span className="font-medium">Raridade:</span> {achievement.rarity}
-                        </div>
-                        {achievement.points_required && (
-                          <div className="text-sm">
-                            <span className="font-medium">Pontos:</span> {achievement.points_required}
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Código</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead>Raridade</TableHead>
+                    <TableHead>Pontos</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8">
+                        Carregando conquistas...
+                      </TableCell>
+                    </TableRow>
+                  ) : achievements?.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8">
+                        Nenhuma conquista encontrada
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    achievements?.map((achievement) => (
+                      <TableRow key={achievement.id}>
+                        <TableCell className="font-medium">{achievement.name}</TableCell>
+                        <TableCell className="font-mono text-sm">{achievement.code}</TableCell>
+                        <TableCell className="max-w-xs truncate">{achievement.description}</TableCell>
+                        <TableCell>
+                          <Badge className={getRarityColor(achievement.rarity)}>
+                            {achievement.rarity}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{achievement.points_required || '-'}</TableCell>
+                        <TableCell>
+                          <Badge variant={achievement.is_active ? "default" : "secondary"}>
+                            {achievement.is_active ? "Ativo" : "Inativo"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            {hasPermission('CONTENT', 'UPDATE') && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleEditAchievement(achievement)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {hasPermission('CONTENT', 'DELETE') && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => deleteAchievementMutation.mutate(achievement.id)}
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
-                        )}
-                        <div className="text-sm">
-                          <span className="font-medium">Conquistas:</span> {achievementStats?.completionsByAchievement[achievement.id] || 0}
-                        </div>
-                        
-                        <div className="flex gap-2 pt-2">
-                          {hasPermission('CONTENT', 'UPDATE') && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEditAchievement(achievement)}
-                              className="flex-1"
-                            >
-                              <Edit className="h-4 w-4 mr-1" />
-                              Editar
-                            </Button>
-                          )}
-                          {hasPermission('CONTENT', 'DELETE') && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => deleteAchievementMutation.mutate(achievement.id)}
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="analytics">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">Total de Conquistas</CardTitle>
+                <Trophy className="h-4 w-4 text-amber-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-amber-600">{achievementStats?.totalAchievements || 0}</div>
+                <p className="text-xs text-gray-600">Conquistas criadas</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">Conquistas Completadas</CardTitle>
+                <Award className="h-4 w-4 text-green-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">{achievementStats?.completedAchievements || 0}</div>
+                <p className="text-xs text-gray-600">Total de completadas</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">Taxa de Conclusão</CardTitle>
+                <Target className="h-4 w-4 text-blue-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">
+                  {(achievementStats?.completionRate || 0).toFixed(1)}%
+                </div>
+                <p className="text-xs text-gray-600">Média de conclusão</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">Usuários Ativos</CardTitle>
+                <Users className="h-4 w-4 text-purple-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-purple-600">{achievementStats?.activeUsers || 0}</div>
+                <p className="text-xs text-gray-600">Com progresso ativo</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Analytics de Conquistas</CardTitle>
+              <CardDescription>
+                Análise detalhada do engajamento com o sistema de conquistas
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center text-gray-500 py-12">
+                <Crown className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <h3 className="text-lg font-semibold mb-2">Analytics Avançados</h3>
+                <p>Gráficos de engajamento e progresso serão exibidos aqui</p>
               </div>
             </CardContent>
           </Card>
@@ -433,40 +502,16 @@ export function AchievementManagement() {
         <TabsContent value="progress">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Target className="h-5 w-5" />
-                Progresso dos Usuários
-              </CardTitle>
+              <CardTitle>Progresso dos Usuários</CardTitle>
               <CardDescription>
-                Monitore o progresso das conquistas pelos usuários
+                Monitore o progresso individual dos usuários nas conquistas
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-center text-gray-500 py-12">
-                <Target className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                <h3 className="text-lg font-semibold mb-2">Analytics de Progresso</h3>
-                <p>Relatórios detalhados do progresso dos usuários serão exibidos aqui</p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="rewards">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Gift className="h-5 w-5" />
-                Sistema de Recompensas
-              </CardTitle>
-              <CardDescription>
-                Configure recompensas e marketplace RadCoins
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center text-gray-500 py-12">
-                <Gift className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                <h3 className="text-lg font-semibold mb-2">Marketplace de Recompensas</h3>
-                <p>Sistema de troca de RadCoins por benefícios será implementado aqui</p>
+                <Star className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <h3 className="text-lg font-semibold mb-2">Progresso dos Usuários</h3>
+                <p>Interface de monitoramento de progresso será implementada aqui</p>
               </div>
             </CardContent>
           </Card>
@@ -475,7 +520,7 @@ export function AchievementManagement() {
 
       {/* Modal de Edição */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Editar Conquista</DialogTitle>
             <DialogDescription>
@@ -494,11 +539,11 @@ export function AchievementManagement() {
 
       {/* Modal de Criação */}
       <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Nova Conquista</DialogTitle>
             <DialogDescription>
-              Crie uma nova conquista para a plataforma.
+              Crie uma nova conquista para o sistema.
             </DialogDescription>
           </DialogHeader>
           

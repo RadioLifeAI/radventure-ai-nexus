@@ -19,7 +19,7 @@ import {
   Plus, Activity, TrendingUp, DollarSign, Clock
 } from "lucide-react";
 import { useAdminPermissions } from "@/hooks/useAdminPermissions";
-import type { AITutorConfig } from "@/types/admin";
+import type { AITutorConfig, AITutorUsageLog } from "@/types/admin";
 
 export function AITutorManagement() {
   const { hasPermission } = useAdminPermissions();
@@ -53,13 +53,23 @@ export function AITutorManagement() {
         .select('tokens_used, cost, response_time_ms, quality_rating, created_at')
         .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching usage stats:', error);
+        return {
+          totalRequests: 0,
+          totalTokens: 0,
+          totalCost: 0,
+          avgResponseTime: 0,
+          avgQuality: 0
+        };
+      }
       
-      const totalRequests = data.length;
-      const totalTokens = data.reduce((sum, log) => sum + (log.tokens_used || 0), 0);
-      const totalCost = data.reduce((sum, log) => sum + (log.cost || 0), 0);
-      const avgResponseTime = data.reduce((sum, log) => sum + (log.response_time_ms || 0), 0) / totalRequests;
-      const avgQuality = data.reduce((sum, log) => sum + (log.quality_rating || 0), 0) / totalRequests;
+      const logs = data as AITutorUsageLog[];
+      const totalRequests = logs.length;
+      const totalTokens = logs.reduce((sum, log) => sum + (log.tokens_used || 0), 0);
+      const totalCost = logs.reduce((sum, log) => sum + (log.cost || 0), 0);
+      const avgResponseTime = totalRequests > 0 ? logs.reduce((sum, log) => sum + (log.response_time_ms || 0), 0) / totalRequests : 0;
+      const avgQuality = totalRequests > 0 ? logs.reduce((sum, log) => sum + (log.quality_rating || 0), 0) / totalRequests : 0;
       
       return {
         totalRequests,
@@ -77,7 +87,16 @@ export function AITutorManagement() {
       if (configData.id) {
         const { data, error } = await supabase
           .from('ai_tutor_config')
-          .update(configData)
+          .update({
+            config_name: configData.config_name,
+            model_name: configData.model_name,
+            api_provider: configData.api_provider,
+            prompt_template: configData.prompt_template,
+            max_tokens: configData.max_tokens,
+            temperature: configData.temperature,
+            is_active: configData.is_active,
+            updated_at: new Date().toISOString()
+          })
           .eq('id', configData.id)
           .select()
           .single();
@@ -87,7 +106,15 @@ export function AITutorManagement() {
       } else {
         const { data, error } = await supabase
           .from('ai_tutor_config')
-          .insert(configData)
+          .insert({
+            config_name: configData.config_name!,
+            model_name: configData.model_name!,
+            api_provider: configData.api_provider!,
+            prompt_template: configData.prompt_template,
+            max_tokens: configData.max_tokens!,
+            temperature: configData.temperature!,
+            is_active: configData.is_active ?? true
+          })
           .select()
           .single();
         
@@ -103,6 +130,15 @@ export function AITutorManagement() {
       });
       setIsEditModalOpen(false);
       setIsCreateModalOpen(false);
+      setSelectedConfig(null);
+    },
+    onError: (error) => {
+      console.error('Error saving config:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar configuração. Tente novamente.",
+        variant: "destructive"
+      });
     }
   });
 
@@ -121,6 +157,14 @@ export function AITutorManagement() {
       toast({
         title: "Configuração excluída",
         description: "A configuração foi excluída com sucesso.",
+      });
+    },
+    onError: (error) => {
+      console.error('Error deleting config:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao excluir configuração. Tente novamente.",
+        variant: "destructive"
       });
     }
   });
