@@ -11,6 +11,10 @@ import {
 } from "lucide-react";
 import { DashboardAnalytics } from "@/components/admin/DashboardAnalytics";
 import { UserManagement } from "@/components/admin/UserManagement";
+import { SubscriptionManagement } from "@/components/admin/SubscriptionManagement";
+import { AITutorManagement } from "@/components/admin/AITutorManagement";
+import { AchievementManagement } from "@/components/admin/AchievementManagement";
+import { SystemMonitoring } from "@/components/admin/SystemMonitoring";
 import { useAdminPermissions } from "@/hooks/useAdminPermissions";
 
 export default function AdminDashboardAdvanced() {
@@ -47,7 +51,16 @@ export default function AdminDashboardAdvanced() {
   const getRoleBadges = () => {
     const roleColors: Record<string, string> = {
       'DEV': 'bg-red-500',
+      'ADMIN_DEV': 'bg-red-600',
       'TechAdmin': 'bg-purple-500',
+      'SHIELD_MASTER': 'bg-blue-600',
+      'LORE_CRAFTER': 'bg-green-600',
+      'SPEED_WIZARD': 'bg-yellow-600',
+      'DATA_SEER': 'bg-pink-600',
+      'GROWTH_HACKER': 'bg-orange-600',
+      'LOOT_KEEPER': 'bg-teal-600',
+      'HELP_RANGER': 'bg-indigo-600',
+      'LAW_GUARDIAN': 'bg-gray-600',
       'WebSecuritySpecialist': 'bg-blue-500',
       'ContentEditor': 'bg-green-500',
       'WebPerformanceSpecialist': 'bg-yellow-500',
@@ -92,7 +105,7 @@ export default function AdminDashboardAdvanced() {
       description: "Ajustar parâmetros do sistema",
       icon: Settings,
       color: "bg-orange-500",
-      action: () => setActiveTab('settings')
+      action: () => setActiveTab('monitoring')
     }
   ];
 
@@ -145,7 +158,7 @@ export default function AdminDashboardAdvanced() {
 
         {/* Tabs Principais */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 bg-white/80 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-7 bg-white/80 backdrop-blur-sm">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Analytics
@@ -154,13 +167,21 @@ export default function AdminDashboardAdvanced() {
               <Users className="h-4 w-4" />
               Usuários
             </TabsTrigger>
-            <TabsTrigger value="content" className="flex items-center gap-2">
-              <Brain className="h-4 w-4" />
-              Conteúdo
-            </TabsTrigger>
             <TabsTrigger value="subscriptions" className="flex items-center gap-2">
               <DollarSign className="h-4 w-4" />
               Assinaturas
+            </TabsTrigger>
+            <TabsTrigger value="ai-tutor" className="flex items-center gap-2">
+              <Brain className="h-4 w-4" />
+              Tutor IA
+            </TabsTrigger>
+            <TabsTrigger value="achievements" className="flex items-center gap-2">
+              <Trophy className="h-4 w-4" />
+              Conquistas
+            </TabsTrigger>
+            <TabsTrigger value="monitoring" className="flex items-center gap-2">
+              <Zap className="h-4 w-4" />
+              Monitoramento
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
@@ -176,68 +197,20 @@ export default function AdminDashboardAdvanced() {
             <UserManagement />
           </TabsContent>
 
-          <TabsContent value="content">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Brain className="h-5 w-5 text-blue-500" />
-                  Gestão de Conteúdo
-                </CardTitle>
-                <CardDescription>
-                  Gerencie casos médicos, eventos e material educativo
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <Card className="cursor-pointer hover:shadow-md transition-shadow" 
-                        onClick={() => window.location.href = '/admin/casos-medicos'}>
-                    <CardContent className="p-6 text-center">
-                      <Brain className="h-12 w-12 text-blue-500 mx-auto mb-4" />
-                      <h3 className="font-semibold mb-2">Casos Médicos</h3>
-                      <p className="text-sm text-gray-600">Criar e editar casos radiológicos</p>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card className="cursor-pointer hover:shadow-md transition-shadow"
-                        onClick={() => window.location.href = '/admin/events-management'}>
-                    <CardContent className="p-6 text-center">
-                      <Trophy className="h-12 w-12 text-purple-500 mx-auto mb-4" />
-                      <h3 className="font-semibold mb-2">Eventos</h3>
-                      <p className="text-sm text-gray-600">Organizar competições e torneios</p>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card className="cursor-pointer hover:shadow-md transition-shadow">
-                    <CardContent className="p-6 text-center">
-                      <Zap className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-                      <h3 className="font-semibold mb-2">Tutor IA</h3>
-                      <p className="text-sm text-gray-600">Configurar assistente inteligente</p>
-                    </CardContent>
-                  </Card>
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="subscriptions">
+            <SubscriptionManagement />
           </TabsContent>
 
-          <TabsContent value="subscriptions">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5 text-green-500" />
-                  Gestão de Assinaturas
-                </CardTitle>
-                <CardDescription>
-                  Configure planos, benefícios e integrações de pagamento
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center text-gray-500 py-12">
-                  <Target className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                  <h3 className="text-lg font-semibold mb-2">Em Desenvolvimento</h3>
-                  <p>Sistema avançado de assinaturas será implementado aqui</p>
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="ai-tutor">
+            <AITutorManagement />
+          </TabsContent>
+
+          <TabsContent value="achievements">
+            <AchievementManagement />
+          </TabsContent>
+
+          <TabsContent value="monitoring">
+            <SystemMonitoring />
           </TabsContent>
 
           <TabsContent value="settings">

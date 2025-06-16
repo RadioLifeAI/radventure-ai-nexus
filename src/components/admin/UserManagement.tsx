@@ -8,37 +8,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Users, UserCheck, UserX, Crown, Shield, Edit, Trash2, 
-  Plus, Search, Filter, Download, MoreHorizontal, Ban
+  Plus, Search, Filter, Download, Ban
 } from "lucide-react";
 import { useAdminPermissions } from "@/hooks/useAdminPermissions";
-
-type UserProfile = {
-  id: string;
-  email: string;
-  username: string;
-  full_name: string;
-  type: 'USER' | 'ADMIN';
-  academic_stage: string;
-  medical_specialty: string;
-  total_points: number;
-  radcoin_balance: number;
-  created_at: string;
-  city: string;
-  state: string;
-};
+import type { UserProfile } from "@/types/admin";
 
 export function UserManagement() {
   const { hasPermission } = useAdminPermissions();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("all");
+  const [filterType, setFilterType] = useState<"all" | "USER" | "ADMIN">("all");
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
@@ -56,7 +41,7 @@ export function UserManagement() {
       }
 
       if (filterType !== 'all') {
-        query = query.eq('type', filterType.toUpperCase());
+        query = query.eq('type', filterType);
       }
 
       const { data, error } = await query;
@@ -99,12 +84,9 @@ export function UserManagement() {
   // Mutation para banir/desbanir usuário
   const toggleBanMutation = useMutation({
     mutationFn: async ({ userId, banned }: { userId: string, banned: boolean }) => {
-      // Aqui implementaríamos a lógica de ban/unban
-      // Por enquanto, vamos simular atualizando um campo custom
       const { data, error } = await supabase
         .from('profiles')
         .update({ 
-          // Pode adicionar um campo "is_banned" na tabela profiles
           bio: banned ? '[BANIDO] ' + (selectedUser?.bio || '') : (selectedUser?.bio || '').replace('[BANIDO] ', '')
         })
         .eq('id', userId);
@@ -236,14 +218,14 @@ export function UserManagement() {
                 />
               </div>
             </div>
-            <Select value={filterType} onValueChange={setFilterType}>
+            <Select value={filterType} onValueChange={(value: "all" | "USER" | "ADMIN") => setFilterType(value)}>
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Filtrar por tipo" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os tipos</SelectItem>
-                <SelectItem value="user">Usuários</SelectItem>
-                <SelectItem value="admin">Administradores</SelectItem>
+                <SelectItem value="USER">Usuários</SelectItem>
+                <SelectItem value="ADMIN">Administradores</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -360,7 +342,7 @@ export function UserManagement() {
                 full_name: formData.get('full_name') as string,
                 username: formData.get('username') as string,
                 medical_specialty: formData.get('medical_specialty') as string,
-                academic_stage: formData.get('academic_stage') as string,
+                academic_stage: formData.get('academic_stage') as 'Student' | 'Intern' | 'Resident' | 'Specialist',
                 city: formData.get('city') as string,
                 state: formData.get('state') as string,
               });
