@@ -1034,6 +1034,10 @@ export type Database = {
         Args: { p_user_id: string; p_case_id: string; p_points?: number }
         Returns: undefined
       }
+      setup_first_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       academic_stage: "Student" | "Intern" | "Resident" | "Specialist"
