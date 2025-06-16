@@ -4,11 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { HeaderNav } from '@/components/HeaderNav';
 import { WelcomeModal } from '@/components/onboarding/WelcomeModal';
 import { ProfileCompleteness } from '@/components/profile/ProfileCompleteness';
-import { ProfileEditModal } from '@/components/profile/ProfileEditModal';
 import { ProtectedRoute } from '@/components/navigation/ProtectedRoute';
 import { useFirstTimeUser } from '@/hooks/useFirstTimeUser';
-import { useWelcomeRewards } from '@/hooks/useWelcomeRewards';
-import { useCaseStats } from '@/hooks/useCaseStats';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,25 +23,14 @@ import {
 } from 'lucide-react';
 
 function DashboardContent() {
-  const { user, profile } = useAuth();
+  const { profile } = useAuth();
   const { showWelcome, markTutorialAsSeen } = useFirstTimeUser();
-  const { rewardClaimed, claimWelcomeReward } = useWelcomeRewards(user);
-  const { stats: caseStats, loading: statsLoading } = useCaseStats();
   const [showProfileEdit, setShowProfileEdit] = useState(false);
 
-  // Claim welcome reward only once when modal is first shown
-  const handleWelcomeComplete = () => {
-    if (!rewardClaimed) {
-      claimWelcomeReward();
-    }
-    markTutorialAsSeen();
-  };
-
-  // Generate quick actions based on real data
   const quickActions = [
     {
       title: "Resolver Casos",
-      description: `${statsLoading ? 'Carregando...' : `${caseStats.reduce((total, stat) => total + stat.count, 0)} casos disponíveis`}`,
+      description: "Pratique com casos reais",
       icon: <Users className="text-blue-400" size={24} />,
       link: "/casos",
       color: "from-blue-500 to-cyan-600"
@@ -182,44 +168,16 @@ function DashboardContent() {
                     Agora
                   </Badge>
                 </div>
-
-                {/* Show specialty breakdown if available */}
-                {!statsLoading && caseStats.length > 0 && (
-                  <div className="flex items-center gap-3 p-3 bg-slate-700/50 rounded-lg">
-                    <Users className="text-blue-400" size={20} />
-                    <div className="flex-1">
-                      <p className="text-white font-medium">Casos Disponíveis por Especialidade</p>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {caseStats.slice(0, 3).map((stat, index) => (
-                          <Badge key={index} variant="outline" className="border-blue-400 text-blue-300 text-xs">
-                            {stat.specialty}: {stat.count}
-                          </Badge>
-                        ))}
-                        {caseStats.length > 3 && (
-                          <Badge variant="outline" className="border-gray-400 text-gray-300 text-xs">
-                            +{caseStats.length - 3} mais
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
         </main>
 
-        {/* Welcome Modal - only show if not claimed before */}
+        {/* Welcome Modal */}
         <WelcomeModal
-          isOpen={showWelcome && !rewardClaimed}
-          onClose={handleWelcomeComplete}
-          onComplete={handleWelcomeComplete}
-        />
-
-        {/* Profile Edit Modal */}
-        <ProfileEditModal
-          isOpen={showProfileEdit}
-          onClose={() => setShowProfileEdit(false)}
+          isOpen={showWelcome}
+          onClose={() => markTutorialAsSeen()}
+          onComplete={() => markTutorialAsSeen()}
         />
       </div>
     </ProtectedRoute>

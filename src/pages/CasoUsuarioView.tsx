@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +12,6 @@ import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carouse
 import { HelpSystem } from "@/components/cases/HelpSystem";
 import { FeedbackModal } from "@/components/cases/FeedbackModal";
 import { useCaseProgress } from "@/hooks/useCaseProgress";
-import { useCaseNavigation } from "@/hooks/useCaseNavigation";
 
 // FEEDBACKS GAMIFICADOS
 const FEEDBACKS = [
@@ -49,7 +49,6 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
 
   // Get current user for progress tracking
   const [user, setUser] = useState<any>(null);
-  const { navigateToNextCase } = useCaseNavigation();
 
   const {
     helpUsed,
@@ -109,8 +108,9 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
     setShowFeedback(true);
   };
 
-  const handleNextCase = async () => {
-    await navigateToNextCase(id);
+  const handleNextCase = () => {
+    // Navigate to next case or back to cases page
+    window.location.href = '/casos';
   };
 
   const handleReviewCase = () => {
@@ -336,23 +336,6 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
                       </div>
                     </span>
                   )}
-                </div>
-
-                {/* Quick Action Buttons */}
-                <div className="flex gap-3 mt-4">
-                  <Button
-                    onClick={handleNextCase}
-                    className="bg-cyan-600 hover:bg-cyan-700 text-white"
-                  >
-                    Próximo Caso →
-                  </Button>
-                  <Button
-                    onClick={() => window.location.href = '/casos'}
-                    variant="outline"
-                    className="border-cyan-600 text-cyan-600 hover:bg-cyan-50"
-                  >
-                    Ver Todos os Casos
-                  </Button>
                 </div>
               </section>
             )}
