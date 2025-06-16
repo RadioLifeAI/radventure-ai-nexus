@@ -778,6 +778,33 @@ export type Database = {
         }
         Relationships: []
       }
+      signup_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          event_data: Json | null
+          event_type: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       subscription_plans: {
         Row: {
           created_at: string
@@ -994,6 +1021,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      log_signup_event: {
+        Args: {
+          p_user_id: string
+          p_event_type: string
+          p_event_data?: Json
+          p_error_message?: string
+        }
+        Returns: undefined
+      }
       process_case_completion: {
         Args: { p_user_id: string; p_case_id: string; p_points?: number }
         Returns: undefined

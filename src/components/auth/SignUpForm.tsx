@@ -133,7 +133,8 @@ export function SignUpForm() {
     
     const message = error.message || '';
     
-    if (message.includes('User already registered')) {
+    // Mapeamento melhorado de erros
+    if (message.includes('User already registered') || message.includes('email_address_already_registered')) {
       return 'Este email já está cadastrado. Tente fazer login.';
     }
     if (message.includes('Invalid email')) {
@@ -142,14 +143,17 @@ export function SignUpForm() {
     if (message.includes('Password should be at least')) {
       return 'A senha deve ter pelo menos 6 caracteres.';
     }
-    if (message.includes('Database error')) {
-      return 'Erro no servidor. Tente novamente em alguns minutos.';
+    if (message.includes('Failed to create user profile') || message.includes('Database error')) {
+      return 'Erro interno do sistema. Nossa equipe foi notificada. Tente novamente em alguns minutos.';
     }
-    if (message.includes('type "profile_type" does not exist')) {
-      return 'Erro de configuração do sistema. Entre em contato com o suporte.';
+    if (message.includes('profile_type') || message.includes('academic_stage')) {
+      return 'Erro de configuração detectado. Nossa equipe foi notificada. Tente novamente.';
+    }
+    if (message.includes('Too many requests')) {
+      return 'Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.';
     }
     
-    return 'Erro inesperado. Tente novamente.';
+    return 'Erro inesperado. Nossa equipe foi notificada. Tente novamente.';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -165,13 +169,14 @@ export function SignUpForm() {
     setLoading(true);
 
     try {
+      // Dados estruturados para o backend
       const userData = {
         full_name: formData.fullName.trim(),
         academic_stage: formData.academicStage,
         medical_specialty: formData.medicalSpecialty
       };
 
-      console.log('Submitting signup with data:', userData);
+      console.log('Submitting signup with structured data:', userData);
 
       const { error } = await signUp(formData.email.trim(), formData.password, userData);
 
@@ -197,13 +202,14 @@ export function SignUpForm() {
           navigate('/dashboard');
         }, 1500);
       }
-    } catch (unexpectedError) {
+    } catch (unexpectedError: any) {
       console.error('Unexpected error during signup:', unexpectedError);
-      setError('Erro inesperado. Tente novamente.');
+      const errorMessage = 'Erro inesperado. Nossa equipe foi notificada. Tente novamente.';
+      setError(errorMessage);
       
       toast({
         title: "Erro inesperado",
-        description: "Algo deu errado. Tente novamente.",
+        description: errorMessage,
         variant: "destructive"
       });
     }

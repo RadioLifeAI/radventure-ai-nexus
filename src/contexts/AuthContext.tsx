@@ -26,6 +26,31 @@ export function useAuth() {
   return context;
 }
 
+// Função para mapear dados do usuário para o formato esperado pelo trigger
+const mapUserDataForSignup = (userData: any) => {
+  console.log('Mapping user data for signup:', userData);
+  
+  return {
+    full_name: userData.full_name || '',
+    academic_stage: userData.academic_stage || 'Student',
+    medical_specialty: userData.medical_specialty || ''
+  };
+};
+
+// Função para log de eventos de cadastro
+const logSignupEvent = async (userId: string | null, eventType: string, eventData?: any, errorMessage?: string) => {
+  try {
+    await supabase.rpc('log_signup_event', {
+      p_user_id: userId,
+      p_event_type: eventType,
+      p_event_data: eventData || null,
+      p_error_message: errorMessage || null
+    });
+  } catch (error) {
+    console.warn('Failed to log signup event:', error);
+  }
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -72,6 +97,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session?.user ?? null);
         
         if (session?.user) {
+          // Log do evento de autenticação
+          await logSignupEvent(session.user.id, 'auth_state_changed', { event });
+          
           // Defer profile fetching to avoid blocking
           setTimeout(async () => {
             const profileData = await fetchProfile(session.user.id);
@@ -106,21 +134,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string, userData: any) => {
+    let userId = null;
+    
     try {
       console.log('Starting signup process for:', email);
-      console.log('User data provided:', userData);
+      console.log('Raw user data provided:', userData);
+      
+      // Mapear dados do usuário
+      const mappedUserData = mapUserDataForSignup(userData);
+      console.log('Mapped user data:', mappedUserData);
+      
+      // Log do início do cadastro
+      await logSignupEvent(null, 'signup_started', { email, userData: mappedUserData });
       
       const redirectUrl = `${window.location.origin}/dashboard`;
-      
-      // Map the user data correctly to match database schema
-      const mappedUserData = {
-        full_name: userData.full_name || '',
-        academic_stage: userData.academic_stage || 'Student',
-        medical_specialty: userData.medical_specialty || '',
-        email: email
-      };
-      
-      console.log('Mapped user data:', mappedUserData);
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -131,16 +158,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       });
       
+      if (data?.user) {
+        userId = data.user.id;
+      }
+      
       if (error) {
         console.error('Signup error:', error);
+        
+        // Log do erro de cadastro
+        await logSignupEvent(userId, 'signup_error', { 
+          email, 
+          error: error.message,
+          userData: mappedUserData 
+        }, error.message);
+        
         return { error };
       }
       
       console.log('Signup successful:', data);
+      
+      // Log do sucesso do cadastro
+      await logSignupEvent(userId, 'signup_success', { 
+        email, 
+        userId,
+        userData: mappedUserData 
+      });
+      
       return { error: null };
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Unexpected signup error:', error);
+      
+      // Log do erro inesperado
+      await logSignupEvent(userId, 'signup_unexpected_error', { 
+        email, 
+        error: error.message 
+      }, error.message);
+      
       return { error };
     }
   };
@@ -156,14 +210,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (error) {
         console.error('Signin error:', error);
+        
+        // Log do erro de login
+        await logSignupEvent(null, 'signin_error', { 
+          email, 
+          error: error.message 
+        }, error.message);
+        
         return { error };
       }
       
       console.log('Signin successful:', data);
+      
+      // Log do sucesso do login
+      await logSignupEvent(data.user?.id || null, 'signin_success', { 
+        email, 
+        userId: data.user?.id 
+      });
+      
       return { error: null };
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Unexpected signin error:', error);
+      
+      // Log do erro inesperado
+      await logSignupEvent(null, 'signin_unexpected_error', { 
+        email, 
+        error: error.message 
+      }, error.message);
+      
       return { error };
     }
   };
@@ -172,14 +247,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('Starting signout process');
       
+      const userId = user?.id;
+      
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);
       setProfile(null);
       
+      // Log do logout
+      await logSignupEvent(userId, 'signout_success', { userId });
+      
       console.log('Signout successful');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Signout error:', error);
+      
+      // Log do erro de logout
+      await logSignupEvent(user?.id || null, 'signout_error', { 
+        error: error.message 
+      }, error.message);
     }
   };
 
@@ -196,15 +281,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('Profile update error:', error);
+        
+        // Log do erro de atualização
+        await logSignupEvent(user.id, 'profile_update_error', { 
+          updates, 
+          error: error.message 
+        }, error.message);
+        
         return { error };
       }
 
       await refreshProfile();
+      
+      // Log do sucesso da atualização
+      await logSignupEvent(user.id, 'profile_update_success', { updates });
+      
       console.log('Profile updated successfully');
       return { error: null };
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Unexpected profile update error:', error);
+      
+      // Log do erro inesperado
+      await logSignupEvent(user.id, 'profile_update_unexpected_error', { 
+        updates, 
+        error: error.message 
+      }, error.message);
+      
       return { error };
     }
   };
