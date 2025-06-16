@@ -258,6 +258,39 @@ export type Database = {
           },
         ]
       }
+      app_settings: {
+        Row: {
+          category: string
+          description: string | null
+          id: string
+          is_public: boolean
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          category: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          category?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       difficulties: {
         Row: {
           description: string | null
@@ -805,6 +838,48 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_history: {
+        Row: {
+          amount: number | null
+          created_at: string
+          currency: string | null
+          ended_at: string | null
+          id: string
+          metadata: Json | null
+          plan_name: string
+          started_at: string
+          status: string
+          stripe_subscription_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          currency?: string | null
+          ended_at?: string | null
+          id?: string
+          metadata?: Json | null
+          plan_name: string
+          started_at: string
+          status: string
+          stripe_subscription_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          currency?: string | null
+          ended_at?: string | null
+          id?: string
+          metadata?: Json | null
+          plan_name?: string
+          started_at?: string
+          status?: string
+          stripe_subscription_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscription_plans: {
         Row: {
           created_at: string
@@ -852,36 +927,59 @@ export type Database = {
       }
       subscriptions: {
         Row: {
+          cancel_at_period_end: boolean | null
           created_at: string
           current_period_end: string | null
           id: string
+          metadata: Json | null
+          plan_id: string | null
           status: string | null
           stripe_customer_id: string | null
+          stripe_subscription_id: string | null
           tier: Database["public"]["Enums"]["subscription_tier"]
+          trial_end: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          cancel_at_period_end?: boolean | null
           created_at?: string
           current_period_end?: string | null
           id?: string
+          metadata?: Json | null
+          plan_id?: string | null
           status?: string | null
           stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           tier?: Database["public"]["Enums"]["subscription_tier"]
+          trial_end?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          cancel_at_period_end?: boolean | null
           created_at?: string
           current_period_end?: string | null
           id?: string
+          metadata?: Json | null
+          plan_id?: string | null
           status?: string | null
           stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           tier?: Database["public"]["Enums"]["subscription_tier"]
+          trial_end?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       system_settings: {
         Row: {
@@ -978,6 +1076,60 @@ export type Database = {
           },
         ]
       }
+      user_benefits: {
+        Row: {
+          ai_credits: number
+          badge_collection: Json | null
+          bonus_points_multiplier: number
+          created_at: string
+          custom_title: string | null
+          elimination_aids: number
+          expires_at: string | null
+          has_premium_features: boolean
+          id: string
+          max_ai_hints_per_day: number
+          max_eliminations_per_case: number
+          max_skips_per_session: number
+          skip_aids: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_credits?: number
+          badge_collection?: Json | null
+          bonus_points_multiplier?: number
+          created_at?: string
+          custom_title?: string | null
+          elimination_aids?: number
+          expires_at?: string | null
+          has_premium_features?: boolean
+          id?: string
+          max_ai_hints_per_day?: number
+          max_eliminations_per_case?: number
+          max_skips_per_session?: number
+          skip_aids?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_credits?: number
+          badge_collection?: Json | null
+          bonus_points_multiplier?: number
+          created_at?: string
+          custom_title?: string | null
+          elimination_aids?: number
+          expires_at?: string | null
+          has_premium_features?: boolean
+          id?: string
+          max_ai_hints_per_day?: number
+          max_eliminations_per_case?: number
+          max_skips_per_session?: number
+          skip_aids?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_case_history: {
         Row: {
           answered_at: string
@@ -1016,6 +1168,42 @@ export type Database = {
           },
         ]
       }
+      user_titles: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          display_name: string
+          icon_url: string | null
+          id: string
+          is_active: boolean
+          rarity: string
+          unlock_criteria: Json | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          display_name: string
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean
+          rarity?: string
+          unlock_criteria?: Json | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          display_name?: string
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean
+          rarity?: string
+          unlock_criteria?: Json | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1036,6 +1224,10 @@ export type Database = {
       }
       setup_first_admin: {
         Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      sync_user_benefits: {
+        Args: { p_user_id: string }
         Returns: undefined
       }
     }
