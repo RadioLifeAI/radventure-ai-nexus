@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Activity,
@@ -20,24 +19,32 @@ import { useDashboardData } from "@/hooks/useDashboardData";
 import { useCasesData } from "@/hooks/useCasesData";
 
 // Componente Card de Ações rápidas
-function ActionCard({ icon, title, description, link, color }: any) {
+function ActionCard({ icon, title, description, link, color, onClick }: any) {
   return (
     <div className="bg-[#161f38] rounded-2xl shadow-lg flex flex-col items-center p-6 min-h-[186px] hover:scale-105 transition-transform duration-200">
       <div className={`mb-2`}>{React.cloneElement(icon, { size: 38, className: color })}</div>
       <span className="mt-2 text-lg font-extrabold text-white drop-shadow-sm text-center">{title}</span>
       <span className="mt-1 text-sm text-cyan-100 text-center">{description}</span>
-      <Button asChild size="sm" variant="outline"
-        className={`mt-4 border-none text-[#11d3fc] bg-white hover:bg-[#d1f6fd] font-bold px-4 rounded-xl shadow`}
-      >
-        <Link to={link || "#"}>
-          {title === "Central de Casos" ? (
-            <>
-              <Activity size={15} className="mr-1" />
-              Explorar
-            </>
-          ) : title === "Crie sua Jornada" ? "Nova Jornada" : "Ver Eventos"}
-        </Link>
-      </Button>
+      {onClick ? (
+        <Button
+          onClick={onClick}
+          size="sm"
+          variant="outline"
+          className="mt-4 border-none text-[#11d3fc] bg-white hover:bg-[#d1f6fd] font-bold px-4 rounded-xl shadow"
+        >
+          <Activity size={15} className="mr-1" />
+          {title === "Central de Casos" ? "Explorar" : title === "Crie sua Jornada" ? "Nova Jornada" : "Ver Eventos"}
+        </Button>
+      ) : (
+        <Button asChild size="sm" variant="outline"
+          className="mt-4 border-none text-[#11d3fc] bg-white hover:bg-[#d1f6fd] font-bold px-4 rounded-xl shadow"
+        >
+          <Link to={link || "#"}>
+            <Activity size={15} className="mr-1" />
+            {title === "Central de Casos" ? "Explorar" : title === "Crie sua Jornada" ? "Nova Jornada" : "Ver Eventos"}
+          </Link>
+        </Button>
+      )}
     </div>
   );
 }
@@ -74,6 +81,19 @@ export default function Dashboard() {
     navigate(`/evento/${eventId}`);
   }
 
+  // Handlers para botões de ação
+  const handleCentralCasos = () => {
+    navigate('/app/casos');
+  };
+
+  const handleCriarJornada = () => {
+    navigate('/app/criar-jornada');
+  };
+
+  const handleEventos = () => {
+    navigate('/app/eventos');
+  };
+
   // Separar especialidades por tipo
   const imagingSpecialties = specialties.filter(spec => 
     spec.name.includes('Radiologia') || 
@@ -103,30 +123,30 @@ export default function Dashboard() {
         {/* Perfil principal */}
         <UserProfile user={user} />
 
-        {/* NOVA SEÇÃO DE EVENTOS GAMIFICADOS */}
+        {/* SEÇÃO DE EVENTOS GAMIFICADOS */}
         <EventsSectionPlayer onEnterEvent={handleEnterEvent} />
 
-        {/* Actions Cards */}
+        {/* Actions Cards - Agora com handlers funcionais */}
         <section className="w-full grid grid-cols-1 sm:grid-cols-3 gap-6 mt-2 mb-4">
           <ActionCard
             icon={<Activity />}
             title="Central de Casos"
             description="Resolva desafios reais, aprenda e suba de nível!"
-            link="/app/casos"
+            onClick={handleCentralCasos}
             color="text-[#11d3fc]"
           />
           <ActionCard
             icon={<BookOpen />}
             title="Crie sua Jornada"
             description="Personalize seu aprendizado com módulos e trilhas temáticas."
-            link="/app/casos?tab=journey"
+            onClick={handleCriarJornada}
             color="text-[#a189fa]"
           />
           <ActionCard
             icon={<Calendar />}
             title="Eventos"
             description="Participe de eventos exclusivos e concorra no ranking."
-            link="/app/eventos"
+            onClick={handleEventos}
             color="text-[#11d3fc]"
           />
         </section>
