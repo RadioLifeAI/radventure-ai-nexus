@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { EventBannerUpload } from "./EventBannerUpload";
@@ -11,6 +10,7 @@ import { EventConfigProgressBar } from "./EventConfigProgressBar";
 import { useEventConfigProgress } from "../hooks/useEventConfigProgress";
 import { ConfigAlertBanner } from "./ConfigAlertBanner";
 import { EventConfigMotivationPhrase } from "./EventConfigMotivationPhrase";
+import { toast } from "@/hooks/use-toast";
 
 export type Prize = { position: number, prize: number };
 
@@ -90,50 +90,148 @@ export function EventForm({ mode, initialValues = {}, loading, onSubmit, onCance
     setDurationMinutes(suggestion.durationMinutes || 30);
     setPrizeRadcoins(suggestion.prizeRadcoins || 500);
     
-    // Aplicar filtros baseados na sugestão da AI (DADOS REAIS)
+    // CORREÇÃO CRÍTICA: Mapear specialty -> category e aplicar todos os filtros
     if (suggestion.specialty || suggestion.modality || suggestion.subtype || suggestion.difficulty) {
-      setCaseFilters({
-        ...caseFilters,
-        ...(suggestion.specialty && { specialty: [suggestion.specialty] }),
-        ...(suggestion.modality && { modality: [suggestion.modality] }),
-        ...(suggestion.subtype && { subtype: [suggestion.subtype] }),
-        ...(suggestion.difficulty && { difficulty: [suggestion.difficulty] })
+      const newFilters: any = { ...caseFilters };
+      
+      if (suggestion.specialty) {
+        newFilters.category = [suggestion.specialty];
+      }
+      if (suggestion.modality) {
+        newFilters.modality = [suggestion.modality];
+      }
+      if (suggestion.subtype) {
+        newFilters.subtype = [suggestion.subtype];
+      }
+      if (suggestion.difficulty) {
+        newFilters.difficulty = [suggestion.difficulty.toString()];
+      }
+      
+      setCaseFilters(newFilters);
+      
+      toast({
+        title: "Sugestão aplicada!",
+        description: "Campos básicos e filtros preenchidos com dados da IA",
+        className: "bg-blue-50 border-blue-200"
       });
     }
   }
 
   function handleAutoFill(data: any) {
-    // Preencher TODOS os campos do formulário
-    setName(data.name || "");
-    setDescription(data.description || "");
-    setNumberOfCases(data.numberOfCases || 10);
-    setDurationMinutes(data.durationMinutes || 30);
-    setPrizeRadcoins(data.prizeRadcoins || 500);
-    setAutoStart(true); // SEMPRE true para auto-preenchimento
+    console.log("Auto-fill data received:", data);
     
-    // Preencher datas inteligentes
-    if (data.scheduled_start) setScheduledStart(data.scheduled_start);
-    if (data.scheduled_end) setScheduledEnd(data.scheduled_end);
+    let fieldsUpdated: string[] = [];
     
-    // Preencher max participants
-    if (data.maxParticipants) setMaxParticipants(data.maxParticipants);
+    // Preencher campos básicos
+    if (data.name) {
+      setName(data.name);
+      fieldsUpdated.push("nome");
+    }
+    if (data.description) {
+      setDescription(data.description);
+      fieldsUpdated.push("descrição");
+    }
+    if (data.numberOfCases) {
+      setNumberOfCases(data.numberOfCases);
+      fieldsUpdated.push("número de casos");
+    }
+    if (data.durationMinutes) {
+      setDurationMinutes(data.durationMinutes);
+      fieldsUpdated.push("duração");
+    }
+    if (data.prizeRadcoins) {
+      setPrizeRadcoins(data.prizeRadcoins);
+      fieldsUpdated.push("prêmio total");
+    }
     
-    // Preencher banner URL (opcional)
-    if (data.bannerUrl !== undefined) setBannerUrl(data.bannerUrl);
+    // SEMPRE true para auto-preenchimento
+    setAutoStart(true);
+    fieldsUpdated.push("início automático");
     
-    // Aplicar distribuição de prêmios completa
+    // CORREÇÃO CRÍTICA: Aplicar datas corretamente
+    if (data.scheduled_start) {
+      setScheduledStart(data.scheduled_start);
+      fieldsUpdated.push("data de início");
+    }
+    if (data.scheduled_end) {
+      setScheduledEnd(data.scheduled_end);
+      fieldsUpdated.push("data de término");
+    }
+    
+    // CORREÇÃO: Preencher max participants
+    if (data.maxParticipants) {
+      setMaxParticipants(data.maxParticipants);
+      fieldsUpdated.push("limite de participantes");
+    }
+    
+    // CORREÇÃO: Aplicar banner URL se fornecido
+    if (data.bannerUrl !== undefined) {
+      setBannerUrl(data.bannerUrl);
+      if (data.bannerUrl) fieldsUpdated.push("banner");
+    }
+    
+    // CORREÇÃO CRÍTICA: Aplicar distribuição de prêmios completa
     if (data.prize_distribution && Array.isArray(data.prize_distribution)) {
       setPrizeDistribution(data.prize_distribution);
+      fieldsUpdated.push("distribuição de prêmios");
     }
     
-    // Aplicar filtros de casos com dados reais
+    // CORREÇÃO CRÍTICA: Mapear filtros corretamente (specialty -> category)
     if (data.caseFilters) {
-      setCaseFilters(data.caseFilters);
+      const mappedFilters: any = {};
+      
+      // Mapear specialty para category (CORREÇÃO PRINCIPAL)
+      if (data.caseFilters.specialty && Array.isArray(data.caseFilters.specialty)) {
+        mappedFilters.category = data.caseFilters.specialty;
+        fieldsUpdated.push("especialidades");
+      }
+      
+      // Aplicar outros filtros diretamente
+      if (data.caseFilters.modality) {
+        mappedFilters.modality = data.caseFilters.modality;
+        fieldsUpdated.push("modalidades");
+      }
+      if (data.caseFilters.subtype) {
+        mappedFilters.subtype = data.caseFilters.subtype;
+        fieldsUpdated.push("subtipos");
+      }
+      if (data.caseFilters.difficulty) {
+        mappedFilters.difficulty = data.caseFilters.difficulty.map((d: any) => d.toString());
+        fieldsUpdated.push("dificuldades");
+      }
+      
+      setCaseFilters(mappedFilters);
     }
+    
+    // Toast específico de sucesso com campos preenchidos
+    toast({
+      title: "✨ Auto-preenchimento concluído!",
+      description: `Campos preenchidos: ${fieldsUpdated.join(", ")}`,
+      className: "bg-green-50 border-green-200"
+    });
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    
+    // Validação robusta antes do submit
+    const missingFields: string[] = [];
+    
+    if (!name.trim()) missingFields.push("nome");
+    if (!scheduledStart) missingFields.push("data de início");
+    if (!scheduledEnd) missingFields.push("data de término");
+    if (numberOfCases < 1) missingFields.push("número de casos válido");
+    if (durationMinutes < 1) missingFields.push("duração válida");
+    
+    if (missingFields.length > 0) {
+      toast({
+        title: "Campos obrigatórios não preenchidos",
+        description: `Preencha: ${missingFields.join(", ")}`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
     onSubmit({
       name,
       description,

@@ -76,6 +76,8 @@ serve(async (req) => {
   try {
     const { type, filters, context } = await req.json();
     
+    console.log(`Processing ${type} request with filters:`, filters);
+    
     // Buscar dados REAIS do banco para contexto
     const { data: specialties } = await supabase
       .from('medical_specialties')
@@ -115,6 +117,13 @@ serve(async (req) => {
         subtypesByModality[subtype.modality_name] = [];
       }
       subtypesByModality[subtype.modality_name].push(subtype.name);
+    });
+
+    console.log("Available data:", {
+      specialties: specialties?.length,
+      modalities: modalities?.length,
+      subtypes: subtypes?.length,
+      difficulties: difficulties?.length
     });
 
     let prompt = '';
@@ -166,65 +175,79 @@ Responda em formato JSON:
   ]
 }`;
     } else if (type === 'autofill') {
-      const smartDates = generateSmartDates(30); // Default 30 min, será ajustado pela IA
+      const smartDates = generateSmartDates(45); // Default mais longo
       
       prompt = `
-Com base nos filtros e contexto fornecidos, preencha automaticamente um formulário COMPLETO de evento de radiologia com TODOS os campos.
+INSTRUÇÕES CRÍTICAS PARA AUTO-PREENCHIMENTO COMPLETO:
 
-DADOS REAIS DO SISTEMA:
-- Especialidades: ${specialties?.map(s => s.name).join(', ')}
-- Modalidades: ${modalities?.map(m => m.name).join(', ')}
-- Subtipos disponíveis: ${JSON.stringify(subtypesByModality, null, 2)}
-- Níveis de dificuldade: ${difficulties?.map(d => `${d.level} (${d.description})`).join(', ')}
-- Casos existentes: ${caseStats?.length} casos no banco
+Você deve preencher automaticamente um formulário COMPLETO de evento de radiologia com TODOS os campos obrigatórios e opcionais. Não deixe NENHUM campo vazio ou com valores padrão.
 
-Filtros recebidos: ${JSON.stringify(filters)}
-Contexto: ${context || 'Evento educacional de radiologia gamificado'}
+DADOS REAIS DO SISTEMA (USE APENAS ESTES):
+- Especialidades médicas: ${specialties?.map(s => s.name).join(', ')}
+- Modalidades de imagem: ${modalities?.map(m => m.name).join(', ')}
+- Subtipos por modalidade: ${JSON.stringify(subtypesByModality, null, 2)}
+- Níveis de dificuldade: ${difficulties?.map(d => `Nível ${d.level}: ${d.description}`).join(', ')}
+- Casos disponíveis no banco: ${caseStats?.length} casos
 
-INSTRUÇÕES CRÍTICAS:
-- Preencha TODOS os campos do formulário
-- Use apenas dados que existem no sistema
-- autoStart deve SEMPRE ser true
-- Gere datas inteligentes (horário útil)
-- Crie distribuição de prêmios detalhada (1º ao 10º lugar)
-- Defina número realista de participantes
-- Banner URL opcional (pode ficar vazio)
+ENTRADA DO USUÁRIO:
+- Filtros selecionados: ${JSON.stringify(filters)}
+- Contexto/descrição: ${context || 'Evento educacional de radiologia gamificado'}
 
-Responda em formato JSON com TODOS os campos:
+REGRAS OBRIGATÓRIAS:
+1. ✅ TODOS os campos devem ser preenchidos de forma inteligente
+2. ✅ Use APENAS especialidades, modalidades e subtipos que existem no sistema
+3. ✅ autoStart SEMPRE deve ser true
+4. ✅ Crie nomes criativos e profissionais para o evento
+5. ✅ Gere descrições detalhadas e motivadoras (4-5 linhas)
+6. ✅ Defina número realista de participantes (30-100)
+7. ✅ Crie distribuição de prêmios proporcional (1º ao 10º lugar)
+8. ✅ Escolha datas e horários em dias úteis e horários comerciais
+9. ✅ Banner URL pode ficar vazio (será opcional)
+10. ✅ Ajuste duração baseado na complexidade e número de casos
+
+FORMATO DE RESPOSTA OBRIGATÓRIO:
 {
-  "name": "Nome criativo e profissional do evento",
-  "description": "Descrição detalhada e motivadora (4-5 linhas)",
+  "name": "Nome criativo e profissional do evento (ex: 'Desafio Neuro TC 2025: Emergências Neurológicas')",
+  "description": "Descrição detalhada e motivadora com 4-5 linhas explicando o evento, o que os participantes aprenderão e por que devem participar",
   "scheduled_start": "${smartDates.scheduled_start}",
   "scheduled_end": "${smartDates.scheduled_end}",
-  "numberOfCases": 12,
-  "durationMinutes": 35,
-  "prizeRadcoins": 1000,
-  "maxParticipants": 50,
+  "numberOfCases": 15,
+  "durationMinutes": 45,
+  "prizeRadcoins": 1500,
+  "maxParticipants": 75,
   "bannerUrl": "",
   "autoStart": true,
   "prize_distribution": [
-    {"position": 1, "prize": 350},
-    {"position": 2, "prize": 200},
-    {"position": 3, "prize": 150},
-    {"position": 4, "prize": 100},
-    {"position": 5, "prize": 80},
-    {"position": 6, "prize": 50},
-    {"position": 7, "prize": 30},
-    {"position": 8, "prize": 20},
-    {"position": 9, "prize": 10},
-    {"position": 10, "prize": 10}
+    {"position": 1, "prize": 525},
+    {"position": 2, "prize": 300},
+    {"position": 3, "prize": 225},
+    {"position": 4, "prize": 150},
+    {"position": 5, "prize": 120},
+    {"position": 6, "prize": 75},
+    {"position": 7, "prize": 45},
+    {"position": 8, "prize": 30},
+    {"position": 9, "prize": 15},
+    {"position": 10, "prize": 15}
   ],
   "caseFilters": {
-    "specialty": ["Especialidade específica"],
-    "modality": ["Modalidade específica"],
-    "subtype": ["Subtipo específico"],
-    "difficulty": [1, 2]
+    "specialty": ["Especialidade específica do sistema"],
+    "modality": ["Modalidade específica do sistema"],
+    "subtype": ["Subtipo específico compatível com a modalidade"],
+    "difficulty": ["2", "3"]
   }
 }
 
-IMPORTANTE: Ajuste as datas baseado na duração escolhida e certifique-se de que todos os valores são realistas e coerentes.`;
+IMPORTANTE: 
+- Ajuste as datas baseado na duração escolhida
+- Certifique-se de que a distribuição de prêmios soma o total em prizeRadcoins
+- Use dados REAIS do sistema (especialidades, modalidades, subtipos)
+- Seja criativo mas profissional no nome e descrição
+- Considere o contexto fornecido pelo usuário para personalizar o evento
+`;
     }
 
+    console.log("Sending request to OpenAI...");
+    
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -236,32 +259,61 @@ IMPORTANTE: Ajuste as datas baseado na duração escolhida e certifique-se de qu
         messages: [
           { 
             role: 'system', 
-            content: 'Você é um especialista em radiologia médica e design de experiências educacionais gamificadas. Sempre responda em JSON válido e use apenas dados reais fornecidos do sistema. Seja preciso e detalhado nos preenchimentos.' 
+            content: 'Você é um especialista em radiologia médica e design de experiências educacionais gamificadas. Sempre responda em JSON válido e use apenas dados reais fornecidos do sistema. Seja preciso, detalhado e criativo nos preenchimentos. NUNCA deixe campos obrigatórios vazios.' 
           },
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
-        max_tokens: 2500,
+        max_tokens: 3000,
       }),
     });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
 
     const aiData = await response.json();
     const content = aiData.choices[0].message.content;
     
+    console.log("OpenAI response received:", content);
+    
     // Parse JSON response
     const jsonMatch = content.match(/\{[\s\S]*\}/);
-    let result = jsonMatch ? JSON.parse(jsonMatch[0]) : { error: 'Invalid JSON response' };
+    if (!jsonMatch) {
+      throw new Error("No valid JSON found in AI response");
+    }
+    
+    let result = JSON.parse(jsonMatch[0]);
 
-    // Para autofill, ajustar datas baseado na duração retornada
-    if (type === 'autofill' && result.durationMinutes) {
-      const adjustedDates = generateSmartDates(result.durationMinutes);
-      result.scheduled_start = adjustedDates.scheduled_start;
-      result.scheduled_end = adjustedDates.scheduled_end;
+    // Para autofill, processar e validar dados
+    if (type === 'autofill') {
+      // Ajustar datas baseado na duração retornada
+      if (result.durationMinutes) {
+        const adjustedDates = generateSmartDates(result.durationMinutes);
+        result.scheduled_start = adjustedDates.scheduled_start;
+        result.scheduled_end = adjustedDates.scheduled_end;
+      }
       
-      // Gerar distribuição de prêmios baseada no valor total
-      if (result.prizeRadcoins) {
+      // Gerar distribuição de prêmios se não estiver completa
+      if (result.prizeRadcoins && (!result.prize_distribution || result.prize_distribution.length === 0)) {
         result.prize_distribution = generatePrizeDistribution(result.prizeRadcoins);
       }
+      
+      // Validar campos obrigatórios
+      const requiredFields = ['name', 'description', 'scheduled_start', 'scheduled_end', 'numberOfCases', 'durationMinutes'];
+      const missingFields = requiredFields.filter(field => !result[field]);
+      
+      if (missingFields.length > 0) {
+        console.error("Missing required fields:", missingFields);
+        throw new Error(`AI failed to provide required fields: ${missingFields.join(', ')}`);
+      }
+      
+      console.log("Auto-fill result processed successfully:", {
+        name: result.name,
+        hasFilters: !!result.caseFilters,
+        hasPrizeDistribution: !!result.prize_distribution,
+        maxParticipants: result.maxParticipants
+      });
     }
 
     return new Response(JSON.stringify(result), {
@@ -269,7 +321,10 @@ IMPORTANTE: Ajuste as datas baseado na duração escolhida e certifique-se de qu
     });
   } catch (error) {
     console.error('Error in event-ai-suggestions:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      details: 'Falha na geração de sugestões/auto-preenchimento'
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
