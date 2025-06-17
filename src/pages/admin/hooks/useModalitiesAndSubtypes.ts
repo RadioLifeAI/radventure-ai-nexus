@@ -10,7 +10,7 @@ export type ModalityAndSubtypes = {
 
 /**
  * Hook que busca modalidades e subtipos diretamente do banco de dados.
- * Substitui o arquivo modalitiesSubtypes.ts para garantir consistência.
+ * Agora com dados atualizados e unificados após correção das especialidades.
  */
 export function useModalitiesAndSubtypes() {
   const [options, setOptions] = useState<ModalityAndSubtypes[]>([]);
@@ -21,26 +21,32 @@ export function useModalitiesAndSubtypes() {
       try {
         setLoading(true);
         
-        // Buscar modalidades principais
+        // Buscar modalidades principais (agora com dados atualizados)
         const { data: modalities, error: modalitiesError } = await supabase
           .from("imaging_modalities")
           .select("name")
           .order("name");
 
-        if (modalitiesError) throw modalitiesError;
+        if (modalitiesError) {
+          console.error("Erro ao buscar modalidades:", modalitiesError);
+          throw modalitiesError;
+        }
 
-        // Buscar subtipos
+        // Buscar subtipos (agora com dados atualizados)
         const { data: subtypes, error: subtypesError } = await supabase
           .from("imaging_subtypes")
           .select("name, modality_name")
           .order("name");
 
-        if (subtypesError) throw subtypesError;
+        if (subtypesError) {
+          console.error("Erro ao buscar subtipos:", subtypesError);
+          throw subtypesError;
+        }
 
         // Organizar dados no formato esperado
         const modalitiesMap: Record<string, ModalityAndSubtypes> = {};
 
-        // Inicializar modalidades
+        // Inicializar modalidades com dados atualizados
         modalities?.forEach(modality => {
           modalitiesMap[modality.name] = {
             value: modality.name,
@@ -49,7 +55,7 @@ export function useModalitiesAndSubtypes() {
           };
         });
 
-        // Adicionar subtipos às modalidades correspondentes
+        // Adicionar subtipos às modalidades correspondentes (dados atualizados)
         subtypes?.forEach(subtype => {
           if (modalitiesMap[subtype.modality_name]) {
             modalitiesMap[subtype.modality_name].subtypes.push({
@@ -59,11 +65,12 @@ export function useModalitiesAndSubtypes() {
           }
         });
 
-        // Converter para array e ordenar
+        // Converter para array e ordenar (português brasileiro)
         const result = Object.values(modalitiesMap).sort((a, b) => 
           a.label.localeCompare(b.label, "pt-BR")
         );
 
+        console.log(`[useModalitiesAndSubtypes] Carregadas ${result.length} modalidades com dados unificados`);
         setOptions(result);
       } catch (error) {
         console.error("Erro ao buscar modalidades e subtipos:", error);
