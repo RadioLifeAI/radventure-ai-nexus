@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,8 +36,15 @@ export function CasesCentral() {
   });
   const [showJourneyModal, setShowJourneyModal] = useState(false);
 
+  // Convert filters for navigation hook
+  const navigationFilters = {
+    specialty: filters.specialty || undefined,
+    modality: filters.modality || undefined,
+    difficulty: filters.difficulty ? parseInt(filters.difficulty) : undefined
+  };
+
   // Navegação inteligente entre casos
-  const navigation = useCaseNavigation(filters);
+  const navigation = useCaseNavigation(navigationFilters);
 
   const { data: recentCases, isLoading: recentLoading } = useQuery({
     queryKey: ['recent-cases'],
