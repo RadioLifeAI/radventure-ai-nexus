@@ -1,99 +1,76 @@
-import { useEffect, useState, useCallback } from "react";
+
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { MOCK_CASES } from "../utils/medicalCasesMock";
 import { toast } from "@/components/ui/use-toast";
 
-/**
- * Hook para carregar casos médicos e inserir MOCKS se necessário.
- * Agora com sincronização em tempo real e filtros.
- */
-export function useMedicalCases({ categoryFilter = "", modalityFilter = "" } = {}) {
+export function useMedicalCases() {
   const [cases, setCases] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  async function fetchCases() {
-    setLoading(true);
-    let query = supabase
-      .from("medical_cases")
-      .select("id, title, created_at, image_url, specialty, modality")
-      .order("created_at", { ascending: false });
-    // Filtros
-    if (categoryFilter) query = query.eq("specialty", categoryFilter);
-    if (modalityFilter) query = query.eq("modality", modalityFilter);
+  const fetchCases = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("medical_cases")
+        .select(`
+          *,
+          medical_specialties (
+            id,
+            name
+          )
+        `)
+        .order("created_at", { ascending: false });
 
-    const { data, error } = await query;
-    if (error) {
-      toast({ title: "Erro ao buscar casos!", variant: "destructive" });
-      setCases([]);
-    } else {
+      if (error) throw error;
       setCases(data || []);
+    } catch (error: any) {
+      console.error("Erro ao carregar casos:", error);
+      toast({
+        title: "Erro ao carregar casos",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }
+  };
+
+  const deleteCase = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("medical_cases")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      setCases(cases => cases.filter(c => c.id !== id));
+      toast({
+        title: "Caso deletado com sucesso!",
+      });
+    } catch (error: any) {
+      console.error("Erro ao deletar caso:", error);
+      toast({
+        title: "Erro ao deletar caso",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Refetch function to refresh the list
+  const refetch = () => {
+    fetchCases();
+  };
 
   useEffect(() => {
-    let mounted = true;
-    setLoading(true);
-
-    async function maybeInsertMockCases() {
-      const { data: existing } = await supabase
-        .from("medical_cases")
-        .select("id")
-        .eq("title", MOCK_CASES[0].title);
-      if (!existing || existing.length === 0) {
-        await supabase.from("medical_cases").insert(
-          MOCK_CASES.map(c => ({
-            ...c,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }))
-        );
-      }
-    }
-
-    //maybeInsertMockCases().then(fetchCases);
-
     fetchCases();
-
-    // ==== SUPABASE REALTIME ====
-    const channel = supabase
-      .channel('schema-db-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'medical_cases' }, () => {
-        fetchCases();
-      })
-      .subscribe();
-
-    return () => {
-      mounted = false;
-      supabase.removeChannel(channel);
-    };
-  }, [categoryFilter, modalityFilter]); // refaz busca ao mudar filtro
-
-  async function refreshCases() {
-    await fetchCases();
-  }
-
-  // Função para deletar caso (corrigida)
-  const deleteCase = useCallback(
-    async (id: string) => {
-      const { error, data } = await supabase.from("medical_cases").delete().eq("id", id);
-      console.log("[deleteCase] id:", id, "error:", error, "data:", data);
-      if (!error) {
-        toast({ title: "Caso excluído com sucesso." });
-        await refreshCases(); // Força atualização dos casos!
-      } else {
-        toast({ title: "Erro ao excluir caso!", variant: "destructive" });
-        console.error("[deleteCase] Erro ao excluir caso:", error);
-      }
-    },
-    [refreshCases]
-  );
-
-  // Função para editar caso (por hora só imprime no console)
-  const editCase = useCallback((id: string) => {
-    console.log("Editar caso:", id);
-    toast({ title: "Em breve: modal de edição do caso." });
   }, []);
 
-  return { cases, loading, refreshCases, deleteCase, editCase };
+  return {
+    cases,
+    loading,
+    deleteCase,
+    refetch
+  };
 }

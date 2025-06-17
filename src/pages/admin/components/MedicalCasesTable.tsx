@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Edit, Trash2, Sparkles } from "lucide-react";
 import { CasePreviewModal } from "./CasePreviewModal";
-import { CaseEditAdminModal } from "./CaseEditAdminModal";
+import { CaseEditAdvancedModal } from "./CaseEditAdvancedModal";
 
 interface MedicalCasesTableProps {
   cases: any[];
@@ -43,7 +43,7 @@ export function MedicalCasesTable({ cases, onDelete }: MedicalCasesTableProps) {
 
   const handleCaseSaved = () => {
     setEditingCaseId(null);
-    // Optionally refresh the cases list here
+    // The parent component will handle refreshing the cases list
   };
 
   return (
@@ -131,8 +131,8 @@ export function MedicalCasesTable({ cases, onDelete }: MedicalCasesTableProps) {
         caseId={previewCase}
       />
 
-      {/* Edit Modal */}
-      <CaseEditAdminModal
+      {/* Advanced Edit Modal */}
+      <CaseEditAdvancedModal
         open={!!editingCaseId}
         onClose={handleCloseEdit}
         caseId={editingCaseId}

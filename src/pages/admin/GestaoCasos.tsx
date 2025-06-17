@@ -7,7 +7,13 @@ import { BackToDashboard } from "@/components/navigation/BackToDashboard";
 import { Loader } from "@/components/Loader";
 
 export default function GestaoCasos() {
-  const { cases, loading, deleteCase } = useMedicalCases();
+  const { cases, loading, deleteCase, refetch } = useMedicalCases();
+
+  // Enhanced delete handler that also refetches
+  const handleDelete = async (id: string) => {
+    await deleteCase(id);
+    refetch(); // Refresh the list after deletion
+  };
 
   return (
     <div className="space-y-6">
@@ -25,7 +31,7 @@ export default function GestaoCasos() {
         {loading ? (
           <Loader />
         ) : (
-          <MedicalCasesTable cases={cases} onDelete={deleteCase} />
+          <MedicalCasesTable cases={cases} onDelete={handleDelete} />
         )}
       </div>
     </div>
