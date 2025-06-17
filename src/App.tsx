@@ -1,9 +1,11 @@
+
 import React from 'react';
 import './App.css';
 
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import Dashboard from "@/pages/Dashboard";
 import Login from "@/pages/Login";
 import Index from "@/pages/Index";
@@ -38,40 +40,42 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router>
-        <div className="App">
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            
-            {/* Main app routes */}
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/casos" element={<Casos />} />
-            <Route path="/central-casos" element={<CentralCasos />} />
-            <Route path="/caso/:id" element={<CasoUsuarioView />} />
-            <Route path="/rankings" element={<Rankings />} />
-            <Route path="/ranking-eventos" element={<RankingEventos />} />
-            <Route path="/eventos" element={<Eventos />} />
-            <Route path="/estatisticas" element={<Estatisticas />} />
-            
-            {/* Admin routes */}
-            <Route path="/admin" element={<AdminPanel />} />
-            <Route path="/admin-integrated" element={<AdminPanelIntegrated />} />
-            <Route path="/admin/dashboard" element={<AdminDashboardAdvanced />} />
-            <Route path="/admin/casos-medicos" element={<CasosMedicos />} />
-            <Route path="/admin/gestao-casos" element={<GestaoCasos />} />
-            <Route path="/admin/events" element={<EventsManagement />} />
-            <Route path="/admin/create-event" element={<CreateEvent />} />
-            <Route path="/admin/fake-cases-preview" element={<FakeCasesPreview />} />
-            
-            {/* Catch all */}
-            <Route path="/404" element={<NotFound />} />
-            <Route path="*" element={<Navigate to="/404" replace />} />
-          </Routes>
-          <Toaster />
-        </div>
-      </Router>
+      <TooltipProvider>
+        <Router>
+          <div className="App">
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              
+              {/* Main app routes */}
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/casos" element={<Casos />} />
+              <Route path="/central-casos" element={<CentralCasos />} />
+              <Route path="/caso/:id" element={<CasoUsuarioView />} />
+              <Route path="/rankings" element={<Rankings />} />
+              <Route path="/ranking-eventos" element={<RankingEventos />} />
+              <Route path="/eventos" element={<Eventos />} />
+              <Route path="/estatisticas" element={<Estatisticas />} />
+              
+              {/* Admin routes */}
+              <Route path="/admin" element={<AdminPanel />} />
+              <Route path="/admin-integrated" element={<AdminPanelIntegrated />} />
+              <Route path="/admin/dashboard" element={<AdminDashboardAdvanced />} />
+              <Route path="/admin/casos-medicos" element={<CasosMedicos />} />
+              <Route path="/admin/gestao-casos" element={<GestaoCasos />} />
+              <Route path="/admin/events" element={<EventsManagement />} />
+              <Route path="/admin/create-event" element={<CreateEvent />} />
+              <Route path="/admin/fake-cases-preview" element={<FakeCasesPreview />} />
+              
+              {/* Catch all */}
+              <Route path="/404" element={<NotFound />} />
+              <Route path="*" element={<Navigate to="/404" replace />} />
+            </Routes>
+            <Toaster />
+          </div>
+        </Router>
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }
