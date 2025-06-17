@@ -48,18 +48,29 @@ export function RewardManagement() {
   const { data: userAchievements = [] } = useQuery({
     queryKey: ["user-achievement-stats"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: achievements, error: achievementsError } = await supabase
         .from("user_achievements")
-        .select(`
-          *,
-          achievement_system(name, rarity),
-          profiles(full_name, username)
-        `)
+        .select("*")
         .order("unlocked_at", { ascending: false })
         .limit(20);
 
-      if (error) throw error;
-      return data;
+      if (achievementsError) throw achievementsError;
+
+      // Get achievement details and user profiles separately
+      const achievementIds = [...new Set(achievements.map(a => a.achievement_id))];
+      const userIds = [...new Set(achievements.map(a => a.user_id))];
+
+      const [{ data: achievementDetails }, { data: userProfiles }] = await Promise.all([
+        supabase.from("achievement_system").select("*").in("id", achievementIds),
+        supabase.from("profiles").select("id, full_name, username").in("id", userIds)
+      ]);
+
+      // Combine the data
+      return achievements.map(achievement => ({
+        ...achievement,
+        achievement_system: achievementDetails?.find(a => a.id === achievement.achievement_id),
+        profiles: userProfiles?.find(p => p.id === achievement.user_id)
+      }));
     },
   });
 

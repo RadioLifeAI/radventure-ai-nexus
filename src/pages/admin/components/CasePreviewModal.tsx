@@ -1,5 +1,6 @@
 
 import React from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -9,34 +10,74 @@ import {
 } from "@/components/ui/dialog";
 import { HelpCircle, BookOpen, Brain, User, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CasePreviewModalProps {
   open: boolean;
   onClose: () => void;
-  form: any;
-  categories: any[];
-  difficulties: any[];
-}
-
-// Helper para label da especialidade
-function getCategoryName(categories: any[], id: string) {
-  return categories.find((c) => String(c.id) === id)?.name || "";
-}
-function getDifficultyDesc(difficulties: any[], level: string) {
-  return (
-    difficulties.find((d) => String(d.level) === String(level))?.description ||
-    level ||
-    ""
-  );
+  caseId: string | null;
 }
 
 export function CasePreviewModal({
   open,
   onClose,
-  form,
-  categories,
-  difficulties,
+  caseId,
 }: CasePreviewModalProps) {
+  const { data: caseData, isLoading } = useQuery({
+    queryKey: ["case-preview", caseId],
+    queryFn: async () => {
+      if (!caseId) return null;
+      
+      const { data, error } = await supabase
+        .from("medical_cases")
+        .select("*")
+        .eq("id", caseId)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!caseId && open,
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["medical-specialties"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("medical_specialties")
+        .select("*");
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: difficulties = [] } = useQuery({
+    queryKey: ["difficulties"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("difficulties")
+        .select("*");
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  if (!caseData && !isLoading) {
+    return null;
+  }
+
+  // Helper para label da especialidade
+  function getCategoryName(categories: any[], id: number) {
+    return categories.find((c) => c.id === id)?.name || "";
+  }
+  
+  function getDifficultyDesc(difficulties: any[], level: number) {
+    return difficulties.find((d) => d.level === level)?.description || level?.toString() || "";
+  }
+
+  const form = caseData || {};
   const category = getCategoryName(categories, form.category_id);
   const difficulty = getDifficultyDesc(difficulties, form.difficulty_level);
 
@@ -77,9 +118,9 @@ export function CasePreviewModal({
         <div className="flex flex-col md:flex-row gap-6 px-6 py-5">
           {/* COLUNA 1: IMAGEM */}
           <div className="md:w-72 flex-shrink-0 flex flex-col items-center">
-            {form.image_url ? (
+            {form.image_url && Array.isArray(form.image_url) && form.image_url[0] ? (
               <img
-                src={form.image_url}
+                src={form.image_url[0]}
                 alt="Imagem do caso"
                 className="w-64 h-64 object-cover rounded-lg border shadow mb-3 bg-white"
               />
@@ -124,7 +165,7 @@ export function CasePreviewModal({
               <div className="px-4 pb-4">
                 <div className="text-xs text-slate-600 mb-2 font-semibold">Selecione sua resposta:</div>
                 <ol className="space-y-2">
-                  {form.answer_options.map((alt: string, idx: number) => (
+                  {(form.answer_options || []).map((alt: string, idx: number) => (
                     <li key={idx}>
                       <button
                         type="button"
