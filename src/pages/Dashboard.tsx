@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Activity,
@@ -113,7 +112,7 @@ export default function Dashboard() {
             icon={<Activity />}
             title="Central de Casos"
             description="Resolva desafios reais, aprenda e suba de nível!"
-            link="/casos"
+            link="/central-casos"
             color="text-[#11d3fc]"
           />
           <ActionCard

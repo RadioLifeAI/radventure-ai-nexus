@@ -1,9 +1,11 @@
 
 import React, { useEffect, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowDown, Sparkles, Sword, Smile, Frown, Lightbulb, Book } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, ArrowRight, Home, Sparkles, Lightbulb, BookOpen, Clock, Target } from "lucide-react";
 import clsx from "clsx";
 import { useShuffledAnswers } from "@/hooks/useShuffledAnswers";
 import { Loader } from "@/components/Loader";
@@ -12,24 +14,7 @@ import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carouse
 import { HelpSystem } from "@/components/cases/HelpSystem";
 import { FeedbackModal } from "@/components/cases/FeedbackModal";
 import { useCaseProgress } from "@/hooks/useCaseProgress";
-
-// FEEDBACKS GAMIFICADOS
-const FEEDBACKS = [
-  { title: "Muito Bem! 🎉", icon: <Sparkles className="text-lg text-green-500 inline ml-1" /> },
-  { title: "Ótimo raciocínio! 👍", icon: <Smile className="text-lg text-green-500 inline ml-1" /> },
-  { title: "Quase lá! Não desista! 💪", icon: <Sword className="text-lg text-yellow-600 inline ml-1" /> },
-  { title: "Continue praticando! 🔄", icon: <Frown className="text-lg text-red-500 inline ml-1" /> }
-];
-
-function randomFeedback(acertou: boolean) {
-  if (acertou) {
-    // Pick between first two feedbacks for correct answer
-    const ok = FEEDBACKS.slice(0, 2);
-    return ok[Math.floor(Math.random() * ok.length)];
-  }
-  // Pick between last two feedbacks for incorrect answer
-  return FEEDBACKS[2 + Math.floor(Math.random() * 2)];
-}
+import { BackToDashboard } from "@/components/navigation/BackToDashboard";
 
 type CasoUsuarioViewProps = {
   idProp?: string;
@@ -39,16 +24,18 @@ type CasoUsuarioViewProps = {
 export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
   const urlParams = useParams();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const id = props.idProp || urlParams.id;
+  const fromSpecialty = searchParams.get('fromSpecialty');
+  
   const [caso, setCaso] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [performance, setPerformance] = useState<any>(null);
-
-  // Get current user for progress tracking
   const [user, setUser] = useState<any>(null);
+  const [startTime] = useState(Date.now());
 
   const {
     helpUsed,
@@ -103,19 +90,40 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
   const handleAnswerSubmit = async () => {
     if (selected === null || isAnswered) return;
     
-    const result = await submitAnswer(selected, caso);
+    const timeSpent = Math.round((Date.now() - startTime) / 1000);
+    const result = await submitAnswer(selected, caso, { timeSpent });
     setPerformance(result);
     setShowFeedback(true);
   };
 
-  const handleNextCase = () => {
-    // Navigate to next case or back to cases page
-    window.location.href = '/casos';
+  const handleNextCase = async () => {
+    if (fromSpecialty) {
+      // Buscar próximo caso da mesma especialidade
+      const { data: nextCase } = await supabase
+        .from('medical_cases')
+        .select('id')
+        .eq('specialty', fromSpecialty)
+        .neq('id', id)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      
+      if (nextCase) {
+        navigate(`/caso/${nextCase.id}?fromSpecialty=${encodeURIComponent(fromSpecialty)}`);
+      } else {
+        navigate('/central-casos');
+      }
+    } else {
+      navigate('/central-casos');
+    }
   };
 
-  const handleReviewCase = () => {
-    setShowFeedback(false);
-    // Could implement a review mode here
+  const handleBackNavigation = () => {
+    if (fromSpecialty) {
+      navigate(`/central-casos?specialty=${encodeURIComponent(fromSpecialty)}`);
+    } else {
+      navigate('/dashboard');
+    }
   };
 
   let caseImages: Array<{ url: string; legend?: string }> = [];
@@ -129,221 +137,227 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
     caseImages = !!caso?.image_url ? [{ url: caso.image_url }] : [];
   }
 
-  // Layout containers refinados:
-  return (
-    <div className="flex flex-col md:flex-row gap-2 px-2 py-3 md:py-6 bg-[#f5f7fd] min-h-screen animate-fade-in relative">
-      {/* Coluna Esquerda: Imagem + ajudas */}
-      <div className="w-full md:w-[225px] flex-shrink-0 flex flex-col items-center gap-2">
-        <div
-          className="rounded-xl bg-black overflow-hidden shadow border mb-1 flex items-center justify-center"
-          style={{ minHeight: 120, maxHeight: 230, width: "100%", maxWidth: 205 }}
-        >
-          {loading ? (
-            <Loader />
-          ) : caseImages.length > 0 ? (
-            <Carousel className="w-full max-w-[205px]">
-              <CarouselContent>
-                {caseImages.map((img, idx) => (
-                  <CarouselItem key={idx}>
-                    <img
-                      src={img.url}
-                      alt={`Imagem do caso ${idx + 1}`}
-                      className="object-contain max-h-[215px] min-w-[150px] rounded"
-                    />
-                    {isAnswered && img.legend && (
-                      <div className="text-xs text-center text-blue-900 mt-2 bg-blue-50 border border-blue-200 rounded px-2 py-1">
-                        {img.legend}
-                      </div>
-                    )}
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-            </Carousel>
-          ) : (
-            <div className="flex flex-col items-center justify-center w-[160px] h-[120px] gap-2">
-              <Book className="w-8 h-8 text-gray-400 opacity-60" />
-              <span className="text-xs text-gray-500">Sem imagem</span>
-            </div>
-          )}
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] flex items-center justify-center">
+        <div className="text-center">
+          <Loader />
+          <p className="text-white mt-4 text-lg">Carregando caso...</p>
         </div>
-        {!loading && (
-          <div className="flex gap-1 mt-1 mb-2">
-            <Button size="sm" variant="outline" title="Zoom In"><ArrowDown style={{ rotate: "180deg" }} /></Button>
-            <Button size="sm" variant="outline" title="Zoom Out"><ArrowDown /></Button>
-            <Button size="sm" variant="outline" title="Fullscreen">⛶</Button>
-          </div>
-        )}
-        {/* Ajudas Disponíveis */}
-        <section className="bg-yellow-50 border border-yellow-200 rounded-xl shadow px-2 py-2 mb-1 w-full">
-          <div className="text-yellow-800 font-semibold mb-1 flex items-center gap-1 text-sm">
-            <Lightbulb className="w-4 h-4 text-yellow-500" /> Ajudas
-          </div>
-          <div className="flex gap-2 mb-1">
-            <Button variant="outline" className="flex-1 flex flex-col items-center py-2 gap-1 cursor-not-allowed opacity-60 text-xs" disabled>
-              <span className="text-pink-600"><Sword className="w-4 h-4 inline" /></span>
-              <span>Eliminar</span>
-              <span className="text-[11px] text-gray-500">{caso?.max_elimination ?? 0}</span>
-            </Button>
-            <Button variant="outline" className="flex-1 flex flex-col items-center py-2 gap-1 cursor-not-allowed opacity-60 text-xs" disabled>
-              <span className="text-blue-600"><ArrowDown className="w-4 h-4 inline" /></span>
-              <span>Pular</span>
-              <span className="text-[11px] text-gray-500">{caso?.can_skip ? 1 : 0}</span>
-            </Button>
-          </div>
-        </section>
-        {/* Tutor AI compacto */}
-        <section className="bg-purple-50 border border-purple-200 rounded-xl shadow px-2 py-2 w-full flex flex-col items-center">
-          <div className="flex items-center gap-1 mb-1">
-            <span className="text-violet-500 font-bold text-base"><Sparkles className="w-4 h-4 inline" /></span>
-            <span className="font-semibold text-violet-900 text-sm">Tutor AI</span>
-          </div>
-          <Button variant="secondary" className="opacity-70 cursor-not-allowed mt-1 mb-1 text-xs px-2 py-1 h-7" disabled>
-            Tutor AI
-          </Button>
-          <span className="text-[11px] text-violet-600">0 disponíveis</span>
-        </section>
       </div>
+    );
+  }
 
-      {/* CONTEÚDO PRINCIPAL: Scroll dedicado, letras maiores, conteúdo unificado */}
-      <main className="flex-1 flex flex-col max-w-3xl mx-auto bg-white rounded-xl shadow-xl border px-4 py-5 relative min-h-[350px] max-h-[calc(100vh-64px)] overflow-y-auto">
-        {/* Erro/carregando */}
-        {loading && (
-          <div className="text-center mt-10">
-            <Loader />
-            <div className="mt-2 text-base text-gray-600">Carregando caso...</div>
-          </div>
-        )}
-        {error && (
-          <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded mb-3 text-base">{error}</div>
-        )}
-        {!loading && caso && (
-          <>
-            {/* Título e categoria */}
-            <div className="flex gap-2 items-center mb-3">
-              <span className="inline-flex items-center bg-white text-cyan-900 rounded-full shadow px-5 py-2 text-2xl font-extrabold tracking-wide">
-                🧠 {caso.title}
-              </span>
-              {caso.category_id && (
-                <span className="bg-cyan-50 border border-cyan-200 rounded px-2 py-1 text-cyan-700 text-sm font-semibold ml-2 flex items-center gap-1">
-                  <Book className="w-5 h-5" /> {caso.category_id}
-                </span>
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardContent className="p-6 text-center">
+            <p className="text-red-600 mb-4">{error}</p>
+            <Button onClick={handleBackNavigation}>
+              Voltar
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white">
+      {/* Header com navegação */}
+      <div className="sticky top-0 bg-black/20 backdrop-blur-sm border-b border-white/10 z-10">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button
+                onClick={handleBackNavigation}
+                variant="outline"
+                size="sm"
+                className="border-white/20 text-white hover:bg-white/10"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                {fromSpecialty ? fromSpecialty : 'Dashboard'}
+              </Button>
+              
+              {fromSpecialty && (
+                <Badge variant="outline" className="border-cyan-400 text-cyan-400">
+                  {fromSpecialty}
+                </Badge>
               )}
             </div>
-            {/* HISTÓRIA CLÍNICA + DADOS PACIENTE UNIFICADOS */}
-            <section className="bg-green-50 border-l-4 border-green-500 rounded-xl shadow px-6 py-3 mb-4 max-w-[95%]">
-              <div className="text-green-900 font-bold mb-2 flex items-center gap-2 text-xl">
-                <Lightbulb className="w-6 h-6 text-green-600" /> História Clínica
-              </div>
-              <div className="text-green-900 text-lg mb-2 leading-relaxed whitespace-pre-line">
-                {/* Unifica história com achados/dados, prioriza novo campo se existir */}
-                {caso.patient_clinical_info || caso.findings}
-              </div>
-              <div className="flex gap-2 flex-wrap text-[17px] mt-2 mb-0">
-                <div className="bg-white border rounded px-3 py-1 text-cyan-900 underline cursor-pointer w-fit font-medium">
-                  {/* Dados do paciente completos em linha */}
-                  {caso.patient_gender ? (
-                    <>
-                      {caso.patient_gender}, {caso.patient_age} anos{caso.symptoms_duration && `, sintomas há ${caso.symptoms_duration}`}
-                    </>
-                  ) : (
-                    "—"
-                  )}
-                </div>
-                {caso.patient_additional_info && (
-                  <div className="bg-blue-100 border border-blue-200 rounded px-3 py-1 text-blue-900 w-fit text-[15px]">
-                    {caso.patient_additional_info}
-                  </div>
-                )}
-              </div>
-            </section>
-            {/* Pergunta e Opções */}
-            <section className="bg-white border border-cyan-200 rounded-lg shadow px-6 py-4 mb-5">
-              <div className="font-bold text-cyan-900 text-2xl mb-2">Pergunta Principal</div>
-              <div className="mb-3 text-[19px] font-semibold text-gray-900">{caso.main_question}</div>
-              <div>
-                <div className="flex flex-col gap-3 mb-5">
-                  {(shuffled?.options || caso.answer_options || []).map((opt: string, idx: number) => {
-                    const isEliminated = eliminatedOptions.includes(idx);
-                    
-                    return (
-                      <button
-                        key={idx}
-                        className={clsx(
-                          "w-full text-left px-6 py-4 rounded shadow border font-bold transition text-xl",
-                          isEliminated 
-                            ? "opacity-30 bg-gray-100 line-through cursor-not-allowed"
-                            : !isAnswered
-                              ? "hover:bg-cyan-50 border-cyan-200"
-                              : idx === correctIdx
-                                ? "bg-green-50 border-green-400 text-green-800 font-extrabold"
-                                : idx === selected
-                                  ? "bg-red-50 border-red-400 text-red-600 font-extrabold"
-                                  : "opacity-75"
-                        )}
-                        disabled={isAnswered || isEliminated}
-                        tabIndex={0}
-                        onClick={() => !isEliminated && setSelected(idx)}
-                        aria-label={`Selecionar alternativa ${getLetter(idx)}`}
-                      >
-                        <span className="font-bold mr-2">{getLetter(idx)})</span> {opt}
-                      </button>
-                    );
-                  })}
-                </div>
-                <Button
-                  disabled={selected === null || isAnswered}
-                  onClick={handleAnswerSubmit}
-                  className="w-full bg-cyan-700 hover:bg-cyan-800 text-white font-bold shadow text-lg py-3"
-                  size="lg"
-                >
-                  Responder
-                </Button>
-              </div>
-            </section>
-            {/* Feedback Gamificado */}
-            {showFeedback && performance && (
-              <section
-                className={clsx(
-                  "mt-2 p-6 rounded-xl shadow border text-xl animate-scale-in",
-                  performance.isCorrect
-                    ? "bg-green-50 border-green-600 text-green-900"
-                    : "bg-yellow-50 border-yellow-600 text-yellow-900"
-                )}
-              >
-                {(() => {
-                  const feedbackMsg = randomFeedback(performance.isCorrect);
-                  return (
-                    <div className="flex items-center gap-2 mb-2 text-2xl font-bold">
-                      {performance.isCorrect
-                        ? feedbackMsg.title
-                        : feedbackMsg.title + " ❌"} {feedbackMsg.icon}
-                    </div>
-                  );
-                })()}
-                <div>
-                  {performance.isCorrect ? (
-                    <span>
-                      <b>✅ Resposta correta!</b>
-                      <div className="mt-2 text-lg">{caso.explanation || "Explicação não disponível para este caso."}</div>
-                    </span>
-                  ) : (
-                    <span>
-                      <b>❌ Resposta incorreta.</b>
-                      <div className="mt-2 text-lg">
-                        {(shuffled?.feedbacks?.[selected!] ?? caso.answer_feedbacks?.[selected!]) ||
-                          caso.explanation ||
-                          "Explicação não disponível para esta alternativa."}
-                      </div>
-                    </span>
-                  )}
-                </div>
-              </section>
-            )}
-          </>
-        )}
-      </main>
 
-      {/* Feedback Modal */}
+            <div className="flex items-center gap-2 text-sm text-cyan-200">
+              <Clock className="h-4 w-4" />
+              <span>{Math.round((Date.now() - startTime) / 1000)}s</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Coluna esquerda - Imagem e ajudas */}
+          <div className="lg:col-span-1 space-y-4">
+            {/* Imagem do caso */}
+            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+              <CardContent className="p-4">
+                <div className="aspect-square bg-black rounded-lg overflow-hidden flex items-center justify-center">
+                  {caseImages.length > 0 ? (
+                    <Carousel className="w-full">
+                      <CarouselContent>
+                        {caseImages.map((img, idx) => (
+                          <CarouselItem key={idx}>
+                            <img
+                              src={img.url}
+                              alt={`Imagem do caso ${idx + 1}`}
+                              className="w-full h-full object-contain"
+                            />
+                          </CarouselItem>
+                        ))}
+                      </CarouselContent>
+                    </Carousel>
+                  ) : (
+                    <div className="text-center text-gray-400">
+                      <BookOpen className="h-12 w-12 mx-auto mb-2" />
+                      <p>Sem imagem</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Sistema de ajudas */}
+            <HelpSystem
+              maxElimination={caso?.max_elimination || 0}
+              canSkip={caso?.can_skip || false}
+              skipPenalty={caso?.skip_penalty_points || 0}
+              eliminationPenalty={caso?.elimination_penalty_points || 0}
+              aiHintEnabled={caso?.ai_hint_enabled || false}
+              onEliminateOption={eliminateOption}
+              onSkip={skipCase}
+              onAIHint={useAIHint}
+              eliminatedOptions={eliminatedOptions}
+              helpCredits={helpCredits}
+            />
+          </div>
+
+          {/* Coluna direita - Conteúdo do caso */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Título e informações */}
+            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-2xl">
+                  <Lightbulb className="h-8 w-8 text-yellow-400" />
+                  {caso?.title}
+                </CardTitle>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge className="bg-blue-500/20 text-blue-200">
+                    {caso?.specialty || 'Geral'}
+                  </Badge>
+                  <Badge className="bg-purple-500/20 text-purple-200">
+                    {caso?.modality || 'Diversos'}
+                  </Badge>
+                  {caso?.difficulty_level && (
+                    <Badge className="bg-orange-500/20 text-orange-200">
+                      Nível {caso.difficulty_level}
+                    </Badge>
+                  )}
+                </div>
+              </CardHeader>
+            </Card>
+
+            {/* História clínica */}
+            <Card className="bg-gradient-to-br from-green-500/10 to-emerald-600/10 backdrop-blur-sm border-green-400/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-green-100">
+                  <BookOpen className="h-5 w-5 text-green-400" />
+                  História Clínica
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <p className="text-green-100 leading-relaxed">
+                    {caso?.patient_clinical_info || caso?.findings}
+                  </p>
+                  
+                  {caso?.patient_gender && (
+                    <div className="flex gap-2 flex-wrap">
+                      <Badge variant="outline" className="border-green-300 text-green-200">
+                        {caso.patient_gender}, {caso.patient_age} anos
+                      </Badge>
+                      {caso?.symptoms_duration && (
+                        <Badge variant="outline" className="border-green-300 text-green-200">
+                          Sintomas há {caso.symptoms_duration}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Pergunta e alternativas */}
+            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-cyan-100">
+                  <Target className="h-5 w-5 text-cyan-400" />
+                  Pergunta Principal
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <p className="text-lg font-medium text-white mb-4">
+                    {caso?.main_question}
+                  </p>
+                  
+                  <div className="space-y-3">
+                    {(shuffled?.options || caso?.answer_options || []).map((opt: string, idx: number) => {
+                      const isEliminated = eliminatedOptions.includes(idx);
+                      const isSelected = selected === idx;
+                      const isCorrect = isAnswered && idx === correctIdx;
+                      const isWrong = isAnswered && isSelected && idx !== correctIdx;
+                      
+                      return (
+                        <button
+                          key={idx}
+                          className={clsx(
+                            "w-full text-left p-4 rounded-lg border-2 transition-all duration-200 font-medium",
+                            isEliminated && "opacity-30 line-through cursor-not-allowed bg-gray-600/20 border-gray-500",
+                            !isEliminated && !isAnswered && "hover:bg-white/10 border-white/20 text-white",
+                            !isEliminated && !isAnswered && isSelected && "bg-cyan-500/20 border-cyan-400 text-cyan-100",
+                            isCorrect && "bg-green-500/20 border-green-400 text-green-100",
+                            isWrong && "bg-red-500/20 border-red-400 text-red-100"
+                          )}
+                          disabled={isAnswered || isEliminated}
+                          onClick={() => !isEliminated && setSelected(idx)}
+                        >
+                          <span className="font-bold mr-3">{getLetter(idx)})</span>
+                          {opt}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  
+                  {!isAnswered && (
+                    <Button
+                      disabled={selected === null}
+                      onClick={handleAnswerSubmit}
+                      className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-bold py-3 text-lg"
+                      size="lg"
+                    >
+                      <Sparkles className="h-5 w-5 mr-2" />
+                      Responder
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal de feedback */}
       {showFeedback && performance && (
         <FeedbackModal
           open={showFeedback}
@@ -354,7 +368,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
           explanation={caso?.explanation || 'Explicação não disponível.'}
           performance={performance}
           onNextCase={handleNextCase}
-          onReviewCase={handleReviewCase}
+          onReviewCase={() => setShowFeedback(false)}
         />
       )}
     </div>
