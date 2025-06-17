@@ -32,12 +32,12 @@ export function JourneyExecutionModal({ journey, isOpen, onClose }: JourneyExecu
   const [showCaseDetails, setShowCaseDetails] = useState(false);
   
   const { updateJourneyProgress } = useJourneyManagement();
-  const { cases, loading: casesLoading } = useCasesData();
+  const { casesStats, isLoading: casesLoading } = useCasesData();
 
   // Buscar casos da jornada
-  const journeyCases = cases.filter(case_item => 
+  const journeyCases = casesStats?.cases?.filter(case_item => 
     journey.case_ids && journey.case_ids.includes(case_item.id)
-  );
+  ) || [];
 
   const currentCase = journeyCases[currentCaseIndex];
   const progress = ((currentCaseIndex + 1) / journeyCases.length) * 100;
