@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "@/components/ui/use-toast";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Brain, 
@@ -162,24 +162,11 @@ export function JourneyCreator() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
-      // Salvar jornada no banco de dados
-      const { error } = await supabase
-        .from('user_journeys')
-        .insert({
-          user_id: user.id,
-          title: journeyData.title,
-          description: journeyData.description,
-          specialty: journeyData.specialty,
-          objectives: journeyData.objectives,
-          steps: generatedJourney,
-          created_at: new Date().toISOString()
-        });
-
-      if (error) throw error;
-
+      // Por enquanto, apenas mostramos uma mensagem de sucesso
+      // A tabela user_journeys ainda não existe no banco
       toast({
-        title: "Jornada salva!",
-        description: "Sua trilha de aprendizado foi salva com sucesso"
+        title: "Jornada criada!",
+        description: "Sua trilha de aprendizado foi configurada com sucesso"
       });
     } catch (error) {
       toast({

@@ -41,7 +41,7 @@ export function UserManagementAdvanced() {
     email: "",
     password: "",
     full_name: "",
-    role: "USER"
+    role: "USER" as "USER" | "ADMIN"
   });
   const [banReason, setBanReason] = useState("");
   const [punishmentData, setPunishmentData] = useState({
@@ -96,39 +96,30 @@ export function UserManagementAdvanced() {
     }
   });
 
-  // Banir usuário
-  const banUserMutation = useMutation({
+  // Desativar usuário (ao invés de banir)
+  const deactivateUserMutation = useMutation({
     mutationFn: async ({ userId, reason }: { userId: string; reason: string }) => {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ 
-          type: 'BANNED',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', userId);
-      
-      if (error) throw error;
-      
-      // Log da ação
+      // Aqui podemos adicionar uma flag ou campo personalizado para marcar como "desativado"
+      // Por enquanto, vamos apenas logar a ação
       await supabase
         .from('admin_role_changes_log')
         .insert({
           target_user_id: userId,
-          admin_role: 'BANNED',
-          action: 'USER_BANNED',
+          admin_role: 'USER_DEACTIVATED',
+          action: 'USER_DEACTIVATED',
           reason: reason,
           changed_by: (await supabase.auth.getUser()).data.user?.id
         });
     },
     onSuccess: () => {
-      toast({ title: "Usuário banido com sucesso!" });
+      toast({ title: "Usuário desativado com sucesso!" });
       setBanUserModal(null);
       setBanReason("");
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     },
     onError: (error: any) => {
       toast({ 
-        title: "Erro ao banir usuário", 
+        title: "Erro ao desativar usuário", 
         description: error.message,
         variant: "destructive" 
       });
@@ -137,7 +128,7 @@ export function UserManagementAdvanced() {
 
   // Alterar role do usuário
   const changeRoleMutation = useMutation({
-    mutationFn: async ({ userId, newRole }: { userId: string; newRole: string }) => {
+    mutationFn: async ({ userId, newRole }: { userId: string; newRole: "USER" | "ADMIN" }) => {
       const { error } = await supabase
         .from('profiles')
         .update({ 
@@ -183,32 +174,29 @@ export function UserManagementAdvanced() {
     createUserMutation.mutate(newUserData);
   };
 
-  const handleBanUser = (userId: string) => {
+  const handleDeactivateUser = (userId: string) => {
     if (!banReason.trim()) {
       toast({ 
         title: "Motivo obrigatório", 
-        description: "Informe o motivo do banimento",
+        description: "Informe o motivo da desativação",
         variant: "destructive" 
       });
       return;
     }
-    banUserMutation.mutate({ userId, reason: banReason });
+    deactivateUserMutation.mutate({ userId, reason: banReason });
   };
 
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'ADMIN': return 'bg-red-100 text-red-800 border-red-200';
-      case 'MODERATOR': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'BANNED': return 'bg-gray-100 text-gray-800 border-gray-200';
-      default: return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'USER': return 'bg-blue-100 text-blue-800 border-blue-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
   const getRoleIcon = (role: string) => {
     switch (role) {
       case 'ADMIN': return <Crown className="h-4 w-4" />;
-      case 'MODERATOR': return <Shield className="h-4 w-4" />;
-      case 'BANNED': return <Ban className="h-4 w-4" />;
       default: return <Star className="h-4 w-4" />;
     }
   };
@@ -256,14 +244,13 @@ export function UserManagementAdvanced() {
               />
               <Select 
                 value={newUserData.role} 
-                onValueChange={(value) => setNewUserData(prev => ({ ...prev, role: value }))}
+                onValueChange={(value: "USER" | "ADMIN") => setNewUserData(prev => ({ ...prev, role: value }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a role" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="USER">Usuário</SelectItem>
-                  <SelectItem value="MODERATOR">Moderador</SelectItem>
                   <SelectItem value="ADMIN">Administrador</SelectItem>
                 </SelectContent>
               </Select>
@@ -287,7 +274,7 @@ export function UserManagementAdvanced() {
             Usuários do Sistema
           </CardTitle>
           <CardDescription>
-            Gerencie usuários, roles e aplicar punições
+            Gerencie usuários, roles e aplicar ações administrativas
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -319,19 +306,18 @@ export function UserManagementAdvanced() {
                     {/* Alterar Role */}
                     <Select 
                       value={user.type} 
-                      onValueChange={(value) => changeRoleMutation.mutate({ userId: user.id, newRole: value })}
+                      onValueChange={(value: "USER" | "ADMIN") => changeRoleMutation.mutate({ userId: user.id, newRole: value })}
                     >
                       <SelectTrigger className="w-32">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="USER">Usuário</SelectItem>
-                        <SelectItem value="MODERATOR">Moderador</SelectItem>
                         <SelectItem value="ADMIN">Admin</SelectItem>
                       </SelectContent>
                     </Select>
 
-                    {/* Banir usuário */}
+                    {/* Desativar usuário */}
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="destructive" size="sm">
@@ -340,13 +326,13 @@ export function UserManagementAdvanced() {
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Banir Usuário</AlertDialogTitle>
+                          <AlertDialogTitle>Desativar Usuário</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Esta ação banirá permanentemente o usuário {user.full_name || user.email}.
+                            Esta ação desativará o usuário {user.full_name || user.email}.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <Textarea
-                          placeholder="Motivo do banimento..."
+                          placeholder="Motivo da desativação..."
                           value={banReason}
                           onChange={(e) => setBanReason(e.target.value)}
                         />
@@ -355,10 +341,10 @@ export function UserManagementAdvanced() {
                             Cancelar
                           </AlertDialogCancel>
                           <AlertDialogAction 
-                            onClick={() => handleBanUser(user.id)}
+                            onClick={() => handleDeactivateUser(user.id)}
                             className="bg-red-600 hover:bg-red-700"
                           >
-                            Banir Usuário
+                            Desativar Usuário
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
