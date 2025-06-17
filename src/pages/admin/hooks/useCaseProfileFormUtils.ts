@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { buildAutoAdvancedFields } from "./autoAdvancedUtils";
 import { shuffleAlternativesWithFeedback } from "./shuffleUtils";
 import { normalizeString, suggestPointsByDifficulty, safeStr, safeArr } from "./caseFormHelpers";
-import { validateAPIResponse, SPECIALTY_MAPPING } from "./useCaseFieldsChecklist";
+import { validateAPIResponse, SPECIALTY_MAPPING, API_COVERAGE_STATUS } from "./useCaseFieldsChecklist";
 
 export function useCaseProfileFormUtils({
   form,
