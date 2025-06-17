@@ -17,6 +17,7 @@ import { CaseProgressDashboard } from "./CaseProgressDashboard";
 import { CaseQualityRadar } from "./CaseQualityRadar";
 import { CaseTemplateChooser } from "./CaseTemplateChooser";
 import { CaseFormGamifiedHelpers } from "./CaseFormGamifiedHelpers";
+import { CaseFormGamifiedLayout } from "./CaseFormGamifiedLayout";
 import { supabase } from "@/integrations/supabase/client";
 
 export function CaseProfileFormEditable({ 
@@ -218,92 +219,133 @@ export function CaseProfileFormEditable({
   }
 
   return (
-    <form className="w-full" onSubmit={handleSubmit}>
+    <div className="w-full space-y-6">
       <CaseFormPreviewModal open={showPreview} onClose={()=>setShowPreview(false)} form={form} categories={categories} difficulties={difficulties} />
 
-      <h2 className="text-xl font-bold mb-2">
-        {isEditMode ? "Editar Caso Médico" : "Criar Novo Caso Médico"}
-      </h2>
-
       {!isEditMode && (
-        <>
+        <div className="grid gap-6">
           <CaseProgressDashboard form={form} />
           <CaseQualityRadar form={form} />
           <CaseFormGamifiedHelpers form={form} />
           <CaseTemplateChooser setForm={setForm} />
-        </>
+        </div>
       )}
 
-      <CaseProfileFormTitleSection
-        autoTitlePreview={autoTitlePreview}
-        showPreview={showPreview}
-      />
-      <CaseProfileBasicSection
-        form={form}
-        highlightedFields={highlightedFields}
-        categories={categories}
-        difficulties={difficulties}
-        handleFormChange={handleFormChange}
-        handleModalityChange={handleModalityChange}
-        handleAutoFillCaseDetails={handleAutoFillCaseDetails}
-        handleSuggestDiagnosis={onSuggestDiagnosis}
-        handleSuggestHint={handleSuggestHint}
-        handleImageChange={handleImageChange}
-        renderTooltipTip={renderTooltipTip}
-        handleSuggestFindings={onSuggestFindings}
-        handleSuggestClinicalInfo={onSuggestClinical}
-        undoFindings={undoFindings}
-        undoClinical={undoClinical}
-        undoDiagnosis={undoDiagnosis}
-        setForm={setForm}
-        autoTitlePreview={autoTitlePreview}
-        onGenerateAutoTitle={handleAutoGenerateTitle}
-      />
-      <label className="font-semibold block mt-3">
-        Pergunta Principal *
-        {renderTooltipTip("tip-main-question", "Esta pergunta será apresentada ao usuário e guiará o raciocínio clínico.")}
-      </label>
-      <Input name="main_question" value={form.main_question} onChange={handleFormChange} placeholder="Ex: Qual é o diagnóstico mais provável?" required />
-      <CaseProfileAlternativesSection
-        form={form}
-        highlightedFields={highlightedFields}
-        handleOptionChange={handleOptionChange}
-        handleOptionFeedbackChange={handleOptionFeedbackChange}
-        handleShortTipChange={handleShortTipChange}
-        handleCorrectChange={handleCorrectChange}
-        handleSuggestAlternatives={handleSuggestAlternatives}
-        handleRandomizeOptions={handleRandomizeOptions}
-        renderTooltipTip={renderTooltipTip}
-      />
-      <CaseProfileExplanationSectionContainer
-        form={form}
-        highlightedFields={highlightedFields}
-        handleFormChange={handleFormChange}
-        handleSuggestExplanation={handleSuggestExplanation}
-        renderTooltipTip={renderTooltipTip}
-        handleSuggestHint={handleSuggestHint}
-      />
-      <div className="mt-7">
-        <button
-          type="button"
-          className="text-cyan-700 font-semibold hover:underline"
-          onClick={() => setShowAdvanced((v: boolean) => !v)}
+      <form className="w-full space-y-6" onSubmit={handleSubmit}>
+        <CaseFormGamifiedLayout
+          section="basic"
+          title={isEditMode ? "Editar Caso Médico" : "Criar Novo Caso Médico"}
+          description="Configure as informações básicas do caso médico"
         >
-          {showAdvanced ? "Ocultar" : "Mostrar"} Configurações Avançadas
-        </button>
-        <CaseProfileAdvancedConfigContainer
-          form={form}
-          handleFormChange={handleFormChange}
-          handleSuggestHint={handleSuggestHint}
-          showAdvanced={showAdvanced}
-        />
-      </div>
-      <Button type="submit" disabled={submitting}>
-        {isEditMode ? "Atualizar Caso" : "Salvar Caso"}
-      </Button>
-      {feedback && (
-        <span className="ml-4 text-sm font-medium text-cyan-700">{feedback}</span>
-      )}
-    </form>
+          <CaseProfileFormTitleSection
+            autoTitlePreview={autoTitlePreview}
+            showPreview={showPreview}
+          />
+          <CaseProfileBasicSection
+            form={form}
+            highlightedFields={highlightedFields}
+            categories={categories}
+            difficulties={difficulties}
+            handleFormChange={handleFormChange}
+            handleModalityChange={handleModalityChange}
+            handleAutoFillCaseDetails={handleAutoFillCaseDetails}
+            handleSuggestDiagnosis={onSuggestDiagnosis}
+            handleSuggestHint={handleSuggestHint}
+            handleImageChange={handleImageChange}
+            renderTooltipTip={renderTooltipTip}
+            handleSuggestFindings={onSuggestFindings}
+            handleSuggestClinicalInfo={onSuggestClinical}
+            undoFindings={undoFindings}
+            undoClinical={undoClinical}
+            undoDiagnosis={undoDiagnosis}
+            setForm={setForm}
+            autoTitlePreview={autoTitlePreview}
+            onGenerateAutoTitle={handleAutoGenerateTitle}
+          />
+        </CaseFormGamifiedLayout>
+
+        <CaseFormGamifiedLayout
+          section="quiz"
+          title="Pergunta e Alternativas"
+          description="Configure a pergunta principal e as opções de resposta"
+        >
+          <div className="space-y-4">
+            <div>
+              <label className="font-semibold block">
+                Pergunta Principal *
+                {renderTooltipTip("tip-main-question", "Esta pergunta será apresentada ao usuário e guiará o raciocínio clínico.")}
+              </label>
+              <Input 
+                name="main_question" 
+                value={form.main_question} 
+                onChange={handleFormChange} 
+                placeholder="Ex: Qual é o diagnóstico mais provável?" 
+                required 
+                className="mt-2"
+              />
+            </div>
+            <CaseProfileAlternativesSection
+              form={form}
+              highlightedFields={highlightedFields}
+              handleOptionChange={handleOptionChange}
+              handleOptionFeedbackChange={handleOptionFeedbackChange}
+              handleShortTipChange={handleShortTipChange}
+              handleCorrectChange={handleCorrectChange}
+              handleSuggestAlternatives={handleSuggestAlternatives}
+              handleRandomizeOptions={handleRandomizeOptions}
+              renderTooltipTip={renderTooltipTip}
+            />
+          </div>
+        </CaseFormGamifiedLayout>
+
+        <CaseFormGamifiedLayout
+          section="clinical"
+          title="Explicação e Feedback"
+          description="Configure as explicações e dicas para o usuário"
+        >
+          <CaseProfileExplanationSectionContainer
+            form={form}
+            highlightedFields={highlightedFields}
+            handleFormChange={handleFormChange}
+            handleSuggestExplanation={handleSuggestExplanation}
+            renderTooltipTip={renderTooltipTip}
+            handleSuggestHint={handleSuggestHint}
+          />
+        </CaseFormGamifiedLayout>
+
+        <CaseFormGamifiedLayout
+          section="advanced"
+          title="Configurações Avançadas"
+          description="Configurações de gamificação e regras especiais"
+        >
+          <div className="space-y-4">
+            <button
+              type="button"
+              className="text-cyan-700 font-semibold hover:underline"
+              onClick={() => setShowAdvanced((v: boolean) => !v)}
+            >
+              {showAdvanced ? "Ocultar" : "Mostrar"} Configurações Avançadas
+            </button>
+            <CaseProfileAdvancedConfigContainer
+              form={form}
+              handleFormChange={handleFormChange}
+              handleSuggestHint={handleSuggestHint}
+              showAdvanced={showAdvanced}
+            />
+          </div>
+        </CaseFormGamifiedLayout>
+
+        <div className="flex justify-between items-center pt-6 border-t border-gray-200">
+          <div className="flex items-center gap-4">
+            <Button type="submit" disabled={submitting} size="lg">
+              {isEditMode ? "Atualizar Caso" : "Salvar Caso"}
+            </Button>
+            {feedback && (
+              <span className="text-sm font-medium text-cyan-700">{feedback}</span>
+            )}
+          </div>
+        </div>
+      </form>
+    </div>
   );
 }

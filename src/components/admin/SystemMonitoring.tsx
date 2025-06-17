@@ -1,7 +1,6 @@
 
 import React from "react";
-import { SystemMetrics } from "./monitoring/SystemMetrics";
-import { SystemLogs } from "./monitoring/SystemLogs";
+import { MonitoringTabs } from "./monitoring/MonitoringTabs";
 import { SystemMonitoringHeader } from "./monitoring/SystemMonitoringHeader";
 
 // Mock data para desenvolvimento
@@ -29,10 +28,10 @@ export function SystemMonitoring() {
         activeUsers={mockMetrics.activeConnections}
       />
       
-      <div className="grid gap-6">
-        <SystemMetrics metrics={mockMetrics} />
-        <SystemLogs logs={mockLogs} />
-      </div>
+      <MonitoringTabs 
+        metrics={mockMetrics}
+        logs={mockLogs}
+      />
     </div>
   );
 }

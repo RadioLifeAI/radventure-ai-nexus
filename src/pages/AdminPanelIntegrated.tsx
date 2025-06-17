@@ -45,8 +45,8 @@ export default function AdminPanelIntegrated() {
     <div className="flex min-h-screen w-full bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
       <AdminSidebar />
       <main className="flex-1 ml-[235px] min-h-screen">
-        {/* Header Gamificado Integrado */}
-        <header className="w-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white shadow-2xl">
+        {/* Header Gamificado Integrado Corrigido */}
+        <header className="w-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white shadow-2xl relative z-10">
           <div className="flex items-center justify-between px-8 py-6">
             <div className="flex items-center gap-4">
               <div className="flex items-center justify-center w-12 h-12 bg-white/20 rounded-full backdrop-blur-sm">
@@ -76,7 +76,8 @@ export default function AdminPanelIntegrated() {
           </div>
         </header>
 
-        <section className="p-8">
+        {/* Conteúdo Principal com espaçamento correto */}
+        <section className="p-8 relative z-0">
           <Routes>
             {/* Rotas integradas com dados reais */}
             <Route path="analytics" element={<DashboardAnalyticsIntegrated />} />

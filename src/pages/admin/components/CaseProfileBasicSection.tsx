@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -52,13 +53,13 @@ export function CaseProfileBasicSection({
       : []);
 
   return (
-    <>
-      {/* Categoria/Dificuldade/Pontos */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
+    <div className="space-y-6">
+      {/* Categoria/Dificuldade/Pontos com melhor espaçamento */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
-          <label className="font-semibold block">Categoria *</label>
+          <label className="font-semibold block mb-2">Categoria *</label>
           <select
-            className="w-full border rounded px-2 py-2 bg-white"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
             name="category_id"
             value={form.category_id}
             onChange={handleFormChange}
@@ -71,9 +72,9 @@ export function CaseProfileBasicSection({
           </select>
         </div>
         <div>
-          <label className="font-semibold block">Dificuldade *</label>
+          <label className="font-semibold block mb-2">Dificuldade *</label>
           <select
-            className="w-full border rounded px-2 py-2 bg-white"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
             name="difficulty_level"
             value={form.difficulty_level}
             onChange={handleFormChange}
@@ -88,7 +89,7 @@ export function CaseProfileBasicSection({
           </select>
         </div>
         <div>
-          <label className="font-semibold block">Pontos *</label>
+          <label className="font-semibold block mb-2">Pontos *</label>
           <Input
             name="points"
             type="number"
@@ -97,20 +98,25 @@ export function CaseProfileBasicSection({
             onChange={handleFormChange}
             placeholder="Ex: 10"
             required
+            className="focus:ring-2 focus:ring-cyan-500"
           />
         </div>
       </div>
+
       {/* Modalidade/Subtipo */}
-      <CaseModalityFields value={{ modality: form.modality, subtype: form.subtype }} onChange={handleModalityChange} />
-      {/* Título gerado automático */}
-      <div className="mb-2">
-        <label className="font-semibold block flex items-center gap-2">
+      <div>
+        <CaseModalityFields value={{ modality: form.modality, subtype: form.subtype }} onChange={handleModalityChange} />
+      </div>
+
+      {/* Título gerado automaticamente */}
+      <div>
+        <label className="font-semibold block mb-2 flex items-center gap-2">
           Título do Caso (gerado automaticamente)
           <span className="text-xs text-cyan-700">(Será preenchido ao selecionar categoria/mod. Se necessário, clique para auto gerar.)</span>
         </label>
-        <div className="flex flex-row items-center gap-2">
+        <div className="flex flex-row items-center gap-3">
           <input
-            className="w-full border rounded px-2 py-2 bg-gray-100 text-gray-700 font-mono"
+            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 text-gray-700 font-mono focus:outline-none"
             value={
               form.title
               ? form.title
@@ -132,43 +138,47 @@ export function CaseProfileBasicSection({
           )}
         </div>
       </div>
-      {/* Diagnóstico apenas para referência interna */}
-      <div className="flex flex-col md:flex-row gap-6">
-        <div className="flex-1 space-y-3">
-          <div className="flex items-end gap-2">
-            <div className="flex-1">
-              <label className="font-semibold">
-                Diagnóstico (referência)*{" "}
-                <span className="text-xs text-muted-foreground">(Não será exibido no título do caso)</span>
-              </label>
-              <Input
-                name="diagnosis_internal"
-                value={form.diagnosis_internal ?? ""}
-                onChange={e => setForm((prev: any) => ({ ...prev, diagnosis_internal: e.target.value }))}
-                placeholder="Ex: Tuberculose pulmonar"
-                required
-                className={highlightedFields.includes("diagnosis_internal") ? "ring-2 ring-cyan-400" : ""}
-              />
+
+      {/* Layout responsivo com diagnóstico e campos clínicos */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          {/* Diagnóstico */}
+          <div>
+            <div className="flex items-end gap-3 mb-2">
+              <div className="flex-1">
+                <label className="font-semibold block mb-2">
+                  Diagnóstico (referência)*{" "}
+                  <span className="text-xs text-muted-foreground">(Não será exibido no título do caso)</span>
+                </label>
+                <Input
+                  name="diagnosis_internal"
+                  value={form.diagnosis_internal ?? ""}
+                  onChange={e => setForm((prev: any) => ({ ...prev, diagnosis_internal: e.target.value }))}
+                  placeholder="Ex: Tuberculose pulmonar"
+                  required
+                  className={`focus:ring-2 focus:ring-cyan-500 ${highlightedFields.includes("diagnosis_internal") ? "ring-2 ring-cyan-400" : ""}`}
+                />
+              </div>
+              <Button type="button" onClick={handleSuggestDiagnosis} variant="secondary" size="sm">
+                Sugerir IA
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                title="Desfazer sugestão IA para diagnóstico"
+                onClick={() => undoDiagnosis.undo((val: string) => setForm((prev: any) => ({ ...prev, diagnosis_internal: val })))}
+                disabled={!undoDiagnosis.canUndo()}
+              >
+                <Undo2 size={18} />
+              </Button>
             </div>
-            <Button type="button" onClick={handleSuggestDiagnosis} variant="secondary" className="mb-1">
-              Sugerir Diagnóstico
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              title="Desfazer sugestão IA para diagnóstico"
-              onClick={() => undoDiagnosis.undo((val: string) => setForm((prev: any) => ({ ...prev, diagnosis_internal: val })))}
-              className="mb-1"
-              disabled={!undoDiagnosis.canUndo()}
-            >
-              <Undo2 size={18} />
-            </Button>
             <Button
               type="button"
               onClick={handleAutoFillCaseDetails}
               variant="secondary"
-              className="mb-1"
+              size="sm"
+              className="w-full"
               title="Preencher achados, resumo, idade, gênero, sintomas e opções avançadas de forma automática"
             >
               Auto-preencher detalhes do caso
@@ -176,94 +186,125 @@ export function CaseProfileBasicSection({
           </div>
 
           {/* Achados radiológicos */}
-          <label className="font-semibold mt-3 flex items-center">
-            Achados radiológicos *
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="ml-2 px-2 py-1 text-cyan-700 border border-cyan-200"
-              onClick={handleSuggestFindings}
-              title="Gerar sugestão de achados radiológicos via IA"
-            >
-              Sugerir IA
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              title="Desfazer sugestão IA para achados"
-              onClick={() => undoFindings.undo((val: string) => setForm((prev: any) => ({ ...prev, findings: val })))}
-              className="ml-1"
-              disabled={!undoFindings.canUndo()}
-            >
-              <Undo2 size={18} />
-            </Button>
-          </label>
-          <Textarea name="findings" value={form.findings} onChange={handleFormChange} placeholder="Descreva os achados..." required className={highlightedFields.includes("findings") ? "ring-2 ring-cyan-400" : ""} />
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <label className="font-semibold flex-1">Achados radiológicos *</label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="px-3 py-1 text-cyan-700 border border-cyan-200"
+                onClick={handleSuggestFindings}
+                title="Gerar sugestão de achados radiológicos via IA"
+              >
+                Sugerir IA
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                title="Desfazer sugestão IA para achados"
+                onClick={() => undoFindings.undo((val: string) => setForm((prev: any) => ({ ...prev, findings: val })))}
+                disabled={!undoFindings.canUndo()}
+              >
+                <Undo2 size={18} />
+              </Button>
+            </div>
+            <Textarea 
+              name="findings" 
+              value={form.findings} 
+              onChange={handleFormChange} 
+              placeholder="Descreva os achados..." 
+              required 
+              className={`min-h-[120px] focus:ring-2 focus:ring-cyan-500 ${highlightedFields.includes("findings") ? "ring-2 ring-cyan-400" : ""}`} 
+            />
+          </div>
 
           {/* Resumo Clínico */}
-          <label className="font-semibold mt-3 flex items-center">
-            Resumo Clínico *
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="ml-2 px-2 py-1 text-cyan-700 border border-cyan-200"
-              onClick={handleSuggestClinicalInfo}
-              title="Gerar sugestão de resumo clínico via IA"
-            >
-              Sugerir IA
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              title="Desfazer sugestão IA para resumo clínico"
-              onClick={() => undoClinical.undo((val: string) => setForm((prev: any) => ({ ...prev, patient_clinical_info: val })))}
-              className="ml-1"
-              disabled={!undoClinical.canUndo()}
-            >
-              <Undo2 size={18} />
-            </Button>
-          </label>
-          <Textarea name="patient_clinical_info" value={form.patient_clinical_info} onChange={handleFormChange} placeholder="Breve histórico do paciente..." required className={highlightedFields.includes("patient_clinical_info") ? "ring-2 ring-cyan-400" : ""} />
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <label className="font-semibold flex-1">Resumo Clínico *</label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="px-3 py-1 text-cyan-700 border border-cyan-200"
+                onClick={handleSuggestClinicalInfo}
+                title="Gerar sugestão de resumo clínico via IA"
+              >
+                Sugerir IA
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                title="Desfazer sugestão IA para resumo clínico"
+                onClick={() => undoClinical.undo((val: string) => setForm((prev: any) => ({ ...prev, patient_clinical_info: val })))}
+                disabled={!undoClinical.canUndo()}
+              >
+                <Undo2 size={18} />
+              </Button>
+            </div>
+            <Textarea 
+              name="patient_clinical_info" 
+              value={form.patient_clinical_info} 
+              onChange={handleFormChange} 
+              placeholder="Breve histórico do paciente..." 
+              required 
+              className={`min-h-[120px] focus:ring-2 focus:ring-cyan-500 ${highlightedFields.includes("patient_clinical_info") ? "ring-2 ring-cyan-400" : ""}`} 
+            />
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-3">
+          {/* Dados do paciente */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="font-semibold">Idade</label>
-              <Input name="patient_age" value={form.patient_age} onChange={handleFormChange} placeholder="Ex: 37" className={highlightedFields.includes("patient_age") ? "ring-2 ring-cyan-400" : ""} />
+              <label className="font-semibold block mb-2">Idade</label>
+              <Input 
+                name="patient_age" 
+                value={form.patient_age} 
+                onChange={handleFormChange} 
+                placeholder="Ex: 37" 
+                className={`focus:ring-2 focus:ring-cyan-500 ${highlightedFields.includes("patient_age") ? "ring-2 ring-cyan-400" : ""}`} 
+              />
             </div>
             <div>
-              <label className="font-semibold">Gênero</label>
+              <label className="font-semibold block mb-2">Gênero</label>
               <select
-                className={`w-full border rounded px-2 py-2 bg-white ${highlightedFields.includes("patient_gender") ? "ring-2 ring-cyan-400" : ""}`}
+                className={`w-full border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent ${highlightedFields.includes("patient_gender") ? "ring-2 ring-cyan-400" : ""}`}
                 name="patient_gender"
                 value={form.patient_gender}
                 onChange={handleFormChange}
               >
-                {[{ value: "", label: "Selecione..." },
-                  { value: "Masculino", label: "Masculino" },
-                  { value: "Feminino", label: "Feminino" },
-                  { value: "Outro", label: "Outro" }].map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                <option value="">Selecione...</option>
+                <option value="Masculino">Masculino</option>
+                <option value="Feminino">Feminino</option>
+                <option value="Outro">Outro</option>
               </select>
             </div>
             <div>
-              <label className="font-semibold">Duração dos sintomas</label>
-              <Input name="symptoms_duration" value={form.symptoms_duration} onChange={handleFormChange} placeholder="Ex: 1 semana" className={highlightedFields.includes("symptoms_duration") ? "ring-2 ring-cyan-400" : ""} />
+              <label className="font-semibold block mb-2">Duração dos sintomas</label>
+              <Input 
+                name="symptoms_duration" 
+                value={form.symptoms_duration} 
+                onChange={handleFormChange} 
+                placeholder="Ex: 1 semana" 
+                className={`focus:ring-2 focus:ring-cyan-500 ${highlightedFields.includes("symptoms_duration") ? "ring-2 ring-cyan-400" : ""}`} 
+              />
             </div>
           </div>
         </div>
-        {/* Imagem */}
-        <div className="pt-3 min-w-[240px] flex flex-col items-center">
-          <ImageUploadWithZoom
-            value={imagesValue}
-            onChange={handleImagesChange}
-          />
+
+        {/* Área de upload de imagens */}
+        <div className="lg:col-span-1">
+          <div className="sticky top-6">
+            <label className="font-semibold block mb-4">Imagens do Caso</label>
+            <ImageUploadWithZoom
+              value={imagesValue}
+              onChange={handleImagesChange}
+            />
+          </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
-
-// ATENÇÃO: O arquivo está ficando longo (273 linhas). Considere pedir a refatoração em breve!

@@ -1,8 +1,6 @@
 
 import React from "react";
-import { KPICards } from "./analytics/KPICards";
-import { ChartsSection } from "./analytics/ChartsSection";
-import { EngagementMetrics } from "./analytics/EngagementMetrics";
+import { AnalyticsTabs } from "./analytics/AnalyticsTabs";
 import { DashboardAnalyticsHeader } from "./analytics/DashboardAnalyticsHeader";
 
 // Mock data para desenvolvimento - em produção virá do backend
@@ -33,15 +31,11 @@ export function DashboardAnalytics() {
         totalCases={mockCaseStats.totalCases}
       />
       
-      <div className="grid gap-6">
-        <KPICards 
-          userStats={mockUserStats}
-          caseStats={mockCaseStats}
-          eventStats={mockEventStats}
-        />
-        <ChartsSection caseStats={mockCaseStats} />
-        <EngagementMetrics />
-      </div>
+      <AnalyticsTabs 
+        userStats={mockUserStats}
+        caseStats={mockCaseStats}
+        eventStats={mockEventStats}
+      />
     </div>
   );
 }
