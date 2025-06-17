@@ -66,7 +66,7 @@ export function CaseFilters({ filters, onFiltersChange, stats }: Props) {
               <SelectValue placeholder="Especialidade" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas as especialidades</SelectItem>
+              <SelectItem value="">Todas as especialidades</SelectItem>
               {specialties.map(specialty => (
                 <SelectItem key={specialty} value={specialty}>
                   {specialty}
@@ -85,7 +85,7 @@ export function CaseFilters({ filters, onFiltersChange, stats }: Props) {
               <SelectValue placeholder="Modalidade" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas as modalidades</SelectItem>
+              <SelectItem value="">Todas as modalidades</SelectItem>
               {modalities.map(modality => (
                 <SelectItem key={modality} value={modality}>{modality}</SelectItem>
               ))}
@@ -97,7 +97,7 @@ export function CaseFilters({ filters, onFiltersChange, stats }: Props) {
               <SelectValue placeholder="Dificuldade" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas as dificuldades</SelectItem>
+              <SelectItem value="">Todas as dificuldades</SelectItem>
               <SelectItem value="1">Iniciante</SelectItem>
               <SelectItem value="2">Fácil</SelectItem>
               <SelectItem value="3">Médio</SelectItem>

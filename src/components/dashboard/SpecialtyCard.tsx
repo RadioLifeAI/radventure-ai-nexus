@@ -5,8 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { getSpecialtyData } from "@/data/specialtyIcons";
 import { Sparkles, ArrowRight } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 
 interface SpecialtyCardProps {
   specialty: {
@@ -20,32 +18,8 @@ export function SpecialtyCard({ specialty }: SpecialtyCardProps) {
   const navigate = useNavigate();
   const specialtyData = getSpecialtyData(specialty.name);
 
-  // Buscar primeiro caso da especialidade
-  const { data: firstCase } = useQuery({
-    queryKey: ['first-case', specialty.name],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('medical_cases')
-        .select('id')
-        .eq('specialty', specialty.name)
-        .order('created_at', { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: specialty.cases > 0
-  });
-
   const handleClick = () => {
-    if (specialty.cases > 0 && firstCase) {
-      // Ir direto para resolução do primeiro caso
-      navigate(`/caso/${firstCase.id}?fromSpecialty=${encodeURIComponent(specialty.name)}`);
-    } else {
-      // Se não há casos, ir para central de casos com filtro
-      navigate(`/central-casos?specialty=${encodeURIComponent(specialty.name)}`);
-    }
+    navigate(`/casos?specialty=${encodeURIComponent(specialty.name)}`);
   };
 
   return (
@@ -86,19 +60,12 @@ export function SpecialtyCard({ specialty }: SpecialtyCardProps) {
             >
               {specialty.cases} caso{specialty.cases !== 1 ? 's' : ''}
             </Badge>
-            {specialty.cases > 0 ? (
+            {specialty.cases > 0 && (
               <Badge 
                 variant="outline" 
                 className="border-green-300 text-green-700 bg-green-50/80"
               >
                 Disponível
-              </Badge>
-            ) : (
-              <Badge 
-                variant="outline" 
-                className="border-gray-300 text-gray-500 bg-gray-50/80"
-              >
-                Em breve
               </Badge>
             )}
           </div>
@@ -107,9 +74,7 @@ export function SpecialtyCard({ specialty }: SpecialtyCardProps) {
             size="sm" 
             className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold px-4 py-2 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 group-hover:scale-105"
           >
-            <span className="mr-2">
-              {specialty.cases > 0 ? 'Resolver' : 'Explorar'}
-            </span>
+            <span className="mr-2">Explorar</span>
             <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
           </Button>
         </div>
