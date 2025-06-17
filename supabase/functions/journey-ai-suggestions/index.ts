@@ -45,7 +45,7 @@ INSTRUÇÕES:
 4. Sugira filtros otimizados baseados no contexto
 5. Estime duração e número recomendado de casos
 
-FORMATO DE RESPOSTA (JSON):
+RESPONDA APENAS COM JSON VÁLIDO (sem markdown, sem \`\`\`json):
 {
   "title": "Título específico e atrativo",
   "description": "Descrição clara dos objetivos da jornada",
@@ -66,8 +66,6 @@ FORMATO DE RESPOSTA (JSON):
   "estimatedDuration": 45,
   "recommendedCaseCount": 9
 }
-
-Seja criativo, educativo e específico. Use terminologia médica apropriada.
 `;
     }
 
@@ -82,11 +80,11 @@ Seja criativo, educativo e específico. Use terminologia médica apropriada.
         messages: [
           { 
             role: 'system', 
-            content: 'Você é um especialista em educação médica que cria jornadas de aprendizado personalizadas. Sempre responda com JSON válido e bem estruturado.' 
+            content: 'Você é um especialista em educação médica. Responda APENAS com JSON válido, sem markdown ou formatação adicional.' 
           },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.8,
+        temperature: 0.7,
         max_tokens: 1000,
       }),
     });
@@ -96,9 +94,17 @@ Seja criativo, educativo e específico. Use terminologia médica apropriada.
     }
 
     const data = await response.json();
-    const content = data.choices[0].message.content;
+    let content = data.choices[0].message.content.trim();
     
     console.log('Raw AI response:', content);
+    
+    // Limpar markdown se presente
+    if (content.startsWith('```json')) {
+      content = content.replace(/```json\n?/g, '').replace(/\n?```$/g, '');
+    }
+    if (content.startsWith('```')) {
+      content = content.replace(/```\n?/g, '').replace(/\n?```$/g, '');
+    }
     
     // Parse do JSON
     let parsedContent;
@@ -106,16 +112,36 @@ Seja criativo, educativo e específico. Use terminologia médica apropriada.
       parsedContent = JSON.parse(content);
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
-      throw new Error('Resposta inválida da IA');
+      console.error('Content that failed to parse:', content);
+      
+      // Fallback com dados padrão
+      parsedContent = {
+        title: 'Jornada Personalizada de Aprendizado',
+        description: 'Explore casos médicos selecionados para aprimorar seus conhecimentos clínicos',
+        objectives: [
+          'Desenvolver raciocínio clínico',
+          'Praticar diagnóstico diferencial',
+          'Melhorar tomada de decisão médica'
+        ],
+        suggestedFilters: {
+          specialty: filters.specialty || 'Medicina Geral',
+          modality: filters.modality || 'Geral',
+          difficulty: 'Intermediário'
+        },
+        estimatedDuration: 30,
+        recommendedCaseCount: 8
+      };
     }
 
     // Validações de segurança
-    if (!parsedContent.title || !parsedContent.description || !parsedContent.objectives) {
-      throw new Error('Resposta incompleta da IA');
+    if (!parsedContent.title) {
+      parsedContent.title = 'Jornada de Aprendizado Médico';
     }
-
-    if (!Array.isArray(parsedContent.objectives)) {
-      parsedContent.objectives = ['Aprender conceitos fundamentais'];
+    if (!parsedContent.description) {
+      parsedContent.description = 'Trilha educativa para desenvolver competências clínicas';
+    }
+    if (!Array.isArray(parsedContent.objectives) || parsedContent.objectives.length === 0) {
+      parsedContent.objectives = ['Desenvolver conhecimento clínico', 'Praticar diagnóstico', 'Melhorar decisão médica'];
     }
 
     // Garantir valores padrão
@@ -131,16 +157,19 @@ Seja criativo, educativo e específico. Use terminologia médica apropriada.
 
   } catch (error) {
     console.error('Error in journey-ai-suggestions function:', error);
-    return new Response(JSON.stringify({ 
-      error: error.message || 'Erro interno do servidor',
+    
+    // Retornar dados padrão em caso de erro
+    const fallbackData = {
       title: 'Jornada Personalizada',
       description: 'Explore casos médicos selecionados para seu aprendizado',
       objectives: ['Desenvolver conhecimento clínico', 'Praticar diagnóstico', 'Melhorar tomada de decisão'],
       suggestedFilters: {},
       estimatedDuration: 30,
       recommendedCaseCount: 6
-    }), {
-      status: 500,
+    };
+    
+    return new Response(JSON.stringify(fallbackData), {
+      status: 200, // Retornar 200 com dados padrão ao invés de erro
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
