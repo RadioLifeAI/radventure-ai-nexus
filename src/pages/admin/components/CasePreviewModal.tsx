@@ -15,13 +15,19 @@ import { supabase } from "@/integrations/supabase/client";
 interface CasePreviewModalProps {
   open: boolean;
   onClose: () => void;
-  caseId: string | null;
+  caseId?: string | null;
+  formData?: any;
+  categories?: any[];
+  difficulties?: any[];
 }
 
 export function CasePreviewModal({
   open,
   onClose,
   caseId,
+  formData,
+  categories: externalCategories,
+  difficulties: externalDifficulties,
 }: CasePreviewModalProps) {
   const { data: caseData, isLoading } = useQuery({
     queryKey: ["case-preview", caseId],
@@ -37,7 +43,7 @@ export function CasePreviewModal({
       if (error) throw error;
       return data;
     },
-    enabled: !!caseId && open,
+    enabled: !!caseId && open && !formData,
   });
 
   const { data: categories = [] } = useQuery({
@@ -50,6 +56,7 @@ export function CasePreviewModal({
       if (error) throw error;
       return data;
     },
+    enabled: !externalCategories,
   });
 
   const { data: difficulties = [] } = useQuery({
@@ -62,9 +69,15 @@ export function CasePreviewModal({
       if (error) throw error;
       return data;
     },
+    enabled: !externalDifficulties,
   });
 
-  if (!caseData && !isLoading) {
+  // Use either fetched data or form data
+  const actualCaseData = formData || caseData;
+  const actualCategories = externalCategories || categories;
+  const actualDifficulties = externalDifficulties || difficulties;
+
+  if (!actualCaseData && !isLoading) {
     return null;
   }
 
@@ -77,9 +90,9 @@ export function CasePreviewModal({
     return difficulties.find((d) => d.level === level)?.description || level?.toString() || "";
   }
 
-  const form = caseData || {};
-  const category = getCategoryName(categories, form.category_id);
-  const difficulty = getDifficultyDesc(difficulties, form.difficulty_level);
+  const form = actualCaseData || {};
+  const category = getCategoryName(actualCategories, form.category_id);
+  const difficulty = getDifficultyDesc(actualDifficulties, form.difficulty_level);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -138,7 +151,7 @@ export function CasePreviewModal({
                 <User size={19} className="text-green-700" />
                 História Clínica
               </div>
-              <div className="text-sm mb-2">{form.patient_clinical_info}</div>
+              <div className="text-sm mb-2">{form.patient_clinical_info || "Informação clínica não disponível"}</div>
               <div className="bg-green-100 px-2 py-1 rounded text-xs text-green-900 max-w-fit">
                 {`Paciente ${form.patient_gender?.toLowerCase() || "--"}, ${form.patient_age || "--"} anos.`}
               </div>
