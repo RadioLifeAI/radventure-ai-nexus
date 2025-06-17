@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface NavigationFilters {
   specialty?: string;
   modality?: string;
+  subtype?: string;
   difficulty?: number;
 }
 
@@ -18,14 +19,17 @@ export function useCaseNavigation(initialFilters: NavigationFilters = {}) {
     queryFn: async () => {
       let query = supabase
         .from('medical_cases')
-        .select('id, title, specialty, modality, difficulty_level')
+        .select('id, title, specialty, modality, subtype, difficulty_level')
         .order('created_at', { ascending: true });
 
-      if (filters.specialty) {
+      if (filters.specialty && filters.specialty !== 'all') {
         query = query.eq('specialty', filters.specialty);
       }
-      if (filters.modality) {
+      if (filters.modality && filters.modality !== 'all') {
         query = query.eq('modality', filters.modality);
+      }
+      if (filters.subtype && filters.subtype !== 'all') {
+        query = query.eq('subtype', filters.subtype);
       }
       if (filters.difficulty) {
         query = query.eq('difficulty_level', filters.difficulty);

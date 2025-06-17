@@ -2,11 +2,12 @@
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Settings, History } from "lucide-react";
+import { Users, Settings, History, Crown } from "lucide-react";
 import { UserFilters } from "./UserFilters";
 import { UsersTable } from "./UsersTable";
 import { UserBenefitsVerification } from "./UserBenefitsVerification";
 import { AdminRoleAuditLog } from "./AdminRoleAuditLog";
+import { UserManagementAdvanced } from "./UserManagementAdvanced";
 import type { UserProfile } from "@/types/admin";
 
 interface UserManagementTabsProps {
@@ -32,10 +33,14 @@ export function UserManagementTabs({
 }: UserManagementTabsProps) {
   return (
     <Tabs defaultValue="users" className="space-y-6">
-      <TabsList className="grid w-full grid-cols-3 bg-gradient-to-r from-blue-50 to-purple-50 p-1 rounded-xl">
+      <TabsList className="grid w-full grid-cols-4 bg-gradient-to-r from-blue-50 to-purple-50 p-1 rounded-xl">
         <TabsTrigger value="users" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
           <Users className="h-4 w-4" />
           Lista de Usuários
+        </TabsTrigger>
+        <TabsTrigger value="advanced" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
+          <Crown className="h-4 w-4" />
+          Gestão Avançada
         </TabsTrigger>
         <TabsTrigger value="benefits" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
           <Settings className="h-4 w-4" />
@@ -72,6 +77,23 @@ export function UserManagementTabs({
               onEditUser={onEditUser}
               onBanUser={onBanUser}
             />
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="advanced" className="space-y-6">
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-red-50/30">
+          <CardHeader className="bg-gradient-to-r from-red-50 to-orange-50 rounded-t-lg">
+            <CardTitle className="flex items-center gap-2 text-red-900">
+              <Crown className="h-5 w-5" />
+              Gestão Avançada de Usuários
+            </CardTitle>
+            <CardDescription className="text-red-700">
+              Controle total sobre usuários, roles e permissões administrativas
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-6">
+            <UserManagementAdvanced />
           </CardContent>
         </Card>
       </TabsContent>
