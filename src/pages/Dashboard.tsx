@@ -1,24 +1,11 @@
-
 import React, { useState } from "react";
 import {
   Activity,
   BookOpen,
   Calendar,
-  SquareCheck,
-  FileText,
-  SquarePlus,
-  SquareMinus,
-  Square,
-  Circle,
   Stethoscope,
-  Baby,
-  Shield,
   Brain,
-  HeartPulse,
   Users,
-  TestTube,
-  Syringe,
-  Droplets,
   Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,7 +14,9 @@ import { HeaderNav } from "@/components/HeaderNav";
 import { UserProfile } from "@/components/UserProfile";
 import { EventsSectionPlayer } from "@/components/EventsSectionPlayer";
 import { SpecialtyCard } from "@/components/dashboard/SpecialtyCard";
+import { DashboardSkeleton } from "@/components/ui/skeleton-loader";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { useCasesData } from "@/hooks/useCasesData";
 
 // Componente Card de Ações rápidas
 function ActionCard({ icon, title, description, link, color }: any) {
@@ -53,8 +42,11 @@ function ActionCard({ icon, title, description, link, color }: any) {
 }
 
 export default function Dashboard() {
-  const { specialties, events, profile, isLoading } = useDashboardData();
+  const { specialties, events, profile, isLoading: dashboardLoading } = useDashboardData();
+  const { userProgress, isLoading: progressLoading } = useCasesData();
   const navigate = useNavigate();
+
+  const isLoading = dashboardLoading || progressLoading;
 
   // Dados do usuário (mantendo compatibilidade)
   const user = {
@@ -65,6 +57,16 @@ export default function Dashboard() {
     avatar: profile?.avatar_url || "https://randomuser.me/api/portraits/women/90.jpg",
     ranking: 7,
   };
+
+  // Combinar dados de especialidades com progresso do usuário
+  const specialtiesWithProgress = specialties.map(specialty => ({
+    ...specialty,
+    userProgress: userProgress?.bySpecialty?.[specialty.name] ? {
+      total: userProgress.bySpecialty[specialty.name].total,
+      correct: userProgress.bySpecialty[specialty.name].correct,
+      accuracy: Math.round((userProgress.bySpecialty[specialty.name].correct / userProgress.bySpecialty[specialty.name].total) * 100)
+    } : undefined
+  }));
 
   // Handler para eventos
   function handleEnterEvent(eventId: string) {
@@ -86,12 +88,8 @@ export default function Dashboard() {
     return (
       <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white w-full">
         <HeaderNav />
-        <main className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-cyan-300" />
-            <p className="text-xl text-cyan-100">Carregando dashboard...</p>
-            <p className="text-sm text-cyan-200 mt-2">Sincronizando dados em tempo real</p>
-          </div>
+        <main className="flex-1 px-2 md:px-16 pt-4 pb-10">
+          <DashboardSkeleton />
         </main>
       </div>
     );
@@ -113,21 +111,21 @@ export default function Dashboard() {
             icon={<Activity />}
             title="Central de Casos"
             description="Resolva desafios reais, aprenda e suba de nível!"
-            link="/casos"
+            link="/app/casos"
             color="text-[#11d3fc]"
           />
           <ActionCard
             icon={<BookOpen />}
             title="Crie sua Jornada"
             description="Personalize seu aprendizado com módulos e trilhas temáticas."
-            link="#"
+            link="/app/casos#journey"
             color="text-[#a189fa]"
           />
           <ActionCard
             icon={<Calendar />}
             title="Eventos"
             description="Participe de eventos exclusivos e concorra no ranking."
-            link="/eventos"
+            link="/app/eventos"
             color="text-[#11d3fc]"
           />
         </section>
@@ -137,7 +135,7 @@ export default function Dashboard() {
           <section className="w-full mt-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-extrabold text-2xl text-white flex items-center gap-2">
-                <FileText className="h-6 w-6 text-cyan-300" />
+                <Brain className="h-6 w-6 text-cyan-300" />
                 Diagnóstico por Imagem
               </h2>
               <div className="text-sm text-cyan-200">
@@ -146,7 +144,10 @@ export default function Dashboard() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {imagingSpecialties.map((specialty) => (
-                <SpecialtyCard key={specialty.id || specialty.name} specialty={specialty} />
+                <SpecialtyCard 
+                  key={specialty.id || specialty.name} 
+                  specialty={specialtiesWithProgress.find(s => s.name === specialty.name) || specialty} 
+                />
               ))}
             </div>
           </section>
@@ -166,7 +167,10 @@ export default function Dashboard() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {medicalSpecialties.map((specialty) => (
-                <SpecialtyCard key={specialty.id || specialty.name} specialty={specialty} />
+                <SpecialtyCard 
+                  key={specialty.id || specialty.name} 
+                  specialty={specialtiesWithProgress.find(s => s.name === specialty.name) || specialty} 
+                />
               ))}
             </div>
           </section>
