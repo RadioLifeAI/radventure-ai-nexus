@@ -3,9 +3,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
-import { AdminFormLayoutGamified } from "@/components/admin/layouts/AdminFormLayoutGamified";
 import { EventForm } from "./EventForm";
-import { Calendar, Sparkles, Trophy } from "lucide-react";
+import { Calendar, Sparkles, Trophy, Zap } from "lucide-react";
 
 export function CreateEventForm() {
   const navigate = useNavigate();
@@ -24,7 +23,7 @@ export function CreateEventForm() {
 
       toast({
         title: "✨ Evento criado com sucesso!",
-        description: `O evento "${eventData.title}" foi registrado na plataforma.`,
+        description: `O evento "${eventData.name}" foi registrado na plataforma.`,
       });
 
       navigate("/admin/events");
@@ -41,38 +40,45 @@ export function CreateEventForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header gamificado */}
-        <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 rounded-xl p-6 text-white shadow-xl">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center justify-center w-12 h-12 bg-white/20 rounded-full backdrop-blur-sm">
-              <Calendar className="h-6 w-6 text-yellow-300" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+      <div className="container mx-auto px-4 py-8">
+        {/* Header gamificado melhorado */}
+        <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 rounded-2xl p-8 text-white shadow-2xl mb-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center justify-center w-16 h-16 bg-white/20 rounded-full backdrop-blur-sm">
+                <Calendar className="h-8 w-8 text-yellow-300" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold flex items-center gap-3 mb-2">
+                  Criar Novo Evento
+                  <Sparkles className="h-8 w-8 text-yellow-300" />
+                </h1>
+                <p className="text-blue-100 text-lg">Configure um evento gamificado para a comunidade médica</p>
+                <div className="flex items-center gap-4 mt-3">
+                  <div className="flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
+                    <Zap className="h-4 w-4 text-green-300" />
+                    <span className="text-sm font-medium">Sistema Ativo</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
+                    <Trophy className="h-4 w-4 text-yellow-300" />
+                    <span className="text-sm font-medium">Modo Criação</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold flex items-center gap-2">
-                Criar Novo Evento
-                <Sparkles className="h-6 w-6 text-yellow-300" />
-              </h1>
-              <p className="text-blue-100">Configure um evento gamificado para a comunidade médica</p>
-            </div>
-            <div className="ml-auto">
-              <Trophy className="h-8 w-8 text-yellow-300" />
+            <div className="hidden md:block">
+              <Trophy className="h-16 w-16 text-yellow-300/50" />
             </div>
           </div>
         </div>
 
-        {/* Formulário com layout gamificado */}
-        <AdminFormLayoutGamified
-          title="Configuração do Evento"
-          description="Preencha os detalhes para criar um evento envolvente e educativo"
-          icon={Calendar}
-          category="events"
-          badge="Novo Evento"
-          progress={75}
-        >
-          <EventForm mode="create" onSubmit={handleSubmit} loading={isLoading} />
-        </AdminFormLayoutGamified>
+        {/* Formulário principal */}
+        <EventForm 
+          mode="create" 
+          onSubmit={handleSubmit} 
+          loading={isLoading} 
+        />
       </div>
     </div>
   );

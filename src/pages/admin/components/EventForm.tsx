@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { EventBannerUpload } from "./EventBannerUpload";
 import { EventTemplatesModal } from "./EventTemplatesModal";
 import { EventAISuggestions } from "./EventAISuggestions";
 import { CaseFiltersGamifiedSection } from "./CaseFiltersGamifiedSection";
@@ -11,6 +10,7 @@ import { useEventConfigProgress } from "../hooks/useEventConfigProgress";
 import { ConfigAlertBanner } from "./ConfigAlertBanner";
 import { EventConfigMotivationPhrase } from "./EventConfigMotivationPhrase";
 import { EventFormHeader } from "./EventFormHeader";
+import { BasicInfoSection, ScheduleSection, GameConfigSection, PrizeDistributionSection } from "./EventFormSections";
 import { toast } from "@/hooks/use-toast";
 
 export type Prize = { position: number, prize: number };
@@ -288,13 +288,13 @@ export function EventForm({ mode, initialValues = {}, loading, onSubmit, onCance
   }, [mode, initialValues]);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-8">
       <EventFormHeader 
         mode={mode} 
         onShowTemplates={() => setShowTemplates(true)} 
       />
 
-      <div className="p-6 bg-white rounded-lg shadow-lg space-y-6">
+      <div className="space-y-6">
         <div className="space-y-4">
           <EventConfigMotivationPhrase />
           <EventConfigProgressBar percent={progress} />
@@ -308,157 +308,44 @@ export function EventForm({ mode, initialValues = {}, loading, onSubmit, onCance
           currentFilters={caseFilters}
         />
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-8">
           {/* Filtros de casos com dados reais unificados */}
           <CaseFiltersGamifiedSection value={caseFilters} onChange={setCaseFilters} />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Título do evento *
-              </label>
-              <input 
-                value={name} 
-                onChange={e => setName(e.target.value)} 
-                required 
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Digite o título do evento"
-              />
-            </div>
+          {/* Seções do formulário com layout gamificado */}
+          <BasicInfoSection
+            name={name}
+            setName={setName}
+            description={description}
+            setDescription={setDescription}
+            bannerUrl={bannerUrl}
+            setBannerUrl={setBannerUrl}
+          />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Banner do evento
-              </label>
-              <EventBannerUpload value={bannerUrl} onChange={setBannerUrl} />
-            </div>
+          <ScheduleSection
+            scheduledStart={scheduledStart}
+            setScheduledStart={setScheduledStart}
+            scheduledEnd={scheduledEnd}
+            setScheduledEnd={setScheduledEnd}
+            durationMinutes={durationMinutes}
+            setDurationMinutes={setDurationMinutes}
+            autoStart={autoStart}
+            setAutoStart={setAutoStart}
+          />
 
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Descrição
-              </label>
-              <textarea 
-                value={description} 
-                onChange={e => setDescription(e.target.value)} 
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
-                placeholder="Descreva o evento..."
-              />
-            </div>
+          <GameConfigSection
+            numberOfCases={numberOfCases}
+            setNumberOfCases={setNumberOfCases}
+            maxParticipants={maxParticipants}
+            setMaxParticipants={setMaxParticipants}
+            prizeRadcoins={prizeRadcoins}
+            setPrizeRadcoins={setPrizeRadcoins}
+          />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Início *
-              </label>
-              <input 
-                type="datetime-local" 
-                value={scheduledStart} 
-                onChange={e => setScheduledStart(e.target.value)} 
-                required 
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Término *
-              </label>
-              <input 
-                type="datetime-local" 
-                value={scheduledEnd} 
-                onChange={e => setScheduledEnd(e.target.value)} 
-                required 
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Total em RadCoins
-              </label>
-              <input 
-                type="number" 
-                value={prizeRadcoins} 
-                onChange={e => setPrizeRadcoins(Number(e.target.value))} 
-                min={0} 
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nº de casos do evento
-              </label>
-              <input 
-                type="number" 
-                value={numberOfCases} 
-                onChange={e => setNumberOfCases(Number(e.target.value))} 
-                min={1} 
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Duração total (minutos)
-              </label>
-              <input 
-                type="number" 
-                value={durationMinutes} 
-                onChange={e => setDurationMinutes(Number(e.target.value))} 
-                min={1} 
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Limite de participantes
-              </label>
-              <input 
-                type="number" 
-                value={maxParticipants === null ? "" : maxParticipants} 
-                onChange={e => setMaxParticipants(e.target.value === "" ? "" : Number(e.target.value))} 
-                min={1} 
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Sem limite"
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-2">
-                <input 
-                  type="checkbox" 
-                  checked={autoStart} 
-                  onChange={e => setAutoStart(e.target.checked)} 
-                  id="autoStart" 
-                  className="rounded"
-                />
-                <label htmlFor="autoStart" className="text-sm font-medium text-gray-700">
-                  Início automático (recomendado)
-                </label>
-              </div>
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-4">
-                Premiação (RadCoins para cada posição)
-              </label>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                {prizeDistribution.map((p, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{p.position}º:</span>
-                    <input
-                      type="number"
-                      className="flex-1 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      value={p.prize}
-                      min={0}
-                      onChange={e => handlePrizeChange(i, Number(e.target.value))}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <PrizeDistributionSection
+            prizeDistribution={prizeDistribution}
+            onPrizeChange={handlePrizeChange}
+          />
 
           <div className="flex justify-end gap-4 pt-6 border-t">
             {onCancel && (
