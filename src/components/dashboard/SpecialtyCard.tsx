@@ -32,7 +32,7 @@ export function SpecialtyCard({ specialty }: SpecialtyCardProps) {
       return;
     }
     
-    // Navegar para casos com filtro de especialidade
+    // Navegar para casos com filtro de especialidade - CORRIGIDO
     navigate(`/app/casos?specialty=${encodeURIComponent(specialty.name)}`);
   };
 
