@@ -21,7 +21,7 @@ interface MedicalCasesTableProps {
 
 export function MedicalCasesTable({ cases, onDelete }: MedicalCasesTableProps) {
   const [previewCase, setPreviewCase] = useState<string | null>(null);
-  const [editingCase, setEditingCase] = useState<any>(null);
+  const [editingCaseId, setEditingCaseId] = useState<string | null>(null);
 
   const getDifficultyColor = (level: number) => {
     switch (level) {
@@ -31,6 +31,19 @@ export function MedicalCasesTable({ cases, onDelete }: MedicalCasesTableProps) {
       case 4: return "bg-red-100 text-red-800";
       default: return "bg-gray-100 text-gray-800";
     }
+  };
+
+  const handleEditCase = (caseId: string) => {
+    setEditingCaseId(caseId);
+  };
+
+  const handleCloseEdit = () => {
+    setEditingCaseId(null);
+  };
+
+  const handleCaseSaved = () => {
+    setEditingCaseId(null);
+    // Optionally refresh the cases list here
   };
 
   return (
@@ -92,7 +105,7 @@ export function MedicalCasesTable({ cases, onDelete }: MedicalCasesTableProps) {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setEditingCase(caso)}
+                      onClick={() => handleEditCase(caso.id)}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -120,9 +133,10 @@ export function MedicalCasesTable({ cases, onDelete }: MedicalCasesTableProps) {
 
       {/* Edit Modal */}
       <CaseEditAdminModal
-        open={!!editingCase}
-        onClose={() => setEditingCase(null)}
-        caseData={editingCase}
+        open={!!editingCaseId}
+        onClose={handleCloseEdit}
+        caseId={editingCaseId}
+        onSaved={handleCaseSaved}
       />
     </>
   );
