@@ -46,13 +46,14 @@ export function RewardManagementIntegrated() {
     refetchInterval: 30000
   });
 
+  // Usando user_achievements_progress que ainda existe após a limpeza
   const { data: userAchievements = [] } = useQuery({
     queryKey: ["user-achievement-stats"],
     queryFn: async () => {
       const { data: userAchievements, error } = await supabase
-        .from("user_achievements")
+        .from("user_achievements_progress")
         .select("*")
-        .order("unlocked_at", { ascending: false })
+        .order("updated_at", { ascending: false })
         .limit(20);
 
       if (error) throw error;
@@ -83,33 +84,33 @@ export function RewardManagementIntegrated() {
 
       if (achievementsError) throw achievementsError;
 
-      const { data: unlockedAchievements, error: unlockedError } = await supabase
-        .from("user_achievements")
-        .select("achievement_id, user_id");
+      const { data: progressRecords, error: progressError } = await supabase
+        .from("user_achievements_progress")
+        .select("achievement_id, user_id, is_completed");
 
-      if (unlockedError) throw unlockedError;
+      if (progressError) throw progressError;
 
       const totalAchievements = allAchievements?.length || 0;
-      const totalUnlocked = unlockedAchievements?.length || 0;
-      const uniqueUsers = new Set(unlockedAchievements?.map(a => a.user_id)).size;
+      const completedAchievements = progressRecords?.filter(p => p.is_completed).length || 0;
+      const uniqueUsers = new Set(progressRecords?.map(a => a.user_id)).size;
 
       const rarityStats = allAchievements?.reduce((acc: any, ach) => {
         acc[ach.rarity] = (acc[ach.rarity] || 0) + 1;
         return acc;
       }, {}) || {};
 
-      const unlockedByRarity = allAchievements?.reduce((acc: any, ach) => {
-        const unlocked = unlockedAchievements?.filter(u => u.achievement_id === ach.id).length || 0;
-        acc[ach.rarity] = (acc[ach.rarity] || 0) + unlocked;
+      const completedByRarity = allAchievements?.reduce((acc: any, ach) => {
+        const completed = progressRecords?.filter(p => p.achievement_id === ach.id && p.is_completed).length || 0;
+        acc[ach.rarity] = (acc[ach.rarity] || 0) + completed;
         return acc;
       }, {}) || {};
 
       return {
         totalAchievements,
-        totalUnlocked,
+        completedAchievements,
         uniqueUsers,
         rarityStats,
-        unlockedByRarity
+        completedByRarity
       };
     },
     refetchInterval: 30000
@@ -225,7 +226,7 @@ export function RewardManagementIntegrated() {
             <div className="text-2xl font-bold">{achievementStats?.totalAchievements || 0}</div>
             <div className="text-purple-200">Conquistas Criadas</div>
             <div className="text-sm text-purple-200 mt-1">
-              {achievementStats?.totalUnlocked || 0} desbloqueadas por {achievementStats?.uniqueUsers || 0} usuários
+              {achievementStats?.completedAchievements || 0} completadas por {achievementStats?.uniqueUsers || 0} usuários
             </div>
           </div>
         </div>
@@ -241,7 +242,7 @@ export function RewardManagementIntegrated() {
                   <p className="text-sm font-medium text-gray-600 capitalize">{rarity}</p>
                   <p className="text-2xl font-bold">{count as number}</p>
                   <p className="text-xs text-gray-500">
-                    {achievementStats?.unlockedByRarity?.[rarity] || 0} desbloqueadas
+                    {achievementStats?.completedByRarity?.[rarity] || 0} completadas
                   </p>
                 </div>
                 <Badge className={getRarityColor(rarity)}>{rarity}</Badge>
@@ -264,7 +265,7 @@ export function RewardManagementIntegrated() {
             </TabsTrigger>
             <TabsTrigger value="recent" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
-              Recentes
+              Progresso
             </TabsTrigger>
           </TabsList>
           <Button onClick={() => setShowRewardForm(true)}>
@@ -290,13 +291,13 @@ export function RewardManagementIntegrated() {
                     <TableHead>Raridade</TableHead>
                     <TableHead>Pontos</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Desbloqueios</TableHead>
+                    <TableHead>Progresso</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {achievements.map((achievement) => {
-                    const unlockedCount = userAchievements.filter(ua => ua.achievement_id === achievement.id).length;
+                    const progressCount = userAchievements.filter(ua => ua.achievement_id === achievement.id).length;
                     return (
                       <TableRow key={achievement.id}>
                         <TableCell className="font-medium">{achievement.name}</TableCell>
@@ -315,7 +316,7 @@ export function RewardManagementIntegrated() {
                         <TableCell>
                           <div className="flex items-center gap-1">
                             <TrendingUp className="h-4 w-4 text-green-500" />
-                            <span className="font-medium">{unlockedCount}</span>
+                            <span className="font-medium">{progressCount}</span>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -350,8 +351,8 @@ export function RewardManagementIntegrated() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Progressão de Desbloqueios</CardTitle>
-                <CardDescription>Conquistas desbloqueadas ao longo do tempo</CardDescription>
+                <CardTitle>Progressão de Conquistas</CardTitle>
+                <CardDescription>Conquistas completadas ao longo do tempo</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-64 flex items-center justify-center text-gray-500">
@@ -366,7 +367,6 @@ export function RewardManagementIntegrated() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {/* Top usuários baseado em conquistas */}
                   {Array.from(new Set(userAchievements.map(ua => ua.user_id)))
                     .slice(0, 5)
                     .map((userId, index) => {
@@ -382,7 +382,7 @@ export function RewardManagementIntegrated() {
                                 {userProfile?.full_name || userProfile?.username || 'Usuário Anônimo'}
                               </div>
                               <div className="text-sm text-gray-600">
-                                {userAchievementCount} conquistas
+                                {userAchievementCount} em progresso
                               </div>
                             </div>
                           </div>
@@ -399,9 +399,9 @@ export function RewardManagementIntegrated() {
         <TabsContent value="recent" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Recompensas Recentes</CardTitle>
+              <CardTitle>Progresso Recente</CardTitle>
               <CardDescription>
-                Últimas recompensas concedidas aos usuários
+                Últimos progressos de conquistas dos usuários
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -410,23 +410,37 @@ export function RewardManagementIntegrated() {
                   <TableRow>
                     <TableHead>Data</TableHead>
                     <TableHead>Usuário</TableHead>
-                    <TableHead>Recompensa</TableHead>
-                    <TableHead>Raridade</TableHead>
+                    <TableHead>Conquista</TableHead>
+                    <TableHead>Progresso</TableHead>
+                    <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {userAchievements.slice(0, 10).map((userAchievement) => (
                     <TableRow key={userAchievement.id}>
                       <TableCell>
-                        {new Date(userAchievement.unlocked_at).toLocaleDateString('pt-BR')}
+                        {new Date(userAchievement.updated_at).toLocaleDateString('pt-BR')}
                       </TableCell>
                       <TableCell>
                         {userAchievement.profiles?.full_name || userAchievement.profiles?.username || 'N/A'}
                       </TableCell>
                       <TableCell>{userAchievement.achievement_system?.name || 'N/A'}</TableCell>
                       <TableCell>
-                        <Badge className={getRarityColor(userAchievement.achievement_system?.rarity || 'common')}>
-                          {userAchievement.achievement_system?.rarity || 'common'}
+                        <div className="flex items-center gap-2">
+                          <span>{userAchievement.current_progress}</span>
+                          <div className="w-20 bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-blue-600 h-2 rounded-full" 
+                              style={{ 
+                                width: `${Math.min(100, (userAchievement.current_progress / (userAchievement.achievement_system?.points_required || 1)) * 100)}%` 
+                              }}
+                            ></div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={userAchievement.is_completed ? "default" : "secondary"}>
+                          {userAchievement.is_completed ? "Completa" : "Em Progresso"}
                         </Badge>
                       </TableCell>
                     </TableRow>
