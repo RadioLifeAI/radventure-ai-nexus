@@ -116,14 +116,6 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
   const { helpAids, consumeHelp, getTutorHint, isGettingHint } = useUserHelpAids();
 
   useEffect(() => {
-    async function getUser() {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-    }
-    getUser();
-  }, []);
-
-  useEffect(() => {
     async function fetchCaso() {
       setLoading(true);
       setError(null);
