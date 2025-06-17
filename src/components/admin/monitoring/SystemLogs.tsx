@@ -1,57 +1,52 @@
 
 import React from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Activity } from "lucide-react";
+
+interface LogEntry {
+  id: string;
+  timestamp: string;
+  level: string;
+  message: string;
+  source: string;
+}
 
 interface SystemLogsProps {
-  logs: any[];
+  logs: LogEntry[];
 }
 
 export function SystemLogs({ logs }: SystemLogsProps) {
-  const getLogLevelBadge = (level: string) => {
+  const getLevelColor = (level: string) => {
     switch (level) {
-      case 'error':
-        return <Badge variant="destructive">Error</Badge>;
-      case 'warning':
-        return <Badge className="bg-yellow-500">Warning</Badge>;
-      case 'info':
-        return <Badge variant="secondary">Info</Badge>;
-      default:
-        return <Badge>{level}</Badge>;
+      case 'ERROR': return 'bg-red-500';
+      case 'WARN': return 'bg-yellow-500';
+      case 'INFO': return 'bg-blue-500';
+      default: return 'bg-gray-500';
     }
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Activity className="h-5 w-5" />
-          Logs do Sistema
-        </CardTitle>
-        <CardDescription>
-          Logs em tempo real de todos os serviços
-        </CardDescription>
+        <CardTitle>System Logs</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {logs?.map((log) => (
-            <div key={log.id} className="border rounded-lg p-4 space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {getLogLevelBadge(log.level)}
-                  <span className="font-medium">{log.service}</span>
+        <div className="space-y-3 max-h-96 overflow-y-auto">
+          {logs.map((log) => (
+            <div key={log.id} className="flex items-start gap-3 p-3 border rounded-lg">
+              <Badge className={getLevelColor(log.level)}>
+                {log.level}
+              </Badge>
+              <div className="flex-1">
+                <p className="text-sm text-gray-900">{log.message}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs text-gray-500">
+                    {new Date(log.timestamp).toLocaleString()}
+                  </span>
+                  <span className="text-xs text-gray-400">•</span>
+                  <span className="text-xs text-gray-500">{log.source}</span>
                 </div>
-                <span className="text-sm text-gray-500">
-                  {log.timestamp.toLocaleTimeString('pt-BR')}
-                </span>
               </div>
-              <p className="text-sm">{log.message}</p>
-              {log.details && (
-                <pre className="text-xs bg-gray-100 p-2 rounded overflow-x-auto">
-                  {JSON.stringify(log.details, null, 2)}
-                </pre>
-              )}
             </div>
           ))}
         </div>

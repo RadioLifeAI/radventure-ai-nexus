@@ -17,7 +17,7 @@ import { AdvancedSettings } from "@/components/admin/AdvancedSettings";
 import { APIKeyManagement } from "@/components/admin/APIKeyManagement";
 import { StripeManagement } from "@/components/admin/StripeManagement";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings } from "lucide-react";
+import { Settings, Crown, Sparkles, Shield, Zap } from "lucide-react";
 
 // Componente de página em construção
 function UnderConstruction({ title }: { title: string }) {
@@ -42,13 +42,40 @@ function UnderConstruction({ title }: { title: string }) {
 
 export default function AdminPanel() {
   return (
-    <div className="flex min-h-screen w-full bg-gray-50">
+    <div className="flex min-h-screen w-full bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
       <AdminSidebar />
       <main className="flex-1 ml-[235px] min-h-screen">
-        <header className="w-full flex items-center justify-between px-8 py-6 border-b bg-white shadow-sm min-h-[66px]">
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">Painel de Administração</h1>
-          <a href="/dashboard" className="bg-white border px-4 py-2 rounded-lg font-semibold text-gray-700 hover:bg-cyan-100 transition">← Voltar ao Dashboard</a>
+        {/* Header Gamificado */}
+        <header className="w-full bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 text-white shadow-2xl">
+          <div className="flex items-center justify-between px-8 py-6">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center justify-center w-12 h-12 bg-white/20 rounded-full backdrop-blur-sm">
+                <Crown className="h-6 w-6 text-yellow-300" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold flex items-center gap-2">
+                  Painel de Administração Master
+                  <Sparkles className="h-6 w-6 text-yellow-300" />
+                </h1>
+                <p className="text-blue-100 text-sm">Controle total da plataforma médica gamificada</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
+                <Shield className="h-4 w-4 text-green-300" />
+                <span className="text-sm font-medium">Sistema Online</span>
+              </div>
+              <a 
+                href="/dashboard" 
+                className="bg-white/20 border border-white/30 px-4 py-2 rounded-lg font-semibold text-white hover:bg-white/30 transition-all backdrop-blur-sm flex items-center gap-2"
+              >
+                <Zap className="h-4 w-4" />
+                Dashboard Principal
+              </a>
+            </div>
+          </div>
         </header>
+
         <section className="p-8">
           <Routes>
             {/* Rotas integradas - todas funcionais */}
