@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,25 +14,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Trophy, Award, Star, Plus, Edit, Trash2, Users } from "lucide-react";
-import { useAdminPermissions } from "@/hooks/useAdminPermissions";
 
 export function AchievementManagement() {
-  const { checkPermission } = useAdminPermissions();
   const [selectedAchievement, setSelectedAchievement] = useState<any>(null);
   const [showAchievementForm, setShowAchievementForm] = useState(false);
-
-  // Verificar permissão
-  if (!checkPermission('USERS', 'READ')) {
-    return (
-      <Card>
-        <CardContent className="text-center py-12">
-          <Trophy className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-semibold mb-2">Acesso Negado</h3>
-          <p>Você não tem permissão para acessar o gerenciamento de conquistas</p>
-        </CardContent>
-      </Card>
-    );
-  }
 
   const { data: achievements = [], isLoading, refetch } = useQuery({
     queryKey: ["achievements"],
@@ -62,7 +48,6 @@ export function AchievementManagement() {
   const { data: userAchievements = [] } = useQuery({
     queryKey: ["user-achievements"],
     queryFn: async () => {
-      // First get user achievements
       const { data: achievements, error: achievementsError } = await supabase
         .from("user_achievements")
         .select("*")
@@ -71,7 +56,6 @@ export function AchievementManagement() {
 
       if (achievementsError) throw achievementsError;
 
-      // Then get related data separately to avoid relation issues
       const userIds = [...new Set(achievements?.map(a => a.user_id))];
       const achievementIds = [...new Set(achievements?.map(a => a.achievement_id))];
 
@@ -86,7 +70,6 @@ export function AchievementManagement() {
           .in("id", achievementIds) : Promise.resolve({ data: [] })
       ]);
 
-      // Combine the data manually
       const enrichedAchievements = achievements?.map(achievement => ({
         ...achievement,
         user: usersData.data?.find(u => u.id === achievement.user_id),
@@ -98,11 +81,6 @@ export function AchievementManagement() {
   });
 
   const handleSaveAchievement = async (achievementData: any) => {
-    if (!checkPermission('USERS', 'CREATE')) {
-      toast.error("Sem permissão para criar conquistas");
-      return;
-    }
-
     try {
       const { error } = await supabase
         .from("achievement_system")
@@ -120,11 +98,6 @@ export function AchievementManagement() {
   };
 
   const handleDeleteAchievement = async (achievementId: string) => {
-    if (!checkPermission('USERS', 'DELETE')) {
-      toast.error("Sem permissão para deletar conquistas");
-      return;
-    }
-
     try {
       const { error } = await supabase
         .from("achievement_system")
@@ -147,12 +120,10 @@ export function AchievementManagement() {
           <h1 className="text-3xl font-bold">Gestão de Conquistas</h1>
           <p className="text-gray-600">Configure conquistas, títulos e sistema de gamificação</p>
         </div>
-        {checkPermission('USERS', 'CREATE') && (
-          <Button onClick={() => setShowAchievementForm(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Conquista
-          </Button>
-        )}
+        <Button onClick={() => setShowAchievementForm(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Nova Conquista
+        </Button>
       </div>
 
       <Tabs defaultValue="achievements" className="space-y-6">
@@ -211,28 +182,24 @@ export function AchievementManagement() {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          {checkPermission('USERS', 'UPDATE') && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedAchievement(achievement);
-                                setShowAchievementForm(true);
-                              }}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {checkPermission('USERS', 'DELETE') && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDeleteAchievement(achievement.id)}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedAchievement(achievement);
+                              setShowAchievementForm(true);
+                            }}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteAchievement(achievement.id)}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>

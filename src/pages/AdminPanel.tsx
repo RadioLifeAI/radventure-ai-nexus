@@ -37,18 +37,15 @@ function UnderConstruction({ title }: { title: string }) {
 }
 
 export default function AdminPanel() {
-  // Temporariamente removido as verificações de permissão para implementação
   return (
     <div className="flex min-h-screen w-full bg-gray-50">
       <AdminSidebar />
       <main className="flex-1 ml-[235px] min-h-screen">
-        {/* Header fixo */}
         <header className="w-full flex items-center justify-between px-8 py-6 border-b bg-white shadow-sm min-h-[66px]">
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">Painel de Administração</h1>
           <a href="/dashboard" className="bg-white border px-4 py-2 rounded-lg font-semibold text-gray-700 hover:bg-cyan-100 transition">← Voltar ao Dashboard</a>
         </header>
         <section className="p-8">
-          {/* Conteúdo dinâmico das seções do admin */}
           <Routes>
             {/* Rotas integradas - todas funcionais */}
             <Route path="analytics" element={<DashboardAnalytics />} />

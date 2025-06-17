@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,25 +13,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Brain, Settings, BarChart3, Plus, Edit, Trash2 } from "lucide-react";
-import { useAdminPermissions } from "@/hooks/useAdminPermissions";
 
 export function AITutorManagement() {
-  const { checkPermission } = useAdminPermissions();
   const [selectedConfig, setSelectedConfig] = useState<any>(null);
   const [showConfigForm, setShowConfigForm] = useState(false);
-
-  // Verificar permissão
-  if (!checkPermission('AI_TUTOR', 'READ')) {
-    return (
-      <Card>
-        <CardContent className="text-center py-12">
-          <Brain className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-semibold mb-2">Acesso Negado</h3>
-          <p>Você não tem permissão para acessar o gerenciamento do Tutor IA</p>
-        </CardContent>
-      </Card>
-    );
-  }
 
   const { data: configs = [], isLoading, refetch } = useQuery({
     queryKey: ["ai-tutor-configs"],
@@ -60,11 +46,6 @@ export function AITutorManagement() {
   });
 
   const handleSaveConfig = async (configData: any) => {
-    if (!checkPermission('AI_TUTOR', 'CREATE')) {
-      toast.error("Sem permissão para criar configurações");
-      return;
-    }
-
     try {
       const { error } = await supabase
         .from("ai_tutor_config")
@@ -82,11 +63,6 @@ export function AITutorManagement() {
   };
 
   const handleDeleteConfig = async (configId: string) => {
-    if (!checkPermission('AI_TUTOR', 'DELETE')) {
-      toast.error("Sem permissão para deletar configurações");
-      return;
-    }
-
     try {
       const { error } = await supabase
         .from("ai_tutor_config")
@@ -109,12 +85,10 @@ export function AITutorManagement() {
           <h1 className="text-3xl font-bold">Gestão do Tutor IA</h1>
           <p className="text-gray-600">Configure e monitore o sistema de tutoria por IA</p>
         </div>
-        {checkPermission('AI_TUTOR', 'CREATE') && (
-          <Button onClick={() => setShowConfigForm(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Configuração
-          </Button>
-        )}
+        <Button onClick={() => setShowConfigForm(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Nova Configuração
+        </Button>
       </div>
 
       <Tabs defaultValue="configs" className="space-y-6">
@@ -161,28 +135,24 @@ export function AITutorManagement() {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          {checkPermission('AI_TUTOR', 'UPDATE') && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedConfig(config);
-                                setShowConfigForm(true);
-                              }}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {checkPermission('AI_TUTOR', 'DELETE') && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDeleteConfig(config.id)}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedConfig(config);
+                              setShowConfigForm(true);
+                            }}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteConfig(config.id)}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -240,8 +210,6 @@ export function AITutorManagement() {
           </Card>
         </TabsContent>
       </Tabs>
-
-      {/* Formulário de configuração seria adicionado aqui */}
     </div>
   );
 }
