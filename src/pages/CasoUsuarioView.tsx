@@ -91,7 +91,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
     if (selected === null || isAnswered) return;
     
     const timeSpent = Math.round((Date.now() - startTime) / 1000);
-    const result = await submitAnswer(selected, caso, { timeSpent });
+    const result = await submitAnswer(selected, caso);
     setPerformance(result);
     setShowFeedback(true);
   };
