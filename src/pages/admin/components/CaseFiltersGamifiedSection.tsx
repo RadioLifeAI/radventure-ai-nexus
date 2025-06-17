@@ -10,7 +10,7 @@ export function CaseFiltersGamifiedSection({ value, onChange }: { value: any, on
   
   function handleQuickSelect(option: string) {
     if (option === "clear") {
-      onChange({ ...value, specialty: [], modality: [], subtype: [], difficulty: [] });
+      onChange({ ...value, category: [], modality: [], subtype: [], difficulty: [] });
     } else if (option === "all-tc") {
       onChange({ ...value, modality: ["Tomografia Computadorizada (TC)"] });
     } else if (option === "all-rx") {
@@ -18,11 +18,11 @@ export function CaseFiltersGamifiedSection({ value, onChange }: { value: any, on
     } else if (option === "all-rm") {
       onChange({ ...value, modality: ["Ressonância Magnética (RM)"] });
     } else if (option === "neuro") {
-      onChange({ ...value, specialty: ["Neurorradiologia"] });
+      onChange({ ...value, category: ["Neurorradiologia"] });
     } else if (option === "torax") {
-      onChange({ ...value, specialty: ["Radiologia Torácica"] });
+      onChange({ ...value, category: ["Radiologia Torácica"] });
     } else if (option === "abdome") {
-      onChange({ ...value, specialty: ["Radiologia Abdominal"] });
+      onChange({ ...value, category: ["Radiologia Abdominal"] });
     }
   }
 
@@ -35,7 +35,7 @@ export function CaseFiltersGamifiedSection({ value, onChange }: { value: any, on
           placeholder="Buscar especialidade/modalidade..." 
           onChange={setSearch} 
         />
-        <CaseFiltersSelector value={value} onChange={onChange} searchTerm={search} />
+        <CaseFiltersSelector value={value} onChange={onChange} />
       </div>
     </div>
   );
