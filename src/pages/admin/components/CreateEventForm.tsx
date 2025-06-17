@@ -71,7 +71,7 @@ export function CreateEventForm() {
           badge="Novo Evento"
           progress={75}
         >
-          <EventForm onSubmit={handleSubmit} loading={isLoading} />
+          <EventForm mode="create" onSubmit={handleSubmit} loading={isLoading} />
         </AdminFormLayoutGamified>
       </div>
     </div>
