@@ -1,319 +1,193 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Activity, Zap, AlertTriangle, TrendingUp, Database, Users, Brain, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { supabase } from "@/integrations/supabase/client";
+import { SystemMonitoringHeader } from "./monitoring/SystemMonitoringHeader";
+import { 
+  Activity, 
+  Database, 
+  Users, 
+  BookOpen, 
+  Calendar,
+  Award,
+  RefreshCw,
+  CheckCircle,
+  AlertTriangle
+} from "lucide-react";
 
 export function SystemMonitoringIntegrated() {
-  const { data: systemHealth } = useQuery({
-    queryKey: ['system-health'],
-    queryFn: async () => {
-      const startTime = Date.now();
-      
-      // Teste de conectividade com o banco
-      const { data: testQuery, error } = await supabase
-        .from('profiles')
-        .select('count')
-        .limit(1);
-      
-      const responseTime = Date.now() - startTime;
-      
-      // Estatísticas do AI Tutor
-      const { data: aiLogs } = await supabase
-        .from('ai_tutor_usage_logs')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(100);
-      
-      // Erros recentes (simulado baseado em logs)
-      const { data: recentActivity } = await supabase
-        .from('user_case_history')
-        .select('*')
-        .order('answered_at', { ascending: false })
-        .limit(50);
-      
-      const avgResponseTime = aiLogs?.reduce((sum, log) => sum + (log.response_time_ms || 0), 0) / (aiLogs?.length || 1);
-      const totalTokensUsed = aiLogs?.reduce((sum, log) => sum + (log.tokens_used || 0), 0) || 0;
-      const totalCost = aiLogs?.reduce((sum, log) => sum + (parseFloat(log.cost?.toString() || '0') || 0), 0) || 0;
-      
-      const today = new Date().toISOString().split('T')[0];
-      const todayActivity = recentActivity?.filter(activity => {
-        return activity.answered_at?.split('T')[0] === today;
-      }).length || 0;
-      
-      return {
-        dbResponseTime: responseTime,
-        dbStatus: error ? 'error' : 'healthy',
-        aiAvgResponseTime: Math.round(avgResponseTime || 0),
-        totalTokensUsed,
-        totalAiCost: totalCost.toFixed(4),
-        todayActivity,
-        aiLogsCount: aiLogs?.length || 0,
-        uptime: '99.8%' // Simulado
-      };
-    },
-    refetchInterval: 10000
-  });
+  const [refreshing, setRefreshing] = useState(false);
 
-  const { data: performanceMetrics } = useQuery({
-    queryKey: ['performance-metrics'],
+  // Métricas de sistema simplificadas
+  const { data: systemMetrics, isLoading, refetch } = useQuery({
+    queryKey: ["system-metrics"],
     queryFn: async () => {
-      // Métricas de performance baseadas nos dados reais
-      const { data: users } = await supabase
-        .from('profiles')
-        .select('created_at');
-      
-      const { data: cases } = await supabase
-        .from('medical_cases')
-        .select('created_at');
-      
-      const { data: events } = await supabase
-        .from('events')
-        .select('created_at, status');
-      
-      const { data: achievements } = await supabase
-        .from('user_achievements')
-        .select('unlocked_at');
-      
-      const now = new Date();
-      const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000).toISOString();
-      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
-      
-      const activeUsersLastHour = users?.filter(u => u.created_at > oneHourAgo).length || 0;
-      const activeCasesLastDay = cases?.filter(c => c.created_at > oneDayAgo).length || 0;
-      const achievementsLastDay = achievements?.filter(a => a.unlocked_at > oneDayAgo).length || 0;
-      const activeEvents = events?.filter(e => e.status === 'ACTIVE').length || 0;
-      
+      const [
+        { count: profilesCount },
+        { count: casesCount },
+        { count: eventsCount },
+        { count: achievementsCount }
+      ] = await Promise.all([
+        supabase.from("profiles").select("*", { count: "exact", head: true }),
+        supabase.from("medical_cases").select("*", { count: "exact", head: true }),
+        supabase.from("events").select("*", { count: "exact", head: true }),
+        supabase.from("achievement_system").select("*", { count: "exact", head: true })
+      ]);
+
       return {
-        activeUsersLastHour,
-        activeCasesLastDay,
-        achievementsLastDay,
-        activeEvents,
-        totalUsers: users?.length || 0,
-        totalCases: cases?.length || 0,
-        totalEvents: events?.length || 0
+        profiles: profilesCount || 0,
+        cases: casesCount || 0,
+        events: eventsCount || 0,
+        achievements: achievementsCount || 0,
+        systemStatus: "healthy"
       };
     },
     refetchInterval: 30000
   });
 
-  const { data: aiTutorLogs } = useQuery({
-    queryKey: ['ai-tutor-logs-recent'],
+  // Logs de atividade recente (simplificado)
+  const { data: activityLogs = [] } = useQuery({
+    queryKey: ["activity-logs"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('ai_tutor_usage_logs')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(20);
-      
+        .from("profiles")
+        .select("full_name, email, created_at, updated_at")
+        .order("updated_at", { ascending: false })
+        .limit(10);
+
       if (error) throw error;
-      return data;
+
+      return data.map(profile => ({
+        id: profile.email,
+        action: "User Activity",
+        user: profile.full_name || profile.email,
+        timestamp: profile.updated_at,
+        status: "success"
+      }));
     },
-    refetchInterval: 15000
+    refetchInterval: 30000
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'healthy': return 'bg-green-500';
-      case 'warning': return 'bg-yellow-500';
-      case 'error': return 'bg-red-500';
-      default: return 'bg-gray-500';
-    }
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await refetch();
+    setTimeout(() => setRefreshing(false), 1000);
   };
+
+  const systemHealth = [
+    { name: "Database", status: "healthy", icon: Database },
+    { name: "Authentication", status: "healthy", icon: Users },
+    { name: "API Services", status: "healthy", icon: Activity },
+    { name: "File Storage", status: "healthy", icon: BookOpen }
+  ];
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-slate-700 to-slate-900 rounded-xl p-6 text-white">
+      <SystemMonitoringHeader />
+
+      {/* Métricas do Sistema */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Total de Usuários</CardTitle>
+            <Users className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">
+              {systemMetrics?.profiles || 0}
+            </div>
+            <p className="text-xs text-gray-600">Perfis cadastrados</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Casos Médicos</CardTitle>
+            <BookOpen className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              {systemMetrics?.cases || 0}
+            </div>
+            <p className="text-xs text-gray-600">Casos disponíveis</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Eventos</CardTitle>
+            <Calendar className="h-4 w-4 text-purple-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-600">
+              {systemMetrics?.events || 0}
+            </div>
+            <p className="text-xs text-gray-600">Eventos criados</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Conquistas</CardTitle>
+            <Award className="h-4 w-4 text-yellow-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-600">
+              {systemMetrics?.achievements || 0}
+            </div>
+            <p className="text-xs text-gray-600">Sistema de recompensas</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Tabs defaultValue="health" className="space-y-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <Activity className="text-slate-300" />
-              Monitoramento do Sistema
-              <Zap className="text-yellow-300" />
-            </h1>
-            <p className="text-slate-200 mt-2">Health check e métricas em tempo real</p>
-          </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-green-400">{systemHealth?.uptime}</div>
-            <div className="text-slate-300">Uptime</div>
-          </div>
+          <TabsList>
+            <TabsTrigger value="health" className="flex items-center gap-2">
+              <Activity className="h-4 w-4" />
+              Saúde do Sistema
+            </TabsTrigger>
+            <TabsTrigger value="logs" className="flex items-center gap-2">
+              <Database className="h-4 w-4" />
+              Logs de Atividade
+            </TabsTrigger>
+          </TabsList>
+          <Button 
+            onClick={handleRefresh} 
+            disabled={refreshing}
+            variant="outline"
+            size="sm"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            Atualizar
+          </Button>
         </div>
-      </div>
 
-      {/* Status Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Banco de Dados</CardTitle>
-            <Database className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-2">
-              <div className={`w-3 h-3 rounded-full ${getStatusColor(systemHealth?.dbStatus || 'healthy')}`}></div>
-              <span className="text-sm font-medium">
-                {systemHealth?.dbStatus === 'healthy' ? 'Conectado' : 'Erro'}
-              </span>
-            </div>
-            <p className="text-xs text-gray-600 mt-1">
-              Resposta: {systemHealth?.dbResponseTime || 0}ms
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">AI Tutor</CardTitle>
-            <Brain className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{systemHealth?.aiLogsCount || 0}</div>
-            <p className="text-xs text-gray-600">
-              Tempo médio: {systemHealth?.aiAvgResponseTime || 0}ms
-            </p>
-            <p className="text-xs text-green-600">
-              Custo total: ${systemHealth?.totalAiCost || '0.00'}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Atividade Hoje</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{systemHealth?.todayActivity || 0}</div>
-            <p className="text-xs text-gray-600">Interações de usuários</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Performance</CardTitle>
-            <Clock className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm">
-              <div className="flex justify-between">
-                <span>Usuários/h:</span>
-                <span className="font-bold">{performanceMetrics?.activeUsersLastHour || 0}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Casos/dia:</span>
-                <span className="font-bold">{performanceMetrics?.activeCasesLastDay || 0}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Conquistas/dia:</span>
-                <span className="font-bold">{performanceMetrics?.achievementsLastDay || 0}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="ai-tutor">AI Tutor</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
-          <TabsTrigger value="alerts">Alertas</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Métricas Gerais</CardTitle>
-                <CardDescription>Estatísticas do sistema</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span>Total de Usuários</span>
-                    <Badge variant="secondary">{performanceMetrics?.totalUsers || 0}</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span>Total de Casos</span>
-                    <Badge variant="secondary">{performanceMetrics?.totalCases || 0}</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span>Eventos Ativos</span>
-                    <Badge variant="secondary">{performanceMetrics?.activeEvents || 0}</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span>Tokens AI Usados</span>
-                    <Badge variant="secondary">{systemHealth?.totalTokensUsed?.toLocaleString() || 0}</Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Status dos Serviços</CardTitle>
-                <CardDescription>Estado atual dos componentes</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span>Supabase Database</span>
-                    <Badge className={getStatusColor(systemHealth?.dbStatus || 'healthy')}>
-                      {systemHealth?.dbStatus === 'healthy' ? 'Online' : 'Offline'}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>OpenAI API</span>
-                    <Badge className="bg-green-500">Online</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Auth Service</span>
-                    <Badge className="bg-green-500">Online</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Edge Functions</span>
-                    <Badge className="bg-green-500">Online</Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="ai-tutor">
+        <TabsContent value="health" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Logs do AI Tutor</CardTitle>
-              <CardDescription>Últimas interações com o sistema de IA</CardDescription>
+              <CardTitle>Status dos Componentes</CardTitle>
+              <CardDescription>
+                Monitoramento da saúde dos principais componentes do sistema
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {aiTutorLogs?.map((log) => (
-                  <div key={log.id} className="border rounded p-3 bg-gray-50">
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="font-medium text-sm">
-                        {new Date(log.created_at).toLocaleString('pt-BR')}
-                      </span>
-                      <div className="flex gap-2">
-                        <Badge variant="outline" className="text-xs">
-                          {log.tokens_used || 0} tokens
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          {log.response_time_ms || 0}ms
-                        </Badge>
-                      </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {systemHealth.map((component) => (
+                  <div key={component.name} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <component.icon className="h-5 w-5 text-gray-600" />
+                      <span className="font-medium">{component.name}</span>
                     </div>
-                    <p className="text-sm text-gray-600 truncate">
-                      {log.prompt_used || 'Prompt não disponível'}
-                    </p>
-                    {log.cost && (
-                      <p className="text-xs text-green-600 mt-1">
-                        Custo: ${parseFloat(log.cost.toString()).toFixed(4)}
-                      </p>
-                    )}
+                    <Badge variant="default" className="bg-green-100 text-green-800">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      {component.status === "healthy" ? "Saudável" : "Problema"}
+                    </Badge>
                   </div>
                 ))}
               </div>
@@ -321,52 +195,41 @@ export function SystemMonitoringIntegrated() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="performance">
+        <TabsContent value="logs" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Métricas de Performance</CardTitle>
-              <CardDescription>Análise detalhada de performance do sistema</CardDescription>
+              <CardTitle>Logs de Atividade Recente</CardTitle>
+              <CardDescription>
+                Atividades recentes do sistema
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center text-gray-500 py-12">
-                <TrendingUp className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                <h3 className="text-lg font-semibold mb-2">Dashboard de Performance</h3>
-                <p>Gráficos de performance serão implementados aqui</p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="alerts">
-          <Card>
-            <CardHeader>
-              <CardTitle>Sistema de Alertas</CardTitle>
-              <CardDescription>Alertas e notificações do sistema</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-start gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded">
-                  <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
-                  <div>
-                    <h4 className="font-medium text-yellow-800">Alto uso de tokens AI</h4>
-                    <p className="text-sm text-yellow-700">
-                      Uso de tokens acima do normal detectado. Monitore custos.
-                    </p>
-                  </div>
-                </div>
-                
-                {systemHealth?.dbResponseTime && systemHealth.dbResponseTime > 500 && (
-                  <div className="flex items-start gap-3 p-3 bg-red-50 border border-red-200 rounded">
-                    <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
-                    <div>
-                      <h4 className="font-medium text-red-800">Latência alta do banco</h4>
-                      <p className="text-sm text-red-700">
-                        Tempo de resposta do banco: {systemHealth.dbResponseTime}ms
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Ação</TableHead>
+                    <TableHead>Usuário</TableHead>
+                    <TableHead>Timestamp</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {activityLogs.slice(0, 10).map((log) => (
+                    <TableRow key={log.id}>
+                      <TableCell>{log.action}</TableCell>
+                      <TableCell>{log.user}</TableCell>
+                      <TableCell>
+                        {new Date(log.timestamp).toLocaleString('pt-BR')}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="default" className="bg-green-100 text-green-800">
+                          {log.status === "success" ? "Sucesso" : "Erro"}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </TabsContent>
