@@ -24,54 +24,53 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  Code
+  Code,
+  Database
 } from "lucide-react";
-
-interface UserAdvancedActionsProps {
-  userId: string;
-  userEmail: string;
-  userRole: string;
-  userName: string;
-}
 
 export function UserManagementAdvanced() {
   const [createUserModal, setCreateUserModal] = useState(false);
   const [banUserModal, setBanUserModal] = useState<string | null>(null);
   const [newUserData, setNewUserData] = useState({
     email: "",
-    password: "",
     full_name: "",
-    role: "ADMIN" as "USER" | "ADMIN"
+    type: "ADMIN" as "USER" | "ADMIN"
   });
   const [banReason, setBanReason] = useState("");
 
   const queryClient = useQueryClient();
 
-  // Buscar usuários
+  // Buscar usuários com a nova estrutura limpa
   const { data: users, isLoading } = useQuery({
-    queryKey: ['admin-users'],
+    queryKey: ['admin-users-clean'],
     queryFn: async () => {
+      console.log('Buscando usuários na estrutura limpa...');
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao buscar usuários:', error);
+        throw error;
+      }
+      
+      console.log('Usuários encontrados:', data?.length || 0);
       return data || [];
     }
   });
 
-  // Criar usuário de desenvolvimento
+  // Criar usuário com a nova função simplificada
   const createUserMutation = useMutation({
     mutationFn: async (userData: typeof newUserData) => {
-      console.log('Criando usuário de desenvolvimento:', userData);
+      console.log('Criando usuário com estrutura limpa:', userData);
       
       const { data, error } = await supabase
-        .rpc('create_dev_user', {
+        .rpc('create_dev_user_simple', {
           p_email: userData.email,
-          p_password: userData.password,
           p_full_name: userData.full_name,
-          p_role: userData.role
+          p_type: userData.type
         });
       
       if (error) {
@@ -79,29 +78,29 @@ export function UserManagementAdvanced() {
         throw error;
       }
       
-      console.log('Usuário criado com sucesso:', data);
+      console.log('Usuário criado com ID:', data);
       return data;
     },
     onSuccess: () => {
-      toast({ title: "Usuário de desenvolvimento criado com sucesso!" });
+      toast({ title: "✅ Usuário criado com sucesso!" });
       setCreateUserModal(false);
-      setNewUserData({ email: "", password: "", full_name: "", role: "ADMIN" });
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      setNewUserData({ email: "", full_name: "", type: "ADMIN" });
+      queryClient.invalidateQueries({ queryKey: ['admin-users-clean'] });
     },
     onError: (error: any) => {
-      console.error('Erro completo:', error);
+      console.error('Erro completo ao criar usuário:', error);
       toast({ 
-        title: "Erro ao criar usuário", 
+        title: "❌ Erro ao criar usuário", 
         description: error.message,
         variant: "destructive" 
       });
     }
   });
 
-  // Alterar role do usuário (sem restrições durante desenvolvimento)
+  // Alterar role do usuário (sem restrições)
   const changeRoleMutation = useMutation({
     mutationFn: async ({ userId, newRole }: { userId: string; newRole: "USER" | "ADMIN" }) => {
-      console.log('Alterando role para:', { userId, newRole });
+      console.log('Alterando role:', { userId, newRole });
       
       const { error } = await supabase
         .from('profiles')
@@ -113,45 +112,45 @@ export function UserManagementAdvanced() {
       
       if (error) throw error;
       
-      // Adicionar role administrativo se for ADMIN
+      // Atualizar role administrativa se necessário
       if (newRole === 'ADMIN') {
         const { error: roleError } = await supabase
           .from('admin_user_roles')
           .upsert({
             user_id: userId,
             admin_role: 'TechAdmin',
-            assigned_by: (await supabase.auth.getUser()).data.user?.id,
-            is_active: true
+            assigned_by: userId,
+            is_active: true,
+            assigned_at: new Date().toISOString()
           });
         
-        if (roleError) console.warn('Aviso ao adicionar role:', roleError);
+        if (roleError) console.warn('Aviso ao atualizar role administrativa:', roleError);
       }
     },
     onSuccess: () => {
-      toast({ title: "Role alterada com sucesso!" });
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      toast({ title: "✅ Role alterada com sucesso!" });
+      queryClient.invalidateQueries({ queryKey: ['admin-users-clean'] });
     },
     onError: (error: any) => {
       toast({ 
-        title: "Erro ao alterar role", 
+        title: "❌ Erro ao alterar role", 
         description: error.message,
         variant: "destructive" 
       });
     }
   });
 
-  // Deletar usuário
+  // Deletar usuário (sem restrições)
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: string) => {
       console.log('Deletando usuário:', userId);
       
-      // Primeiro remover roles
-      await supabase
-        .from('admin_user_roles')
-        .delete()
-        .eq('user_id', userId);
+      // Remover dados relacionados primeiro
+      await supabase.from('admin_user_roles').delete().eq('user_id', userId);
+      await supabase.from('user_benefits').delete().eq('user_id', userId);
+      await supabase.from('user_help_aids').delete().eq('user_id', userId);
       
-      // Depois remover profile
+      // Deletar profile
       const { error } = await supabase
         .from('profiles')
         .delete()
@@ -160,14 +159,14 @@ export function UserManagementAdvanced() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Usuário deletado com sucesso!" });
+      toast({ title: "✅ Usuário deletado com sucesso!" });
       setBanUserModal(null);
       setBanReason("");
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-users-clean'] });
     },
     onError: (error: any) => {
       toast({ 
-        title: "Erro ao deletar usuário", 
+        title: "❌ Erro ao deletar usuário", 
         description: error.message,
         variant: "destructive" 
       });
@@ -177,7 +176,7 @@ export function UserManagementAdvanced() {
   const handleCreateUser = () => {
     if (!newUserData.email || !newUserData.full_name) {
       toast({ 
-        title: "Campos obrigatórios", 
+        title: "❌ Campos obrigatórios", 
         description: "Preencha pelo menos email e nome completo",
         variant: "destructive" 
       });
@@ -189,7 +188,7 @@ export function UserManagementAdvanced() {
   const handleDeleteUser = (userId: string) => {
     if (!banReason.trim()) {
       toast({ 
-        title: "Motivo obrigatório", 
+        title: "❌ Motivo obrigatório", 
         description: "Informe o motivo da exclusão",
         variant: "destructive" 
       });
@@ -213,22 +212,22 @@ export function UserManagementAdvanced() {
     }
   };
 
-  // Ensure user type is valid for Select component
   const getValidUserType = (userType: string | null | undefined): "USER" | "ADMIN" => {
     if (userType === "ADMIN") return "ADMIN";
-    return "USER"; // Default to USER for any invalid or empty value
+    return "USER";
   };
 
   return (
     <div className="space-y-6">
-      {/* Development Banner */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+      {/* Banner de Sucesso da Limpeza */}
+      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
         <div className="flex items-center gap-2">
-          <Code className="h-5 w-5 text-yellow-600" />
-          <h3 className="font-semibold text-yellow-800">Modo Desenvolvimento</h3>
+          <Database className="h-5 w-5 text-green-600" />
+          <h3 className="font-semibold text-green-800">✅ Banco de Dados Limpo e Otimizado</h3>
         </div>
-        <p className="text-sm text-yellow-700 mt-1">
-          Todas as restrições RLS foram desabilitadas. Todos os usuários têm acesso total durante o desenvolvimento.
+        <p className="text-sm text-green-700 mt-1">
+          Limpeza completa realizada: Foreign keys problemáticas removidas, tabelas duplicadas consolidadas, 
+          RLS desabilitado. Sistema pronto para desenvolvimento sem restrições!
         </p>
       </div>
 
@@ -236,21 +235,21 @@ export function UserManagementAdvanced() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Gestão Avançada de Usuários</h2>
-          <p className="text-gray-600">Controle total sobre usuários, roles e permissões (Modo Desenvolvimento)</p>
+          <p className="text-gray-600">Controle total sobre usuários - Banco otimizado e sem restrições</p>
         </div>
         
         <Dialog open={createUserModal} onOpenChange={setCreateUserModal}>
           <DialogTrigger asChild>
             <Button className="bg-green-600 hover:bg-green-700">
               <Plus className="h-4 w-4 mr-2" />
-              Criar Usuário de Teste
+              Criar Usuário
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Criar Usuário de Desenvolvimento</DialogTitle>
+              <DialogTitle>Criar Novo Usuário</DialogTitle>
               <DialogDescription>
-                Crie um usuário para testes da equipe (apenas durante desenvolvimento)
+                Criação simplificada com a nova estrutura otimizada
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -261,22 +260,16 @@ export function UserManagementAdvanced() {
                 onChange={(e) => setNewUserData(prev => ({ ...prev, email: e.target.value }))}
               />
               <Input
-                placeholder="Senha (opcional para desenvolvimento)"
-                type="password"
-                value={newUserData.password}
-                onChange={(e) => setNewUserData(prev => ({ ...prev, password: e.target.value }))}
-              />
-              <Input
                 placeholder="Nome completo"
                 value={newUserData.full_name}
                 onChange={(e) => setNewUserData(prev => ({ ...prev, full_name: e.target.value }))}
               />
               <Select 
-                value={newUserData.role} 
-                onValueChange={(value: "USER" | "ADMIN") => setNewUserData(prev => ({ ...prev, role: value }))}
+                value={newUserData.type} 
+                onValueChange={(value: "USER" | "ADMIN") => setNewUserData(prev => ({ ...prev, type: value }))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione a role" />
+                  <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="USER">Usuário</SelectItem>
@@ -288,7 +281,7 @@ export function UserManagementAdvanced() {
                 className="w-full"
                 disabled={createUserMutation.isPending}
               >
-                {createUserMutation.isPending ? "Criando..." : "Criar Usuário de Teste"}
+                {createUserMutation.isPending ? "Criando..." : "Criar Usuário"}
               </Button>
             </div>
           </DialogContent>
@@ -300,21 +293,24 @@ export function UserManagementAdvanced() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5" />
-            Usuários do Sistema
+            Usuários do Sistema ({users?.length || 0})
           </CardTitle>
           <CardDescription>
-            Gerencie usuários, roles e aplique ações administrativas (sem restrições durante desenvolvimento)
+            Sistema otimizado - Criação, edição e exclusão sem restrições
           </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-8">Carregando usuários...</div>
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
+              Carregando usuários...
+            </div>
           ) : (
             <div className="space-y-4">
               {users?.map((user) => {
                 const validUserType = getValidUserType(user.type);
                 return (
-                  <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
                         {getRoleIcon(validUserType)}
@@ -327,6 +323,9 @@ export function UserManagementAdvanced() {
                             {validUserType}
                           </Badge>
                           <span className="text-xs text-gray-500">
+                            ID: {user.id.substring(0, 8)}...
+                          </span>
+                          <span className="text-xs text-gray-500">
                             Criado em {new Date(user.created_at).toLocaleDateString()}
                           </span>
                         </div>
@@ -338,6 +337,7 @@ export function UserManagementAdvanced() {
                       <Select 
                         value={validUserType} 
                         onValueChange={(value: "USER" | "ADMIN") => changeRoleMutation.mutate({ userId: user.id, newRole: value })}
+                        disabled={changeRoleMutation.isPending}
                       >
                         <SelectTrigger className="w-32">
                           <SelectValue />
@@ -359,7 +359,8 @@ export function UserManagementAdvanced() {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Deletar Usuário</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Esta ação deletará permanentemente o usuário {user.full_name || user.email}.
+                              Esta ação deletará permanentemente o usuário {user.full_name || user.email} 
+                              e todos os dados relacionados (roles, benefits, help aids).
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <Textarea
@@ -374,8 +375,9 @@ export function UserManagementAdvanced() {
                             <AlertDialogAction 
                               onClick={() => handleDeleteUser(user.id)}
                               className="bg-red-600 hover:bg-red-700"
+                              disabled={deleteUserMutation.isPending}
                             >
-                              Deletar Usuário
+                              {deleteUserMutation.isPending ? "Deletando..." : "Deletar Usuário"}
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
@@ -384,6 +386,14 @@ export function UserManagementAdvanced() {
                   </div>
                 );
               })}
+              
+              {users?.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  <Shield className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>Nenhum usuário encontrado</p>
+                  <p className="text-sm">Crie o primeiro usuário usando o botão acima</p>
+                </div>
+              )}
             </div>
           )}
         </CardContent>

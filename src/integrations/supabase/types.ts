@@ -54,36 +54,6 @@ export type Database = {
         }
         Relationships: []
       }
-      achievements: {
-        Row: {
-          code: string
-          created_at: string
-          criteria: Json
-          description: string | null
-          icon_url: string | null
-          id: string
-          name: string
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          criteria: Json
-          description?: string | null
-          icon_url?: string | null
-          id?: string
-          name: string
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          criteria?: Json
-          description?: string | null
-          icon_url?: string | null
-          id?: string
-          name?: string
-        }
-        Relationships: []
-      }
       admin_role_changes_log: {
         Row: {
           action: string
@@ -112,44 +82,7 @@ export type Database = {
           reason?: string | null
           target_user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "admin_role_changes_log_changed_by_fkey"
-            columns: ["changed_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      admin_roles: {
-        Row: {
-          assigned_at: string
-          id: string
-          profile_id: string
-          role: Database["public"]["Enums"]["admin_role"]
-        }
-        Insert: {
-          assigned_at?: string
-          id?: string
-          profile_id: string
-          role: Database["public"]["Enums"]["admin_role"]
-        }
-        Update: {
-          assigned_at?: string
-          id?: string
-          profile_id?: string
-          role?: Database["public"]["Enums"]["admin_role"]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "admin_roles_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       admin_user_roles: {
         Row: {
@@ -176,22 +109,7 @@ export type Database = {
           is_active?: boolean
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "admin_user_roles_assigned_by_fkey"
-            columns: ["assigned_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "admin_user_roles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       ai_tutor_config: {
         Row: {
@@ -295,39 +213,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      app_settings: {
-        Row: {
-          category: string
-          description: string | null
-          id: string
-          is_public: boolean
-          key: string
-          updated_at: string
-          updated_by: string | null
-          value: Json
-        }
-        Insert: {
-          category: string
-          description?: string | null
-          id?: string
-          is_public?: boolean
-          key: string
-          updated_at?: string
-          updated_by?: string | null
-          value: Json
-        }
-        Update: {
-          category?: string
-          description?: string | null
-          id?: string
-          is_public?: boolean
-          key?: string
-          updated_at?: string
-          updated_by?: string | null
-          value?: Json
-        }
-        Relationships: []
       }
       difficulties: {
         Row: {
@@ -735,36 +620,6 @@ export type Database = {
         }
         Relationships: []
       }
-      monthly_rankings: {
-        Row: {
-          category: string | null
-          id: string
-          points: number
-          rank: number | null
-          updated_at: string
-          user_id: string
-          year_month: string
-        }
-        Insert: {
-          category?: string | null
-          id?: string
-          points: number
-          rank?: number | null
-          updated_at?: string
-          user_id: string
-          year_month: string
-        }
-        Update: {
-          category?: string | null
-          id?: string
-          points?: number
-          rank?: number | null
-          updated_at?: string
-          user_id?: string
-          year_month?: string
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           academic_specialty: string | null
@@ -866,75 +721,6 @@ export type Database = {
           id?: string
           metadata?: Json | null
           tx_type?: Database["public"]["Enums"]["radcoin_tx_type"]
-          user_id?: string
-        }
-        Relationships: []
-      }
-      signup_logs: {
-        Row: {
-          created_at: string
-          error_message: string | null
-          event_data: Json | null
-          event_type: string
-          id: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          error_message?: string | null
-          event_data?: Json | null
-          event_type: string
-          id?: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          error_message?: string | null
-          event_data?: Json | null
-          event_type?: string
-          id?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      subscription_history: {
-        Row: {
-          amount: number | null
-          created_at: string
-          currency: string | null
-          ended_at: string | null
-          id: string
-          metadata: Json | null
-          plan_name: string
-          started_at: string
-          status: string
-          stripe_subscription_id: string | null
-          user_id: string
-        }
-        Insert: {
-          amount?: number | null
-          created_at?: string
-          currency?: string | null
-          ended_at?: string | null
-          id?: string
-          metadata?: Json | null
-          plan_name: string
-          started_at: string
-          status: string
-          stripe_subscription_id?: string | null
-          user_id: string
-        }
-        Update: {
-          amount?: number | null
-          created_at?: string
-          currency?: string | null
-          ended_at?: string | null
-          id?: string
-          metadata?: Json | null
-          plan_name?: string
-          started_at?: string
-          status?: string
-          stripe_subscription_id?: string | null
           user_id?: string
         }
         Relationships: []
@@ -1057,35 +843,6 @@ export type Database = {
           value?: Json | null
         }
         Relationships: []
-      }
-      user_achievements: {
-        Row: {
-          achievement_id: string
-          id: string
-          unlocked_at: string
-          user_id: string
-        }
-        Insert: {
-          achievement_id: string
-          id?: string
-          unlocked_at?: string
-          user_id: string
-        }
-        Update: {
-          achievement_id?: string
-          id?: string
-          unlocked_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_achievements_achievement_id_fkey"
-            columns: ["achievement_id"]
-            isOneToOne: false
-            referencedRelation: "achievements"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       user_achievements_progress: {
         Row: {
@@ -1323,42 +1080,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_titles: {
-        Row: {
-          code: string
-          created_at: string
-          description: string | null
-          display_name: string
-          icon_url: string | null
-          id: string
-          is_active: boolean
-          rarity: string
-          unlock_criteria: Json | null
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          description?: string | null
-          display_name: string
-          icon_url?: string | null
-          id?: string
-          is_active?: boolean
-          rarity?: string
-          unlock_criteria?: Json | null
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          description?: string | null
-          display_name?: string
-          icon_url?: string | null
-          id?: string
-          is_active?: boolean
-          rarity?: string
-          unlock_criteria?: Json | null
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
@@ -1377,9 +1098,9 @@ export type Database = {
         }
         Returns: Json
       }
-      is_user_admin: {
-        Args: { user_id: string }
-        Returns: boolean
+      create_dev_user_simple: {
+        Args: { p_email: string; p_full_name: string; p_type?: string }
+        Returns: string
       }
       log_signup_event: {
         Args: {
@@ -1410,24 +1131,9 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: undefined
       }
-      user_has_admin_role: {
-        Args: { user_id: string; role_name: string }
-        Returns: boolean
-      }
     }
     Enums: {
       academic_stage: "Student" | "Intern" | "Resident" | "Specialist"
-      admin_role:
-        | "DEV"
-        | "TechAdmin"
-        | "WebSecuritySpecialist"
-        | "ContentEditor"
-        | "WebPerformanceSpecialist"
-        | "WebAnalyticsManager"
-        | "DigitalMarketingSpecialist"
-        | "EcommerceManager"
-        | "CustomerSupportCoordinator"
-        | "ComplianceOfficer"
       event_status: "SCHEDULED" | "ACTIVE" | "FINISHED"
       profile_type: "USER" | "ADMIN"
       radcoin_tx_type:
@@ -1553,18 +1259,6 @@ export const Constants = {
   public: {
     Enums: {
       academic_stage: ["Student", "Intern", "Resident", "Specialist"],
-      admin_role: [
-        "DEV",
-        "TechAdmin",
-        "WebSecuritySpecialist",
-        "ContentEditor",
-        "WebPerformanceSpecialist",
-        "WebAnalyticsManager",
-        "DigitalMarketingSpecialist",
-        "EcommerceManager",
-        "CustomerSupportCoordinator",
-        "ComplianceOfficer",
-      ],
       event_status: ["SCHEDULED", "ACTIVE", "FINISHED"],
       profile_type: ["USER", "ADMIN"],
       radcoin_tx_type: [
