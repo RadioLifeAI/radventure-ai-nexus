@@ -274,9 +274,9 @@ export function AdvancedJourneyFilters({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">Qualquer duração</SelectItem>
-                <SelectItem value="Agudo">Agudo (< 1 semana)</SelectItem>
+                <SelectItem value="Agudo">Agudo (&lt; 1 semana)</SelectItem>
                 <SelectItem value="Subagudo">Subagudo (1-4 semanas)</SelectItem>
-                <SelectItem value="Crônico">Crônico (> 1 mês)</SelectItem>
+                <SelectItem value="Crônico">Crônico (&gt; 1 mês)</SelectItem>
               </SelectContent>
             </Select>
           </div>
