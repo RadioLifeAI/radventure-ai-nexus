@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +30,9 @@ import {
   Activity,
   CheckCircle,
   XCircle,
-  MessageSquare
+  MessageSquare,
+  AlertTriangle,
+  Info
 } from "lucide-react";
 import clsx from "clsx";
 import { cn } from "@/lib/utils";
@@ -46,7 +48,19 @@ import {
   Dialog,
   DialogContent,
   DialogClose,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // FEEDBACKS GAMIFICADOS
 const FEEDBACKS = [
@@ -72,6 +86,7 @@ type CasoUsuarioViewProps = {
 export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
   const urlParams = useParams();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const id = props.idProp || urlParams.id;
   const [caso, setCaso] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -84,6 +99,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
   const [showTutorHint, setShowTutorHint] = useState(false);
   const [tutorQuestion, setTutorQuestion] = useState("");
   const [tutorHintText, setTutorHintText] = useState("");
+  const [showHelpConfirm, setShowHelpConfirm] = useState<string | null>(null);
 
   // Get current user for progress tracking
   const [user, setUser] = useState<any>(null);
@@ -150,11 +166,15 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
   };
 
   const handleNextCase = () => {
-    window.location.href = '/casos';
+    navigate('/app/casos');
   };
 
   const handleReviewCase = () => {
     setShowFeedback(false);
+  };
+
+  const handleBackNavigation = () => {
+    navigate(-1);
   };
 
   const handleEliminateOption = () => {
@@ -167,15 +187,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
       return;
     }
 
-    const availableOptions = [0, 1, 2, 3].filter(i => 
-      i !== caso.correct_answer_index && !eliminatedOptions.includes(i)
-    );
-
-    if (availableOptions.length === 0) return;
-
-    const randomIndex = availableOptions[Math.floor(Math.random() * availableOptions.length)];
-    eliminateOption(randomIndex);
-    consumeHelp({ aidType: 'elimination' });
+    setShowHelpConfirm('eliminate');
   };
 
   const handleSkipCase = () => {
@@ -188,9 +200,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
       return;
     }
 
-    consumeHelp({ aidType: 'skip' });
-    skipCase();
-    handleNextCase();
+    setShowHelpConfirm('skip');
   };
 
   const handleRequestTutorHint = () => {
@@ -203,6 +213,30 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
       return;
     }
 
+    setShowTutorHint(true);
+  };
+
+  const confirmHelpAction = () => {
+    if (showHelpConfirm === 'eliminate') {
+      const availableOptions = [0, 1, 2, 3].filter(i => 
+        i !== caso.correct_answer_index && !eliminatedOptions.includes(i)
+      );
+
+      if (availableOptions.length === 0) return;
+
+      const randomIndex = availableOptions[Math.floor(Math.random() * availableOptions.length)];
+      eliminateOption(randomIndex);
+      consumeHelp({ aidType: 'elimination' });
+    } else if (showHelpConfirm === 'skip') {
+      consumeHelp({ aidType: 'skip' });
+      skipCase();
+      handleNextCase();
+    }
+
+    setShowHelpConfirm(null);
+  };
+
+  const handleTutorHintRequest = () => {
     getTutorHint(
       { caseData: caso, userQuestion: tutorQuestion },
       {
@@ -281,7 +315,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Header Gamificado */}
+      {/* Header Gamificado com Navegação */}
       <div className={cn(
         "relative text-white p-6",
         isAnswered 
@@ -292,6 +326,14 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
       )}>
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div className="flex items-center gap-4">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-white hover:bg-white/20 rounded-full"
+              onClick={handleBackNavigation}
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </Button>
             <div className="p-3 bg-white/20 rounded-full backdrop-blur-sm">
               <Stethoscope className="h-8 w-8 text-blue-100" />
             </div>
@@ -330,7 +372,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
             variant="ghost" 
             size="icon" 
             className="text-white hover:bg-white/20 rounded-full"
-            onClick={() => window.history.back()}
+            onClick={() => navigate('/app/casos')}
           >
             <X className="h-6 w-6" />
           </Button>
@@ -491,7 +533,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
                     "w-full p-4 rounded-lg border-2 text-left transition-all duration-300 flex items-center gap-3",
                     eliminatedOptions.includes(index)
                       ? "border-gray-300 bg-gray-100 text-gray-400 opacity-50"
-                      : isAnswered || selected !== null 
+                      : isAnswered
                         ? selected === index
                           ? index === correctIdx
                             ? "border-green-500 bg-green-50 text-green-800"
@@ -508,7 +550,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
                     "w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm",
                     eliminatedOptions.includes(index)
                       ? "bg-gray-300 text-gray-500"
-                      : isAnswered || selected !== null
+                      : isAnswered
                         ? selected === index
                           ? index === correctIdx
                             ? "bg-green-500 text-white"
@@ -656,7 +698,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
                 size="sm"
                 className="w-full border-purple-300 hover:bg-purple-50"
                 disabled={isAnswered || !helpAids || helpAids.ai_tutor_credits <= 0}
-                onClick={() => setShowTutorHint(true)}
+                onClick={handleRequestTutorHint}
               >
                 <Brain className="h-4 w-4 mr-2" />
                 Pedir Dica
@@ -695,15 +737,40 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
         />
       )}
 
+      {/* Modal de Confirmação para Ajudas */}
+      <AlertDialog open={!!showHelpConfirm} onOpenChange={() => setShowHelpConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-orange-500" />
+              Confirmar uso de ajuda
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {showHelpConfirm === 'eliminate' && 
+                `Você deseja eliminar uma alternativa incorreta? Isso consumirá 1 crédito de eliminação. Créditos restantes: ${(helpAids?.elimination_aids || 0) - 1}`}
+              {showHelpConfirm === 'skip' && 
+                `Você deseja pular este caso? Isso consumirá 1 crédito de pular e você não ganhará pontos. Créditos restantes: ${(helpAids?.skip_aids || 0) - 1}`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmHelpAction}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Modal para Pergunta do Tutor AI */}
       <Dialog open={showTutorHint} onOpenChange={setShowTutorHint}>
         <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Brain className="h-5 w-5 text-purple-600" />
+              Tutor AI - Solicitar Dica
+            </DialogTitle>
+          </DialogHeader>
           <div className="p-4">
-            <div className="flex items-center gap-3 mb-4">
-              <Brain className="h-6 w-6 text-purple-600" />
-              <h3 className="text-lg font-bold text-purple-800">Tutor AI</h3>
-            </div>
-            
             <div className="mb-4">
               <label className="text-sm font-medium text-gray-700 mb-2 block">
                 Qual sua dúvida sobre este caso? (opcional)
@@ -716,9 +783,20 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
               />
             </div>
             
+            <div className="bg-blue-50 p-3 rounded-lg mb-4">
+              <div className="flex items-start gap-2">
+                <Info className="h-4 w-4 text-blue-600 mt-0.5" />
+                <div className="text-sm text-blue-700">
+                  <p className="font-medium mb-1">Sobre o Tutor AI:</p>
+                  <p>Créditos restantes: {helpAids?.ai_tutor_credits || 0}</p>
+                  <p>O tutor fornecerá uma dica educativa sem revelar a resposta diretamente.</p>
+                </div>
+              </div>
+            </div>
+            
             <div className="flex gap-2">
               <Button
-                onClick={handleRequestTutorHint}
+                onClick={handleTutorHintRequest}
                 disabled={isGettingHint}
                 className="flex-1"
               >
