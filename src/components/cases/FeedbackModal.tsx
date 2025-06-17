@@ -18,6 +18,8 @@ type Props = {
     timeSpent: number;
     helpUsed: string[];
     penalty: number;
+    selectedIndex?: number;
+    answerFeedbacks?: string[];
   };
   onNextCase: () => void;
   onReviewCase: () => void;
@@ -53,6 +55,11 @@ export function FeedbackModal({
 
   // Verificação adicional para casos onde as respostas são textualmente iguais
   const actuallyCorrect = isCorrect || normalizeText(selectedAnswer) === normalizeText(correctAnswer);
+
+  // Obter o feedback da alternativa selecionada
+  const selectedFeedback = performance.answerFeedbacks && performance.selectedIndex !== undefined 
+    ? performance.answerFeedbacks[performance.selectedIndex] 
+    : '';
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -154,16 +161,15 @@ export function FeedbackModal({
                   <span className="text-green-600">{correctAnswer}</span>
                 </div>
               )}
-
-              {/* Debug info quando as respostas são textualmente iguais mas marcadas como diferentes */}
-              {!isCorrect && normalizeText(selectedAnswer) === normalizeText(correctAnswer) && (
-                <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded">
-                  <div className="text-xs text-blue-700">
-                    <strong>Nota:</strong> Sua resposta está correta! Houve um problema na verificação inicial, mas foi corrigido.
-                  </div>
-                </div>
-              )}
             </div>
+            
+            {/* Feedback da alternativa selecionada */}
+            {selectedFeedback && (
+              <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-4">
+                <h4 className="font-medium text-blue-800 mb-2">Feedback da sua resposta:</h4>
+                <p className="text-blue-700 text-sm leading-relaxed">{selectedFeedback}</p>
+              </div>
+            )}
             
             <div className="bg-blue-50 border border-blue-200 rounded p-3">
               <h4 className="font-medium text-blue-800 mb-2">Explicação:</h4>

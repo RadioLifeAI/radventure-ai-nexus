@@ -122,7 +122,8 @@ export function useCaseProgress(caseId: string, userId?: string) {
           penalties: penalties,
           selected_index: selectedIndex,
           selected_text: case_.answer_options?.[selectedIndex],
-          correct_text: case_.answer_options?.[case_.correct_answer_index]
+          correct_text: case_.answer_options?.[case_.correct_answer_index],
+          answer_feedbacks: case_.answer_feedbacks
         }
       });
 
@@ -143,7 +144,9 @@ export function useCaseProgress(caseId: string, userId?: string) {
       points,
       timeSpent,
       helpUsed,
-      penalties
+      penalties,
+      selectedIndex,
+      answerFeedbacks: case_.answer_feedbacks
     };
   };
 
