@@ -1,7 +1,6 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { modalitiesSubtypes } from "../utils/modalitiesSubtypes";
 
 export type ModalityAndSubtypes = {
   value: string;
@@ -10,57 +9,71 @@ export type ModalityAndSubtypes = {
 };
 
 /**
- * Retorna sempre todas as modalidades fixas + subtipos do sistema (padrão da app).
- * Adicionalmente, se houverem subtipos ou modalidades "novos" na base de dados, mescla ambos (sem duplicar).
+ * Hook que busca modalidades e subtipos diretamente do banco de dados.
+ * Substitui o arquivo modalitiesSubtypes.ts para garantir consistência.
  */
 export function useModalitiesAndSubtypes() {
-  const [options, setOptions] = useState<ModalityAndSubtypes[]>(modalitiesSubtypes);
+  const [options, setOptions] = useState<ModalityAndSubtypes[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
-    (async () => {
-      // Busca modalidades e subtipos únicos cadastrados
-      const { data, error } = await supabase
-        .from("medical_cases")
-        .select("modality, subtype")
-        .neq("modality", null);
+    const fetchModalitiesAndSubtypes = async () => {
+      try {
+        setLoading(true);
+        
+        // Buscar modalidades principais
+        const { data: modalities, error: modalitiesError } = await supabase
+          .from("imaging_modalities")
+          .select("name")
+          .order("name");
 
-      if (error || !data) {
-        setOptions(modalitiesSubtypes);
+        if (modalitiesError) throw modalitiesError;
+
+        // Buscar subtipos
+        const { data: subtypes, error: subtypesError } = await supabase
+          .from("imaging_subtypes")
+          .select("name, modality_name")
+          .order("name");
+
+        if (subtypesError) throw subtypesError;
+
+        // Organizar dados no formato esperado
+        const modalitiesMap: Record<string, ModalityAndSubtypes> = {};
+
+        // Inicializar modalidades
+        modalities?.forEach(modality => {
+          modalitiesMap[modality.name] = {
+            value: modality.name,
+            label: modality.name,
+            subtypes: []
+          };
+        });
+
+        // Adicionar subtipos às modalidades correspondentes
+        subtypes?.forEach(subtype => {
+          if (modalitiesMap[subtype.modality_name]) {
+            modalitiesMap[subtype.modality_name].subtypes.push({
+              value: subtype.name,
+              label: subtype.name
+            });
+          }
+        });
+
+        // Converter para array e ordenar
+        const result = Object.values(modalitiesMap).sort((a, b) => 
+          a.label.localeCompare(b.label, "pt-BR")
+        );
+
+        setOptions(result);
+      } catch (error) {
+        console.error("Erro ao buscar modalidades e subtipos:", error);
+        setOptions([]);
+      } finally {
         setLoading(false);
-        return;
       }
+    };
 
-      // Index rápido de modalidades/subtipos fixos para merge
-      const modalitiesMap: Record<string, Set<string>> = {};
-      modalitiesSubtypes.forEach(m => {
-        modalitiesMap[m.value] = new Set(m.subtypes.map(sub => sub.value));
-      });
-
-      // Adiciona do banco, só se não existir na lista fixa
-      data.forEach(({ modality, subtype }) => {
-        if (!modality) return;
-        if (!modalitiesMap[modality]) {
-          modalitiesMap[modality] = new Set();
-        }
-        if (subtype) {
-          modalitiesMap[modality].add(subtype);
-        }
-      });
-
-      // Transforma para o formato do componente
-      const opts: ModalityAndSubtypes[] = Object.entries(modalitiesMap).map(([modality, subSet]) => ({
-        value: modality,
-        label: modality,
-        subtypes: Array.from(subSet).map((sub) => ({ value: sub, label: sub })),
-      }));
-
-      // Ordena o array pelo nome da modalidade
-      opts.sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
-      setOptions(opts);
-      setLoading(false);
-    })();
+    fetchModalitiesAndSubtypes();
   }, []);
 
   return { options, loading };

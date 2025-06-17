@@ -567,6 +567,27 @@ export type Database = {
         }
         Relationships: []
       }
+      imaging_subtypes: {
+        Row: {
+          created_at: string | null
+          id: number
+          modality_name: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          modality_name: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          modality_name?: string
+          name?: string
+        }
+        Relationships: []
+      }
       medical_cases: {
         Row: {
           ai_hint_enabled: boolean | null
