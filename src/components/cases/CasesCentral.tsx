@@ -77,6 +77,12 @@ export function CasesCentral() {
     </Card>
   );
 
+  // Transform casesStats to match CaseFilters expected format
+  const filtersStats = casesStats ? {
+    total: casesStats.totalCases,
+    bySpecialty: casesStats.bySpecialty
+  } : { total: 0, bySpecialty: {} };
+
   return (
     <div className="space-y-8">
       {/* Header com estatísticas principais */}
@@ -145,7 +151,7 @@ export function CasesCentral() {
           <CaseFilters 
             filters={filters} 
             onFiltersChange={setFilters}
-            stats={casesStats}
+            stats={filtersStats}
           />
           <CasesGrid cases={[]} />
         </TabsContent>
