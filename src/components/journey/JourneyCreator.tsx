@@ -177,6 +177,9 @@ export function JourneyCreator() {
     }
   };
 
+  // Filter out empty specialty names to prevent Select error
+  const validSpecialties = specialties?.filter(specialty => specialty.name && specialty.name.trim() !== '') || [];
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
@@ -219,7 +222,7 @@ export function JourneyCreator() {
                     <SelectValue placeholder="Selecione a especialidade" />
                   </SelectTrigger>
                   <SelectContent>
-                    {specialties?.map((specialty) => (
+                    {validSpecialties.map((specialty) => (
                       <SelectItem key={specialty.name} value={specialty.name}>
                         {specialty.name}
                       </SelectItem>
