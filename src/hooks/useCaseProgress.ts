@@ -120,6 +120,7 @@ export function useCaseProgress(caseId: string) {
     // Save to database using real authentication
     try {
       await supabase.from('user_case_history').insert({
+        user_id: user.id, // Adicionar user_id obrigatório
         case_id: caseId,
         is_correct: isCorrect,
         points: points,

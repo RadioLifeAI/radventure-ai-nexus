@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -101,12 +100,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
   const [tutorHintText, setTutorHintText] = useState("");
   const [showHelpConfirm, setShowHelpConfirm] = useState<string | null>(null);
 
-  // Get current user for progress tracking
-  const [user, setUser] = useState<any>(null);
-
-  const { toast } = useToast();
-  const { helpAids, consumeHelp, getTutorHint, isGettingHint } = useUserHelpAids();
-
+  // Corrigir chamada do hook - só precisa do caseId
   const {
     helpUsed,
     eliminatedOptions,
@@ -116,7 +110,10 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
     skipCase,
     useAIHint,
     submitAnswer
-  } = useCaseProgress(id || '', user?.id);
+  } = useCaseProgress(id || '');
+
+  const { toast } = useToast();
+  const { helpAids, consumeHelp, getTutorHint, isGettingHint } = useUserHelpAids();
 
   useEffect(() => {
     async function getUser() {
