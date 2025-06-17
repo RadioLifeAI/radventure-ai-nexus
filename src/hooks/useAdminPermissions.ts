@@ -14,19 +14,16 @@ export function useAdminPermissions() {
 
   const loadUserRoles = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
-      console.log("🔍 Carregando permissões para usuário:", user.id);
+      // Sistema mock: sempre usar usuário de desenvolvimento
+      const mockUserId = "00000000-0000-0000-0000-000000000001";
+      
+      console.log("🔍 Carregando permissões para usuário mock:", mockUserId);
 
       // Buscar perfil do usuário na estrutura limpa
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("type")
-        .eq("id", user.id)
+        .eq("id", mockUserId)
         .single();
 
       if (profileError) {
@@ -46,7 +43,7 @@ export function useAdminPermissions() {
         const { data: roles, error: rolesError } = await supabase
           .from("admin_user_roles")
           .select("admin_role")
-          .eq("user_id", user.id)
+          .eq("user_id", mockUserId)
           .eq("is_active", true);
 
         if (rolesError) {

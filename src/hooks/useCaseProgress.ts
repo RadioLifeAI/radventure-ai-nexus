@@ -16,6 +16,9 @@ export function useCaseProgress(caseId: string, userId?: string) {
 
   const { toast } = useToast();
 
+  // Sistema mock: usar sempre o usuário de desenvolvimento
+  const mockUserId = "00000000-0000-0000-0000-000000000001";
+
   const addHelpUsed = (helpType: string) => {
     setHelpUsed(prev => [...prev, helpType]);
   };
@@ -75,33 +78,31 @@ export function useCaseProgress(caseId: string, userId?: string) {
 
     setIsAnswered(true);
 
-    // Save to database if user is logged in
-    if (userId) {
-      try {
-        await supabase.from('user_case_history').insert({
-          user_id: userId,
-          case_id: caseId,
-          is_correct: isCorrect,
-          points: points,
-          details: {
-            time_spent: timeSpent,
-            help_used: helpUsed,
-            penalties: penalties,
-            selected_index: selectedIndex
-          }
-        });
-
-        // Update user profile points using the correct function
-        if (isCorrect && points > 0) {
-          await supabase.rpc('process_case_completion', {
-            p_user_id: userId,
-            p_case_id: caseId,
-            p_points: points
-          });
+    // Save to database using mock user
+    try {
+      await supabase.from('user_case_history').insert({
+        user_id: mockUserId,
+        case_id: caseId,
+        is_correct: isCorrect,
+        points: points,
+        details: {
+          time_spent: timeSpent,
+          help_used: helpUsed,
+          penalties: penalties,
+          selected_index: selectedIndex
         }
-      } catch (error) {
-        console.error('Error saving case completion:', error);
+      });
+
+      // Update user profile points using the correct function
+      if (isCorrect && points > 0) {
+        await supabase.rpc('process_case_completion', {
+          p_user_id: mockUserId,
+          p_case_id: caseId,
+          p_points: points
+        });
       }
+    } catch (error) {
+      console.error('Error saving case completion:', error);
     }
 
     return {
