@@ -1263,6 +1263,66 @@ export type Database = {
         }
         Relationships: []
       }
+      user_journeys: {
+        Row: {
+          case_ids: Json | null
+          completed_at: string | null
+          completed_cases: number | null
+          created_at: string
+          current_case_index: number | null
+          description: string | null
+          estimated_duration_minutes: number | null
+          filters: Json
+          id: string
+          is_completed: boolean | null
+          objectives: Json | null
+          progress_percentage: number | null
+          status: string | null
+          title: string
+          total_cases: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          case_ids?: Json | null
+          completed_at?: string | null
+          completed_cases?: number | null
+          created_at?: string
+          current_case_index?: number | null
+          description?: string | null
+          estimated_duration_minutes?: number | null
+          filters?: Json
+          id?: string
+          is_completed?: boolean | null
+          objectives?: Json | null
+          progress_percentage?: number | null
+          status?: string | null
+          title: string
+          total_cases?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          case_ids?: Json | null
+          completed_at?: string | null
+          completed_cases?: number | null
+          created_at?: string
+          current_case_index?: number | null
+          description?: string | null
+          estimated_duration_minutes?: number | null
+          filters?: Json
+          id?: string
+          is_completed?: boolean | null
+          objectives?: Json | null
+          progress_percentage?: number | null
+          status?: string | null
+          title?: string
+          total_cases?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_titles: {
         Row: {
           code: string
