@@ -1,9 +1,8 @@
 
 import React from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { CasePreviewModal } from "./CasePreviewModal";
+import { CasePreviewModalEnhanced } from "./CasePreviewModalEnhanced";
 
-// Modal leve para preview rápido gamificado, aproveita o CasePreviewModal padrão
+// Modal leve para preview rápido gamificado usando o novo design
 export function CaseFormPreviewModal({ 
   open, 
   onClose, 
@@ -20,7 +19,7 @@ export function CaseFormPreviewModal({
   if (!open) return null;
   
   return (
-    <CasePreviewModal
+    <CasePreviewModalEnhanced
       open={open}
       onClose={onClose}
       formData={form}
