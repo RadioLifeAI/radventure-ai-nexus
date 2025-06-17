@@ -201,6 +201,12 @@ export function UserManagementAdvanced() {
     }
   };
 
+  // Ensure user type is valid for Select component
+  const getValidUserType = (userType: string | null | undefined): "USER" | "ADMIN" => {
+    if (userType === "ADMIN") return "ADMIN";
+    return "USER"; // Default to USER for any invalid or empty value
+  };
+
   return (
     <div className="space-y-6">
       {/* Header com ações */}
@@ -282,76 +288,79 @@ export function UserManagementAdvanced() {
             <div className="text-center py-8">Carregando usuários...</div>
           ) : (
             <div className="space-y-4">
-              {users?.map((user) => (
-                <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                      {getRoleIcon(user.type)}
-                    </div>
-                    <div>
-                      <h3 className="font-semibold">{user.full_name || user.email}</h3>
-                      <p className="text-sm text-gray-600">{user.email}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge className={getRoleColor(user.type)}>
-                          {user.type}
-                        </Badge>
-                        <span className="text-xs text-gray-500">
-                          Criado em {new Date(user.created_at).toLocaleDateString()}
-                        </span>
+              {users?.map((user) => {
+                const validUserType = getValidUserType(user.type);
+                return (
+                  <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                        {getRoleIcon(validUserType)}
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">{user.full_name || user.email}</h3>
+                        <p className="text-sm text-gray-600">{user.email}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge className={getRoleColor(validUserType)}>
+                            {validUserType}
+                          </Badge>
+                          <span className="text-xs text-gray-500">
+                            Criado em {new Date(user.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-center gap-2">
-                    {/* Alterar Role */}
-                    <Select 
-                      value={user.type} 
-                      onValueChange={(value: "USER" | "ADMIN") => changeRoleMutation.mutate({ userId: user.id, newRole: value })}
-                    >
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="USER">Usuário</SelectItem>
-                        <SelectItem value="ADMIN">Admin</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="flex items-center gap-2">
+                      {/* Alterar Role */}
+                      <Select 
+                        value={validUserType} 
+                        onValueChange={(value: "USER" | "ADMIN") => changeRoleMutation.mutate({ userId: user.id, newRole: value })}
+                      >
+                        <SelectTrigger className="w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="USER">Usuário</SelectItem>
+                          <SelectItem value="ADMIN">Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
 
-                    {/* Desativar usuário */}
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="sm">
-                          <Ban className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Desativar Usuário</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Esta ação desativará o usuário {user.full_name || user.email}.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <Textarea
-                          placeholder="Motivo da desativação..."
-                          value={banReason}
-                          onChange={(e) => setBanReason(e.target.value)}
-                        />
-                        <AlertDialogFooter>
-                          <AlertDialogCancel onClick={() => setBanReason("")}>
-                            Cancelar
-                          </AlertDialogCancel>
-                          <AlertDialogAction 
-                            onClick={() => handleDeactivateUser(user.id)}
-                            className="bg-red-600 hover:bg-red-700"
-                          >
-                            Desativar Usuário
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                      {/* Desativar usuário */}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" size="sm">
+                            <Ban className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Desativar Usuário</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Esta ação desativará o usuário {user.full_name || user.email}.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <Textarea
+                            placeholder="Motivo da desativação..."
+                            value={banReason}
+                            onChange={(e) => setBanReason(e.target.value)}
+                          />
+                          <AlertDialogFooter>
+                            <AlertDialogCancel onClick={() => setBanReason("")}>
+                              Cancelar
+                            </AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => handleDeactivateUser(user.id)}
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              Desativar Usuário
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>
