@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -178,7 +177,11 @@ export function JourneyCreator() {
   };
 
   // Filter out empty specialty names to prevent Select error
-  const validSpecialties = specialties?.filter(specialty => specialty.name && specialty.name.trim() !== '') || [];
+  const validSpecialties = specialties?.filter(specialty => 
+    specialty.name && 
+    specialty.name.trim() !== '' && 
+    typeof specialty.name === 'string'
+  ) || [];
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
