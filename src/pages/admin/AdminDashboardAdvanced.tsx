@@ -15,6 +15,7 @@ import { AITutorManagement } from "@/components/admin/AITutorManagement";
 import { AchievementManagement } from "@/components/admin/AchievementManagement";
 import { SystemMonitoringIntegrated } from "@/components/admin/SystemMonitoringIntegrated";
 import { useAdminPermissions } from "@/hooks/useAdminPermissions";
+import { BackToDashboard } from "@/components/navigation/BackToDashboard";
 
 export default function AdminDashboardAdvanced() {
   const { userRoles, isAdmin, loading } = useAdminPermissions();
@@ -111,6 +112,14 @@ export default function AdminDashboardAdvanced() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
+        {/* Navegação superior */}
+        <div className="flex items-center justify-between">
+          <BackToDashboard variant="back" />
+          <div className="text-sm text-gray-500">
+            Painel Administrativo
+          </div>
+        </div>
+
         {/* Header Principal */}
         <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 rounded-2xl p-8 text-white shadow-2xl">
           <div className="flex items-center justify-between">

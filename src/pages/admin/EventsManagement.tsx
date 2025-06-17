@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { EventManagementTable } from "./components/EventManagementTable";
 import { EventsManagementHeader } from "@/components/admin/events/EventsManagementHeader";
+import { BackToDashboard } from "@/components/navigation/BackToDashboard";
 import { toast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 
@@ -52,6 +53,14 @@ export default function EventsManagement() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Navegação */}
+      <div className="flex items-center justify-between">
+        <BackToDashboard variant="back" />
+        <div className="text-sm text-gray-500">
+          {events.length} eventos • {activeEvents} ativos
+        </div>
+      </div>
+
       <EventsManagementHeader 
         totalEvents={events.length}
         activeEvents={activeEvents}
