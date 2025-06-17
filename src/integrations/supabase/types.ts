@@ -1194,6 +1194,7 @@ export type Database = {
           answered_at: string
           case_id: string
           details: Json | null
+          help_used: Json | null
           id: string
           is_correct: boolean | null
           points: number | null
@@ -1203,6 +1204,7 @@ export type Database = {
           answered_at?: string
           case_id: string
           details?: Json | null
+          help_used?: Json | null
           id?: string
           is_correct?: boolean | null
           points?: number | null
@@ -1212,6 +1214,7 @@ export type Database = {
           answered_at?: string
           case_id?: string
           details?: Json | null
+          help_used?: Json | null
           id?: string
           is_correct?: boolean | null
           points?: number | null
@@ -1226,6 +1229,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_help_aids: {
+        Row: {
+          ai_tutor_credits: number
+          created_at: string | null
+          elimination_aids: number
+          id: string
+          last_refill_date: string | null
+          skip_aids: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_tutor_credits?: number
+          created_at?: string | null
+          elimination_aids?: number
+          id?: string
+          last_refill_date?: string | null
+          skip_aids?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_tutor_credits?: number
+          created_at?: string | null
+          elimination_aids?: number
+          id?: string
+          last_refill_date?: string | null
+          skip_aids?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       user_titles: {
         Row: {
@@ -1268,6 +1304,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      consume_help_aid: {
+        Args: { p_user_id: string; p_aid_type: string; p_amount?: number }
+        Returns: boolean
+      }
       is_user_admin: {
         Args: { user_id: string }
         Returns: boolean
@@ -1284,6 +1324,10 @@ export type Database = {
       process_case_completion: {
         Args: { p_user_id: string; p_case_id: string; p_points?: number }
         Returns: undefined
+      }
+      refill_daily_help_aids: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       setup_first_admin: {
         Args: Record<PropertyKey, never>

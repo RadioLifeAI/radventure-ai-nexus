@@ -1,136 +1,129 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { CaseEditFormModal } from "./CaseEditFormModal";
-import { CaseViewerAdminModal } from "./CaseViewerAdminModal";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Eye, Edit, Trash2, Sparkles } from "lucide-react";
 import { CasePreviewModal } from "./CasePreviewModal";
+import { CaseEditAdminModal } from "./CaseEditAdminModal";
 
-type Case = {
-  id: string;
-  title: string;
-  specialty: string;
-  modality: string;
-  difficulty_level: number;
-  points: number;
-  created_at: string;
-  case_number: number;
-};
-
-type MedicalCasesTableProps = {
-  cases: Case[];
+interface MedicalCasesTableProps {
+  cases: any[];
   onDelete: (id: string) => void;
-};
+}
 
 export function MedicalCasesTable({ cases, onDelete }: MedicalCasesTableProps) {
-  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showViewModal, setShowViewModal] = useState(false);
-  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [previewCase, setPreviewCase] = useState<string | null>(null);
+  const [editingCase, setEditingCase] = useState<any>(null);
 
-  const handleEdit = (caseId: string) => {
-    setSelectedCaseId(caseId);
-    setShowEditModal(true);
-  };
-
-  const handleView = (caseId: string) => {
-    setSelectedCaseId(caseId);
-    setShowViewModal(true);
-  };
-
-  const handlePreview = (caseId: string) => {
-    setSelectedCaseId(caseId);
-    setShowPreviewModal(true);
-  };
-
-  const handleCloseModals = () => {
-    setSelectedCaseId(null);
-    setShowEditModal(false);
-    setShowViewModal(false);
-    setShowPreviewModal(false);
+  const getDifficultyColor = (level: number) => {
+    switch (level) {
+      case 1: return "bg-green-100 text-green-800";
+      case 2: return "bg-yellow-100 text-yellow-800"; 
+      case 3: return "bg-orange-100 text-orange-800";
+      case 4: return "bg-red-100 text-red-800";
+      default: return "bg-gray-100 text-gray-800";
+    }
   };
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse border border-gray-300">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border border-gray-300 px-4 py-2 text-left">Título</th>
-            <th className="border border-gray-300 px-4 py-2 text-left">Especialidade</th>
-            <th className="border border-gray-300 px-4 py-2 text-left">Modalidade</th>
-            <th className="border border-gray-300 px-4 py-2 text-left">Dificuldade</th>
-            <th className="border border-gray-300 px-4 py-2 text-left">Pontos</th>
-            <th className="border border-gray-300 px-4 py-2 text-left">Criado em</th>
-            <th className="border border-gray-300 px-4 py-2 text-center">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {cases.map((caso) => (
-            <tr key={caso.id} className="hover:bg-gray-50">
-              <td className="border border-gray-300 px-4 py-2 font-semibold">
-                {caso.title}
-              </td>
-              <td className="border border-gray-300 px-4 py-2">{caso.specialty}</td>
-              <td className="border border-gray-300 px-4 py-2">{caso.modality}</td>
-              <td className="border border-gray-300 px-4 py-2">{caso.difficulty_level}</td>
-              <td className="border border-gray-300 px-4 py-2">{caso.points}</td>
-              <td className="border border-gray-300 px-4 py-2">
-                {new Date(caso.created_at).toLocaleDateString()}
-              </td>
-              <td className="border border-gray-300 px-4 py-2 text-center">
-                <div className="flex gap-2 justify-center">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEdit(caso.id)}
-                  >
-                    Editar
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleView(caso.id)}
-                  >
-                    Visualizar
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePreview(caso.id)}
-                  >
-                    Preview
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => onDelete(caso.id)}
-                  >
-                    Deletar
-                  </Button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Título</TableHead>
+              <TableHead>Categoria</TableHead>
+              <TableHead>Dificuldade</TableHead>
+              <TableHead>Modalidade</TableHead>
+              <TableHead>Pontos</TableHead>
+              <TableHead>Data</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {cases.map((caso) => (
+              <TableRow key={caso.id}>
+                <TableCell className="font-medium">
+                  {caso.title || "Sem título"}
+                </TableCell>
+                <TableCell>
+                  <Badge variant="outline">
+                    {caso.medical_specialties?.name || "N/A"}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge className={getDifficultyColor(caso.difficulty_level)}>
+                    Nível {caso.difficulty_level || 1}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <span className="text-sm text-gray-600">
+                    {caso.modality || "N/A"}
+                    {caso.subtype && ` - ${caso.subtype}`}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <Badge variant="secondary">
+                    {caso.points || 100} pts
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-sm text-gray-500">
+                  {new Date(caso.created_at).toLocaleDateString()}
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPreviewCase(caso.id)}
+                      className="flex items-center gap-2"
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      Preview
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditingCase(caso)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => onDelete(caso.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
-      <CaseEditFormModal
-        open={showEditModal}
-        onClose={handleCloseModals}
-        caseId={selectedCaseId}
-        onSaved={handleCloseModals}
-      />
-
-      <CaseViewerAdminModal
-        open={showViewModal}
-        onClose={handleCloseModals}
-        caseId={selectedCaseId}
-      />
-
+      {/* Preview Modal */}
       <CasePreviewModal
-        open={showPreviewModal}
-        onClose={handleCloseModals}
-        caseId={selectedCaseId}
+        open={!!previewCase}
+        onClose={() => setPreviewCase(null)}
+        caseId={previewCase}
       />
-    </div>
+
+      {/* Edit Modal */}
+      <CaseEditAdminModal
+        open={!!editingCase}
+        onClose={() => setEditingCase(null)}
+        case={editingCase}
+      />
+    </>
   );
 }
