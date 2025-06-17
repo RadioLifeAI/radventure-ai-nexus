@@ -1368,6 +1368,15 @@ export type Database = {
         Args: { p_user_id: string; p_aid_type: string; p_amount?: number }
         Returns: boolean
       }
+      create_dev_user: {
+        Args: {
+          p_email: string
+          p_password: string
+          p_full_name: string
+          p_role?: string
+        }
+        Returns: Json
+      }
       is_user_admin: {
         Args: { user_id: string }
         Returns: boolean
@@ -1388,6 +1397,10 @@ export type Database = {
       refill_daily_help_aids: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      setup_dev_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       setup_first_admin: {
         Args: Record<PropertyKey, never>

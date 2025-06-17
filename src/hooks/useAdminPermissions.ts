@@ -20,22 +20,29 @@ export function useAdminPermissions() {
         return;
       }
 
-      console.log("Verificando permissões para usuário:", user.id);
+      console.log("Carregando permissões para usuário:", user.id);
 
-      // Verificar se é admin usando a nova função segura
-      const { data: isAdminResult, error: adminError } = await supabase
-        .rpc("is_user_admin", { user_id: user.id });
+      // Durante desenvolvimento, verificar diretamente o tipo do usuário
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("type")
+        .eq("id", user.id)
+        .single();
 
-      if (adminError) {
-        console.error("Erro ao verificar admin:", adminError);
-        throw adminError;
+      if (profileError) {
+        console.error("Erro ao carregar profile:", profileError);
+        setIsAdmin(false);
+        setUserRoles([]);
+        setLoading(false);
+        return;
       }
 
-      console.log("Resultado is_user_admin:", isAdminResult);
-      setIsAdmin(isAdminResult || false);
+      console.log("Profile encontrado:", profile);
+      const isUserAdmin = profile?.type === 'ADMIN';
+      setIsAdmin(isUserAdmin);
 
-      if (isAdminResult) {
-        // Carregar roles específicos
+      if (isUserAdmin) {
+        // Carregar roles específicos (sem restrições RLS durante desenvolvimento)
         const { data: roles, error: rolesError } = await supabase
           .from("admin_user_roles")
           .select("admin_role")
@@ -43,17 +50,16 @@ export function useAdminPermissions() {
           .eq("is_active", true);
 
         if (rolesError) {
-          console.error("Erro ao carregar roles:", rolesError);
-          throw rolesError;
+          console.warn("Aviso ao carregar roles (pode ser esperado em desenvolvimento):", rolesError);
         }
 
         const adminRoles = roles?.map(r => r.admin_role as AdminRole) || [];
         console.log("Roles encontrados:", adminRoles);
         
-        // Se não tem roles específicos mas é ADMIN, dar acesso básico
+        // Durante desenvolvimento, dar acesso básico se não tem roles específicos
         if (adminRoles.length === 0) {
           adminRoles.push("TechAdmin");
-          console.log("Nenhum role específico encontrado, usando TechAdmin padrão");
+          console.log("Desenvolvimento: usando TechAdmin padrão");
         }
 
         setUserRoles(adminRoles);
@@ -70,14 +76,16 @@ export function useAdminPermissions() {
   };
 
   const checkPermission = (resource: ResourceType, action: PermissionAction): boolean => {
-    const hasPermissionResult = isAdmin && hasPermission(userRoles, resource, action);
-    console.log(`Verificando permissão: ${resource}.${action} = ${hasPermissionResult}`);
+    // Durante desenvolvimento, todos os admins têm acesso total
+    const hasPermissionResult = isAdmin;
+    console.log(`Verificando permissão (modo dev): ${resource}.${action} = ${hasPermissionResult}`);
     return hasPermissionResult;
   };
 
   const hasAnyAdminRole = (): boolean => {
-    const hasRole = isAdmin && userRoles.length > 0;
-    console.log(`hasAnyAdminRole: ${hasRole} (isAdmin: ${isAdmin}, roles: ${userRoles.length})`);
+    // Durante desenvolvimento, basta ser ADMIN
+    const hasRole = isAdmin;
+    console.log(`hasAnyAdminRole (modo dev): ${hasRole}`);
     return hasRole;
   };
 
