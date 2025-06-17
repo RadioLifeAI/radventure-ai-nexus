@@ -37,11 +37,11 @@ export function SystemMonitoringIntegrated() {
       
       const avgResponseTime = aiLogs?.reduce((sum, log) => sum + (log.response_time_ms || 0), 0) / (aiLogs?.length || 1);
       const totalTokensUsed = aiLogs?.reduce((sum, log) => sum + (log.tokens_used || 0), 0) || 0;
-      const totalCost = aiLogs?.reduce((sum, log) => sum + (parseFloat(log.cost) || 0), 0) || 0;
+      const totalCost = aiLogs?.reduce((sum, log) => sum + (parseFloat(log.cost?.toString() || '0') || 0), 0) || 0;
       
+      const today = new Date().toISOString().split('T')[0];
       const todayActivity = recentActivity?.filter(activity => {
-        const today = new Date().toISOString().split('T')[0];
-        return activity.answered_at.startsWith(today);
+        return activity.answered_at?.split('T')[0] === today;
       }).length || 0;
       
       return {
@@ -79,12 +79,12 @@ export function SystemMonitoringIntegrated() {
         .select('unlocked_at');
       
       const now = new Date();
-      const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000).toISOString();
+      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
       
-      const activeUsersLastHour = users?.filter(u => new Date(u.created_at) > oneHourAgo).length || 0;
-      const activeCasesLastDay = cases?.filter(c => new Date(c.created_at) > oneDayAgo).length || 0;
-      const achievementsLastDay = achievements?.filter(a => new Date(a.unlocked_at) > oneDayAgo).length || 0;
+      const activeUsersLastHour = users?.filter(u => u.created_at > oneHourAgo).length || 0;
+      const activeCasesLastDay = cases?.filter(c => c.created_at > oneDayAgo).length || 0;
+      const achievementsLastDay = achievements?.filter(a => a.unlocked_at > oneDayAgo).length || 0;
       const activeEvents = events?.filter(e => e.status === 'ACTIVE').length || 0;
       
       return {
@@ -311,7 +311,7 @@ export function SystemMonitoringIntegrated() {
                     </p>
                     {log.cost && (
                       <p className="text-xs text-green-600 mt-1">
-                        Custo: ${parseFloat(log.cost).toFixed(4)}
+                        Custo: ${parseFloat(log.cost.toString()).toFixed(4)}
                       </p>
                     )}
                   </div>
