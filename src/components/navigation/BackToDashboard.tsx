@@ -2,7 +2,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Home, ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 interface BackToDashboardProps {
   className?: string;
@@ -16,9 +16,22 @@ export function BackToDashboard({
   showText = true 
 }: BackToDashboardProps) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleClick = () => {
-    navigate('/dashboard');
+    // Detectar se estamos em contexto admin ou app
+    if (location.pathname.startsWith('/admin')) {
+      navigate('/admin/analytics');
+    } else {
+      navigate('/app/dashboard');
+    }
+  };
+
+  const getDashboardLabel = () => {
+    if (location.pathname.startsWith('/admin')) {
+      return variant === "home" ? "Admin Dashboard" : "Voltar ao Admin Dashboard";
+    }
+    return variant === "home" ? "Dashboard" : "Voltar ao Dashboard";
   };
 
   return (
@@ -33,9 +46,7 @@ export function BackToDashboard({
         <ArrowLeft className="h-4 w-4" />
       )}
       {showText && (
-        <span>
-          {variant === "home" ? "Dashboard" : "Voltar ao Dashboard"}
-        </span>
+        <span>{getDashboardLabel()}</span>
       )}
     </Button>
   );

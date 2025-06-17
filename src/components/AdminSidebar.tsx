@@ -21,7 +21,7 @@ import {
   Monitor,
 } from "lucide-react";
 
-// Menu admin integrado com todas as funcionalidades
+// Menu admin reorganizado com rotas corretas
 const adminMenu = [
   { label: "Analytics", icon: <BarChart3 size={20} />, to: "/admin/analytics" },
   { label: "Criar Eventos", icon: <Calendar size={20} />, to: "/admin/create-event" },
@@ -43,11 +43,12 @@ const adminMenu = [
 
 export function AdminSidebar() {
   const location = useLocation();
+  
   return (
     <aside className="h-screen bg-white shadow border-r w-[235px] flex flex-col fixed top-0 left-0 z-30">
       <div className="flex items-center px-6 py-4 border-b">
         <ShieldIcon />
-        <span className="ml-2 font-bold text-lg text-[#191a26]">Painel de Administração</span>
+        <span className="ml-2 font-bold text-lg text-[#191a26]">Painel Admin</span>
       </div>
       <nav className="flex-1 flex flex-col px-2 py-4 gap-1 overflow-y-auto">
         {adminMenu.map((item) => (
@@ -65,6 +66,16 @@ export function AdminSidebar() {
           </Link>
         ))}
       </nav>
+      
+      {/* Development indicator */}
+      <div className="p-4 border-t bg-yellow-50">
+        <div className="text-xs text-yellow-700 font-medium">
+          🚧 Modo Desenvolvimento
+        </div>
+        <div className="text-xs text-yellow-600">
+          Acesso desbloqueado temporariamente
+        </div>
+      </div>
     </aside>
   );
 }
