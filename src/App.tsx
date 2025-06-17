@@ -30,12 +30,23 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/admin/*" element={<AdminPanel />} />
+          
+          {/* App Routes - Estrutura principal */}
+          <Route path="/app/casos" element={<Casos />} />
+          <Route path="/app/caso/:id" element={<CasoUsuarioView />} />
+          <Route path="/app/eventos" element={<Eventos />} />
+          <Route path="/app/ranking-eventos" element={<RankingEventos />} />
+          <Route path="/app/rankings" element={<Rankings />} />
+          <Route path="/app/estatisticas" element={<Estatisticas />} />
+
+          {/* Legacy Routes - Redirecionamento */}
           <Route path="/casos" element={<Casos />} />
           <Route path="/caso/:id" element={<CasoUsuarioView />} />
           <Route path="/eventos" element={<Eventos />} />
           <Route path="/ranking-eventos" element={<RankingEventos />} />
           <Route path="/rankings" element={<Rankings />} />
           <Route path="/estatisticas" element={<Estatisticas />} />
+          
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

@@ -21,8 +21,11 @@ import {
 } from "lucide-react";
 import { CaseFilters } from "./CaseFilters";
 import { CasesGrid } from "./CasesGrid";
+import { CaseNavigation } from "./CaseNavigation";
+import { CreateJourneyModal } from "@/components/journey/CreateJourneyModal";
 import { Skeleton } from "@/components/ui/skeleton-loader";
 import { useCasesData } from "@/hooks/useCasesData";
+import { useCaseNavigation } from "@/hooks/useCaseNavigation";
 
 export function CasesCentral() {
   const { casesStats, userProgress, isLoading } = useCasesData();
@@ -32,6 +35,10 @@ export function CasesCentral() {
     difficulty: "",
     searchTerm: ""
   });
+  const [showJourneyModal, setShowJourneyModal] = useState(false);
+
+  // Navegação inteligente entre casos
+  const navigation = useCaseNavigation(filters);
 
   const { data: recentCases, isLoading: recentLoading } = useQuery({
     queryKey: ['recent-cases'],
@@ -153,7 +160,21 @@ export function CasesCentral() {
             onFiltersChange={setFilters}
             stats={filtersStats}
           />
-          <CasesGrid cases={[]} />
+          
+          {/* Navegação entre casos */}
+          {navigation.totalCases > 0 && (
+            <CaseNavigation
+              currentIndex={navigation.currentIndex}
+              totalCases={navigation.totalCases}
+              hasNext={navigation.hasNext}
+              hasPrevious={navigation.hasPrevious}
+              onNext={navigation.goToNext}
+              onPrevious={navigation.goToPrevious}
+              currentCase={navigation.currentCase}
+            />
+          )}
+          
+          <CasesGrid filters={filters} />
         </TabsContent>
 
         <TabsContent value="progress" className="space-y-6">
@@ -244,14 +265,17 @@ export function CasesCentral() {
             </CardHeader>
             <CardContent>
               <div className="text-center py-8">
-                <Zap className="h-16 w-16 text-purple-400 mx-auto mb-4" />
+                <Brain className="h-16 w-16 text-purple-400 mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-white mb-2">
                   Trilhas de Aprendizado Inteligentes
                 </h3>
                 <p className="text-purple-100 mb-6">
                   IA personalizada criará trilhas baseadas no seu perfil e objetivos
                 </p>
-                <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+                <Button 
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                  onClick={() => setShowJourneyModal(true)}
+                >
                   <Brain className="h-4 w-4 mr-2" />
                   Criar Jornada com IA
                 </Button>
@@ -260,6 +284,11 @@ export function CasesCentral() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <CreateJourneyModal
+        isOpen={showJourneyModal}
+        onClose={() => setShowJourneyModal(false)}
+      />
     </div>
   );
 }

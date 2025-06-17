@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import {
   Activity,
@@ -118,7 +119,7 @@ export default function Dashboard() {
             icon={<BookOpen />}
             title="Crie sua Jornada"
             description="Personalize seu aprendizado com módulos e trilhas temáticas."
-            link="/app/casos#journey"
+            link="/app/casos?tab=journey"
             color="text-[#a189fa]"
           />
           <ActionCard
