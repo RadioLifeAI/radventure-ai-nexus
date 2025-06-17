@@ -9,7 +9,7 @@ export function useCasesData() {
     queryFn: async () => {
       const { data: cases, error } = await supabase
         .from('medical_cases')
-        .select('id, specialty, modality, difficulty_level, created_at, points');
+        .select('id, specialty, modality, difficulty_level, created_at, points, title, description, patient_clinical_info, findings');
 
       if (error) throw error;
 
