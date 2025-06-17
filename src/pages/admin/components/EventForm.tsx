@@ -91,30 +91,40 @@ export function EventForm({ mode, initialValues = {}, loading, onSubmit, onCance
     setPrizeRadcoins(suggestion.prizeRadcoins || 500);
     
     // Aplicar filtros baseados na sugestão da AI (DADOS REAIS)
-    if (suggestion.specialty || suggestion.modality || suggestion.subtype) {
+    if (suggestion.specialty || suggestion.modality || suggestion.subtype || suggestion.difficulty) {
       setCaseFilters({
         ...caseFilters,
         ...(suggestion.specialty && { specialty: [suggestion.specialty] }),
         ...(suggestion.modality && { modality: [suggestion.modality] }),
-        ...(suggestion.subtype && { subtype: [suggestion.subtype] })
+        ...(suggestion.subtype && { subtype: [suggestion.subtype] }),
+        ...(suggestion.difficulty && { difficulty: [suggestion.difficulty] })
       });
     }
   }
 
   function handleAutoFill(data: any) {
+    // Preencher TODOS os campos do formulário
     setName(data.name || "");
     setDescription(data.description || "");
     setNumberOfCases(data.numberOfCases || 10);
     setDurationMinutes(data.durationMinutes || 30);
     setPrizeRadcoins(data.prizeRadcoins || 500);
-    setAutoStart(data.autoStart ?? true);
+    setAutoStart(true); // SEMPRE true para auto-preenchimento
     
-    // Preencher datas inteligentes se fornecidas pela AI
+    // Preencher datas inteligentes
     if (data.scheduled_start) setScheduledStart(data.scheduled_start);
     if (data.scheduled_end) setScheduledEnd(data.scheduled_end);
     
-    // Aplicar distribuição de prêmios se fornecida
-    if (data.prize_distribution) setPrizeDistribution(data.prize_distribution);
+    // Preencher max participants
+    if (data.maxParticipants) setMaxParticipants(data.maxParticipants);
+    
+    // Preencher banner URL (opcional)
+    if (data.bannerUrl !== undefined) setBannerUrl(data.bannerUrl);
+    
+    // Aplicar distribuição de prêmios completa
+    if (data.prize_distribution && Array.isArray(data.prize_distribution)) {
+      setPrizeDistribution(data.prize_distribution);
+    }
     
     // Aplicar filtros de casos com dados reais
     if (data.caseFilters) {
@@ -202,7 +212,7 @@ export function EventForm({ mode, initialValues = {}, loading, onSubmit, onCance
         </div>
       </div>
 
-      {/* Assistente IA MELHORADO */}
+      {/* Assistente IA COMPLETO */}
       <EventAISuggestions 
         onApplySuggestion={handleAISuggestion}
         onAutoFill={handleAutoFill}
@@ -210,7 +220,7 @@ export function EventForm({ mode, initialValues = {}, loading, onSubmit, onCance
       />
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Filtros de casos MELHORADOS com dados reais */}
+        {/* Filtros de casos com dados reais unificados */}
         <CaseFiltersGamifiedSection value={caseFilters} onChange={setCaseFilters} />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -335,7 +345,7 @@ export function EventForm({ mode, initialValues = {}, loading, onSubmit, onCance
                 className="rounded"
               />
               <label htmlFor="autoStart" className="text-sm font-medium text-gray-700">
-                Início automático
+                Início automático (recomendado)
               </label>
             </div>
           </div>

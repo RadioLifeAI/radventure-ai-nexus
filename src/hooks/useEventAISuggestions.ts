@@ -8,8 +8,10 @@ interface AISuggestion {
   description: string;
   specialty: string;
   modality: string;
+  subtype?: string;
   numberOfCases: number;
   durationMinutes: number;
+  difficulty?: number;
   target: string;
   prizeRadcoins: number;
 }
@@ -17,11 +19,21 @@ interface AISuggestion {
 interface AIAutoFill {
   name: string;
   description: string;
+  scheduled_start: string;
+  scheduled_end: string;
   numberOfCases: number;
   durationMinutes: number;
   prizeRadcoins: number;
+  maxParticipants?: number;
+  bannerUrl?: string;
   autoStart: boolean;
-  caseFilters: any;
+  prize_distribution: Array<{ position: number; prize: number }>;
+  caseFilters: {
+    specialty?: string[];
+    modality?: string[];
+    subtype?: string[];
+    difficulty?: number[];
+  };
 }
 
 export function useEventAISuggestions() {
@@ -45,7 +57,7 @@ export function useEventAISuggestions() {
         setSuggestions(data.suggestions);
         toast({
           title: 'Sugestões geradas!',
-          description: `${data.suggestions.length} sugestões criadas pela IA`
+          description: `${data.suggestions.length} sugestões criadas pela IA com dados reais`
         });
       }
 
@@ -76,12 +88,22 @@ export function useEventAISuggestions() {
 
       if (error) throw error;
 
-      toast({
-        title: 'Formulário preenchido!',
-        description: 'IA preencheu o formulário baseado nos filtros'
-      });
-
-      return data;
+      // Validar se todos os campos essenciais foram preenchidos
+      if (data && data.name && data.scheduled_start && data.scheduled_end) {
+        toast({
+          title: 'Formulário preenchido completamente!',
+          description: 'IA preencheu todos os campos com dados inteligentes',
+          className: 'bg-green-50 border-green-200'
+        });
+        return data;
+      } else {
+        toast({
+          title: 'Preenchimento incompleto',
+          description: 'Alguns campos não foram preenchidos pela IA',
+          variant: 'destructive'
+        });
+        return null;
+      }
     } catch (error: any) {
       console.error('Error getting AI autofill:', error);
       toast({
