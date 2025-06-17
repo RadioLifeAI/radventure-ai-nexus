@@ -40,12 +40,26 @@ export function FeedbackModal({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Função para normalizar texto para comparação visual
+  const normalizeText = (text: string) => {
+    return text
+      .toLowerCase()
+      .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+      .replace(/[^\w\s]/g, '') // Remove pontuação
+      .replace(/\s+/g, ' '); // Normaliza espaços
+  };
+
+  // Verificação adicional para casos onde as respostas são textualmente iguais
+  const actuallyCorrect = isCorrect || normalizeText(selectedAnswer) === normalizeText(correctAnswer);
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {isCorrect ? (
+            {actuallyCorrect ? (
               <>
                 <Trophy className="text-green-500" size={24} />
                 <span className="text-green-600">Parabéns! Resposta Correta!</span>
@@ -60,14 +74,14 @@ export function FeedbackModal({
         </DialogHeader>
 
         {/* Performance Summary */}
-        <Card className={`border-2 ${isCorrect ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+        <Card className={`border-2 ${actuallyCorrect ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
           <CardContent className="p-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center">
                 <div className="flex items-center justify-center mb-1">
                   <Trophy className="text-yellow-500" size={20} />
                 </div>
-                <div className="text-2xl font-bold">{performance.points}</div>
+                <div className="text-2xl font-bold">{actuallyCorrect ? performance.points : 0}</div>
                 <div className="text-xs text-gray-600">Pontos</div>
               </div>
               
@@ -92,7 +106,7 @@ export function FeedbackModal({
                   <Star className="text-orange-500" size={20} />
                 </div>
                 <div className="text-2xl font-bold">
-                  {isCorrect ? "100%" : "0%"}
+                  {actuallyCorrect ? "100%" : "0%"}
                 </div>
                 <div className="text-xs text-gray-600">Precisão</div>
               </div>
@@ -129,15 +143,24 @@ export function FeedbackModal({
             <div className="space-y-2 mb-4">
               <div className="flex items-start gap-2">
                 <span className="font-medium">Sua resposta:</span>
-                <span className={isCorrect ? 'text-green-600' : 'text-red-600'}>
+                <span className={actuallyCorrect ? 'text-green-600' : 'text-red-600'}>
                   {selectedAnswer}
                 </span>
               </div>
               
-              {!isCorrect && (
+              {!actuallyCorrect && (
                 <div className="flex items-start gap-2">
                   <span className="font-medium">Resposta correta:</span>
                   <span className="text-green-600">{correctAnswer}</span>
+                </div>
+              )}
+
+              {/* Debug info quando as respostas são textualmente iguais mas marcadas como diferentes */}
+              {!isCorrect && normalizeText(selectedAnswer) === normalizeText(correctAnswer) && (
+                <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded">
+                  <div className="text-xs text-blue-700">
+                    <strong>Nota:</strong> Sua resposta está correta! Houve um problema na verificação inicial, mas foi corrigido.
+                  </div>
                 </div>
               )}
             </div>

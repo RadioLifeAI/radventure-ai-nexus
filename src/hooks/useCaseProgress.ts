@@ -48,7 +48,6 @@ export function useCaseProgress(caseId: string, userId?: string) {
     addHelpUsed("Dica IA");
     setHelpCredits(prev => ({ ...prev, aiHint: prev.aiHint - 1 }));
     
-    // Here you would call the AI hint function
     toast({
       title: "Dica IA ativada",
       description: "Analisando o caso para fornecer uma dica...",
@@ -67,12 +66,44 @@ export function useCaseProgress(caseId: string, userId?: string) {
     return (skipCount * skipPenalty) + (eliminationCount * eliminationPenalty);
   };
 
+  // Função para normalizar texto para comparação
+  const normalizeText = (text: string) => {
+    return text
+      .toLowerCase()
+      .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+      .replace(/[^\w\s]/g, '') // Remove pontuação
+      .replace(/\s+/g, ' '); // Normaliza espaços
+  };
+
   const submitAnswer = async (selectedIndex: number, case_: any) => {
     if (isAnswered) return;
     
     const endTime = Date.now();
     const timeSpent = Math.floor((endTime - startTime) / 1000);
-    const isCorrect = selectedIndex === case_.correct_answer_index;
+    
+    // Verificação corrigida: comparar tanto por índice quanto por texto
+    let isCorrect = false;
+    
+    if (selectedIndex === case_.correct_answer_index) {
+      isCorrect = true;
+    } else {
+      // Fallback: comparar textos normalizados
+      const selectedText = case_.answer_options?.[selectedIndex] || '';
+      const correctText = case_.answer_options?.[case_.correct_answer_index] || '';
+      
+      if (selectedText && correctText && normalizeText(selectedText) === normalizeText(correctText)) {
+        isCorrect = true;
+        console.log('Resposta correta detectada por comparação de texto:', {
+          selected: selectedText,
+          correct: correctText,
+          normalized_selected: normalizeText(selectedText),
+          normalized_correct: normalizeText(correctText)
+        });
+      }
+    }
+    
     const penalties = calculatePenalties(case_.skip_penalty_points || 0, case_.elimination_penalty_points || 0);
     const points = calculatePoints(case_.points || 10, isCorrect, penalties);
 
@@ -89,7 +120,9 @@ export function useCaseProgress(caseId: string, userId?: string) {
           time_spent: timeSpent,
           help_used: helpUsed,
           penalties: penalties,
-          selected_index: selectedIndex
+          selected_index: selectedIndex,
+          selected_text: case_.answer_options?.[selectedIndex],
+          correct_text: case_.answer_options?.[case_.correct_answer_index]
         }
       });
 
