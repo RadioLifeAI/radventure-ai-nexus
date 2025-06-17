@@ -29,13 +29,13 @@ export default function CentralCasos() {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (filters.specialty) {
+      if (filters.specialty && filters.specialty !== "all") {
         query = query.eq('specialty', filters.specialty);
       }
-      if (filters.modality) {
+      if (filters.modality && filters.modality !== "all") {
         query = query.eq('modality', filters.modality);
       }
-      if (filters.difficulty) {
+      if (filters.difficulty && filters.difficulty !== "all") {
         const difficultyLevel = parseInt(filters.difficulty);
         if (!isNaN(difficultyLevel)) {
           query = query.eq('difficulty_level', difficultyLevel);
@@ -129,8 +129,7 @@ export default function CentralCasos() {
           <TabsContent value="cases" className="space-y-6 mt-6">
             <CaseFilters 
               filters={filters} 
-              onFiltersChange={setFilters} 
-              showAdvanced={true}
+              onFiltersChange={setFilters}
             />
 
             {isLoading ? (
