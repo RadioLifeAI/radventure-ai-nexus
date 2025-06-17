@@ -2,17 +2,14 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Brain, Settings, BarChart3, Plus, Edit, Trash2 } from "lucide-react";
+import { Settings, BarChart3 } from "lucide-react";
+import { AITutorHeader } from "./tutor/AITutorHeader";
+import { AIConfigTable } from "./tutor/AIConfigTable";
 
 export function AITutorManagement() {
   const [selectedConfig, setSelectedConfig] = useState<any>(null);
@@ -78,100 +75,60 @@ export function AITutorManagement() {
     }
   };
 
+  const handleEditConfig = (config: any) => {
+    setSelectedConfig(config);
+    setShowConfigForm(true);
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Gestão do Tutor IA</h1>
-          <p className="text-gray-600">Configure e monitore o sistema de tutoria por IA</p>
-        </div>
-        <Button onClick={() => setShowConfigForm(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nova Configuração
-        </Button>
-      </div>
+      <AITutorHeader onNewConfig={() => setShowConfigForm(true)} />
 
       <Tabs defaultValue="configs" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="configs" className="flex items-center gap-2">
+        <TabsList className="grid w-full grid-cols-2 bg-gradient-to-r from-purple-50 to-indigo-50 p-1 rounded-xl">
+          <TabsTrigger value="configs" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
             <Settings className="h-4 w-4" />
             Configurações
           </TabsTrigger>
-          <TabsTrigger value="usage" className="flex items-center gap-2">
+          <TabsTrigger value="usage" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
             <BarChart3 className="h-4 w-4" />
             Uso e Análise
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="configs" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Configurações do Tutor IA</CardTitle>
-              <CardDescription>
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-purple-50/30">
+            <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-t-lg">
+              <CardTitle className="flex items-center gap-2 text-purple-900">
+                <Settings className="h-5 w-5" />
+                Configurações do Tutor IA
+              </CardTitle>
+              <CardDescription className="text-purple-700">
                 Gerencie modelos, prompts e parâmetros do sistema de tutoria
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Modelo</TableHead>
-                    <TableHead>Provider</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {configs.map((config) => (
-                    <TableRow key={config.id}>
-                      <TableCell className="font-medium">{config.config_name}</TableCell>
-                      <TableCell>{config.model_name}</TableCell>
-                      <TableCell>{config.api_provider}</TableCell>
-                      <TableCell>
-                        <Badge variant={config.is_active ? "default" : "secondary"}>
-                          {config.is_active ? "Ativo" : "Inativo"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedConfig(config);
-                              setShowConfigForm(true);
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDeleteConfig(config.id)}
-                            className="text-red-600"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+            <CardContent className="p-6">
+              <AIConfigTable 
+                configs={configs}
+                onEdit={handleEditConfig}
+                onDelete={handleDeleteConfig}
+              />
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="usage" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Logs de Uso do Tutor IA</CardTitle>
-              <CardDescription>
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-indigo-50/30">
+            <CardHeader className="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-t-lg">
+              <CardTitle className="flex items-center gap-2 text-indigo-900">
+                <BarChart3 className="h-5 w-5" />
+                Logs de Uso do Tutor IA
+              </CardTitle>
+              <CardDescription className="text-indigo-700">
                 Monitore o uso e performance do sistema de tutoria
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               <Table>
                 <TableHeader>
                   <TableRow>
