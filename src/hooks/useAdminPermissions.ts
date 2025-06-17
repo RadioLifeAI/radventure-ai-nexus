@@ -2,48 +2,45 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminRole, hasPermission, ResourceType, PermissionAction } from "@/types/admin";
+import { useAuth } from "./useAuth";
+import { useUserProfile } from "./useUserProfile";
 
 export function useAdminPermissions() {
   const [userRoles, setUserRoles] = useState<AdminRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  const { user, isAuthenticated } = useAuth();
+  const { profile } = useUserProfile();
+
   useEffect(() => {
-    loadUserRoles();
-  }, []);
+    if (isAuthenticated && user && profile) {
+      loadUserRoles();
+    } else {
+      setIsAdmin(false);
+      setUserRoles([]);
+      setLoading(false);
+    }
+  }, [isAuthenticated, user, profile]);
 
   const loadUserRoles = async () => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+
     try {
-      // Sistema mock: sempre usar usuário de desenvolvimento
-      const mockUserId = "00000000-0000-0000-0000-000000000001";
-      
-      console.log("🔍 Carregando permissões para usuário mock:", mockUserId);
+      console.log("🔍 Carregando permissões para usuário:", user.id);
 
-      // Buscar perfil do usuário na estrutura limpa
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("type")
-        .eq("id", mockUserId)
-        .single();
-
-      if (profileError) {
-        console.error("❌ Erro ao carregar profile:", profileError);
-        setIsAdmin(false);
-        setUserRoles([]);
-        setLoading(false);
-        return;
-      }
-
-      console.log("✅ Profile encontrado:", profile);
       const isUserAdmin = profile?.type === 'ADMIN';
       setIsAdmin(isUserAdmin);
 
       if (isUserAdmin) {
-        // Carregar roles específicos da tabela limpa
+        // Carregar roles específicos
         const { data: roles, error: rolesError } = await supabase
           .from("admin_user_roles")
           .select("admin_role")
-          .eq("user_id", mockUserId)
+          .eq("user_id", user.id)
           .eq("is_active", true);
 
         if (rolesError) {
@@ -73,6 +70,8 @@ export function useAdminPermissions() {
   };
 
   const checkPermission = (resource: ResourceType, action: PermissionAction): boolean => {
+    if (!isAuthenticated || !user) return false;
+    
     // Sistema limpo: todos os admins têm acesso total
     const hasPermissionResult = isAdmin;
     console.log(`✅ Verificando permissão: ${resource}.${action} = ${hasPermissionResult}`);
@@ -80,6 +79,8 @@ export function useAdminPermissions() {
   };
 
   const hasAnyAdminRole = (): boolean => {
+    if (!isAuthenticated || !user) return false;
+    
     // Sistema limpo: basta ser ADMIN
     const hasRole = isAdmin;
     console.log(`✅ hasAnyAdminRole: ${hasRole}`);

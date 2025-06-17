@@ -1085,6 +1085,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      award_radcoins: {
+        Args: {
+          p_user_id: string
+          p_amount: number
+          p_transaction_type: string
+          p_metadata?: Json
+        }
+        Returns: undefined
+      }
       consume_help_aid: {
         Args: { p_user_id: string; p_aid_type: string; p_amount?: number }
         Returns: boolean
@@ -1112,7 +1121,9 @@ export type Database = {
         Returns: undefined
       }
       process_case_completion: {
-        Args: { p_user_id: string; p_case_id: string; p_points?: number }
+        Args:
+          | { p_case_id: string; p_points?: number; p_is_correct?: boolean }
+          | { p_user_id: string; p_case_id: string; p_points?: number }
         Returns: undefined
       }
       refill_daily_help_aids: {

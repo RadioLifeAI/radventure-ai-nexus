@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from './useAuth';
 
 export interface UserHelpAids {
   id: string;
@@ -18,17 +19,17 @@ export interface UserHelpAids {
 export function useUserHelpAids() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user, isAuthenticated } = useAuth();
 
   const { data: helpAids, isLoading } = useQuery({
-    queryKey: ['user-help-aids'],
+    queryKey: ['user-help-aids', user?.id],
     queryFn: async () => {
-      // Sistema mock: usar usuário de desenvolvimento
-      const mockUserId = "00000000-0000-0000-0000-000000000001";
+      if (!user?.id) throw new Error('User not authenticated');
 
       const { data, error } = await supabase
         .from('user_help_aids')
         .select('*')
-        .eq('user_id', mockUserId)
+        .eq('user_id', user.id)
         .single();
 
       if (error) {
@@ -36,7 +37,7 @@ export function useUserHelpAids() {
         if (error.code === 'PGRST116') {
           const { data: newRecord, error: insertError } = await supabase
             .from('user_help_aids')
-            .insert({ user_id: mockUserId })
+            .insert({ user_id: user.id })
             .select()
             .single();
           
@@ -48,15 +49,15 @@ export function useUserHelpAids() {
 
       return data;
     },
+    enabled: !!user?.id && isAuthenticated,
   });
 
   const consumeHelpMutation = useMutation({
     mutationFn: async ({ aidType, amount = 1 }: { aidType: string, amount?: number }) => {
-      // Sistema mock: usar usuário de desenvolvimento
-      const mockUserId = "00000000-0000-0000-0000-000000000001";
+      if (!user?.id) throw new Error('User not authenticated');
 
       const { data, error } = await supabase.rpc('consume_help_aid', {
-        p_user_id: mockUserId,
+        p_user_id: user.id,
         p_aid_type: aidType,
         p_amount: amount
       });
@@ -91,16 +92,15 @@ export function useUserHelpAids() {
 
   const getTutorHintMutation = useMutation({
     mutationFn: async ({ caseData, userQuestion }: { caseData: any, userQuestion?: string }) => {
-      // Sistema mock: simular session com token fictício
-      const mockSession = {
-        access_token: "mock_token_for_edge_function",
-        user: { id: "00000000-0000-0000-0000-000000000001" }
-      };
+      if (!user?.id) throw new Error('User not authenticated');
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('No valid session');
 
       const response = await fetch('/supabase/functions/v1/ai-tutor-hint', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${mockSession.access_token}`,
+          'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ caseData, userQuestion }),

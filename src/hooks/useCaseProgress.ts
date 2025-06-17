@@ -2,8 +2,9 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "./useAuth";
 
-export function useCaseProgress(caseId: string, userId?: string) {
+export function useCaseProgress(caseId: string) {
   const [startTime] = useState(Date.now());
   const [helpUsed, setHelpUsed] = useState<string[]>([]);
   const [eliminatedOptions, setEliminatedOptions] = useState<number[]>([]);
@@ -15,9 +16,7 @@ export function useCaseProgress(caseId: string, userId?: string) {
   });
 
   const { toast } = useToast();
-
-  // Sistema mock: usar sempre o usuário de desenvolvimento
-  const mockUserId = "00000000-0000-0000-0000-000000000001";
+  const { user } = useAuth();
 
   const addHelpUsed = (helpType: string) => {
     setHelpUsed(prev => [...prev, helpType]);
@@ -78,7 +77,7 @@ export function useCaseProgress(caseId: string, userId?: string) {
   };
 
   const submitAnswer = async (selectedIndex: number, case_: any) => {
-    if (isAnswered) return;
+    if (isAnswered || !user) return;
     
     const endTime = Date.now();
     const timeSpent = Math.floor((endTime - startTime) / 1000);
@@ -118,10 +117,9 @@ export function useCaseProgress(caseId: string, userId?: string) {
       isCorrect
     });
 
-    // Save to database using mock user
+    // Save to database using real authentication
     try {
       await supabase.from('user_case_history').insert({
-        user_id: mockUserId,
         case_id: caseId,
         is_correct: isCorrect,
         points: points,
@@ -136,12 +134,12 @@ export function useCaseProgress(caseId: string, userId?: string) {
         }
       });
 
-      // Update user profile points using the correct function
+      // Update user profile points using the updated function
       if (isCorrect && points > 0) {
         await supabase.rpc('process_case_completion', {
-          p_user_id: mockUserId,
           p_case_id: caseId,
-          p_points: points
+          p_points: points,
+          p_is_correct: isCorrect
         });
       }
     } catch (error) {

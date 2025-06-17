@@ -1,11 +1,48 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Rocket, Globe, User } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const Login = () => {
   const [showPass, setShowPass] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    fullName: '',
+    confirmPassword: ''
+  });
+
+  const { signIn, signUp, loading, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (isSignUp) {
+      if (formData.password !== formData.confirmPassword) {
+        return;
+      }
+      const { data, error } = await signUp(formData.email, formData.password, formData.fullName);
+      if (!error && data) {
+        navigate('/dashboard');
+      }
+    } else {
+      const { data, error } = await signIn(formData.email, formData.password);
+      if (!error && data) {
+        navigate('/dashboard');
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-[#111C44] via-[#162850] to-[#0286d0]">
@@ -16,21 +53,46 @@ const Login = () => {
             <Rocket className="text-cyan-400" size={48} />
           </div>
           <h1 className="text-3xl font-bold text-white mb-1">RadVenture</h1>
-          <span className="text-md text-cyan-200 mb-7">Bem-vindo à sua jornada global em radiologia!</span>
+          <span className="text-md text-cyan-200 mb-7">
+            {isSignUp ? 'Crie sua conta e inicie sua jornada!' : 'Bem-vindo à sua jornada global em radiologia!'}
+          </span>
         </div>
-        <form className="w-full max-w-sm">
+        
+        <form onSubmit={handleSubmit} className="w-full max-w-sm">
+          {isSignUp && (
+            <>
+              <label className="block text-cyan-100 mb-2">Nome Completo</label>
+              <Input
+                type="text"
+                placeholder="Seu nome completo"
+                className="mb-5 bg-white/10 border-cyan-500 text-cyan-50 placeholder:text-cyan-200"
+                value={formData.fullName}
+                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                required
+              />
+            </>
+          )}
+          
           <label className="block text-cyan-100 mb-2">E-mail</label>
           <Input
             type="email"
             placeholder="seu@email.com"
             className="mb-5 bg-white/10 border-cyan-500 text-cyan-50 placeholder:text-cyan-200"
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            required
           />
+          
           <label className="block text-cyan-100 mb-2">Senha</label>
           <div className="relative mb-5">
             <Input
               type={showPass ? "text" : "password"}
-              placeholder="Senha secreta"
+              placeholder={isSignUp ? "Mínimo 6 caracteres" : "Senha secreta"}
               className="pr-10 bg-white/10 border-cyan-500 text-cyan-50 placeholder:text-cyan-200"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              required
+              minLength={isSignUp ? 6 : undefined}
             />
             <button
               type="button"
@@ -41,19 +103,41 @@ const Login = () => {
               {showPass ? <EyeOff size={20}/> : <Eye size={20}/>}
             </button>
           </div>
-          <Button className="w-full text-base font-bold bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 hover:from-cyan-500 hover:to-violet-600">
-            Entrar no Quiz
+
+          {isSignUp && (
+            <>
+              <label className="block text-cyan-100 mb-2">Confirmar Senha</label>
+              <Input
+                type="password"
+                placeholder="Digite a senha novamente"
+                className="mb-5 bg-white/10 border-cyan-500 text-cyan-50 placeholder:text-cyan-200"
+                value={formData.confirmPassword}
+                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                required
+              />
+            </>
+          )}
+          
+          <Button 
+            type="submit"
+            className="w-full text-base font-bold bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 hover:from-cyan-500 hover:to-violet-600"
+            disabled={loading || (isSignUp && formData.password !== formData.confirmPassword)}
+          >
+            {loading ? 'Processando...' : (isSignUp ? 'Criar Conta' : 'Entrar no Quiz')}
           </Button>
+          
           <div className="mt-5 text-center">
-            <a
-              href="#"
+            <button
+              type="button"
+              onClick={() => setIsSignUp(!isSignUp)}
               className="text-cyan-200 underline hover:text-cyan-100 transition"
             >
-              Não tem conta? Criar uma nova
-            </a>
+              {isSignUp ? 'Já tem conta? Fazer login' : 'Não tem conta? Criar uma nova'}
+            </button>
           </div>
         </form>
       </div>
+      
       {/* Benefits Panel */}
       <div className="hidden md:flex flex-1 flex-col justify-center px-12 py-12 min-h-screen bg-gradient-to-bl from-[#162850] via-[#1e366a] to-[#111C44] text-white relative">
         <div className="absolute top-8 right-12 flex items-center space-x-2">
