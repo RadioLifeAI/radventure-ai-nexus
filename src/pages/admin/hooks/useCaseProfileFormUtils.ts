@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { buildAutoAdvancedFields } from "./autoAdvancedUtils";
 import { shuffleAlternativesWithFeedback } from "./shuffleUtils";
 import { normalizeString, suggestPointsByDifficulty, safeStr, safeArr } from "./caseFormHelpers";
+import { validateAPIResponse, SPECIALTY_MAPPING } from "./useCaseFieldsChecklist";
 
 export function useCaseProfileFormUtils({
   form,
@@ -32,11 +33,9 @@ export function useCaseProfileFormUtils({
           diagnosis: diagnosisText
         }
       });
-      // Espera-se { suggestion: { diagnosis_reviewed: "..." } }
       if (error) throw new Error(error.message);
       const text = data?.suggestion?.diagnosis_reviewed ?? data?.suggestion?.diagnosis ?? "";
       if (typeof text === "string" && text.trim() !== "") return text.trim();
-      // fallback: capitalizar localmente se não houver resposta da IA
       return diagnosisText.charAt(0).toUpperCase() + diagnosisText.slice(1);
     } catch (err: any) {
       return diagnosisText.charAt(0).toUpperCase() + diagnosisText.slice(1);
@@ -69,13 +68,44 @@ export function useCaseProfileFormUtils({
       }
 
       const suggestion = data?.suggestion || {};
+      
+      // VALIDAÇÃO DOS CAMPOS RETORNADOS PELA API
+      const validation = validateAPIResponse(suggestion);
+      if (validation.missing.length > 0) {
+        console.warn("Campos ausentes na resposta da API:", validation.missing);
+      }
+      if (validation.invalid.length > 0) {
+        console.warn("Campos inválidos na resposta da API:", validation.invalid);
+      }
+      if (validation.warnings.length > 0) {
+        console.warn("Avisos da validação:", validation.warnings);
+      }
+
+      // MAPEAMENTO DE ESPECIALIDADES ATUALIZADAS
       let categoriaId = "";
       if (suggestion.category) {
-        const normalizedAI = normalizeString(suggestion.category);
+        let categoryName = suggestion.category;
+        
+        // Aplicar mapeamento se necessário
+        if (SPECIALTY_MAPPING[categoryName as keyof typeof SPECIALTY_MAPPING]) {
+          categoryName = SPECIALTY_MAPPING[categoryName as keyof typeof SPECIALTY_MAPPING];
+          console.log(`Especialidade mapeada: ${suggestion.category} → ${categoryName}`);
+        }
+        
+        const normalizedAI = normalizeString(categoryName);
         const match = categories.find((cat: any) => normalizeString(cat.name) === normalizedAI)
           || categories.find((cat: any) => normalizeString(cat.name).startsWith(normalizedAI))
           || categories.find((cat: any) => normalizedAI.startsWith(normalizeString(cat.name)));
         categoriaId = match ? String(match.id) : "";
+        
+        if (!match) {
+          console.warn(`Especialidade não encontrada no banco: ${categoryName}`);
+          toast({ 
+            title: "Aviso", 
+            description: `Especialidade "${categoryName}" não encontrada. Verifique se foi atualizada no banco.`,
+            variant: "destructive"
+          });
+        }
       }
 
       // Busca dificuldade mais próxima
@@ -216,7 +246,7 @@ export function useCaseProfileFormUtils({
       setTimeout(() => setHighlightedFields([]), 2500);
       toast({
         title: "Campos preenchidos por IA!",
-        description: "Todos os campos do formulário, incluindo categoria, dificuldade e configurações avançadas, foram preenchidos automaticamente com base na sugestão da IA. Revise as sugestões — especialmente explicação curta, integração de achados e quadro clínico."
+        description: `Todos os ${API_COVERAGE_STATUS.FULLY_COVERED.length} campos suportados foram preenchidos automaticamente. ${validation.warnings.length > 0 ? 'Verifique os avisos no console.' : ''}`,
       });
     } catch (err: any) {
       toast({
