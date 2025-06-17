@@ -11,14 +11,7 @@ interface CasePreviewModalProps {
   difficulties?: any[];
 }
 
-// Modal único e principal para preview de casos
+// Wrapper para manter compatibilidade com código existente
 export function CasePreviewModal(props: CasePreviewModalProps) {
   return <CasePreviewModalEnhanced {...props} />;
 }
-
-// Export padrão para compatibilidade
-export default CasePreviewModal;
-
-// Exports adicionais para manter compatibilidade
-export { CasePreviewModal as CaseFormPreviewModal };
-export { CasePreviewModal as CaseProfileFormPreviewModal };
