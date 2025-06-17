@@ -1,4 +1,3 @@
-
 import React from "react";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { Routes, Route } from "react-router-dom";
@@ -6,12 +5,12 @@ import CasosMedicos from "./admin/CasosMedicos";
 import GestaoCasos from "./admin/GestaoCasos";
 import CreateEvent from "./admin/CreateEvent";
 import EventsManagement from "./admin/EventsManagement";
-import { DashboardAnalytics } from "@/components/admin/DashboardAnalytics";
+import { DashboardAnalyticsIntegrated } from "@/components/admin/DashboardAnalyticsIntegrated";
 import { UserManagement } from "@/components/admin/UserManagement";
-import { SubscriptionManagement } from "@/components/admin/SubscriptionManagement";
+import { SubscriptionManagementIntegrated } from "@/components/admin/SubscriptionManagementIntegrated";
 import { AITutorManagement } from "@/components/admin/AITutorManagement";
 import { AchievementManagement } from "@/components/admin/AchievementManagement";
-import { SystemMonitoring } from "@/components/admin/SystemMonitoring";
+import { SystemMonitoringIntegrated } from "@/components/admin/SystemMonitoringIntegrated";
 import { RewardManagement } from "@/components/admin/RewardManagement";
 import { AdvancedSettings } from "@/components/admin/AdvancedSettings";
 import { APIKeyManagement } from "@/components/admin/APIKeyManagement";
@@ -80,12 +79,12 @@ export default function AdminPanel() {
         <section className="p-8 relative z-0">
           <Routes>
             {/* Rotas integradas - todas funcionais */}
-            <Route path="analytics" element={<DashboardAnalytics />} />
+            <Route path="analytics" element={<DashboardAnalyticsIntegrated />} />
             <Route path="usuarios" element={<UserManagement />} />
-            <Route path="assinaturas" element={<SubscriptionManagement />} />
+            <Route path="assinaturas" element={<SubscriptionManagementIntegrated />} />
             <Route path="tutor-ia" element={<AITutorManagement />} />
             <Route path="conquistas" element={<AchievementManagement />} />
-            <Route path="monitoramento" element={<SystemMonitoring />} />
+            <Route path="monitoramento" element={<SystemMonitoringIntegrated />} />
             
             {/* Rotas existentes mantidas */}
             <Route path="casos-medicos" element={<CasosMedicos />} />

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,12 +8,12 @@ import {
   Sparkles, Crown, Shield, Zap, Target,
   TrendingUp, DollarSign, Calendar, Bell
 } from "lucide-react";
-import { DashboardAnalytics } from "@/components/admin/DashboardAnalytics";
+import { DashboardAnalyticsIntegrated } from "@/components/admin/DashboardAnalyticsIntegrated";
 import { UserManagement } from "@/components/admin/UserManagement";
-import { SubscriptionManagement } from "@/components/admin/SubscriptionManagement";
+import { SubscriptionManagementIntegrated } from "@/components/admin/SubscriptionManagementIntegrated";
 import { AITutorManagement } from "@/components/admin/AITutorManagement";
 import { AchievementManagement } from "@/components/admin/AchievementManagement";
-import { SystemMonitoring } from "@/components/admin/SystemMonitoring";
+import { SystemMonitoringIntegrated } from "@/components/admin/SystemMonitoringIntegrated";
 import { useAdminPermissions } from "@/hooks/useAdminPermissions";
 
 export default function AdminDashboardAdvanced() {
@@ -190,7 +189,7 @@ export default function AdminDashboardAdvanced() {
           </TabsList>
 
           <TabsContent value="overview">
-            <DashboardAnalytics />
+            <DashboardAnalyticsIntegrated />
           </TabsContent>
 
           <TabsContent value="users">
@@ -198,7 +197,7 @@ export default function AdminDashboardAdvanced() {
           </TabsContent>
 
           <TabsContent value="subscriptions">
-            <SubscriptionManagement />
+            <SubscriptionManagementIntegrated />
           </TabsContent>
 
           <TabsContent value="ai-tutor">
@@ -210,7 +209,7 @@ export default function AdminDashboardAdvanced() {
           </TabsContent>
 
           <TabsContent value="monitoring">
-            <SystemMonitoring />
+            <SystemMonitoringIntegrated />
           </TabsContent>
 
           <TabsContent value="settings">
