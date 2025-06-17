@@ -1,13 +1,16 @@
+
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { EventManagementTable } from "./components/EventManagementTable";
+import { EventsManagementHeader } from "@/components/admin/events/EventsManagementHeader";
 import { toast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 
 export default function EventsManagement() {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   async function loadEvents() {
     setLoading(true);
@@ -45,21 +48,26 @@ export default function EventsManagement() {
     toast({ title: "Evento atualizado", description: "As informações do evento foram salvas." });
   }
 
+  const activeEvents = events.filter(e => e.status === 'ACTIVE' || e.status === 'SCHEDULED').length;
+
   return (
-    <div className="p-4 max-w-5xl mx-auto animate-fade-in">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Gestão de Eventos</h1>
-        <Button asChild>
-          <a href="/admin/create-event">Criar novo evento</a>
-        </Button>
+    <div className="space-y-6 animate-fade-in">
+      <EventsManagementHeader 
+        totalEvents={events.length}
+        activeEvents={activeEvents}
+        onCreateNew={() => navigate('/admin/create-event')}
+      />
+      
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="animate-spin mr-2" /> 
+            <span>Carregando eventos...</span>
+          </div>
+        ) : (
+          <EventManagementTable events={events} onDelete={handleDelete} onUpdate={handleUpdate} />
+        )}
       </div>
-      {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="animate-spin mr-2" /> <span>Carregando eventos...</span>
-        </div>
-      ) : (
-        <EventManagementTable events={events} onDelete={handleDelete} onUpdate={handleUpdate} />
-      )}
     </div>
   );
 }

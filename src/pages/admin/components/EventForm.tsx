@@ -10,6 +10,7 @@ import { EventConfigProgressBar } from "./EventConfigProgressBar";
 import { useEventConfigProgress } from "../hooks/useEventConfigProgress";
 import { ConfigAlertBanner } from "./ConfigAlertBanner";
 import { EventConfigMotivationPhrase } from "./EventConfigMotivationPhrase";
+import { EventFormHeader } from "./EventFormHeader";
 import { toast } from "@/hooks/use-toast";
 
 export type Prize = { position: number, prize: number };
@@ -287,222 +288,213 @@ export function EventForm({ mode, initialValues = {}, loading, onSubmit, onCance
   }, [mode, initialValues]);
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg space-y-6">
-      <div className="space-y-4">
-        <EventConfigMotivationPhrase />
-        <EventConfigProgressBar percent={progress} />
-        <CaseFilterStatsBar stats={stats} loading={statsLoading} />
-        <ConfigAlertBanner message={alertMsg} />
-      </div>
-
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">
-          {mode === "create" ? "Novo Evento" : "Editar Evento"}
-        </h2>
-        <div className="flex gap-2">
-          <Button 
-            type="button" 
-            variant="outline"
-            onClick={() => setShowTemplates(true)}
-          >
-            Templates Rápidos
-          </Button>
-        </div>
-      </div>
-
-      {/* Assistente IA COMPLETO */}
-      <EventAISuggestions 
-        onApplySuggestion={handleAISuggestion}
-        onAutoFill={handleAutoFill}
-        currentFilters={caseFilters}
+    <div className="max-w-4xl mx-auto space-y-6">
+      <EventFormHeader 
+        mode={mode} 
+        onShowTemplates={() => setShowTemplates(true)} 
       />
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Filtros de casos com dados reais unificados */}
-        <CaseFiltersGamifiedSection value={caseFilters} onChange={setCaseFilters} />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Título do evento *
-            </label>
-            <input 
-              value={name} 
-              onChange={e => setName(e.target.value)} 
-              required 
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Digite o título do evento"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Banner do evento
-            </label>
-            <EventBannerUpload value={bannerUrl} onChange={setBannerUrl} />
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Descrição
-            </label>
-            <textarea 
-              value={description} 
-              onChange={e => setDescription(e.target.value)} 
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
-              placeholder="Descreva o evento..."
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Início *
-            </label>
-            <input 
-              type="datetime-local" 
-              value={scheduledStart} 
-              onChange={e => setScheduledStart(e.target.value)} 
-              required 
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Término *
-            </label>
-            <input 
-              type="datetime-local" 
-              value={scheduledEnd} 
-              onChange={e => setScheduledEnd(e.target.value)} 
-              required 
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Total em RadCoins
-            </label>
-            <input 
-              type="number" 
-              value={prizeRadcoins} 
-              onChange={e => setPrizeRadcoins(Number(e.target.value))} 
-              min={0} 
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Nº de casos do evento
-            </label>
-            <input 
-              type="number" 
-              value={numberOfCases} 
-              onChange={e => setNumberOfCases(Number(e.target.value))} 
-              min={1} 
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Duração total (minutos)
-            </label>
-            <input 
-              type="number" 
-              value={durationMinutes} 
-              onChange={e => setDurationMinutes(Number(e.target.value))} 
-              min={1} 
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Limite de participantes
-            </label>
-            <input 
-              type="number" 
-              value={maxParticipants === null ? "" : maxParticipants} 
-              onChange={e => setMaxParticipants(e.target.value === "" ? "" : Number(e.target.value))} 
-              min={1} 
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Sem limite"
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <div className="flex items-center gap-2">
-              <input 
-                type="checkbox" 
-                checked={autoStart} 
-                onChange={e => setAutoStart(e.target.checked)} 
-                id="autoStart" 
-                className="rounded"
-              />
-              <label htmlFor="autoStart" className="text-sm font-medium text-gray-700">
-                Início automático (recomendado)
-              </label>
-            </div>
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-4">
-              Premiação (RadCoins para cada posição)
-            </label>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              {prizeDistribution.map((p, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{p.position}º:</span>
-                  <input
-                    type="number"
-                    className="flex-1 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    value={p.prize}
-                    min={0}
-                    onChange={e => handlePrizeChange(i, Number(e.target.value))}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
+      <div className="p-6 bg-white rounded-lg shadow-lg space-y-6">
+        <div className="space-y-4">
+          <EventConfigMotivationPhrase />
+          <EventConfigProgressBar percent={progress} />
+          <CaseFilterStatsBar stats={stats} loading={statsLoading} />
+          <ConfigAlertBanner message={alertMsg} />
         </div>
 
-        <div className="flex justify-end gap-4 pt-6 border-t">
-          {onCancel && (
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onCancel}
-              disabled={loading}
-            >
-              Cancelar
-            </Button>
-          )}
-          <Button 
-            type="submit" 
-            disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8"
-          >
-            {loading ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Salvando...
-              </>
-            ) : (
-              mode === "create" ? "Criar Evento" : "Salvar Alterações"
-            )}
-          </Button>
-        </div>
-      </form>
-
-      {showTemplates && (
-        <EventTemplatesModal
-          onApplyTemplate={handleApplyTemplate}
-          onClose={() => setShowTemplates(false)}
+        <EventAISuggestions 
+          onApplySuggestion={handleAISuggestion}
+          onAutoFill={handleAutoFill}
+          currentFilters={caseFilters}
         />
-      )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Filtros de casos com dados reais unificados */}
+          <CaseFiltersGamifiedSection value={caseFilters} onChange={setCaseFilters} />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Título do evento *
+              </label>
+              <input 
+                value={name} 
+                onChange={e => setName(e.target.value)} 
+                required 
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Digite o título do evento"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Banner do evento
+              </label>
+              <EventBannerUpload value={bannerUrl} onChange={setBannerUrl} />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Descrição
+              </label>
+              <textarea 
+                value={description} 
+                onChange={e => setDescription(e.target.value)} 
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+                placeholder="Descreva o evento..."
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Início *
+              </label>
+              <input 
+                type="datetime-local" 
+                value={scheduledStart} 
+                onChange={e => setScheduledStart(e.target.value)} 
+                required 
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Término *
+              </label>
+              <input 
+                type="datetime-local" 
+                value={scheduledEnd} 
+                onChange={e => setScheduledEnd(e.target.value)} 
+                required 
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Total em RadCoins
+              </label>
+              <input 
+                type="number" 
+                value={prizeRadcoins} 
+                onChange={e => setPrizeRadcoins(Number(e.target.value))} 
+                min={0} 
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Nº de casos do evento
+              </label>
+              <input 
+                type="number" 
+                value={numberOfCases} 
+                onChange={e => setNumberOfCases(Number(e.target.value))} 
+                min={1} 
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Duração total (minutos)
+              </label>
+              <input 
+                type="number" 
+                value={durationMinutes} 
+                onChange={e => setDurationMinutes(Number(e.target.value))} 
+                min={1} 
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Limite de participantes
+              </label>
+              <input 
+                type="number" 
+                value={maxParticipants === null ? "" : maxParticipants} 
+                onChange={e => setMaxParticipants(e.target.value === "" ? "" : Number(e.target.value))} 
+                min={1} 
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Sem limite"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <div className="flex items-center gap-2">
+                <input 
+                  type="checkbox" 
+                  checked={autoStart} 
+                  onChange={e => setAutoStart(e.target.checked)} 
+                  id="autoStart" 
+                  className="rounded"
+                />
+                <label htmlFor="autoStart" className="text-sm font-medium text-gray-700">
+                  Início automático (recomendado)
+                </label>
+              </div>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-4">
+                Premiação (RadCoins para cada posição)
+              </label>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                {prizeDistribution.map((p, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{p.position}º:</span>
+                    <input
+                      type="number"
+                      className="flex-1 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      value={p.prize}
+                      min={0}
+                      onChange={e => handlePrizeChange(i, Number(e.target.value))}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-4 pt-6 border-t">
+            {onCancel && (
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onCancel}
+                disabled={loading}
+              >
+                Cancelar
+              </Button>
+            )}
+            <Button 
+              type="submit" 
+              disabled={loading}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8"
+            >
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Salvando...
+                </>
+              ) : (
+                mode === "create" ? "Criar Evento" : "Salvar Alterações"
+              )}
+            </Button>
+          </div>
+        </form>
+
+        {showTemplates && (
+          <EventTemplatesModal
+            onApplyTemplate={handleApplyTemplate}
+            onClose={() => setShowTemplates(false)}
+          />
+        )}
+      </div>
     </div>
   );
 }
