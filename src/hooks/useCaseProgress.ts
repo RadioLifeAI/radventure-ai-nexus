@@ -109,6 +109,15 @@ export function useCaseProgress(caseId: string, userId?: string) {
 
     setIsAnswered(true);
 
+    // Debug log para verificar os dados que estão sendo passados
+    console.log('Debug submitAnswer:', {
+      selectedIndex,
+      answer_options: case_.answer_options,
+      answer_feedbacks: case_.answer_feedbacks,
+      correct_answer_index: case_.correct_answer_index,
+      isCorrect
+    });
+
     // Save to database using mock user
     try {
       await supabase.from('user_case_history').insert({

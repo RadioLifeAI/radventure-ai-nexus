@@ -56,10 +56,27 @@ export function FeedbackModal({
   // Verificação adicional para casos onde as respostas são textualmente iguais
   const actuallyCorrect = isCorrect || normalizeText(selectedAnswer) === normalizeText(correctAnswer);
 
-  // Obter o feedback da alternativa selecionada
-  const selectedFeedback = performance.answerFeedbacks && performance.selectedIndex !== undefined 
-    ? performance.answerFeedbacks[performance.selectedIndex] 
-    : '';
+  // Obter o feedback da alternativa selecionada - com verificação mais robusta
+  let selectedFeedback = '';
+  if (performance.answerFeedbacks && performance.selectedIndex !== undefined) {
+    const feedbacks = performance.answerFeedbacks;
+    const selectedIdx = performance.selectedIndex;
+    
+    // Verificar se o índice é válido e se há feedback para essa posição
+    if (selectedIdx >= 0 && selectedIdx < feedbacks.length && feedbacks[selectedIdx]) {
+      selectedFeedback = feedbacks[selectedIdx].trim();
+    }
+  }
+
+  console.log('Debug FeedbackModal:', {
+    selectedIndex: performance.selectedIndex,
+    answerFeedbacks: performance.answerFeedbacks,
+    selectedFeedback,
+    isCorrect,
+    actuallyCorrect,
+    selectedAnswer,
+    correctAnswer
+  });
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -165,9 +182,21 @@ export function FeedbackModal({
             
             {/* Feedback da alternativa selecionada */}
             {selectedFeedback && (
-              <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-4">
-                <h4 className="font-medium text-blue-800 mb-2">Feedback da sua resposta:</h4>
-                <p className="text-blue-700 text-sm leading-relaxed">{selectedFeedback}</p>
+              <div className={`border rounded p-3 mb-4 ${
+                actuallyCorrect 
+                  ? 'bg-green-50 border-green-200' 
+                  : 'bg-red-50 border-red-200'
+              }`}>
+                <h4 className={`font-medium mb-2 ${
+                  actuallyCorrect ? 'text-green-800' : 'text-red-800'
+                }`}>
+                  Feedback da sua resposta:
+                </h4>
+                <p className={`text-sm leading-relaxed ${
+                  actuallyCorrect ? 'text-green-700' : 'text-red-700'
+                }`}>
+                  {selectedFeedback}
+                </p>
               </div>
             )}
             
