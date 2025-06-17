@@ -1,9 +1,8 @@
-
 import React from "react";
 import {
   Activity, Baby, Brain, HeartPulse, Users, TestTube, Syringe, Droplets,
   Shield, Headphones, FileText, SquarePlus, SquareMinus, Circle, Stethoscope,
-  Eye, Bone, Zap, Heart, Lungs, Pill, Camera, Microscope, Scissors,
+  Eye, Bone, Zap, Heart, Wind, Pill, Camera, Microscope, Scissors,
   Thermometer, Clock, Bandage, Target, Waves, FlaskConical, Dna,
   Sparkles, Star, Crown
 } from "lucide-react";
@@ -198,7 +197,7 @@ export const specialtyIconMapping: Record<string, {
     description: "Saúde mental"
   },
   "Pneumologia": {
-    icon: <Lungs size={32} className="text-sky-600" />,
+    icon: <Wind size={32} className="text-sky-600" />,
     gradient: "bg-gradient-to-br from-sky-50 to-sky-100",
     borderColor: "border-sky-200",
     description: "Doenças pulmonares"
