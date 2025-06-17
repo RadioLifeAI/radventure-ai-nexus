@@ -37,7 +37,7 @@ export function AdvancedJourneyFilters({
   const handleFilterChange = (key: string, value: string) => {
     const newFilters = {
       ...filters,
-      [key]: value
+      [key]: value === 'all' ? '' : value
     };
 
     // Se mudou modalidade, limpar subtipo
@@ -144,12 +144,12 @@ export function AdvancedJourneyFilters({
             <label className="text-sm font-medium text-purple-800 mb-2 block">
               Especialidade
             </label>
-            <Select value={filters.specialty} onValueChange={(value) => handleFilterChange('specialty', value)}>
+            <Select value={filters.specialty || 'all'} onValueChange={(value) => handleFilterChange('specialty', value)}>
               <SelectTrigger className="border-purple-200 focus:border-purple-400">
                 <SelectValue placeholder="Todas as especialidades" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas as especialidades</SelectItem>
+                <SelectItem value="all">Todas as especialidades</SelectItem>
                 {validSpecialties.map((specialty) => (
                   <SelectItem key={specialty.id} value={specialty.name}>
                     {specialty.name}
@@ -164,12 +164,12 @@ export function AdvancedJourneyFilters({
             <label className="text-sm font-medium text-purple-800 mb-2 block">
               Modalidade
             </label>
-            <Select value={filters.modality} onValueChange={(value) => handleFilterChange('modality', value)}>
+            <Select value={filters.modality || 'all'} onValueChange={(value) => handleFilterChange('modality', value)}>
               <SelectTrigger className="border-purple-200 focus:border-purple-400">
                 <SelectValue placeholder="Todas as modalidades" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas as modalidades</SelectItem>
+                <SelectItem value="all">Todas as modalidades</SelectItem>
                 {validModalities.map((modality) => (
                   <SelectItem key={modality.value} value={modality.value}>
                     {modality.label}
@@ -185,7 +185,7 @@ export function AdvancedJourneyFilters({
               Subtipo
             </label>
             <Select 
-              value={filters.subtype} 
+              value={filters.subtype || 'all'} 
               onValueChange={(value) => handleFilterChange('subtype', value)}
               disabled={!filters.modality}
             >
@@ -193,7 +193,7 @@ export function AdvancedJourneyFilters({
                 <SelectValue placeholder="Todos os subtipos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os subtipos</SelectItem>
+                <SelectItem value="all">Todos os subtipos</SelectItem>
                 {availableSubtypes.map((subtype) => (
                   <SelectItem key={subtype.value} value={subtype.value}>
                     {subtype.label}
@@ -208,12 +208,12 @@ export function AdvancedJourneyFilters({
             <label className="text-sm font-medium text-purple-800 mb-2 block">
               Dificuldade
             </label>
-            <Select value={filters.difficulty} onValueChange={(value) => handleFilterChange('difficulty', value)}>
+            <Select value={filters.difficulty || 'all'} onValueChange={(value) => handleFilterChange('difficulty', value)}>
               <SelectTrigger className="border-purple-200 focus:border-purple-400">
                 <SelectValue placeholder="Todas as dificuldades" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas as dificuldades</SelectItem>
+                <SelectItem value="all">Todas as dificuldades</SelectItem>
                 {validDifficulties.map((difficulty) => (
                   <SelectItem key={difficulty.id} value={difficulty.level.toString()}>
                     Nível {difficulty.level} - {difficulty.description}
@@ -230,12 +230,12 @@ export function AdvancedJourneyFilters({
             <label className="text-sm font-medium text-purple-800 mb-2 block">
               Idade do Paciente
             </label>
-            <Select value={filters.patientAge} onValueChange={(value) => handleFilterChange('patientAge', value)}>
+            <Select value={filters.patientAge || 'all'} onValueChange={(value) => handleFilterChange('patientAge', value)}>
               <SelectTrigger className="border-purple-200 focus:border-purple-400">
                 <SelectValue placeholder="Todas as idades" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas as idades</SelectItem>
+                <SelectItem value="all">Todas as idades</SelectItem>
                 <SelectItem value="Neonato">Neonato</SelectItem>
                 <SelectItem value="Lactente">Lactente</SelectItem>
                 <SelectItem value="Pré-escolar">Pré-escolar</SelectItem>
@@ -252,12 +252,12 @@ export function AdvancedJourneyFilters({
             <label className="text-sm font-medium text-purple-800 mb-2 block">
               Gênero do Paciente
             </label>
-            <Select value={filters.patientGender} onValueChange={(value) => handleFilterChange('patientGender', value)}>
+            <Select value={filters.patientGender || 'all'} onValueChange={(value) => handleFilterChange('patientGender', value)}>
               <SelectTrigger className="border-purple-200 focus:border-purple-400">
                 <SelectValue placeholder="Todos os gêneros" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os gêneros</SelectItem>
+                <SelectItem value="all">Todos os gêneros</SelectItem>
                 <SelectItem value="Masculino">Masculino</SelectItem>
                 <SelectItem value="Feminino">Feminino</SelectItem>
               </SelectContent>
@@ -268,12 +268,12 @@ export function AdvancedJourneyFilters({
             <label className="text-sm font-medium text-purple-800 mb-2 block">
               Duração dos Sintomas
             </label>
-            <Select value={filters.symptomsDuration} onValueChange={(value) => handleFilterChange('symptomsDuration', value)}>
+            <Select value={filters.symptomsDuration || 'all'} onValueChange={(value) => handleFilterChange('symptomsDuration', value)}>
               <SelectTrigger className="border-purple-200 focus:border-purple-400">
                 <SelectValue placeholder="Qualquer duração" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Qualquer duração</SelectItem>
+                <SelectItem value="all">Qualquer duração</SelectItem>
                 <SelectItem value="Agudo">Agudo (&lt; 1 semana)</SelectItem>
                 <SelectItem value="Subagudo">Subagudo (1-4 semanas)</SelectItem>
                 <SelectItem value="Crônico">Crônico (&gt; 1 mês)</SelectItem>
