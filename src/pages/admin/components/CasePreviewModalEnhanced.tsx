@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -170,14 +171,12 @@ export function CasePreviewModalEnhanced({
 
       if (error) throw error;
 
-      // Atualizar pontos do usuário
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update({ 
-          total_points: supabase.sql`total_points + ${points}`,
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", user.id);
+      // Atualizar pontos do usuário usando RPC ou raw query
+      const { error: profileError } = await supabase.rpc('process_case_completion', {
+        p_user_id: user.id,
+        p_case_id: actualCaseData.id,
+        p_points: points
+      });
 
       if (profileError) console.error("Erro ao atualizar perfil:", profileError);
 

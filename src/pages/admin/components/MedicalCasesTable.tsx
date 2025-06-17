@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Eye, Edit, Trash2, Sparkles } from "lucide-react";
+import { Edit, Trash2, Sparkles } from "lucide-react";
 import { CasePreviewModal } from "./CasePreviewModal";
 import { CaseEditAdminModal } from "./CaseEditAdminModal";
 
@@ -122,7 +122,7 @@ export function MedicalCasesTable({ cases, onDelete }: MedicalCasesTableProps) {
       <CaseEditAdminModal
         open={!!editingCase}
         onClose={() => setEditingCase(null)}
-        case={editingCase}
+        caseData={editingCase}
       />
     </>
   );
