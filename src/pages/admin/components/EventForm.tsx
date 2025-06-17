@@ -23,6 +23,60 @@ type Props = {
   onCancel?: () => void;
 };
 
+// Função auxiliar para gerar datas inteligentes
+function generateSmartDates(durationMinutes: number = 30) {
+  const now = new Date();
+  const startDate = new Date(now);
+  
+  // Se for fim de semana, mover para próxima segunda
+  if (startDate.getDay() === 0) { // Domingo
+    startDate.setDate(startDate.getDate() + 1);
+  } else if (startDate.getDay() === 6) { // Sábado
+    startDate.setDate(startDate.getDate() + 2);
+  }
+  
+  // Se for muito tarde (depois das 18h), mover para próximo dia útil às 14h
+  if (startDate.getHours() >= 18) {
+    startDate.setDate(startDate.getDate() + 1);
+    startDate.setHours(14, 0, 0, 0);
+  } else if (startDate.getHours() < 8) {
+    // Se for muito cedo (antes das 8h), definir para 14h do mesmo dia
+    startDate.setHours(14, 0, 0, 0);
+  } else {
+    // Horário atual + 2 horas, arredondado para próxima hora cheia
+    startDate.setHours(startDate.getHours() + 2, 0, 0, 0);
+  }
+  
+  const endDate = new Date(startDate);
+  endDate.setMinutes(endDate.getMinutes() + durationMinutes);
+  
+  return {
+    scheduled_start: startDate.toISOString().slice(0, 16),
+    scheduled_end: endDate.toISOString().slice(0, 16)
+  };
+}
+
+// Função auxiliar para gerar distribuição de prêmios
+function generatePrizeDistribution(totalPrize: number): Prize[] {
+  const distributions = [
+    { position: 1, percentage: 35 },
+    { position: 2, percentage: 20 },
+    { position: 3, percentage: 15 },
+    { position: 4, percentage: 10 },
+    { position: 5, percentage: 8 },
+    { position: 6, percentage: 5 },
+    { position: 7, percentage: 3 },
+    { position: 8, percentage: 2 },
+    { position: 9, percentage: 1 },
+    { position: 10, percentage: 1 }
+  ];
+  
+  return distributions.map(({ position, percentage }) => ({
+    position,
+    prize: Math.round((totalPrize * percentage) / 100)
+  }));
+}
+
 export function EventForm({ mode, initialValues = {}, loading, onSubmit, onCancel }: Props) {
   const [name, setName] = useState(initialValues.name ?? "");
   const [description, setDescription] = useState(initialValues.description ?? "");
@@ -85,37 +139,91 @@ export function EventForm({ mode, initialValues = {}, loading, onSubmit, onCance
   }
 
   function handleAISuggestion(suggestion: any) {
-    setName(suggestion.name || "");
-    setDescription(suggestion.description || "");
-    setNumberOfCases(suggestion.numberOfCases || 10);
-    setDurationMinutes(suggestion.durationMinutes || 30);
-    setPrizeRadcoins(suggestion.prizeRadcoins || 500);
+    console.log("AI Suggestion received:", suggestion);
     
-    // CORREÇÃO CRÍTICA: Mapear specialty -> category e aplicar todos os filtros
+    let fieldsUpdated: string[] = [];
+    
+    // PREENCHER CAMPOS BÁSICOS
+    if (suggestion.name) {
+      setName(suggestion.name);
+      fieldsUpdated.push("nome");
+    }
+    if (suggestion.description) {
+      setDescription(suggestion.description);
+      fieldsUpdated.push("descrição");
+    }
+    if (suggestion.numberOfCases) {
+      setNumberOfCases(suggestion.numberOfCases);
+      fieldsUpdated.push("número de casos");
+    }
+    if (suggestion.durationMinutes) {
+      setDurationMinutes(suggestion.durationMinutes);
+      fieldsUpdated.push("duração");
+    }
+    if (suggestion.prizeRadcoins) {
+      setPrizeRadcoins(suggestion.prizeRadcoins);
+      fieldsUpdated.push("prêmio total");
+    }
+    
+    // GERAR DATAS INTELIGENTES baseado na duração sugerida
+    const smartDates = generateSmartDates(suggestion.durationMinutes || 30);
+    setScheduledStart(smartDates.scheduled_start);
+    setScheduledEnd(smartDates.scheduled_end);
+    fieldsUpdated.push("datas programadas");
+    
+    // GERAR DISTRIBUIÇÃO DE PRÊMIOS baseado no total sugerido
+    if (suggestion.prizeRadcoins) {
+      const newPrizeDistribution = generatePrizeDistribution(suggestion.prizeRadcoins);
+      setPrizeDistribution(newPrizeDistribution);
+      fieldsUpdated.push("distribuição de prêmios");
+    }
+    
+    // DEFINIR MÁXIMO DE PARTICIPANTES baseado na dificuldade/duração
+    let maxParticipantsValue = 50; // default
+    if (suggestion.difficulty >= 3 || suggestion.durationMinutes >= 45) {
+      maxParticipantsValue = 75; // eventos mais difíceis/longos têm mais participantes
+    } else if (suggestion.difficulty <= 2 && suggestion.durationMinutes <= 30) {
+      maxParticipantsValue = 40; // eventos mais fáceis/curtos têm menos participantes
+    }
+    setMaxParticipants(maxParticipantsValue);
+    fieldsUpdated.push("limite de participantes");
+    
+    // SEMPRE ATIVAR AUTO-START para sugestões
+    setAutoStart(true);
+    fieldsUpdated.push("início automático");
+    
+    // MANTER BANNER VAZIO (opcional)
+    setBannerUrl("");
+    
+    // APLICAR FILTROS DE CASOS (specialty → category mapping)
     if (suggestion.specialty || suggestion.modality || suggestion.subtype || suggestion.difficulty) {
       const newFilters: any = { ...caseFilters };
       
       if (suggestion.specialty) {
         newFilters.category = [suggestion.specialty];
+        fieldsUpdated.push("especialidade");
       }
       if (suggestion.modality) {
         newFilters.modality = [suggestion.modality];
+        fieldsUpdated.push("modalidade");
       }
       if (suggestion.subtype) {
         newFilters.subtype = [suggestion.subtype];
+        fieldsUpdated.push("subtipo");
       }
       if (suggestion.difficulty) {
         newFilters.difficulty = [suggestion.difficulty.toString()];
+        fieldsUpdated.push("dificuldade");
       }
       
       setCaseFilters(newFilters);
-      
-      toast({
-        title: "Sugestão aplicada!",
-        description: "Campos básicos e filtros preenchidos com dados da IA",
-        className: "bg-blue-50 border-blue-200"
-      });
     }
+    
+    toast({
+      title: "✨ Sugestão aplicada completamente!",
+      description: `Campos preenchidos: ${fieldsUpdated.join(", ")}`,
+      className: "bg-blue-50 border-blue-200"
+    });
   }
 
   function handleAutoFill(data: any) {
