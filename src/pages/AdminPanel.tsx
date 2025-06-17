@@ -12,6 +12,10 @@ import { SubscriptionManagement } from "@/components/admin/SubscriptionManagemen
 import { AITutorManagement } from "@/components/admin/AITutorManagement";
 import { AchievementManagement } from "@/components/admin/AchievementManagement";
 import { SystemMonitoring } from "@/components/admin/SystemMonitoring";
+import { RewardManagement } from "@/components/admin/RewardManagement";
+import { AdvancedSettings } from "@/components/admin/AdvancedSettings";
+import { APIKeyManagement } from "@/components/admin/APIKeyManagement";
+import { StripeManagement } from "@/components/admin/StripeManagement";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Settings } from "lucide-react";
 
@@ -61,13 +65,15 @@ export default function AdminPanel() {
             <Route path="create-event" element={<CreateEvent />} />
             <Route path="events" element={<EventsManagement />} />
             
-            {/* Rotas em desenvolvimento */}
-            <Route path="recompensas" element={<UnderConstruction title="Recompensas" />} />
-            <Route path="configuracoes" element={<UnderConstruction title="Configurações" />} />
+            {/* Novas rotas implementadas */}
+            <Route path="recompensas" element={<RewardManagement />} />
+            <Route path="configuracoes" element={<AdvancedSettings />} />
+            <Route path="chaves-api" element={<APIKeyManagement />} />
+            <Route path="config-stripe" element={<StripeManagement />} />
+            
+            {/* Rotas ainda em desenvolvimento */}
             <Route path="textos-ui" element={<UnderConstruction title="Textos da UI" />} />
             <Route path="config-assinatura" element={<UnderConstruction title="Config. Assinatura" />} />
-            <Route path="config-stripe" element={<UnderConstruction title="Config. Stripe" />} />
-            <Route path="chaves-api" element={<UnderConstruction title="Chaves API" />} />
           </Routes>
         </section>
       </main>

@@ -126,11 +126,13 @@ export function MedicalCasesTable({ cases, onDelete }: MedicalCasesTableProps) {
         caseId={selectedCaseId}
       />
 
-      <CasePreviewModal
-        open={showPreviewModal}
-        onClose={handleCloseModals}
-        caseId={selectedCaseId}
-      />
+      {selectedCaseId && (
+        <CasePreviewModal
+          open={showPreviewModal}
+          onClose={handleCloseModals}
+          caseId={selectedCaseId}
+        />
+      )}
     </div>
   );
 }
