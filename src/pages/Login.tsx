@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Rocket, Globe, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/components/ui/use-toast";
 
 const Login = () => {
   const [showPass, setShowPass] = useState(false);
@@ -17,6 +18,7 @@ const Login = () => {
   });
 
   const { signIn, signUp, loading, isAuthenticated } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,10 +32,29 @@ const Login = () => {
     
     if (isSignUp) {
       if (formData.password !== formData.confirmPassword) {
+        toast({
+          title: 'Erro na confirmação',
+          description: 'As senhas não coincidem.',
+          variant: 'destructive'
+        });
         return;
       }
+      
+      if (formData.password.length < 6) {
+        toast({
+          title: 'Senha muito curta',
+          description: 'A senha deve ter pelo menos 6 caracteres.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
       const { data, error } = await signUp(formData.email, formData.password, formData.fullName);
       if (!error && data) {
+        toast({
+          title: 'Conta criada!',
+          description: 'Bem-vindo ao RadVenture! Você pode começar a usar o sistema.',
+        });
         navigate('/dashboard');
       }
     } else {

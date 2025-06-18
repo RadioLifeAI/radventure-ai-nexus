@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { SecureWrapper } from "@/components/auth/SecureWrapper";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
@@ -29,18 +30,62 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/admin/*" element={<AdminPanel />} />
           
-          {/* Main App Routes */}
-          <Route path="/app/casos" element={<Casos />} />
-          <Route path="/app/caso/:id" element={<CasoUsuarioView />} />
-          <Route path="/app/eventos" element={<Eventos />} />
-          <Route path="/app/ranking-eventos" element={<RankingEventos />} />
-          <Route path="/app/rankings" element={<Rankings />} />
-          <Route path="/app/estatisticas" element={<Estatisticas />} />
-          <Route path="/app/jornada" element={<CreateJourney />} />
-          <Route path="/app/criar-jornada" element={<CreateJourney />} />
+          {/* Protected User Routes */}
+          <Route path="/dashboard" element={
+            <SecureWrapper>
+              <Dashboard />
+            </SecureWrapper>
+          } />
+          
+          {/* Main App Routes - Protected */}
+          <Route path="/app/casos" element={
+            <SecureWrapper>
+              <Casos />
+            </SecureWrapper>
+          } />
+          <Route path="/app/caso/:id" element={
+            <SecureWrapper>
+              <CasoUsuarioView />
+            </SecureWrapper>
+          } />
+          <Route path="/app/eventos" element={
+            <SecureWrapper>
+              <Eventos />
+            </SecureWrapper>
+          } />
+          <Route path="/app/ranking-eventos" element={
+            <SecureWrapper>
+              <RankingEventos />
+            </SecureWrapper>
+          } />
+          <Route path="/app/rankings" element={
+            <SecureWrapper>
+              <Rankings />
+            </SecureWrapper>
+          } />
+          <Route path="/app/estatisticas" element={
+            <SecureWrapper>
+              <Estatisticas />
+            </SecureWrapper>
+          } />
+          <Route path="/app/jornada" element={
+            <SecureWrapper>
+              <CreateJourney />
+            </SecureWrapper>
+          } />
+          <Route path="/app/criar-jornada" element={
+            <SecureWrapper>
+              <CreateJourney />
+            </SecureWrapper>
+          } />
+
+          {/* Admin Routes - Protected with Admin Check */}
+          <Route path="/admin/*" element={
+            <SecureWrapper requireAdmin={true}>
+              <AdminPanel />
+            </SecureWrapper>
+          } />
 
           {/* Legacy Routes - Redirect to /app structure */}
           <Route path="/casos" element={<Navigate to="/app/casos" replace />} />
