@@ -25,7 +25,7 @@ type Props = {
   };
 };
 
-export function CasesGrid({ filters }: Props) {
+export const CasesGrid = React.memo(function CasesGrid({ filters }: Props) {
   const { data: cases, isLoading } = useQuery({
     queryKey: ['filtered-cases', filters],
     queryFn: async () => {
@@ -51,8 +51,15 @@ export function CasesGrid({ filters }: Props) {
       const { data, error } = await query;
       if (error) throw error;
       return data || [];
-    }
+    },
+    staleTime: 3 * 60 * 1000, // 3 minutos
+    gcTime: 10 * 60 * 1000 // 10 minutos
   });
+
+  const noFiltersApplied = React.useMemo(() => 
+    !Object.values(filters).some(f => f), 
+    [filters]
+  );
 
   if (isLoading) {
     return (
@@ -70,9 +77,9 @@ export function CasesGrid({ filters }: Props) {
         <div className="text-6xl mb-4">🔍</div>
         <h3 className="text-xl font-semibold text-white mb-2">Nenhum caso encontrado</h3>
         <p className="text-cyan-100">
-          {Object.values(filters).some(f => f) 
-            ? "Tente ajustar os filtros ou explore outras especialidades" 
-            : "Os casos estão sendo preparados para esta especialidade"
+          {noFiltersApplied 
+            ? "Os casos estão sendo preparados para esta especialidade" 
+            : "Tente ajustar os filtros ou explore outras especialidades"
           }
         </p>
       </div>
@@ -86,4 +93,4 @@ export function CasesGrid({ filters }: Props) {
       ))}
     </div>
   );
-}
+});

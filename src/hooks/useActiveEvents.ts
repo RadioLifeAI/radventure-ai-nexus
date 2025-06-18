@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 export type EventType = {
   id: string;
@@ -17,28 +18,22 @@ export type EventType = {
 };
 
 export function useActiveEvents() {
-  const [events, setEvents] = useState<EventType[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let ignore = false;
-    async function fetchEvents() {
-      setLoading(true);
+  const { data: events = [], isLoading: loading } = useQuery({
+    queryKey: ['active-events'],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from("events")
         .select("*")
         .in("status", ["ACTIVE", "SCHEDULED"])
         .order("scheduled_start", { ascending: true });
-      if (!ignore) {
-        setEvents(data || []);
-        setLoading(false);
-      }
-    }
-    fetchEvents();
-    return () => {
-      ignore = true;
-    };
-  }, []);
+      
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 2 * 60 * 1000, // 2 minutos
+    gcTime: 5 * 60 * 1000, // 5 minutos
+    refetchInterval: 2 * 60 * 1000 // Atualiza a cada 2 minutos
+  });
 
   return { events, loading };
 }

@@ -39,7 +39,9 @@ export function useCasesData() {
         cases: cases || []
       };
     },
-    refetchInterval: 30000
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    gcTime: 10 * 60 * 1000, // 10 minutos
+    refetchInterval: 5 * 60 * 1000 // Atualiza a cada 5 minutos
   });
 
   // Buscar progresso do usuário
@@ -76,6 +78,8 @@ export function useCasesData() {
         bySpecialty
       };
     },
+    staleTime: 2 * 60 * 1000, // 2 minutos
+    gcTime: 5 * 60 * 1000, // 5 minutos
     enabled: true
   });
 

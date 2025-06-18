@@ -19,33 +19,33 @@ interface CaseCardProps {
   };
 }
 
-export function CaseCard({ case: caseData }: CaseCardProps) {
+export const CaseCard = React.memo(function CaseCard({ case: caseData }: CaseCardProps) {
   const navigate = useNavigate();
 
-  const handleResolveCase = () => {
+  const handleResolveCase = React.useCallback(() => {
     navigate(`/app/caso/${caseData.id}`);
-  };
+  }, [navigate, caseData.id]);
 
-  const getDifficultyColor = (level: number) => {
-    switch (level) {
+  const getDifficultyColor = React.useMemo(() => {
+    switch (caseData.difficulty_level) {
       case 1: return "bg-green-100 text-green-800 border-green-200";
       case 2: return "bg-yellow-100 text-yellow-800 border-yellow-200";
       case 3: return "bg-orange-100 text-orange-800 border-orange-200";
       case 4: return "bg-red-100 text-red-800 border-red-200";
       default: return "bg-gray-100 text-gray-800 border-gray-200";
     }
-  };
+  }, [caseData.difficulty_level]);
 
-  const getDifficultyStars = (level: number) => {
+  const difficultyStars = React.useMemo(() => {
     return Array.from({ length: 4 }, (_, i) => (
       <Star
         key={i}
         className={`h-3 w-3 ${
-          i < level ? "text-yellow-500 fill-yellow-500" : "text-gray-300"
+          i < caseData.difficulty_level ? "text-yellow-500 fill-yellow-500" : "text-gray-300"
         }`}
       />
     ));
-  };
+  }, [caseData.difficulty_level]);
 
   return (
     <Card className="group hover:shadow-lg transition-all duration-300 hover:scale-[1.02] bg-white/90 backdrop-blur-sm border-white/20">
@@ -55,7 +55,7 @@ export function CaseCard({ case: caseData }: CaseCardProps) {
             {caseData.title}
           </CardTitle>
           <div className="flex items-center gap-1">
-            {getDifficultyStars(caseData.difficulty_level)}
+            {difficultyStars}
           </div>
         </div>
         
@@ -69,7 +69,7 @@ export function CaseCard({ case: caseData }: CaseCardProps) {
             </Badge>
           )}
           <Badge 
-            className={`text-xs border ${getDifficultyColor(caseData.difficulty_level)}`}
+            className={`text-xs border ${getDifficultyColor}`}
           >
             Nível {caseData.difficulty_level}
           </Badge>
@@ -100,4 +100,4 @@ export function CaseCard({ case: caseData }: CaseCardProps) {
       </CardContent>
     </Card>
   );
-}
+});

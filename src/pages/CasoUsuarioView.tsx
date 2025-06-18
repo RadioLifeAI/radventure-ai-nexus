@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -146,27 +146,53 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
   const shuffled = useShuffledAnswers(caso);
   const correctIdx = shuffled?.correctIndex ?? caso?.correct_answer_index;
 
-  const handleAnswerSubmit = async () => {
+  // Memoizar processamento de imagens
+  const caseImages = useMemo(() => {
+    if (!caso?.image_url) return [];
+    
+    try {
+      return Array.isArray(caso.image_url)
+        ? caso.image_url
+        : typeof caso.image_url === "string" && caso.image_url?.startsWith("[")
+          ? JSON.parse(caso.image_url)
+          : [{ url: caso.image_url }];
+    } catch {
+      return [{ url: caso.image_url }];
+    }
+  }, [caso?.image_url]);
+
+  // Memoizar função de cor de dificuldade
+  const getDifficultyColor = useMemo(() => {
+    const colors: Record<number, string> = {
+      1: "bg-green-500",
+      2: "bg-yellow-500", 
+      3: "bg-orange-500",
+      4: "bg-red-500"
+    };
+    return (level: number) => colors[level] || "bg-gray-500";
+  }, []);
+
+  const handleAnswerSubmit = React.useCallback(async () => {
     if (selected === null || isAnswered) return;
     
     const result = await submitAnswer(selected, caso);
     setPerformance(result);
     setShowFeedback(true);
-  };
+  }, [selected, isAnswered, submitAnswer, caso]);
 
-  const handleNextCase = () => {
+  const handleNextCase = React.useCallback(() => {
     navigate('/app/casos');
-  };
+  }, [navigate]);
 
-  const handleReviewCase = () => {
+  const handleReviewCase = React.useCallback(() => {
     setShowFeedback(false);
-  };
+  }, []);
 
-  const handleBackNavigation = () => {
+  const handleBackNavigation = React.useCallback(() => {
     navigate(-1);
-  };
+  }, [navigate]);
 
-  const handleEliminateOption = () => {
+  const handleEliminateOption = React.useCallback(() => {
     if (!helpAids || helpAids.elimination_aids <= 0) {
       toast({
         title: "Sem créditos",
@@ -177,9 +203,9 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
     }
 
     setShowHelpConfirm('eliminate');
-  };
+  }, [helpAids, toast]);
 
-  const handleSkipCase = () => {
+  const handleSkipCase = React.useCallback(() => {
     if (!helpAids || helpAids.skip_aids <= 0) {
       toast({
         title: "Sem créditos",
@@ -190,9 +216,9 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
     }
 
     setShowHelpConfirm('skip');
-  };
+  }, [helpAids, toast]);
 
-  const handleRequestTutorHint = () => {
+  const handleRequestTutorHint = React.useCallback(() => {
     if (!helpAids || helpAids.ai_tutor_credits <= 0) {
       toast({
         title: "Sem créditos",
@@ -203,9 +229,9 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
     }
 
     setShowTutorHint(true);
-  };
+  }, [helpAids, toast]);
 
-  const confirmHelpAction = () => {
+  const confirmHelpAction = React.useCallback(() => {
     if (showHelpConfirm === 'eliminate') {
       const availableOptions = [0, 1, 2, 3].filter(i => 
         i !== caso.correct_answer_index && !eliminatedOptions.includes(i)
@@ -223,9 +249,9 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
     }
 
     setShowHelpConfirm(null);
-  };
+  }, [showHelpConfirm, caso, eliminatedOptions, eliminateOption, consumeHelp, skipCase, handleNextCase]);
 
-  const handleTutorHintRequest = () => {
+  const handleTutorHintRequest = React.useCallback(() => {
     getTutorHint(
       { caseData: caso, userQuestion: tutorQuestion },
       {
@@ -240,40 +266,19 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
         }
       }
     );
-  };
+  }, [getTutorHint, caso, tutorQuestion, toast]);
 
-  const nextImage = () => {
+  const nextImage = React.useCallback(() => {
     setCurrentImageIndex((prev) => (prev + 1) % caseImages.length);
-  };
+  }, [caseImages.length]);
 
-  const prevImage = () => {
+  const prevImage = React.useCallback(() => {
     setCurrentImageIndex((prev) => (prev - 1 + caseImages.length) % caseImages.length);
-  };
+  }, [caseImages.length]);
 
-  const resetImageView = () => {
+  const resetImageView = React.useCallback(() => {
     setImageZoom(1);
-  };
-
-  let caseImages: Array<{ url: string; legend?: string }> = [];
-  try {
-    caseImages = Array.isArray(caso?.image_url)
-      ? caso.image_url
-      : typeof caso?.image_url === "string" && caso.image_url?.startsWith("[")
-        ? JSON.parse(caso.image_url)
-        : !!caso?.image_url ? [{ url: caso.image_url }] : [];
-  } catch {
-    caseImages = !!caso?.image_url ? [{ url: caso.image_url }] : [];
-  }
-
-  function getDifficultyColor(level: number) {
-    switch (level) {
-      case 1: return "bg-green-500";
-      case 2: return "bg-yellow-500";
-      case 3: return "bg-orange-500";
-      case 4: return "bg-red-500";
-      default: return "bg-gray-500";
-    }
-  }
+  }, []);
 
   if (loading) {
     return (
