@@ -3,8 +3,9 @@ import React, { useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, RefreshCw } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { DynamicTagInput } from "./DynamicTagInput";
+import { CaseStructuredDataAI } from "./CaseStructuredDataAI";
 import { useDynamicSuggestions } from "../hooks/useDynamicSuggestions";
 import { toast } from "@/components/ui/use-toast";
 
@@ -15,34 +16,38 @@ type Props = {
   renderTooltipTip: (id: string, text: string) => React.ReactNode;
 };
 
-const TARGET_AUDIENCE = [
+const TARGET_AUDIENCE_BASE = [
   "Graduação", "Residência R1", "Residência R2", "Residência R3",
   "Especialização", "Mestrado", "Doutorado", "Educação Continuada"
 ];
 
-export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, renderTooltipTip }: Props) {
-  const { suggestions, loading, generateSuggestions } = useDynamicSuggestions();
+const FINDING_TYPES_BASE = [
+  "Consolidação", "Massa", "Nódulo", "Derrame", "Pneumotórax", "Atelectasia", 
+  "Bronquiectasias", "Cavitação", "Calcificação", "Linfadenopatia", "Fratura", 
+  "Luxação", "Edema", "Inflamação"
+];
 
-  // Auto-gerar diagnósticos diferenciais quando o diagnóstico principal for preenchido
-  const handlePrimaryDiagnosisBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
-    const diagnosis = e.target.value.trim();
-    if (diagnosis && diagnosis !== form.primary_diagnosis) {
-      console.log('🔄 Diagnóstico principal alterado, gerando sugestões...');
-      await generateSuggestions(diagnosis);
-    }
-  };
+const LEARNING_OBJECTIVES_BASE = [
+  "Reconhecer achados radiológicos", "Diferenciar patologias", "Identificar achados específicos", 
+  "Avaliar correlação clínica", "Compreender fisiopatologia"
+];
+
+export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, renderTooltipTip }: Props) {
+  const { suggestions, generateSuggestions } = useDynamicSuggestions();
 
   // Aplicar diagnósticos diferenciais automaticamente quando gerados
   useEffect(() => {
     if (suggestions.differential_diagnoses && suggestions.differential_diagnoses.length > 0) {
       // Aplicar exatamente 4 diagnósticos diferenciais
       const differentials = suggestions.differential_diagnoses.slice(0, 4);
-      setForm({ ...form, differential_diagnoses: differentials });
-      
-      toast({
-        title: "🤖 Diagnósticos Diferenciais Gerados!",
-        description: `${differentials.length} diagnósticos diferenciais baseados no diagnóstico principal.`
-      });
+      if (JSON.stringify(form.differential_diagnoses) !== JSON.stringify(differentials)) {
+        setForm({ ...form, differential_diagnoses: differentials });
+        
+        toast({
+          title: "🤖 Diagnósticos Diferenciais Gerados!",
+          description: `${differentials.length} diagnósticos diferenciais baseados no diagnóstico principal.`
+        });
+      }
     }
   }, [suggestions.differential_diagnoses]);
 
@@ -64,32 +69,42 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
     }
   };
 
+  const handleSuggestionsGenerated = async (generatedSuggestions: any) => {
+    // Atualizar as sugestões dinâmicas quando o botão AI for clicado
+    await generateSuggestions(form.primary_diagnosis);
+  };
+
   return (
     <div className="space-y-6">
+      {/* Botão AI Dados Estruturados */}
+      <CaseStructuredDataAI 
+        form={form} 
+        setForm={setForm}
+        onSuggestionsGenerated={handleSuggestionsGenerated}
+      />
+
       {/* Diagnóstico Estruturado */}
       <div className="p-4 border border-blue-200 rounded-lg bg-blue-50">
         <h3 className="font-semibold text-blue-900 mb-4 flex items-center gap-2">
           <Sparkles size={20} />
           Diagnóstico Estruturado
-          {loading && <RefreshCw className="h-4 w-4 animate-spin text-blue-600" />}
         </h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="font-semibold block mb-2">
               Diagnóstico Primário *
-              {renderTooltipTip("tip-primary-diagnosis", "Diagnóstico principal do caso - gera automaticamente os diagnósticos diferenciais")}
+              {renderTooltipTip("tip-primary-diagnosis", "Diagnóstico principal do caso - use o botão AI acima para gerar dados estruturados")}
             </label>
             <Input
               name="primary_diagnosis"
               value={form.primary_diagnosis}
               onChange={handleFormChange}
-              onBlur={handlePrimaryDiagnosisBlur}
               placeholder="Ex: Pneumonia adquirida na comunidade"
               className="focus:ring-2 focus:ring-blue-500"
             />
             <div className="text-xs text-blue-600 mt-1">
-              💡 Ao sair do campo, diagnósticos diferenciais serão gerados automaticamente
+              💡 Após preencher, clique no botão "🤖 AI: Dados Estruturados" acima
             </div>
           </div>
 
@@ -132,7 +147,7 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
             onChange={handleDifferentialChange}
             placeholder="Digite um diagnóstico diferencial"
             suggestions={suggestions.differential_diagnoses || []}
-            loading={loading}
+            loading={false}
             label={`Diagnósticos Diferenciais (${form.differential_diagnoses?.length || 0}/4) 🤖`}
           />
           <div className="text-xs text-gray-600 mt-1">
@@ -152,7 +167,7 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
             onChange={handleTagChange}
             placeholder="Digite uma região anatômica"
             suggestions={suggestions.anatomical_regions || []}
-            loading={loading}
+            loading={false}
             label="Regiões Anatômicas 🤖"
           />
 
@@ -161,9 +176,9 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
             value={form.finding_types || []}
             onChange={handleTagChange}
             placeholder="Digite um tipo de achado"
-            suggestions={["Consolidação", "Massa", "Nódulo", "Derrame", "Pneumotórax", "Atelectasia", "Bronquiectasias", "Cavitação", "Calcificação", "Linfadenopatia", "Fratura", "Luxação", "Edema", "Inflamação"]}
+            suggestions={suggestions.finding_types || FINDING_TYPES_BASE}
             loading={false}
-            label="Tipos de Achados"
+            label="Tipos de Achados 🤖"
           />
 
           <div>
@@ -190,7 +205,7 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
             onChange={handleTagChange}
             placeholder="Digite um tipo de patologia"
             suggestions={suggestions.pathology_types || []}
-            loading={loading}
+            loading={false}
             label="Tipos de Patologia 🤖"
           />
         </div>
@@ -207,7 +222,7 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
             onChange={handleTagChange}
             placeholder="Digite um sintoma"
             suggestions={suggestions.main_symptoms || []}
-            loading={loading}
+            loading={false}
             label="Sintomas Principais 🤖"
           />
 
@@ -217,7 +232,7 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
             onChange={handleTagChange}
             placeholder="Digite um antecedente"
             suggestions={suggestions.medical_history || []}
-            loading={loading}
+            loading={false}
             label="Antecedentes Médicos 🤖"
           />
         </div>
@@ -254,9 +269,9 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
             value={form.learning_objectives || []}
             onChange={handleTagChange}
             placeholder="Digite um objetivo de aprendizado"
-            suggestions={["Reconhecer consolidação", "Diferenciar pneumonia de TEP", "Identificar derrame pleural", "Avaliar achados radiológicos", "Correlacionar clínica e imagem"]}
+            suggestions={suggestions.learning_objectives || LEARNING_OBJECTIVES_BASE}
             loading={false}
-            label="Objetivos de Aprendizado"
+            label="Objetivos de Aprendizado 🤖"
           />
 
           <DynamicTagInput
@@ -265,7 +280,7 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
             onChange={handleTagChange}
             placeholder="Digite uma tag de apresentação"
             suggestions={suggestions.clinical_presentation_tags || []}
-            loading={loading}
+            loading={false}
             label="Apresentação Clínica 🤖"
           />
 
@@ -275,7 +290,7 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
             onChange={handleTagChange}
             placeholder="Digite um fator de complexidade"
             suggestions={suggestions.case_complexity_factors || []}
-            loading={loading}
+            loading={false}
             label="Fatores de Complexidade 🤖"
           />
 
@@ -285,7 +300,7 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
             onChange={handleTagChange}
             placeholder="Digite uma palavra-chave"
             suggestions={suggestions.search_keywords || []}
-            loading={loading}
+            loading={false}
             label="Palavras-chave para Busca 🤖"
           />
         </div>
@@ -337,7 +352,7 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
               min="1"
               max="10"
               value={form.clinical_relevance}
-              onChange={(e) => setForm({ ...form, clinical_relevance: parseInt(e.target.value) || 5 })}
+              onChange={(e) => setForm({ ...form, clinical_relevance: parseInt e.target.value) || 5 })}
             />
           </div>
 
@@ -378,9 +393,9 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
               value={form.target_audience || []}
               onChange={handleTagChange}
               placeholder="Digite o público-alvo"
-              suggestions={TARGET_AUDIENCE}
+              suggestions={suggestions.target_audience || TARGET_AUDIENCE_BASE}
               loading={false}
-              label="Público-alvo"
+              label="Público-alvo 🤖"
             />
           </div>
         </div>

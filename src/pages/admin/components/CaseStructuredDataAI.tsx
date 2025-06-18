@@ -9,6 +9,7 @@ interface CaseStructuredDataAIProps {
   form: any;
   setForm: (form: any) => void;
   onFieldsUpdated?: (fields: string[]) => void;
+  onSuggestionsGenerated?: (suggestions: any) => void;
   disabled?: boolean;
 }
 
@@ -16,6 +17,7 @@ export function CaseStructuredDataAI({
   form, 
   setForm, 
   onFieldsUpdated,
+  onSuggestionsGenerated,
   disabled = false 
 }: CaseStructuredDataAIProps) {
   const { autofillStructuredComplete, loading } = useCaseAutofillAPIExpanded();
@@ -23,6 +25,16 @@ export function CaseStructuredDataAI({
   const handleAutofillStructuredData = async () => {
     try {
       console.log('🤖 Iniciando AI: Dados Estruturados...');
+      
+      // Verificar se temos diagnóstico principal
+      if (!form.primary_diagnosis?.trim()) {
+        toast({ 
+          title: "Diagnóstico Principal Obrigatório", 
+          description: "Preencha o diagnóstico principal primeiro para gerar dados estruturados.",
+          variant: "destructive" 
+        });
+        return;
+      }
       
       const suggestions = await autofillStructuredComplete(form);
       
@@ -68,10 +80,13 @@ export function CaseStructuredDataAI({
         setForm((prev: any) => ({ ...prev, ...updates }));
         onFieldsUpdated?.(updatedFields);
         
+        // Notificar o componente pai sobre as sugestões geradas
+        onSuggestionsGenerated?.(suggestions);
+        
         const diffCount = updates.differential_diagnoses ? updates.differential_diagnoses.length : 0;
         toast({ 
           title: `🤖 AI: Dados Estruturados Preenchidos!`,
-          description: `${updatedFields.length} campos atualizados incluindo ${diffCount} diagnósticos diferenciais.` 
+          description: `${updatedFields.length} campos atualizados incluindo ${diffCount} diagnósticos diferenciais e tags dinâmicas.` 
         });
       } else {
         toast({ 
@@ -110,7 +125,7 @@ export function CaseStructuredDataAI({
       
       <div className="text-xs text-cyan-700">
         <div>Preenche TODOS os 20+ campos estruturados:</div>
-        <div className="font-medium">Diagnósticos • 4 Diferenciais • Regiões • Sintomas • Tags</div>
+        <div className="font-medium">Diagnósticos • 4 Diferenciais • Regiões • Sintomas • Tags Dinâmicas</div>
       </div>
     </div>
   );

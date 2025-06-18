@@ -29,11 +29,15 @@ export function useDynamicSuggestions() {
           clinical_presentation_tags: result.clinical_presentation_tags || [],
           case_complexity_factors: result.case_complexity_factors || [],
           search_keywords: result.search_keywords || [],
-          differential_diagnoses: result.differential_diagnoses || []
+          differential_diagnoses: result.differential_diagnoses || [],
+          finding_types: result.finding_types || [],
+          learning_objectives: result.learning_objectives || [],
+          target_audience: result.target_audience || []
         };
         
         setSuggestions(dynamicSuggestions);
         console.log('✅ Sugestões dinâmicas geradas:', dynamicSuggestions);
+        return dynamicSuggestions;
       }
     } catch (error) {
       console.error('❌ Erro ao gerar sugestões dinâmicas:', error);
@@ -42,9 +46,14 @@ export function useDynamicSuggestions() {
     }
   }, [autofillStructuredComplete]);
 
+  const clearSuggestions = useCallback(() => {
+    setSuggestions({});
+  }, []);
+
   return {
     suggestions,
     loading,
-    generateSuggestions
+    generateSuggestions,
+    clearSuggestions
   };
 }
