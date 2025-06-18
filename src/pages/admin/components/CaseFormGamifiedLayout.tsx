@@ -1,67 +1,123 @@
 
 import React from "react";
-import { Sparkles, Brain, Stethoscope, GraduationCap, Gamepad2, MessageSquareQuote, Settings, Database } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Brain, Target, Lightbulb, Settings, Users, Trophy, Database, BookOpen } from "lucide-react";
 
 interface CaseFormGamifiedLayoutProps {
-  section: string;
-  title: string;
-  description: string;
   children: React.ReactNode;
-  aiComponent?: React.ReactNode;
+  section: "basic" | "clinical" | "quiz" | "advanced" | "gamification" | "structured" | "reference";
+  title: string;
+  description?: string;
+  progress?: number;
 }
 
 export function CaseFormGamifiedLayout({ 
+  children, 
   section, 
   title, 
   description, 
-  children, 
-  aiComponent 
+  progress 
 }: CaseFormGamifiedLayoutProps) {
-  const getSectionIcon = (section: string) => {
+  const getSectionConfig = (section: string) => {
     switch (section) {
-      case "basic": return <Database className="h-5 w-5" />;
-      case "structured": return <Brain className="h-5 w-5" />;
-      case "clinical": return <Stethoscope className="h-5 w-5" />;
-      case "educational": return <GraduationCap className="h-5 w-5" />;
-      case "gamification": return <Gamepad2 className="h-5 w-5" />;
-      case "quiz": return <MessageSquareQuote className="h-5 w-5" />;
-      case "advanced": return <Settings className="h-5 w-5" />;
-      default: return <Sparkles className="h-5 w-5" />;
+      case "basic":
+        return {
+          icon: Target,
+          color: "blue",
+          gradient: "from-blue-50 to-indigo-50",
+          border: "border-blue-200",
+          badge: "Essencial"
+        };
+      case "clinical":
+        return {
+          icon: Brain,
+          color: "green",
+          gradient: "from-green-50 to-emerald-50",
+          border: "border-green-200",
+          badge: "Clínico"
+        };
+      case "quiz":
+        return {
+          icon: Lightbulb,
+          color: "yellow",
+          gradient: "from-yellow-50 to-orange-50",
+          border: "border-yellow-200",
+          badge: "Quiz"
+        };
+      case "advanced":
+        return {
+          icon: Settings,
+          color: "purple",
+          gradient: "from-purple-50 to-pink-50",
+          border: "border-purple-200",
+          badge: "Avançado"
+        };
+      case "gamification":
+        return {
+          icon: Trophy,
+          color: "amber",
+          gradient: "from-amber-50 to-yellow-50",
+          border: "border-amber-200",
+          badge: "Gamificação"
+        };
+      case "structured":
+        return {
+          icon: Database,
+          color: "cyan",
+          gradient: "from-cyan-50 to-blue-50",
+          border: "border-cyan-200",
+          badge: "Estruturado"
+        };
+      case "reference":
+        return {
+          icon: BookOpen,
+          color: "indigo",
+          gradient: "from-indigo-50 to-purple-50",
+          border: "border-indigo-200",
+          badge: "Referência"
+        };
+      default:
+        return {
+          icon: Target,
+          color: "gray",
+          gradient: "from-gray-50 to-slate-50",
+          border: "border-gray-200",
+          badge: "Seção"
+        };
     }
   };
 
-  const getSectionColors = (section: string) => {
-    switch (section) {
-      case "basic": return "from-blue-50 to-indigo-50 border-blue-200";
-      case "structured": return "from-purple-50 to-violet-50 border-purple-200";
-      case "clinical": return "from-green-50 to-emerald-50 border-green-200";
-      case "educational": return "from-orange-50 to-amber-50 border-orange-200";
-      case "gamification": return "from-red-50 to-pink-50 border-red-200";
-      case "quiz": return "from-teal-50 to-cyan-50 border-teal-200";
-      case "advanced": return "from-gray-50 to-slate-50 border-gray-200";
-      default: return "from-blue-50 to-indigo-50 border-blue-200";
-    }
-  };
+  const config = getSectionConfig(section);
+  const Icon = config.icon;
 
   return (
-    <div className={`bg-gradient-to-r ${getSectionColors(section)} rounded-lg border-2 p-6 space-y-4`}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          {getSectionIcon(section)}
-          <div>
-            <h3 className="text-lg font-bold text-gray-900">{title}</h3>
-            <p className="text-sm text-gray-600">{description}</p>
-          </div>
-        </div>
-        {aiComponent && (
-          <div className="flex-shrink-0">
-            {aiComponent}
-          </div>
+    <Card className={`border-2 ${config.border} bg-gradient-to-br ${config.gradient} shadow-lg hover:shadow-xl transition-all duration-300`}>
+      <CardHeader className="pb-4">
+        <CardTitle className={`flex items-center gap-2 text-${config.color}-800`}>
+          <Icon className={`h-5 w-5 text-${config.color}-500`} />
+          {title}
+          <Badge className={`bg-${config.color}-500 text-white`}>{config.badge}</Badge>
+          {progress !== undefined && (
+            <div className="ml-auto">
+              <div className={`w-16 h-2 bg-${config.color}-200 rounded-full overflow-hidden`}>
+                <div 
+                  className={`h-full bg-${config.color}-500 transition-all duration-500`}
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+          )}
+        </CardTitle>
+        {description && (
+          <p className={`text-sm text-${config.color}-600 mt-1`}>
+            {description}
+          </p>
         )}
-      </div>
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      </CardHeader>
+      <CardContent className="space-y-4">
         {children}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

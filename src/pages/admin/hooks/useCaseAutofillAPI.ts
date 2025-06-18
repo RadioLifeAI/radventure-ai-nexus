@@ -4,9 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 
 export interface AutofillOptions {
-  action: 'smart_autofill' | 'template_autofill' | 'field_completion' | 'consistency_check' | 'smart_suggestions' |
-          'autofill_structured_diagnosis' | 'autofill_clinical_summary' | 'autofill_educational_tags' |
-          'autofill_gamification_metrics' | 'autofill_quiz_content' | 'autofill_advanced_config' | 'complete_autofill';
+  action: 'smart_autofill' | 'template_autofill' | 'field_completion' | 'consistency_check' | 'smart_suggestions';
   templateType?: string;
 }
 
@@ -72,36 +70,6 @@ export function useCaseAutofillAPI() {
     return await callAutofillAPI(caseData, { action: 'smart_suggestions' });
   };
 
-  // === NOVAS FUNÇÕES ESPECÍFICAS POR SEÇÃO ===
-
-  const autofillStructuredDiagnosis = async (caseData: any) => {
-    return await callAutofillAPI(caseData, { action: 'autofill_structured_diagnosis' });
-  };
-
-  const autofillClinicalSummary = async (caseData: any) => {
-    return await callAutofillAPI(caseData, { action: 'autofill_clinical_summary' });
-  };
-
-  const autofillEducationalTags = async (caseData: any) => {
-    return await callAutofillAPI(caseData, { action: 'autofill_educational_tags' });
-  };
-
-  const autofillGamificationMetrics = async (caseData: any) => {
-    return await callAutofillAPI(caseData, { action: 'autofill_gamification_metrics' });
-  };
-
-  const autofillQuizContent = async (caseData: any) => {
-    return await callAutofillAPI(caseData, { action: 'autofill_quiz_content' });
-  };
-
-  const autofillAdvancedConfig = async (caseData: any) => {
-    return await callAutofillAPI(caseData, { action: 'autofill_advanced_config' });
-  };
-
-  const completeAutofill = async (caseData: any) => {
-    return await callAutofillAPI(caseData, { action: 'complete_autofill' });
-  };
-
   return {
     loading,
     lastSuggestions,
@@ -110,14 +78,6 @@ export function useCaseAutofillAPI() {
     completeFields,
     checkConsistency,
     getSmartSuggestions,
-    callAutofillAPI,
-    // Novas funções específicas por seção
-    autofillStructuredDiagnosis,
-    autofillClinicalSummary,
-    autofillEducationalTags,
-    autofillGamificationMetrics,
-    autofillQuizContent,
-    autofillAdvancedConfig,
-    completeAutofill
+    callAutofillAPI
   };
 }

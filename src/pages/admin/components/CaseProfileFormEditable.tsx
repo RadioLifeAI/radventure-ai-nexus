@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useCaseProfileFormHandlers } from "../hooks/useCaseProfileFormHandlers";
 import { Button } from "@/components/ui/button";
@@ -21,13 +20,6 @@ import { CaseQualityRadar } from "./CaseQualityRadar";
 import { CaseTemplateChooser } from "./CaseTemplateChooser";
 import { CaseFormGamifiedHelpers } from "./CaseFormGamifiedHelpers";
 import { CaseFormGamifiedLayout } from "./CaseFormGamifiedLayout";
-import { CaseMasterAutofillAI } from "./CaseMasterAutofillAI";
-import { CaseStructuredDataAI } from "./CaseStructuredDataAI";
-import { CaseClinicalSummaryAI } from "./CaseClinicalSummaryAI";
-import { CaseEducationalTagsAI } from "./CaseEducationalTagsAI";
-import { CaseGamificationAI } from "./CaseGamificationAI";
-import { CaseQuizContentAI } from "./CaseQuizContentAI";
-import { CaseAdvancedConfigAI } from "./CaseAdvancedConfigAI";
 import { supabase } from "@/integrations/supabase/client";
 
 export function CaseProfileFormEditable({ 
@@ -95,9 +87,11 @@ export function CaseProfileFormEditable({
         similar_cases_ids: editingCase.similar_cases_ids || [],
         prerequisite_cases: editingCase.prerequisite_cases || [],
         unlocks_cases: editingCase.unlocks_cases || [],
+        // Garantir objetos vazios para campos JSON
         vital_signs: editingCase.vital_signs || {},
         structured_metadata: editingCase.structured_metadata || {},
         achievement_triggers: editingCase.achievement_triggers || {},
+        // Garantir valores padrão
         primary_diagnosis: editingCase.primary_diagnosis || "",
         case_classification: editingCase.case_classification || "diagnostico",
         cid10_code: editingCase.cid10_code || "",
@@ -107,6 +101,7 @@ export function CaseProfileFormEditable({
         clinical_relevance: editingCase.clinical_relevance || 5,
         estimated_solve_time: editingCase.estimated_solve_time || 5,
         exam_context: editingCase.exam_context || "rotina",
+        // Campos de referência
         is_radiopaedia_case: editingCase.is_radiopaedia_case ?? false,
         reference_citation: editingCase.reference_citation ?? "",
         reference_url: editingCase.reference_url ?? "",
@@ -216,11 +211,13 @@ export function CaseProfileFormEditable({
         ai_tutor_level: form.ai_tutor_level,
         updated_at: new Date().toISOString(),
         
+        // Campos de referência Radiopaedia
         is_radiopaedia_case: form.is_radiopaedia_case,
         reference_citation: form.is_radiopaedia_case ? form.reference_citation : null,
         reference_url: form.is_radiopaedia_case ? form.reference_url : null,
         access_date: form.is_radiopaedia_case && form.access_date ? form.access_date : null,
         
+        // Novos campos estruturados
         primary_diagnosis: form.primary_diagnosis || null,
         secondary_diagnoses: form.secondary_diagnoses || [],
         case_classification: form.case_classification || "diagnostico",
@@ -322,19 +319,7 @@ export function CaseProfileFormEditable({
           <CaseQualityRadar form={form} />
           <CaseFormGamifiedHelpers form={form} />
           
-          {/* === MASTER BUTTON AI === */}
-          <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-6 shadow-lg">
-            <div className="text-center mb-4">
-              <h3 className="text-lg font-bold text-purple-900 mb-2">🪄 Auto-preenchimento Inteligente Total</h3>
-              <p className="text-sm text-purple-700">Preenche automaticamente TODOS os campos baseado no diagnóstico principal</p>
-            </div>
-            <CaseMasterAutofillAI 
-              form={form} 
-              setForm={setForm}
-              onFieldsHighlighted={setHighlightedFields}
-            />
-          </div>
-          
+          {/* Sistema de Auto-preenchimento Inteligente AVANÇADO */}
           <CaseSmartAutofillAdvanced 
             form={form} 
             setForm={setForm}
@@ -378,13 +363,6 @@ export function CaseProfileFormEditable({
           section="structured"
           title="Dados Estruturados"
           description="Configure os campos estruturados para filtros avançados e AI"
-          aiComponent={
-            <CaseStructuredDataAI 
-              form={form}
-              setForm={setForm}
-              onFieldsHighlighted={setHighlightedFields}
-            />
-          }
         >
           <CaseStructuredFieldsSection 
             form={form}
@@ -392,102 +370,6 @@ export function CaseProfileFormEditable({
             handleFormChange={handleFormChange}
             renderTooltipTip={renderTooltipTip}
           />
-        </CaseFormGamifiedLayout>
-
-        <CaseFormGamifiedLayout
-          section="clinical"
-          title="Resumo Clínico Estruturado"
-          description="Configure sintomas, sinais vitais e histórico médico"
-          aiComponent={
-            <CaseClinicalSummaryAI 
-              form={form}
-              setForm={setForm}
-              onFieldsHighlighted={setHighlightedFields}
-            />
-          }
-        >
-          <div className="space-y-4">
-            <div>
-              <label className="font-semibold block">
-                Principais Sintomas
-                {renderTooltipTip("tip-main-symptoms", "Liste os sintomas principais apresentados pelo paciente.")}
-              </label>
-              <Input 
-                name="main_symptoms" 
-                value={Array.isArray(form.main_symptoms) ? form.main_symptoms.join(", ") : ""} 
-                onChange={(e) => setForm((prev: any) => ({ 
-                  ...prev, 
-                  main_symptoms: e.target.value.split(",").map(s => s.trim()).filter(s => s) 
-                }))} 
-                placeholder="Ex: dor torácica, dispneia, febre" 
-                className={highlightedFields.includes('main_symptoms') ? 'ring-2 ring-green-300 bg-green-50' : ''}
-              />
-            </div>
-          </div>
-        </CaseFormGamifiedLayout>
-
-        <CaseFormGamifiedLayout
-          section="educational"
-          title="Tags e Metadados Educacionais"
-          description="Configure objetivos de aprendizado e tags para filtros"
-          aiComponent={
-            <CaseEducationalTagsAI 
-              form={form}
-              setForm={setForm}
-              onFieldsHighlighted={setHighlightedFields}
-            />
-          }
-        >
-          <div className="space-y-4">
-            <div>
-              <label className="font-semibold block">
-                Objetivos de Aprendizado
-                {renderTooltipTip("tip-learning-objectives", "Defina os objetivos educacionais deste caso.")}
-              </label>
-              <Input 
-                name="learning_objectives" 
-                value={Array.isArray(form.learning_objectives) ? form.learning_objectives.join(", ") : ""} 
-                onChange={(e) => setForm((prev: any) => ({ 
-                  ...prev, 
-                  learning_objectives: e.target.value.split(",").map(s => s.trim()).filter(s => s) 
-                }))} 
-                placeholder="Ex: identificar pneumonia, interpretar infiltrados, correlação clínico-radiológica" 
-                className={highlightedFields.includes('learning_objectives') ? 'ring-2 ring-green-300 bg-green-50' : ''}
-              />
-            </div>
-          </div>
-        </CaseFormGamifiedLayout>
-
-        <CaseFormGamifiedLayout
-          section="gamification"
-          title="Gamificação Avançada"
-          description="Configure métricas de dificuldade e valor educacional"
-          aiComponent={
-            <CaseGamificationAI 
-              form={form}
-              setForm={setForm}
-              onFieldsHighlighted={setHighlightedFields}
-            />
-          }
-        >
-          <div className="space-y-4">
-            <div>
-              <label className="font-semibold block">
-                Raridade do Caso
-                {renderTooltipTip("tip-case-rarity", "Defina a raridade do caso para ajustar a pontuação.")}
-              </label>
-              <select 
-                name="case_rarity" 
-                value={form.case_rarity || "comum"} 
-                onChange={handleFormChange}
-                className={`w-full border border-gray-300 rounded px-3 py-2 ${highlightedFields.includes('case_rarity') ? 'ring-2 ring-green-300 bg-green-50' : ''}`}
-              >
-                <option value="comum">Comum</option>
-                <option value="raro">Raro</option>
-                <option value="muito_raro">Muito Raro</option>
-              </select>
-            </div>
-          </div>
         </CaseFormGamifiedLayout>
 
         <CaseFormGamifiedLayout
@@ -506,13 +388,6 @@ export function CaseProfileFormEditable({
           section="quiz"
           title="Pergunta e Alternativas"
           description="Configure a pergunta principal e as opções de resposta"
-          aiComponent={
-            <CaseQuizContentAI 
-              form={form}
-              setForm={setForm}
-              onFieldsHighlighted={setHighlightedFields}
-            />
-          }
         >
           <div className="space-y-4">
             <div>
@@ -526,7 +401,7 @@ export function CaseProfileFormEditable({
                 onChange={handleFormChange} 
                 placeholder="Ex: Qual é o diagnóstico mais provável?" 
                 required 
-                className={`mt-2 ${highlightedFields.includes('main_question') ? 'ring-2 ring-green-300 bg-green-50' : ''}`}
+                className="mt-2"
               />
             </div>
             <CaseProfileAlternativesSection
@@ -562,13 +437,6 @@ export function CaseProfileFormEditable({
           section="advanced"
           title="Configurações Avançadas"
           description="Configurações de gamificação e regras especiais"
-          aiComponent={
-            <CaseAdvancedConfigAI 
-              form={form}
-              setForm={setForm}
-              onFieldsHighlighted={setHighlightedFields}
-            />
-          }
         >
           <div className="space-y-4">
             <button
