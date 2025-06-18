@@ -18,10 +18,10 @@ import { useAdminPermissions } from "@/hooks/useAdminPermissions";
 import { BackToDashboard } from "@/components/navigation/BackToDashboard";
 
 export default function AdminDashboardAdvanced() {
-  const { userRoles, isAdmin, loading } = useAdminPermissions();
+  const { adminRoles, isAdmin, isLoading } = useAdminPermissions();
   const [activeTab, setActiveTab] = useState('overview');
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -71,9 +71,9 @@ export default function AdminDashboardAdvanced() {
       'ComplianceOfficer': 'bg-gray-500'
     };
 
-    return userRoles.map(role => (
-      <Badge key={role} className={`${roleColors[role]} text-white`}>
-        {role}
+    return adminRoles.map(role => (
+      <Badge key={role.admin_role} className={`${roleColors[role.admin_role]} text-white`}>
+        {role.admin_role}
       </Badge>
     ));
   };
