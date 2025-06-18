@@ -1,11 +1,12 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { X, Plus, Sparkles } from "lucide-react";
+import { Sparkles, RefreshCw } from "lucide-react";
+import { DynamicTagInput } from "./DynamicTagInput";
+import { useDynamicSuggestions } from "../hooks/useDynamicSuggestions";
+import { toast } from "@/components/ui/use-toast";
 
 type Props = {
   form: any;
@@ -14,112 +15,53 @@ type Props = {
   renderTooltipTip: (id: string, text: string) => React.ReactNode;
 };
 
-const ANATOMICAL_REGIONS = [
-  "Crânio", "Pescoço", "Tórax", "Pulmões", "Coração", "Mediastino",
-  "Abdome", "Pelve", "Coluna", "Membros Superiores", "Membros Inferiores",
-  "Sistema Musculoesquelético", "Sistema Vascular"
-];
-
-const FINDING_TYPES = [
-  "Consolidação", "Massa", "Nódulo", "Derrame", "Pneumotórax",
-  "Atelectasia", "Bronquiectasias", "Cavitação", "Calcificação",
-  "Linfadenopatia", "Fratura", "Luxação", "Edema", "Inflamação"
-];
-
-const PATHOLOGY_TYPES = [
-  "Infeccioso", "Inflamatório", "Neoplásico", "Degenerativo",
-  "Traumático", "Vascular", "Congênito", "Metabólico", "Autoimune"
-];
-
-const MAIN_SYMPTOMS = [
-  "Dor torácica", "Dispneia", "Tosse", "Febre", "Hemoptise",
-  "Dor abdominal", "Náuseas", "Vômitos", "Cefaleia", "Tontura",
-  "Dor lombar", "Claudicação", "Palpitações"
-];
-
-const MEDICAL_HISTORY = [
-  "Hipertensão Arterial", "Diabetes Mellitus", "Tabagismo", "Etilismo",
-  "Cardiopatia", "Pneumopatia", "Neoplasia prévia", "Cirurgia prévia",
-  "Alergia medicamentosa", "Uso de medicamentos"
-];
-
 const TARGET_AUDIENCE = [
   "Graduação", "Residência R1", "Residência R2", "Residência R3",
   "Especialização", "Mestrado", "Doutorado", "Educação Continuada"
 ];
 
 export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, renderTooltipTip }: Props) {
-  const addTag = (field: string, value: string) => {
-    if (value && !form[field].includes(value)) {
-      setForm({ ...form, [field]: [...form[field], value] });
+  const { suggestions, loading, generateSuggestions } = useDynamicSuggestions();
+
+  // Auto-gerar diagnósticos diferenciais quando o diagnóstico principal for preenchido
+  const handlePrimaryDiagnosisBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
+    const diagnosis = e.target.value.trim();
+    if (diagnosis && diagnosis !== form.primary_diagnosis) {
+      console.log('🔄 Diagnóstico principal alterado, gerando sugestões...');
+      await generateSuggestions(diagnosis);
     }
   };
 
-  const removeTag = (field: string, index: number) => {
-    const newTags = form[field].filter((_: any, i: number) => i !== index);
-    setForm({ ...form, [field]: newTags });
+  // Aplicar diagnósticos diferenciais automaticamente quando gerados
+  useEffect(() => {
+    if (suggestions.differential_diagnoses && suggestions.differential_diagnoses.length > 0) {
+      // Aplicar exatamente 4 diagnósticos diferenciais
+      const differentials = suggestions.differential_diagnoses.slice(0, 4);
+      setForm({ ...form, differential_diagnoses: differentials });
+      
+      toast({
+        title: "🤖 Diagnósticos Diferenciais Gerados!",
+        description: `${differentials.length} diagnósticos diferenciais baseados no diagnóstico principal.`
+      });
+    }
+  }, [suggestions.differential_diagnoses]);
+
+  const handleTagChange = (field: string, values: string[]) => {
+    setForm({ ...form, [field]: values });
   };
 
-  const TagInput = ({ field, options, placeholder }: { field: string, options: string[], placeholder: string }) => {
-    const [inputValue, setInputValue] = React.useState("");
-
-    return (
-      <div className="space-y-2">
-        <div className="flex gap-2">
-          <Input
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder={placeholder}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                addTag(field, inputValue);
-                setInputValue("");
-              }
-            }}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              addTag(field, inputValue);
-              setInputValue("");
-            }}
-          >
-            <Plus size={16} />
-          </Button>
-        </div>
-        
-        <div className="flex flex-wrap gap-1">
-          {options.slice(0, 6).map((option) => (
-            <Button
-              key={option}
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-6 text-xs"
-              onClick={() => addTag(field, option)}
-            >
-              + {option}
-            </Button>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap gap-1">
-          {form[field].map((tag: string, index: number) => (
-            <Badge key={index} variant="secondary" className="gap-1">
-              {tag}
-              <X 
-                size={12} 
-                className="cursor-pointer hover:text-red-500" 
-                onClick={() => removeTag(field, index)}
-              />
-            </Badge>
-          ))}
-        </div>
-      </div>
-    );
+  const handleDifferentialChange = (field: string, values: string[]) => {
+    // Limitar a exatamente 4 diagnósticos diferenciais
+    const limitedValues = values.slice(0, 4);
+    setForm({ ...form, [field]: limitedValues });
+    
+    if (values.length > 4) {
+      toast({
+        title: "Limite de Diagnósticos Diferenciais",
+        description: "Máximo de 4 diagnósticos diferenciais permitidos.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -129,21 +71,26 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
         <h3 className="font-semibold text-blue-900 mb-4 flex items-center gap-2">
           <Sparkles size={20} />
           Diagnóstico Estruturado
+          {loading && <RefreshCw className="h-4 w-4 animate-spin text-blue-600" />}
         </h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="font-semibold block mb-2">
               Diagnóstico Primário *
-              {renderTooltipTip("tip-primary-diagnosis", "Diagnóstico principal do caso")}
+              {renderTooltipTip("tip-primary-diagnosis", "Diagnóstico principal do caso - gera automaticamente os diagnósticos diferenciais")}
             </label>
             <Input
               name="primary_diagnosis"
               value={form.primary_diagnosis}
               onChange={handleFormChange}
+              onBlur={handlePrimaryDiagnosisBlur}
               placeholder="Ex: Pneumonia adquirida na comunidade"
               className="focus:ring-2 focus:ring-blue-500"
             />
+            <div className="text-xs text-blue-600 mt-1">
+              💡 Ao sair do campo, diagnósticos diferenciais serão gerados automaticamente
+            </div>
           </div>
 
           <div>
@@ -179,15 +126,18 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
         </div>
 
         <div className="mt-4">
-          <label className="font-semibold block mb-2">
-            Diagnósticos Diferenciais
-            {renderTooltipTip("tip-secondary-diagnoses", "Outros diagnósticos possíveis para este caso")}
-          </label>
-          <TagInput 
-            field="secondary_diagnoses" 
-            options={["Tuberculose", "Neoplasia pulmonar", "Pneumonia atípica", "TEP"]}
+          <DynamicTagInput
+            field="differential_diagnoses"
+            value={form.differential_diagnoses || []}
+            onChange={handleDifferentialChange}
             placeholder="Digite um diagnóstico diferencial"
+            suggestions={suggestions.differential_diagnoses || []}
+            loading={loading}
+            label={`Diagnósticos Diferenciais (${form.differential_diagnoses?.length || 0}/4) 🤖`}
           />
+          <div className="text-xs text-gray-600 mt-1">
+            Exatamente 4 diagnósticos diferenciais são necessários para o quiz completo
+          </div>
         </div>
       </div>
 
@@ -196,29 +146,25 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
         <h3 className="font-semibold text-green-900 mb-4">Achados Radiológicos Estruturados</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="font-semibold block mb-2">
-              Regiões Anatômicas
-              {renderTooltipTip("tip-anatomical-regions", "Regiões anatômicas envolvidas no caso")}
-            </label>
-            <TagInput 
-              field="anatomical_regions" 
-              options={ANATOMICAL_REGIONS}
-              placeholder="Digite uma região anatômica"
-            />
-          </div>
+          <DynamicTagInput
+            field="anatomical_regions"
+            value={form.anatomical_regions || []}
+            onChange={handleTagChange}
+            placeholder="Digite uma região anatômica"
+            suggestions={suggestions.anatomical_regions || []}
+            loading={loading}
+            label="Regiões Anatômicas 🤖"
+          />
 
-          <div>
-            <label className="font-semibold block mb-2">
-              Tipos de Achados
-              {renderTooltipTip("tip-finding-types", "Tipos de achados radiológicos presentes")}
-            </label>
-            <TagInput 
-              field="finding_types" 
-              options={FINDING_TYPES}
-              placeholder="Digite um tipo de achado"
-            />
-          </div>
+          <DynamicTagInput
+            field="finding_types"
+            value={form.finding_types || []}
+            onChange={handleTagChange}
+            placeholder="Digite um tipo de achado"
+            suggestions={["Consolidação", "Massa", "Nódulo", "Derrame", "Pneumotórax", "Atelectasia", "Bronquiectasias", "Cavitação", "Calcificação", "Linfadenopatia", "Fratura", "Luxação", "Edema", "Inflamação"]}
+            loading={false}
+            label="Tipos de Achados"
+          />
 
           <div>
             <label className="font-semibold block mb-2">
@@ -238,17 +184,15 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
             </Select>
           </div>
 
-          <div>
-            <label className="font-semibold block mb-2">
-              Tipos de Patologia
-              {renderTooltipTip("tip-pathology-types", "Classificação patológica dos achados")}
-            </label>
-            <TagInput 
-              field="pathology_types" 
-              options={PATHOLOGY_TYPES}
-              placeholder="Digite um tipo de patologia"
-            />
-          </div>
+          <DynamicTagInput
+            field="pathology_types"
+            value={form.pathology_types || []}
+            onChange={handleTagChange}
+            placeholder="Digite um tipo de patologia"
+            suggestions={suggestions.pathology_types || []}
+            loading={loading}
+            label="Tipos de Patologia 🤖"
+          />
         </div>
       </div>
 
@@ -257,29 +201,25 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
         <h3 className="font-semibold text-purple-900 mb-4">Resumo Clínico Estruturado</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="font-semibold block mb-2">
-              Sintomas Principais
-              {renderTooltipTip("tip-main-symptoms", "Principais sintomas apresentados pelo paciente")}
-            </label>
-            <TagInput 
-              field="main_symptoms" 
-              options={MAIN_SYMPTOMS}
-              placeholder="Digite um sintoma"
-            />
-          </div>
+          <DynamicTagInput
+            field="main_symptoms"
+            value={form.main_symptoms || []}
+            onChange={handleTagChange}
+            placeholder="Digite um sintoma"
+            suggestions={suggestions.main_symptoms || []}
+            loading={loading}
+            label="Sintomas Principais 🤖"
+          />
 
-          <div>
-            <label className="font-semibold block mb-2">
-              Antecedentes Médicos
-              {renderTooltipTip("tip-medical-history", "História médica pregressa relevante")}
-            </label>
-            <TagInput 
-              field="medical_history" 
-              options={MEDICAL_HISTORY}
-              placeholder="Digite um antecedente"
-            />
-          </div>
+          <DynamicTagInput
+            field="medical_history"
+            value={form.medical_history || []}
+            onChange={handleTagChange}
+            placeholder="Digite um antecedente"
+            suggestions={suggestions.medical_history || []}
+            loading={loading}
+            label="Antecedentes Médicos 🤖"
+          />
         </div>
 
         <div className="mt-4">
@@ -309,53 +249,45 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
         <h3 className="font-semibold text-yellow-900 mb-4">Tags e Metadados Educacionais</h3>
         
         <div className="space-y-4">
-          <div>
-            <label className="font-semibold block mb-2">
-              Objetivos de Aprendizado
-              {renderTooltipTip("tip-learning-objectives", "O que o estudante deve aprender com este caso")}
-            </label>
-            <TagInput 
-              field="learning_objectives" 
-              options={["Reconhecer consolidação", "Diferenciar pneumonia de TEP", "Identificar derrame pleural"]}
-              placeholder="Digite um objetivo de aprendizado"
-            />
-          </div>
+          <DynamicTagInput
+            field="learning_objectives"
+            value={form.learning_objectives || []}
+            onChange={handleTagChange}
+            placeholder="Digite um objetivo de aprendizado"
+            suggestions={["Reconhecer consolidação", "Diferenciar pneumonia de TEP", "Identificar derrame pleural", "Avaliar achados radiológicos", "Correlacionar clínica e imagem"]}
+            loading={false}
+            label="Objetivos de Aprendizado"
+          />
 
-          <div>
-            <label className="font-semibold block mb-2">
-              Apresentação Clínica
-              {renderTooltipTip("tip-clinical-presentation", "Tags que descrevem como o caso se apresenta clinicamente")}
-            </label>
-            <TagInput 
-              field="clinical_presentation_tags" 
-              options={["Agudo", "Crônico", "Febril", "Assintomático", "Emergencial"]}
-              placeholder="Digite uma tag de apresentação"
-            />
-          </div>
+          <DynamicTagInput
+            field="clinical_presentation_tags"
+            value={form.clinical_presentation_tags || []}
+            onChange={handleTagChange}
+            placeholder="Digite uma tag de apresentação"
+            suggestions={suggestions.clinical_presentation_tags || []}
+            loading={loading}
+            label="Apresentação Clínica 🤖"
+          />
 
-          <div>
-            <label className="font-semibold block mb-2">
-              Fatores de Complexidade
-              {renderTooltipTip("tip-complexity-factors", "O que torna este caso mais desafiador")}
-            </label>
-            <TagInput 
-              field="case_complexity_factors" 
-              options={["Múltiplas lesões", "Achado sutil", "Sobreposição de estruturas", "Artefatos"]}
-              placeholder="Digite um fator de complexidade"
-            />
-          </div>
+          <DynamicTagInput
+            field="case_complexity_factors"
+            value={form.case_complexity_factors || []}
+            onChange={handleTagChange}
+            placeholder="Digite um fator de complexidade"
+            suggestions={suggestions.case_complexity_factors || []}
+            loading={loading}
+            label="Fatores de Complexidade 🤖"
+          />
 
-          <div>
-            <label className="font-semibold block mb-2">
-              Palavras-chave para Busca
-              {renderTooltipTip("tip-search-keywords", "Palavras-chave que facilitarão a busca deste caso")}
-            </label>
-            <TagInput 
-              field="search_keywords" 
-              options={["pneumonia", "consolidação", "radiografia", "tórax"]}
-              placeholder="Digite uma palavra-chave"
-            />
-          </div>
+          <DynamicTagInput
+            field="search_keywords"
+            value={form.search_keywords || []}
+            onChange={handleTagChange}
+            placeholder="Digite uma palavra-chave"
+            suggestions={suggestions.search_keywords || []}
+            loading={loading}
+            label="Palavras-chave para Busca 🤖"
+          />
         </div>
       </div>
 
@@ -441,14 +373,14 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
           </div>
 
           <div>
-            <label className="font-semibold block mb-2">
-              Público-alvo
-              {renderTooltipTip("tip-target-audience", "Para que nível de estudante este caso é mais adequado")}
-            </label>
-            <TagInput 
-              field="target_audience" 
-              options={TARGET_AUDIENCE}
+            <DynamicTagInput
+              field="target_audience"
+              value={form.target_audience || []}
+              onChange={handleTagChange}
               placeholder="Digite o público-alvo"
+              suggestions={TARGET_AUDIENCE}
+              loading={false}
+              label="Público-alvo"
             />
           </div>
         </div>
