@@ -37,9 +37,7 @@ export function useDashboardData() {
 
       return specialtiesWithCounts;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutos
-    gcTime: 10 * 60 * 1000, // 10 minutos
-    refetchInterval: 5 * 60 * 1000 // Atualiza a cada 5 minutos
+    refetchInterval: 30000 // Atualiza a cada 30 segundos
   });
 
   // Buscar dados de eventos
@@ -55,9 +53,7 @@ export function useDashboardData() {
       if (error) throw error;
       return events || [];
     },
-    staleTime: 5 * 60 * 1000, // 5 minutos
-    gcTime: 10 * 60 * 1000, // 10 minutos
-    refetchInterval: 5 * 60 * 1000
+    refetchInterval: 30000
   });
 
   // Buscar dados do perfil do usuário
@@ -75,9 +71,7 @@ export function useDashboardData() {
 
       if (error) throw error;
       return profile;
-    },
-    staleTime: 2 * 60 * 1000, // 2 minutos
-    gcTime: 5 * 60 * 1000 // 5 minutos
+    }
   });
 
   return {

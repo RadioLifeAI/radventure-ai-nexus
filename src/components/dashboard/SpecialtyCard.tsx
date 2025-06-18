@@ -20,13 +20,12 @@ interface SpecialtyCardProps {
   };
 }
 
-export const SpecialtyCard = React.memo(function SpecialtyCard({ specialty }: SpecialtyCardProps) {
+export function SpecialtyCard({ specialty }: SpecialtyCardProps) {
   const navigate = useNavigate();
+  const specialtyData = getSpecialtyData(specialty.name);
   const [showModal, setShowModal] = useState(false);
-  
-  const specialtyData = React.useMemo(() => getSpecialtyData(specialty.name), [specialty.name]);
-  
-  const handleExplore = React.useCallback(() => {
+
+  const handleExplore = () => {
     // Se não há casos disponíveis, mostrar modal
     if (specialty.cases === 0) {
       setShowModal(true);
@@ -35,26 +34,10 @@ export const SpecialtyCard = React.memo(function SpecialtyCard({ specialty }: Sp
     
     // Navegar para casos com filtro de especialidade - CORRIGIDO
     navigate(`/app/casos?specialty=${encodeURIComponent(specialty.name)}`);
-  }, [specialty.cases, specialty.name, navigate]);
+  };
 
   const accuracy = specialty.userProgress?.accuracy || 0;
   const hasProgress = (specialty.userProgress?.total || 0) > 0;
-
-  const progressBadgeClassName = React.useMemo(() => {
-    return `flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${
-      accuracy >= 80 ? 'bg-green-500 text-white' :
-      accuracy >= 60 ? 'bg-yellow-500 text-white' :
-      'bg-red-500 text-white'
-    }`;
-  }, [accuracy]);
-
-  const progressBarClassName = React.useMemo(() => {
-    return `h-2 rounded-full transition-all duration-500 ${
-      accuracy >= 80 ? 'bg-green-500' :
-      accuracy >= 60 ? 'bg-yellow-500' :
-      'bg-red-500'
-    }`;
-  }, [accuracy]);
 
   return (
     <>
@@ -73,7 +56,11 @@ export const SpecialtyCard = React.memo(function SpecialtyCard({ specialty }: Sp
         {/* Progress indicator */}
         {hasProgress && (
           <div className="absolute top-3 left-3">
-            <div className={progressBadgeClassName}>
+            <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${
+              accuracy >= 80 ? 'bg-green-500 text-white' :
+              accuracy >= 60 ? 'bg-yellow-500 text-white' :
+              'bg-red-500 text-white'
+            }`}>
               <TrendingUp className="h-3 w-3" />
               {accuracy}%
             </div>
@@ -106,7 +93,11 @@ export const SpecialtyCard = React.memo(function SpecialtyCard({ specialty }: Sp
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
                 <div 
-                  className={progressBarClassName}
+                  className={`h-2 rounded-full transition-all duration-500 ${
+                    accuracy >= 80 ? 'bg-green-500' :
+                    accuracy >= 60 ? 'bg-yellow-500' :
+                    'bg-red-500'
+                  }`}
                   style={{ width: `${accuracy}%` }}
                 />
               </div>
@@ -167,4 +158,4 @@ export const SpecialtyCard = React.memo(function SpecialtyCard({ specialty }: Sp
       />
     </>
   );
-});
+}
