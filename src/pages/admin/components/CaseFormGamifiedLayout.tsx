@@ -2,11 +2,11 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Target, Lightbulb, Settings, Users, Trophy } from "lucide-react";
+import { Brain, Target, Lightbulb, Settings, Users, Trophy, Database, BookOpen } from "lucide-react";
 
 interface CaseFormGamifiedLayoutProps {
   children: React.ReactNode;
-  section: "basic" | "clinical" | "quiz" | "advanced" | "gamification";
+  section: "basic" | "clinical" | "quiz" | "advanced" | "gamification" | "structured" | "reference";
   title: string;
   description?: string;
   progress?: number;
@@ -60,6 +60,22 @@ export function CaseFormGamifiedLayout({
           gradient: "from-amber-50 to-yellow-50",
           border: "border-amber-200",
           badge: "Gamificação"
+        };
+      case "structured":
+        return {
+          icon: Database,
+          color: "cyan",
+          gradient: "from-cyan-50 to-blue-50",
+          border: "border-cyan-200",
+          badge: "Estruturado"
+        };
+      case "reference":
+        return {
+          icon: BookOpen,
+          color: "indigo",
+          gradient: "from-indigo-50 to-purple-50",
+          border: "border-indigo-200",
+          badge: "Referência"
         };
       default:
         return {
