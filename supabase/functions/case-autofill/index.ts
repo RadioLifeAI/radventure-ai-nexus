@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0'
 
@@ -21,6 +20,8 @@ interface CaseData {
   case_complexity_factors?: string[];
   learning_objectives?: string[];
   search_keywords?: string[];
+  category_id?: string;
+  difficulty_level?: string;
 }
 
 // Inicializar cliente Supabase para buscar dados
@@ -76,85 +77,123 @@ async function loadDatabaseData() {
   }
 }
 
-const ENHANCED_RADIOLOGY_TEMPLATE_PROMPT = `
-Você é um radiologista especialista que deve preencher automaticamente campos estruturados para um caso médico radiológico usando DADOS REAIS DO BANCO DE DADOS.
+// Prompts para diferentes ações
+const TITLE_GENERATION_PROMPT = `
+Você é um radiologista especialista que deve gerar títulos profissionais para casos médicos.
+
+DADOS DO CASO:
+{caseData}
 
 DADOS DISPONÍVEIS NO BANCO:
 Especialidades: {specialties}
-Modalidades: {modalities}  
-Subtipos: {subtypes}
-Dificuldades: {difficulties}
+Modalidades: {modalities}
 
-REGRAS IMPORTANTES:
-1. Use EXATAMENTE os nomes das especialidades, modalidades e subtipos listados acima
-2. Para category_id: retorne o ID numérico da especialidade
-3. Para difficulty_level: retorne o número do nível (1-4)
-4. Para modalidade/subtipo: use os nomes exatos do banco
-5. Garanta que modalidade e subtipo sejam compatíveis
+REGRAS PARA TÍTULO:
+1. Formato: "Caso [Especialidade] - [Descrição Específica]"
+2. Seja específico e profissional
+3. Máximo 80 caracteres
+4. Use terminologia médica correta
+5. Evite abreviações desnecessárias
+6. Seja descritivo mas conciso
 
-CONTEXTO DO CASO:
-Modalidade: {modality}
-Especialidade: {specialty}
-Contexto: {context}
-Título: {title}
-
-PREENCHA EM FORMATO JSON VÁLIDO:
+RETORNE JSON:
 {
-  "category_id": ID_NUMERICO_ESPECIALIDADE,
-  "difficulty_level": NUMERO_1_A_4,
-  "points": PONTOS_BASEADOS_NA_DIFICULDADE,
-  "modality": "NOME_EXATO_DA_MODALIDADE",
-  "subtype": "NOME_EXATO_DO_SUBTIPO",
-  "primary_diagnosis": "Diagnóstico principal específico",
-  "secondary_diagnoses": ["Diagnóstico diferencial 1", "Diagnóstico diferencial 2"],
-  "case_classification": "diagnostico|diferencial|emergencial|didatico",
-  "anatomical_regions": ["Região anatômica específica"],
-  "finding_types": ["Tipo de achado radiológico"],
-  "pathology_types": ["Tipo de patologia"],
-  "main_symptoms": ["Sintoma principal", "Sintoma secundário"],
-  "clinical_presentation_tags": ["Tag de apresentação"],
-  "case_complexity_factors": ["Fator de complexidade"],
-  "learning_objectives": ["Objetivo educacional 1", "Objetivo 2"],
-  "search_keywords": ["palavra-chave1", "palavra-chave2"],
-  "case_rarity": "comum|raro|muito_raro",
-  "educational_value": 7,
-  "clinical_relevance": 8,
-  "estimated_solve_time": 5,
-  "exam_context": "rotina|urgencia|uti|ambulatorio",
-  "target_audience": ["Graduação", "Residência R1"],
-  "laterality": "bilateral|direito|esquerdo|central",
-  "cid10_code": "Código CID-10 se aplicável"
+  "title": "Título profissional gerado",
+  "rationale": "Explicação da escolha do título"
 }
 `;
 
-const SMART_AUTOFILL_PROMPT = `
-Você é um especialista em radiologia que deve analisar o caso fornecido e sugerir melhorias inteligentes usando DADOS REAIS DO BANCO.
+const BASIC_DATA_AUTOFILL_PROMPT = `
+Analise este caso médico e preencha automaticamente os campos básicos usando dados reais do banco.
 
 DADOS DISPONÍVEIS:
 Especialidades: {specialties}
 Modalidades: {modalities}
 Subtipos: {subtypes}
+Dificuldades: {difficulties}
 
-ANALISE O CASO ATUAL:
+CASO ATUAL:
 {caseData}
 
-FORNEÇA SUGESTÕES INTELIGENTES EM JSON:
+PREENCHA OS CAMPOS BÁSICOS EM JSON:
 {
-  "suggestions": {
-    "missing_fields": ["campo1", "campo2"],
-    "inconsistencies": ["inconsistência detectada"],
-    "improvements": ["sugestão de melhoria"],
-    "related_fields": {
-      "campo": "valor sugerido"
-    }
-  },
-  "autofill_data": {
-    "category_id": ID_NUMERICO,
-    "difficulty_level": NUMERO_1_A_4,
-    "modality": "NOME_EXATO_MODALIDADE",
-    "subtype": "NOME_EXATO_SUBTIPO",
-    // outros campos preenchidos automaticamente
-  }
+  "category_id": ID_NUMERICO_ESPECIALIDADE,
+  "difficulty_level": NUMERO_1_A_4,
+  "points": PONTOS_BASEADOS_NA_DIFICULDADE,
+  "modality": "NOME_EXATO_MODALIDADE",
+  "subtype": "NOME_EXATO_SUBTIPO",
+  "patient_age": "IDADE_ESTIMADA",
+  "patient_gender": "GENERO_BASEADO_CONTEXTO",
+  "symptoms_duration": "DURACAO_ESTIMADA"
+}
+`;
+
+const DIAGNOSIS_AUTOFILL_PROMPT = `
+Analise os achados radiológicos e informações clínicas para sugerir diagnósticos precisos.
+
+CASO:
+{caseData}
+
+FORNEÇA DIAGNÓSTICOS EM JSON:
+{
+  "primary_diagnosis": "Diagnóstico principal específico",
+  "secondary_diagnoses": ["Diagnóstico diferencial 1", "Diagnóstico diferencial 2"],
+  "cid10_code": "Código CID-10 apropriado",
+  "case_classification": "diagnostico|diferencial|emergencial|didatico",
+  "differential_diagnoses": ["Hipótese 1", "Hipótese 2", "Hipótese 3"]
+}
+`;
+
+const STRUCTURED_DATA_PROMPT = `
+Extraia e estruture dados clínicos e radiológicos do caso fornecido.
+
+CASO:
+{caseData}
+
+EXTRAIA DADOS ESTRUTURADOS EM JSON:
+{
+  "anatomical_regions": ["Região específica 1", "Região 2"],
+  "finding_types": ["Tipo de achado 1", "Tipo 2"],
+  "laterality": "bilateral|direito|esquerdo|central",
+  "main_symptoms": ["Sintoma principal", "Sintoma secundário"],
+  "pathology_types": ["Tipo de patologia"],
+  "clinical_presentation_tags": ["Tag clínica 1", "Tag 2"],
+  "case_complexity_factors": ["Fator de complexidade"],
+  "learning_objectives": ["Objetivo educacional 1", "Objetivo 2"],
+  "search_keywords": ["palavra-chave1", "palavra-chave2"],
+  "target_audience": ["Graduação", "Residência R1"],
+  "exam_context": "rotina|urgencia|uti|ambulatorio"
+}
+`;
+
+const QUIZ_AUTOFILL_PROMPT = `
+Gere uma pergunta principal e alternativas baseadas no caso médico.
+
+CASO:
+{caseData}
+
+GERE QUIZ EM JSON:
+{
+  "main_question": "Pergunta clara e específica sobre o caso",
+  "answer_options": [
+    "Opção correta baseada no diagnóstico",
+    "Distrator plausível 1",
+    "Distrator plausível 2", 
+    "Distrator plausível 3"
+  ],
+  "correct_answer_index": 0,
+  "answer_feedbacks": [
+    "Feedback para opção correta",
+    "Explicação sobre o distrator 1",
+    "Explicação sobre o distrator 2",
+    "Explicação sobre o distrator 3"
+  ],
+  "answer_short_tips": [
+    "Dica para opção correta",
+    "Dica para distrator 1",
+    "Dica para distrator 2",
+    "Dica para distrator 3"
+  ]
 }
 `;
 
@@ -179,6 +218,21 @@ serve(async (req) => {
     let responseFormat = 'json_object';
 
     switch (action) {
+      case 'generate_title':
+        prompt = buildTitleGenerationPrompt(caseData, dbData);
+        break;
+      case 'autofill_basic_data':
+        prompt = buildBasicDataPrompt(caseData, dbData);
+        break;
+      case 'autofill_diagnosis':
+        prompt = buildDiagnosisPrompt(caseData, dbData);
+        break;
+      case 'autofill_structured_data':
+        prompt = buildStructuredDataPrompt(caseData, dbData);
+        break;
+      case 'autofill_quiz':
+        prompt = buildQuizPrompt(caseData, dbData);
+        break;
       case 'template_autofill':
         prompt = buildTemplateAutofillPrompt(caseData, templateType, dbData);
         break;
@@ -273,7 +327,89 @@ serve(async (req) => {
   }
 });
 
+function buildTitleGenerationPrompt(caseData: CaseData, dbData: any): string {
+  return TITLE_GENERATION_PROMPT
+    .replace('{caseData}', JSON.stringify(caseData, null, 2))
+    .replace('{specialties}', JSON.stringify(dbData.specialties))
+    .replace('{modalities}', JSON.stringify(dbData.modalities));
+}
+
+function buildBasicDataPrompt(caseData: CaseData, dbData: any): string {
+  return BASIC_DATA_AUTOFILL_PROMPT
+    .replace('{caseData}', JSON.stringify(caseData, null, 2))
+    .replace('{specialties}', JSON.stringify(dbData.specialties))
+    .replace('{modalities}', JSON.stringify(dbData.modalities))
+    .replace('{subtypes}', JSON.stringify(dbData.subtypes))
+    .replace('{difficulties}', JSON.stringify(dbData.difficulties));
+}
+
+function buildDiagnosisPrompt(caseData: CaseData, dbData: any): string {
+  return DIAGNOSIS_AUTOFILL_PROMPT
+    .replace('{caseData}', JSON.stringify(caseData, null, 2));
+}
+
+function buildStructuredDataPrompt(caseData: CaseData, dbData: any): string {
+  return STRUCTURED_DATA_PROMPT
+    .replace('{caseData}', JSON.stringify(caseData, null, 2));
+}
+
+function buildQuizPrompt(caseData: CaseData, dbData: any): string {
+  return QUIZ_AUTOFILL_PROMPT
+    .replace('{caseData}', JSON.stringify(caseData, null, 2));
+}
+
 function buildTemplateAutofillPrompt(caseData: CaseData, templateType: string, dbData: any): string {
+  const ENHANCED_RADIOLOGY_TEMPLATE_PROMPT = `
+Você é um radiologista especialista que deve preencher automaticamente campos estruturados para um caso médico radiológico usando DADOS REAIS DO BANCO DE DADOS.
+
+DADOS DISPONÍVEIS NO BANCO:
+Especialidades: {specialties}
+Modalidades: {modalities}  
+Subtipos: {subtypes}
+Dificuldades: {difficulties}
+
+REGRAS IMPORTANTES:
+1. Use EXATAMENTE os nomes das especialidades, modalidades e subtipos listados acima
+2. Para category_id: retorne o ID numérico da especialidade
+3. Para difficulty_level: retorne o número do nível (1-4)
+4. Para modalidade/subtipo: use os nomes exatos do banco
+5. Garanta que modalidade e subtipo sejam compatíveis
+
+CONTEXTO DO CASO:
+Modalidade: {modality}
+Especialidade: {specialty}
+Contexto: {context}
+Título: {title}
+
+PREENCHA EM FORMATO JSON VÁLIDO:
+{
+  "category_id": ID_NUMERICO_ESPECIALIDADE,
+  "difficulty_level": NUMERO_1_A_4,
+  "points": PONTOS_BASEADOS_NA_DIFICULDADE,
+  "modality": "NOME_EXATO_DA_MODALIDADE",
+  "subtype": "NOME_EXATO_DO_SUBTIPO",
+  "primary_diagnosis": "Diagnóstico principal específico",
+  "secondary_diagnoses": ["Diagnóstico diferencial 1", "Diagnóstico diferencial 2"],
+  "case_classification": "diagnostico|diferencial|emergencial|didatico",
+  "anatomical_regions": ["Região anatômica específica"],
+  "finding_types": ["Tipo de achado radiológico"],
+  "pathology_types": ["Tipo de patologia"],
+  "main_symptoms": ["Sintoma principal", "Sintoma secundário"],
+  "clinical_presentation_tags": ["Tag de apresentação"],
+  "case_complexity_factors": ["Fator de complexidade"],
+  "learning_objectives": ["Objetivo educacional 1", "Objetivo 2"],
+  "search_keywords": ["palavra-chave1", "palavra-chave2"],
+  "case_rarity": "comum|raro|muito_raro",
+  "educational_value": 7,
+  "clinical_relevance": 8,
+  "estimated_solve_time": 5,
+  "exam_context": "rotina|urgencia|uti|ambulatorio",
+  "target_audience": ["Graduação", "Residência R1"],
+  "laterality": "bilateral|direito|esquerdo|central",
+  "cid10_code": "Código CID-10 se aplicável"
+}
+`;
+
   const contextMap = {
     'trauma_tc': 'TC de Trauma - Emergência',
     'pneumonia_rx': 'RX Tórax - Pneumonia',
@@ -295,6 +431,36 @@ function buildTemplateAutofillPrompt(caseData: CaseData, templateType: string, d
 }
 
 function buildSmartAutofillPrompt(caseData: CaseData, dbData: any): string {
+  const SMART_AUTOFILL_PROMPT = `
+Você é um especialista em radiologia que deve analisar o caso fornecido e sugerir melhorias inteligentes usando DADOS REAIS DO BANCO.
+
+DADOS DISPONÍVEIS:
+Especialidades: {specialties}
+Modalidades: {modalities}
+Subtipos: {subtypes}
+
+ANALISE O CASO ATUAL:
+{caseData}
+
+FORNEÇA SUGESTÕES INTELIGENTES EM JSON:
+{
+  "suggestions": {
+    "missing_fields": ["campo1", "campo2"],
+    "inconsistencies": ["inconsistência detectada"],
+    "improvements": ["sugestão de melhoria"],
+    "related_fields": {
+      "campo": "valor sugerido"
+    }
+  },
+  "autofill_data": {
+    "category_id": ID_NUMERICO,
+    "difficulty_level": NUMERO_1_A_4,
+    "modality": "NOME_EXATO_MODALIDADE",
+    "subtype": "NOME_EXATO_SUBTIPO"
+  }
+}
+`;
+
   return SMART_AUTOFILL_PROMPT
     .replace('{specialties}', JSON.stringify(dbData.specialties))
     .replace('{modalities}', JSON.stringify(dbData.modalities))
@@ -371,4 +537,3 @@ ANALISE CONSISTÊNCIA EM JSON:
   "improvements": ["melhoria sugerida"]
 }
 `;
-}

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { CaseProfileBasicSectionUnified } from "./CaseProfileBasicSectionUnified";
-import { CaseSmartAutofillEnhanced } from "./CaseSmartAutofillEnhanced";
+import { CaseSmartAutofillAdvanced } from "./CaseSmartAutofillAdvanced";
 import { CaseProfileAlternativesSection } from "./CaseProfileAlternativesSection";
 import { CaseProfileExplanationSectionContainer } from "./CaseProfileExplanationSectionContainer";
 import { CaseProfileAdvancedConfigContainer } from "./CaseProfileAdvancedConfigContainer";
@@ -21,7 +21,6 @@ import { CaseTemplateChooser } from "./CaseTemplateChooser";
 import { CaseFormGamifiedHelpers } from "./CaseFormGamifiedHelpers";
 import { CaseFormGamifiedLayout } from "./CaseFormGamifiedLayout";
 import { supabase } from "@/integrations/supabase/client";
-import { CaseSmartAutofill } from "./CaseSmartAutofill";
 
 export function CaseProfileFormEditable({ 
   editingCase, 
@@ -113,8 +112,6 @@ export function CaseProfileFormEditable({
 
   const isEditMode = !!editingCase;
   const { generateTitle, abbreviateCategory, generateRandomCaseNumber } = useCaseTitleGenerator(categories);
-
-  // ... keep existing code (autoTitlePreview, useEffect for title generation, handleAutoGenerateTitle)
 
   const undoFindings = useFieldUndo(handlers.form.findings);
   const undoClinical = useFieldUndo(handlers.form.patient_clinical_info);
@@ -322,8 +319,8 @@ export function CaseProfileFormEditable({
           <CaseQualityRadar form={form} />
           <CaseFormGamifiedHelpers form={form} />
           
-          {/* Novo: Sistema de Auto-preenchimento Inteligente APRIMORADO */}
-          <CaseSmartAutofillEnhanced 
+          {/* Sistema de Auto-preenchimento Inteligente AVANÇADO */}
+          <CaseSmartAutofillAdvanced 
             form={form} 
             setForm={setForm}
             onFieldsUpdated={(fields) => {
