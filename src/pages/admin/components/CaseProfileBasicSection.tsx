@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { CaseModalityFields } from "./CaseModalityFields";
+import { CaseReferenceSection } from "./CaseReferenceSection";
 import { Undo2 } from "lucide-react";
 import { ImageUploadWithZoom } from "./ImageUploadWithZoom";
 
@@ -54,6 +55,13 @@ export function CaseProfileBasicSection({
 
   return (
     <div className="space-y-6">
+      {/* Seção de Referência - PRIMEIRO para garantir preenchimento obrigatório */}
+      <CaseReferenceSection
+        form={form}
+        handleFormChange={handleFormChange}
+        renderTooltipTip={renderTooltipTip}
+      />
+
       {/* Categoria/Dificuldade/Pontos com melhor espaçamento */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useCaseProfileFormHandlers } from "../hooks/useCaseProfileFormHandlers";
 import { Button } from "@/components/ui/button";
@@ -66,7 +65,13 @@ export function CaseProfileFormEditable({
   // Load editing case data into form
   useEffect(() => {
     if (editingCase) {
-      setForm(editingCase);
+      setForm({
+        ...editingCase,
+        is_radiopaedia_case: editingCase.is_radiopaedia_case ?? false,
+        reference_citation: editingCase.reference_citation ?? "",
+        reference_url: editingCase.reference_url ?? "",
+        access_date: editingCase.access_date ?? ""
+      });
     }
   }, [editingCase, setForm]);
 
@@ -126,6 +131,19 @@ export function CaseProfileFormEditable({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    
+    // Validação específica para casos Radiopaedia
+    if (form.is_radiopaedia_case) {
+      if (!form.reference_citation?.trim()) {
+        toast({ title: "Citação da referência é obrigatória para casos do Radiopaedia", variant: "destructive" });
+        return;
+      }
+      if (!form.reference_url?.trim()) {
+        toast({ title: "URL de referência é obrigatória para casos do Radiopaedia", variant: "destructive" });
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
       const selectedCategory = categories.find(c => String(c.id) === String(form.category_id));
@@ -178,7 +196,11 @@ export function CaseProfileFormEditable({
         elimination_penalty_points: form.elimination_penalty_points,
         ai_tutor_level: form.ai_tutor_level,
         updated_at: new Date().toISOString(),
-        diagnosis_internal
+        diagnosis_internal,
+        is_radiopaedia_case: form.is_radiopaedia_case,
+        reference_citation: form.is_radiopaedia_case ? form.reference_citation : null,
+        reference_url: form.is_radiopaedia_case ? form.reference_url : null,
+        access_date: form.is_radiopaedia_case && form.access_date ? form.access_date : null
       };
 
       Object.keys(payload).forEach(k => {

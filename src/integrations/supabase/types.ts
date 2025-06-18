@@ -475,6 +475,7 @@ export type Database = {
       }
       medical_cases: {
         Row: {
+          access_date: string | null
           ai_hint_enabled: boolean | null
           ai_tutor_level: string | null
           answer_feedbacks: string[] | null
@@ -496,6 +497,7 @@ export type Database = {
           findings: string | null
           id: string
           image_url: Json | null
+          is_radiopaedia_case: boolean
           main_question: string | null
           manual_hint: string | null
           max_elimination: number | null
@@ -505,6 +507,8 @@ export type Database = {
           patient_clinical_info: string | null
           patient_gender: string | null
           points: number | null
+          reference_citation: string | null
+          reference_url: string | null
           skip_penalty_points: number | null
           specialty: string | null
           subtype: string | null
@@ -513,6 +517,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          access_date?: string | null
           ai_hint_enabled?: boolean | null
           ai_tutor_level?: string | null
           answer_feedbacks?: string[] | null
@@ -534,6 +539,7 @@ export type Database = {
           findings?: string | null
           id?: string
           image_url?: Json | null
+          is_radiopaedia_case?: boolean
           main_question?: string | null
           manual_hint?: string | null
           max_elimination?: number | null
@@ -543,6 +549,8 @@ export type Database = {
           patient_clinical_info?: string | null
           patient_gender?: string | null
           points?: number | null
+          reference_citation?: string | null
+          reference_url?: string | null
           skip_penalty_points?: number | null
           specialty?: string | null
           subtype?: string | null
@@ -551,6 +559,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          access_date?: string | null
           ai_hint_enabled?: boolean | null
           ai_tutor_level?: string | null
           answer_feedbacks?: string[] | null
@@ -572,6 +581,7 @@ export type Database = {
           findings?: string | null
           id?: string
           image_url?: Json | null
+          is_radiopaedia_case?: boolean
           main_question?: string | null
           manual_hint?: string | null
           max_elimination?: number | null
@@ -581,6 +591,8 @@ export type Database = {
           patient_clinical_info?: string | null
           patient_gender?: string | null
           points?: number | null
+          reference_citation?: string | null
+          reference_url?: string | null
           skip_penalty_points?: number | null
           specialty?: string | null
           subtype?: string | null

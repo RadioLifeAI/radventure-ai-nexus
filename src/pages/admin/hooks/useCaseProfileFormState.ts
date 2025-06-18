@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 
 const INITIAL_FORM = {
@@ -27,7 +28,12 @@ const INITIAL_FORM = {
   elimination_penalty_points: 0,
   ai_tutor_level: "desligado",
   case_number: null as number | null,
-  diagnosis_internal: ""
+  diagnosis_internal: "",
+  // Novos campos para referência Radiopaedia
+  is_radiopaedia_case: false,
+  reference_citation: "",
+  reference_url: "",
+  access_date: ""
 };
 
 export function useCaseProfileFormState() {
