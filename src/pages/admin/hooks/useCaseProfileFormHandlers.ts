@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useCaseProfileFormState } from "./useCaseProfileFormState";
 import { toast } from "@/components/ui/use-toast";
@@ -100,7 +101,6 @@ export function useCaseProfileFormHandlers({ categories, difficulties }: { categ
 
   // Sugestões IA e automações vêm do utils
   const {
-    handleAutoFillCaseDetails,
     handleSuggestDiagnosis,
     handleSuggestAlternatives,
     handleSuggestHint,
@@ -145,7 +145,6 @@ export function useCaseProfileFormHandlers({ categories, difficulties }: { categ
     handleShortTipChange,
     handleCorrectChange,
     handleImageChange,
-    handleAutoFillCaseDetails,
     handleSuggestDiagnosis,
     handleSuggestAlternatives,
     handleSuggestHint,

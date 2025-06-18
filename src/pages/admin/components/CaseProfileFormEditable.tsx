@@ -68,7 +68,7 @@ export function CaseProfileFormEditable({
     showAdvanced, setShowAdvanced, showPreview, setShowPreview, highlightedFields, setHighlightedFields,
     handleFormChange, handleModalityChange, handleOptionChange, handleOptionFeedbackChange,
     handleShortTipChange, handleCorrectChange, handleImageChange,
-    handleAutoFillCaseDetails, handleSuggestDiagnosis, handleSuggestAlternatives, handleSuggestHint, handleSuggestExplanation,
+    handleSuggestDiagnosis, handleSuggestAlternatives, handleSuggestHint, handleSuggestExplanation,
     handleSuggestFindings, handleSuggestClinicalInfo,
     handleRandomizeOptions
   } = handlers;
@@ -327,13 +327,13 @@ export function CaseProfileFormEditable({
           <CaseQualityRadar form={form} />
           <CaseFormGamifiedHelpers form={form} />
           
-          {/* Sistema de Auto-preenchimento Inteligente AVANÇADO */}
-          <CaseSmartAutofillAdvanced 
-            form={form} 
+          {/* BOTÃO MASTER AI: Preencher TUDO - Substitui "Auto-preenchimento por Seção" */}
+          <CaseMasterAI 
+            form={form}
             setForm={setForm}
             onFieldsUpdated={(fields) => {
               setHighlightedFields(fields);
-              setTimeout(() => setHighlightedFields([]), 2000);
+              setTimeout(() => setHighlightedFields([]), 3000);
             }}
           />
         </div>
@@ -365,7 +365,6 @@ export function CaseProfileFormEditable({
             highlightedFields={highlightedFields}
             handleFormChange={handleFormChange}
             handleModalityChange={handleModalityChange}
-            handleAutoFillCaseDetails={handleAutoFillCaseDetails}
             handleImageChange={handleImageChange}
             renderTooltipTip={renderTooltipTip}
             handleSuggestFindings={onSuggestFindings}
@@ -376,18 +375,6 @@ export function CaseProfileFormEditable({
             autoTitlePreview={autoTitlePreview}
             onGenerateAutoTitle={handleAutoGenerateTitle}
           />
-          
-          {/* NOVO: Botão Master ao lado do título */}
-          <div className="flex items-center gap-4 mt-4">
-            <CaseMasterAI 
-              form={form}
-              setForm={setForm}
-              onFieldsUpdated={(fields) => {
-                setHighlightedFields(fields);
-                setTimeout(() => setHighlightedFields([]), 3000);
-              }}
-            />
-          </div>
         </CaseFormGamifiedLayout>
 
         <CaseFormGamifiedLayout

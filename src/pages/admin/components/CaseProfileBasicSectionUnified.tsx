@@ -13,7 +13,6 @@ type Props = {
   highlightedFields: string[];
   handleFormChange: any;
   handleModalityChange: any;
-  handleAutoFillCaseDetails: any;
   handleImageChange: any;
   renderTooltipTip: any;
   handleSuggestFindings: any;
@@ -27,7 +26,7 @@ type Props = {
 
 export function CaseProfileBasicSectionUnified({
   form, highlightedFields, handleFormChange,
-  handleModalityChange, handleAutoFillCaseDetails, handleImageChange, renderTooltipTip,
+  handleModalityChange, handleImageChange, renderTooltipTip,
   handleSuggestFindings, handleSuggestClinicalInfo,
   undoFindings, undoClinical, setForm,
   autoTitlePreview, onGenerateAutoTitle
@@ -261,20 +260,6 @@ export function CaseProfileBasicSectionUnified({
                 className={`focus:ring-2 focus:ring-cyan-500 ${highlightedFields.includes("symptoms_duration") ? "ring-2 ring-cyan-400" : ""}`} 
               />
             </div>
-          </div>
-
-          {/* Botão de auto-preenchimento */}
-          <div>
-            <Button
-              type="button"
-              onClick={handleAutoFillCaseDetails}
-              variant="secondary"
-              size="sm"
-              className="w-full"
-              title="Preencher detalhes do caso de forma automática usando IA"
-            >
-              Auto-preencher detalhes do caso com IA
-            </Button>
           </div>
         </div>
 
