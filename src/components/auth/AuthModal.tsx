@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Eye, EyeOff, Rocket } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/components/ui/use-toast';
 
 interface AuthModalProps {
   open: boolean;
@@ -25,23 +24,12 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
   });
 
   const { signIn, signUp, loading } = useAuth();
-  const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error } = await signIn(loginData.email, loginData.password);
-    if (!error) {
+    const { data, error } = await signIn(loginData.email, loginData.password);
+    if (!error && data) {
       onClose();
-      toast({
-        title: 'Login realizado com sucesso!',
-        description: 'Bem-vindo de volta!'
-      });
-    } else {
-      toast({
-        title: 'Erro no login',
-        description: error.message,
-        variant: 'destructive'
-      });
     }
   };
 
@@ -49,28 +37,17 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
     e.preventDefault();
     
     if (signupData.password !== signupData.confirmPassword) {
-      toast({
-        title: 'Erro',
-        description: 'As senhas não coincidem',
-        variant: 'destructive'
-      });
       return;
     }
 
-    const { error } = await signUp(signupData.email, signupData.password);
+    const { data, error } = await signUp(
+      signupData.email, 
+      signupData.password, 
+      signupData.fullName
+    );
     
-    if (!error) {
+    if (!error && data) {
       onClose();
-      toast({
-        title: 'Conta criada!',
-        description: 'Verifique seu email para confirmar a conta.'
-      });
-    } else {
-      toast({
-        title: 'Erro no cadastro',
-        description: error.message,
-        variant: 'destructive'
-      });
     }
   };
 
@@ -82,7 +59,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
             <div className="bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full p-2">
               <Rocket className="text-white" size={24} />
             </div>
-            RadMed
+            RadVenture
           </DialogTitle>
         </DialogHeader>
 
