@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { CaseModalityFields } from "./CaseModalityFields";
-import { CaseReferenceSection } from "./CaseReferenceSection";
 import { Undo2 } from "lucide-react";
 import { ImageUploadWithZoom } from "./ImageUploadWithZoom";
 
@@ -32,9 +31,9 @@ type Props = {
 
 export function CaseProfileBasicSection({
   form, highlightedFields, categories, difficulties, handleFormChange,
-  handleModalityChange, handleAutoFillCaseDetails, handleSuggestDiagnosis, handleSuggestHint, handleImageChange, renderTooltipTip,
+  handleModalityChange, handleAutoFillCaseDetails, handleImageChange, renderTooltipTip,
   handleSuggestFindings, handleSuggestClinicalInfo,
-  undoFindings, undoClinical, undoDiagnosis, setForm,
+  undoFindings, undoClinical, setForm,
   autoTitlePreview, onGenerateAutoTitle
 }: Props) {
   function handleImagesChange(imgArr: { url: string; legend: string }[]) {
@@ -55,13 +54,6 @@ export function CaseProfileBasicSection({
 
   return (
     <div className="space-y-6">
-      {/* Seção de Referência - PRIMEIRO para garantir preenchimento obrigatório */}
-      <CaseReferenceSection
-        form={form}
-        handleFormChange={handleFormChange}
-        renderTooltipTip={renderTooltipTip}
-      />
-
       {/* Categoria/Dificuldade/Pontos com melhor espaçamento */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
@@ -147,52 +139,9 @@ export function CaseProfileBasicSection({
         </div>
       </div>
 
-      {/* Layout responsivo com diagnóstico e campos clínicos */}
+      {/* Layout responsivo com campos clínicos */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          {/* Diagnóstico */}
-          <div>
-            <div className="flex items-end gap-3 mb-2">
-              <div className="flex-1">
-                <label className="font-semibold block mb-2">
-                  Diagnóstico (referência)*{" "}
-                  <span className="text-xs text-muted-foreground">(Não será exibido no título do caso)</span>
-                </label>
-                <Input
-                  name="diagnosis_internal"
-                  value={form.diagnosis_internal ?? ""}
-                  onChange={e => setForm((prev: any) => ({ ...prev, diagnosis_internal: e.target.value }))}
-                  placeholder="Ex: Tuberculose pulmonar"
-                  required
-                  className={`focus:ring-2 focus:ring-cyan-500 ${highlightedFields.includes("diagnosis_internal") ? "ring-2 ring-cyan-400" : ""}`}
-                />
-              </div>
-              <Button type="button" onClick={handleSuggestDiagnosis} variant="secondary" size="sm">
-                Sugerir IA
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                title="Desfazer sugestão IA para diagnóstico"
-                onClick={() => undoDiagnosis.undo((val: string) => setForm((prev: any) => ({ ...prev, diagnosis_internal: val })))}
-                disabled={!undoDiagnosis.canUndo()}
-              >
-                <Undo2 size={18} />
-              </Button>
-            </div>
-            <Button
-              type="button"
-              onClick={handleAutoFillCaseDetails}
-              variant="secondary"
-              size="sm"
-              className="w-full"
-              title="Preencher achados, resumo, idade, gênero, sintomas e opções avançadas de forma automática"
-            >
-              Auto-preencher detalhes do caso
-            </Button>
-          </div>
-
           {/* Achados radiológicos */}
           <div>
             <div className="flex items-center gap-3 mb-2">
@@ -299,6 +248,20 @@ export function CaseProfileBasicSection({
                 className={`focus:ring-2 focus:ring-cyan-500 ${highlightedFields.includes("symptoms_duration") ? "ring-2 ring-cyan-400" : ""}`} 
               />
             </div>
+          </div>
+
+          {/* Botão de auto-preenchimento */}
+          <div>
+            <Button
+              type="button"
+              onClick={handleAutoFillCaseDetails}
+              variant="secondary"
+              size="sm"
+              className="w-full"
+              title="Preencher detalhes do caso de forma automática usando IA"
+            >
+              Auto-preencher detalhes do caso com IA
+            </Button>
           </div>
         </div>
 

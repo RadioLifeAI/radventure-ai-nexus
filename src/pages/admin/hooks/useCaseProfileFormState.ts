@@ -28,14 +28,14 @@ const INITIAL_FORM = {
   elimination_penalty_points: 0,
   ai_tutor_level: "desligado",
   case_number: null as number | null,
-  diagnosis_internal: "",
+  
   // Campos de referência Radiopaedia
   is_radiopaedia_case: false,
   reference_citation: "",
   reference_url: "",
   access_date: "",
   
-  // Novos campos estruturados - Diagnóstico
+  // Campos estruturados unificados - Diagnóstico
   primary_diagnosis: "",
   secondary_diagnoses: [] as string[],
   case_classification: "diagnostico",

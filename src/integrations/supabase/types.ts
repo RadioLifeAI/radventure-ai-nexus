@@ -476,129 +476,213 @@ export type Database = {
       medical_cases: {
         Row: {
           access_date: string | null
+          achievement_triggers: Json | null
           ai_hint_enabled: boolean | null
           ai_tutor_level: string | null
+          anatomical_regions: string[] | null
           answer_feedbacks: string[] | null
           answer_options: string[] | null
           answer_short_tips: string[] | null
           author_id: string | null
           can_skip: boolean | null
+          case_classification: string | null
+          case_complexity_factors: string[] | null
           case_number: number | null
+          case_rarity: string | null
           category_id: number | null
+          cid10_code: string | null
+          clinical_presentation_tags: string[] | null
+          clinical_relevance: number | null
           correct_answer_index: number | null
           created_at: string
           created_by: string | null
           description: string | null
           diagnosis_internal: string | null
+          differential_diagnoses: string[] | null
           difficulty_description: string | null
           difficulty_level: number | null
+          educational_value: number | null
           elimination_penalty_points: number | null
+          estimated_solve_time: number | null
+          exam_context: string | null
           explanation: string | null
+          finding_types: string[] | null
           findings: string | null
           id: string
           image_url: Json | null
           is_radiopaedia_case: boolean
+          laterality: string | null
+          learning_objectives: string[] | null
           main_question: string | null
+          main_symptoms: string[] | null
           manual_hint: string | null
           max_elimination: number | null
+          medical_history: string[] | null
+          medical_subspecialty: string[] | null
           meta: Json | null
           modality: string | null
+          pathology_types: string[] | null
           patient_age: string | null
           patient_clinical_info: string | null
           patient_gender: string | null
           points: number | null
+          prerequisite_cases: string[] | null
+          primary_diagnosis: string | null
           reference_citation: string | null
           reference_url: string | null
+          search_keywords: string[] | null
+          secondary_diagnoses: string[] | null
+          similar_cases_ids: string[] | null
           skip_penalty_points: number | null
           specialty: string | null
+          structured_metadata: Json | null
           subtype: string | null
           symptoms_duration: string | null
+          target_audience: string[] | null
           title: string
+          unlocks_cases: string[] | null
           updated_at: string
+          vital_signs: Json | null
         }
         Insert: {
           access_date?: string | null
+          achievement_triggers?: Json | null
           ai_hint_enabled?: boolean | null
           ai_tutor_level?: string | null
+          anatomical_regions?: string[] | null
           answer_feedbacks?: string[] | null
           answer_options?: string[] | null
           answer_short_tips?: string[] | null
           author_id?: string | null
           can_skip?: boolean | null
+          case_classification?: string | null
+          case_complexity_factors?: string[] | null
           case_number?: number | null
+          case_rarity?: string | null
           category_id?: number | null
+          cid10_code?: string | null
+          clinical_presentation_tags?: string[] | null
+          clinical_relevance?: number | null
           correct_answer_index?: number | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           diagnosis_internal?: string | null
+          differential_diagnoses?: string[] | null
           difficulty_description?: string | null
           difficulty_level?: number | null
+          educational_value?: number | null
           elimination_penalty_points?: number | null
+          estimated_solve_time?: number | null
+          exam_context?: string | null
           explanation?: string | null
+          finding_types?: string[] | null
           findings?: string | null
           id?: string
           image_url?: Json | null
           is_radiopaedia_case?: boolean
+          laterality?: string | null
+          learning_objectives?: string[] | null
           main_question?: string | null
+          main_symptoms?: string[] | null
           manual_hint?: string | null
           max_elimination?: number | null
+          medical_history?: string[] | null
+          medical_subspecialty?: string[] | null
           meta?: Json | null
           modality?: string | null
+          pathology_types?: string[] | null
           patient_age?: string | null
           patient_clinical_info?: string | null
           patient_gender?: string | null
           points?: number | null
+          prerequisite_cases?: string[] | null
+          primary_diagnosis?: string | null
           reference_citation?: string | null
           reference_url?: string | null
+          search_keywords?: string[] | null
+          secondary_diagnoses?: string[] | null
+          similar_cases_ids?: string[] | null
           skip_penalty_points?: number | null
           specialty?: string | null
+          structured_metadata?: Json | null
           subtype?: string | null
           symptoms_duration?: string | null
+          target_audience?: string[] | null
           title: string
+          unlocks_cases?: string[] | null
           updated_at?: string
+          vital_signs?: Json | null
         }
         Update: {
           access_date?: string | null
+          achievement_triggers?: Json | null
           ai_hint_enabled?: boolean | null
           ai_tutor_level?: string | null
+          anatomical_regions?: string[] | null
           answer_feedbacks?: string[] | null
           answer_options?: string[] | null
           answer_short_tips?: string[] | null
           author_id?: string | null
           can_skip?: boolean | null
+          case_classification?: string | null
+          case_complexity_factors?: string[] | null
           case_number?: number | null
+          case_rarity?: string | null
           category_id?: number | null
+          cid10_code?: string | null
+          clinical_presentation_tags?: string[] | null
+          clinical_relevance?: number | null
           correct_answer_index?: number | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           diagnosis_internal?: string | null
+          differential_diagnoses?: string[] | null
           difficulty_description?: string | null
           difficulty_level?: number | null
+          educational_value?: number | null
           elimination_penalty_points?: number | null
+          estimated_solve_time?: number | null
+          exam_context?: string | null
           explanation?: string | null
+          finding_types?: string[] | null
           findings?: string | null
           id?: string
           image_url?: Json | null
           is_radiopaedia_case?: boolean
+          laterality?: string | null
+          learning_objectives?: string[] | null
           main_question?: string | null
+          main_symptoms?: string[] | null
           manual_hint?: string | null
           max_elimination?: number | null
+          medical_history?: string[] | null
+          medical_subspecialty?: string[] | null
           meta?: Json | null
           modality?: string | null
+          pathology_types?: string[] | null
           patient_age?: string | null
           patient_clinical_info?: string | null
           patient_gender?: string | null
           points?: number | null
+          prerequisite_cases?: string[] | null
+          primary_diagnosis?: string | null
           reference_citation?: string | null
           reference_url?: string | null
+          search_keywords?: string[] | null
+          secondary_diagnoses?: string[] | null
+          similar_cases_ids?: string[] | null
           skip_penalty_points?: number | null
           specialty?: string | null
+          structured_metadata?: Json | null
           subtype?: string | null
           symptoms_duration?: string | null
+          target_audience?: string[] | null
           title?: string
+          unlocks_cases?: string[] | null
           updated_at?: string
+          vital_signs?: Json | null
         }
         Relationships: [
           {
