@@ -143,7 +143,7 @@ export const CaseFilters = React.memo(function CaseFilters({ filters, onFiltersC
           <SelectContent>
             <SelectItem value="">Todas as dificuldades</SelectItem>
             <SelectItem value="1">Nível 1 - Iniciante</SelectItem>
-            <Select value="2">Nível 2 - Intermediário</SelectItem>
+            <SelectItem value="2">Nível 2 - Intermediário</SelectItem>
             <SelectItem value="3">Nível 3 - Avançado</SelectItem>
             <SelectItem value="4">Nível 4 - Expert</SelectItem>
           </SelectContent>
