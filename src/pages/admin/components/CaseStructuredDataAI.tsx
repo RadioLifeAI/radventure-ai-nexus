@@ -55,13 +55,23 @@ export function CaseStructuredDataAI({
         }
       });
 
+      // VALIDAÇÃO ESPECÍFICA: Garantir 4 diagnósticos diferenciais
+      if (suggestions.differential_diagnoses && Array.isArray(suggestions.differential_diagnoses)) {
+        if (suggestions.differential_diagnoses.length !== 4) {
+          console.warn(`⚠️ Esperados 4 diagnósticos diferenciais, recebidos ${suggestions.differential_diagnoses.length}`);
+        }
+        updates.differential_diagnoses = suggestions.differential_diagnoses.slice(0, 4); // Garantir máximo 4
+        updatedFields.push('differential_diagnoses');
+      }
+
       if (Object.keys(updates).length > 0) {
         setForm((prev: any) => ({ ...prev, ...updates }));
         onFieldsUpdated?.(updatedFields);
         
+        const diffCount = updates.differential_diagnoses ? updates.differential_diagnoses.length : 0;
         toast({ 
           title: `🤖 AI: Dados Estruturados Preenchidos!`,
-          description: `${updatedFields.length} campos estruturados atualizados com base no diagnóstico.` 
+          description: `${updatedFields.length} campos atualizados incluindo ${diffCount} diagnósticos diferenciais.` 
         });
       } else {
         toast({ 
@@ -100,7 +110,7 @@ export function CaseStructuredDataAI({
       
       <div className="text-xs text-cyan-700">
         <div>Preenche TODOS os 20+ campos estruturados:</div>
-        <div className="font-medium">Diagnósticos • Regiões • Sintomas • Tags • Metadados</div>
+        <div className="font-medium">Diagnósticos • 4 Diferenciais • Regiões • Sintomas • Tags</div>
       </div>
     </div>
   );

@@ -37,9 +37,35 @@ export function CaseExplanationCompleteAI({
       const updatedFields: string[] = [];
       const updates: any = {};
 
+      // CORREÇÃO: Lidar com estrutura de objeto na explicação
       if (suggestions.explanation) {
-        updates.explanation = suggestions.explanation;
-        updatedFields.push('explanation');
+        let explanationText = "";
+        
+        if (typeof suggestions.explanation === 'string') {
+          // Se já é string, usar diretamente
+          explanationText = suggestions.explanation;
+        } else if (typeof suggestions.explanation === 'object') {
+          // Se é objeto, converter para texto estruturado
+          const explanationObj = suggestions.explanation;
+          const sections = [];
+          
+          // Processar cada seção do objeto
+          Object.keys(explanationObj).forEach((key, index) => {
+            const section = explanationObj[key];
+            if (typeof section === 'object' && section.title && section.content) {
+              sections.push(`**${section.title}**\n${section.content}`);
+            } else if (typeof section === 'string') {
+              sections.push(`**Seção ${index + 1}**\n${section}`);
+            }
+          });
+          
+          explanationText = sections.join('\n\n');
+        }
+        
+        if (explanationText.trim()) {
+          updates.explanation = explanationText;
+          updatedFields.push('explanation');
+        }
       }
       
       if (suggestions.manual_hint) {

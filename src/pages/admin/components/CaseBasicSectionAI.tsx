@@ -22,7 +22,7 @@ export function CaseBasicSectionAI({
 
   const handleAutofillBasicSection = async () => {
     try {
-      console.log('🤖 Iniciando AI: Dados Básicos...');
+      console.log('🤖 Iniciando AI: Dados Básicos Expandidos...');
       
       const suggestions = await autofillBasicComplete(form);
       
@@ -37,6 +37,7 @@ export function CaseBasicSectionAI({
       const updatedFields: string[] = [];
       const updates: any = {};
 
+      // Campos básicos existentes
       if (suggestions.category_id) {
         updates.category_id = suggestions.category_id;
         updatedFields.push('category_id');
@@ -77,13 +78,24 @@ export function CaseBasicSectionAI({
         updatedFields.push('symptoms_duration');
       }
 
+      // NOVOS CAMPOS: Achados radiológicos e resumo clínico
+      if (suggestions.findings) {
+        updates.findings = suggestions.findings;
+        updatedFields.push('findings');
+      }
+      
+      if (suggestions.patient_clinical_info) {
+        updates.patient_clinical_info = suggestions.patient_clinical_info;
+        updatedFields.push('patient_clinical_info');
+      }
+
       if (Object.keys(updates).length > 0) {
         setForm((prev: any) => ({ ...prev, ...updates }));
         onFieldsUpdated?.(updatedFields);
         
         toast({ 
-          title: `🤖 AI: Dados Básicos Preenchidos!`,
-          description: `${updatedFields.length} campos atualizados: ${updatedFields.join(', ')}` 
+          title: `🤖 AI: Dados Básicos Expandidos!`,
+          description: `${updatedFields.length} campos atualizados incluindo achados e resumo clínico.` 
         });
       } else {
         toast({ 
@@ -122,7 +134,7 @@ export function CaseBasicSectionAI({
       
       <div className="text-xs text-blue-700">
         <div>Analisa diagnóstico + contexto para sugerir:</div>
-        <div className="font-medium">Categoria • Dificuldade • Modalidade • Demografia</div>
+        <div className="font-medium">Categoria • Dificuldade • Modalidade • Demografia • Achados • Resumo</div>
       </div>
     </div>
   );

@@ -22,6 +22,159 @@ REGRAS RÍGIDAS PARA OCULTAR DIAGNÓSTICO:
 - Use linguagem técnica neutra sem revelar conclusões
 `;
 
+// PROMPT EXPANDIDO PARA DADOS BÁSICOS (INCLUI ACHADOS E RESUMO CLÍNICO)
+export function buildPromptBasicComplete({ diagnosis, contextData }: { diagnosis: string, contextData?: any }) {
+  return [
+    {
+      role: "system",
+      content: `Você é um especialista em radiologia que ajuda a preencher dados básicos de casos clínicos educacionais.
+
+Com base no diagnóstico fornecido, sugira TODOS os campos básicos incluindo categoria, dificuldade, modalidade, demografia E TAMBÉM os achados radiológicos e resumo clínico.
+
+${DIAG_NOT_REVEALED}
+${STRICT_DIAGNOSIS_HIDING}
+
+IMPORTANTE: Os campos "findings" e "patient_clinical_info" devem ser preenchidos de forma neutra, sem revelar o diagnóstico.
+
+Retorne EXATAMENTE este JSON:
+{
+  "category_id": number,
+  "difficulty_level": number,
+  "points": number,
+  "modality": "string",
+  "subtype": "string",
+  "patient_age": "string",
+  "patient_gender": "string",
+  "symptoms_duration": "string",
+  "findings": "string - achados radiológicos neutros",
+  "patient_clinical_info": "string - resumo clínico neutro"
+}`
+    },
+    {
+      role: "user",
+      content: `Diagnóstico: ${diagnosis}`
+    }
+  ];
+}
+
+// PROMPT PARA 4 DIAGNÓSTICOS DIFERENCIAIS
+export function buildPromptStructuredComplete({ diagnosis, contextData }: { diagnosis: string, contextData?: any }) {
+  return [
+    {
+      role: "system",
+      content: `Você é um especialista em radiologia que preenche dados estruturados para casos clínicos educacionais.
+
+Com base no diagnóstico fornecido, preencha TODOS os campos estruturados, garantindo EXATAMENTE 4 diagnósticos diferenciais educacionalmente relevantes.
+
+REGRA CRÍTICA: "differential_diagnoses" deve conter EXATAMENTE 4 diagnósticos plausíveis que NÃO incluam o diagnóstico principal.
+
+Retorne EXATAMENTE este JSON:
+{
+  "primary_diagnosis": "string",
+  "secondary_diagnoses": ["string1", "string2"],
+  "case_classification": "diagnostico",
+  "cid10_code": "string",
+  "anatomical_regions": ["string1", "string2"],
+  "finding_types": ["string1", "string2"],
+  "laterality": "string",
+  "main_symptoms": ["string1", "string2"],
+  "vital_signs": {"pressao": "string", "temp": "string"},
+  "medical_history": ["string1", "string2"],
+  "learning_objectives": ["string1", "string2", "string3"],
+  "pathology_types": ["string1"],
+  "clinical_presentation_tags": ["string1", "string2"],
+  "case_complexity_factors": ["string1", "string2"],
+  "search_keywords": ["string1", "string2", "string3"],
+  "structured_metadata": {"severidade": "string", "urgencia": "string"},
+  "case_rarity": "comum|raro|muito_raro",
+  "educational_value": number_1_to_10,
+  "clinical_relevance": number_1_to_10,
+  "estimated_solve_time": number_minutes,
+  "target_audience": ["Graduação", "Residência R1"],
+  "medical_subspecialty": ["string1", "string2"],
+  "exam_context": "rotina|urgencia|eletivo",
+  "differential_diagnoses": ["diferencial1", "diferencial2", "diferencial3", "diferencial4"],
+  "similar_cases_ids": []
+}`
+    },
+    {
+      role: "user",
+      content: `Diagnóstico principal: ${diagnosis}`
+    }
+  ];
+}
+
+// PROMPT PARA QUIZ BASEADO EM DIAGNÓSTICOS DIFERENCIAIS
+export function buildPromptQuizComplete({ diagnosis, differential_diagnoses, contextData }: { diagnosis: string, differential_diagnoses?: string[], contextData?: any }) {
+  const differentials = differential_diagnoses && differential_diagnoses.length >= 3 
+    ? differential_diagnoses.slice(0, 3) 
+    : ["Diferencial A", "Diferencial B", "Diferencial C"];
+
+  return [
+    {
+      role: "system",
+      content: `Você é um especialista em radiologia que cria quizzes educacionais baseados em diagnósticos diferenciais.
+
+Com base no diagnóstico principal e nos 3 diagnósticos diferenciais fornecidos, crie um quiz completo.
+
+REGRAS OBRIGATÓRIAS:
+- A alternativa A (índice 0) deve SEMPRE ser o diagnóstico principal (CORRETO)
+- As alternativas B, C, D devem ser os 3 diagnósticos diferenciais fornecidos
+- Pergunta deve ser neutra, sem revelar o diagnóstico
+- Feedbacks devem explicar por que cada alternativa está certa ou errada
+- ${FEEDBACK_INSTRUCTION}
+
+${DIAG_NOT_REVEALED}
+${STRICT_DIAGNOSIS_HIDING}
+
+Retorne EXATAMENTE este JSON:
+{
+  "main_question": "string - pergunta neutra",
+  "answer_options": ["${diagnosis}", "${differentials[0]}", "${differentials[1]}", "${differentials[2]}"],
+  "correct_answer_index": 0,
+  "answer_feedbacks": ["feedback_correto", "feedback_incorreto_1", "feedback_incorreto_2", "feedback_incorreto_3"],
+  "answer_short_tips": ["dica_1", "dica_2", "dica_3", "dica_4"]
+}`
+    },
+    {
+      role: "user",
+      content: `Diagnóstico principal: ${diagnosis}
+Diagnósticos diferenciais: ${differentials.join(', ')}`
+    }
+  ];
+}
+
+// PROMPT PARA EXPLICAÇÃO ESTRUTURADA (RETORNA STRING)
+export function buildPromptExplanationComplete({ diagnosis, findings, contextData }: { diagnosis: string, findings?: string, contextData?: any }) {
+  return [
+    {
+      role: "system",
+      content: `Você é um especialista em radiologia que cria explicações educacionais detalhadas.
+
+Com base no diagnóstico e achados fornecidos, crie uma explicação educacional completa E uma dica manual concisa.
+
+A explicação deve ser um TEXTO CORRIDO estruturado (não objeto JSON) cobrindo:
+1. Análise dos achados radiológicos
+2. Correlação clínica
+3. Diagnóstico diferencial
+4. Pontos-chave para o aprendizado
+5. Relevância clínica e prognóstico
+
+Retorne EXATAMENTE este JSON:
+{
+  "explanation": "string - texto educacional estruturado completo",
+  "manual_hint": "string - dica concisa para ajudar o estudante"
+}`
+    },
+    {
+      role: "user",
+      content: `Diagnóstico: ${diagnosis}
+Achados: ${findings || 'não especificado'}`
+    }
+  ];
+}
+
+// Manter prompts existentes para compatibilidade
 export function buildPromptAlternatives({ diagnosis, findings, modality, subtype }) {
   return [
     {
