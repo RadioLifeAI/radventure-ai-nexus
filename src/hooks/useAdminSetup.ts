@@ -38,7 +38,7 @@ export function useAdminSetup() {
       console.log('Criando primeiro admin do sistema...');
       
       const { data, error } = await supabase
-        .rpc('create_dev_user_simple', {
+        .rpc('create_admin_direct', {
           p_email: email,
           p_full_name: fullName,
           p_type: 'ADMIN'

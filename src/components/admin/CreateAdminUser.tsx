@@ -25,10 +25,10 @@ export function CreateAdminUser() {
     setIsCreating(true);
     
     try {
-      console.log('Criando admin via função create_dev_user_simple...');
+      console.log('Criando admin via função create_admin_direct...');
       
       const { data, error } = await supabase
-        .rpc('create_dev_user_simple', {
+        .rpc('create_admin_direct', {
           p_email: email,
           p_full_name: fullName,
           p_type: 'ADMIN'
