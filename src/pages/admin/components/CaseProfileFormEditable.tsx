@@ -22,6 +22,14 @@ import { CaseFormGamifiedHelpers } from "./CaseFormGamifiedHelpers";
 import { CaseFormGamifiedLayout } from "./CaseFormGamifiedLayout";
 import { supabase } from "@/integrations/supabase/client";
 
+// Novos componentes AI por seção
+import { CaseBasicSectionAI } from "./CaseBasicSectionAI";
+import { CaseStructuredDataAI } from "./CaseStructuredDataAI";
+import { CaseQuizCompleteAI } from "./CaseQuizCompleteAI";
+import { CaseExplanationCompleteAI } from "./CaseExplanationCompleteAI";
+import { CaseAdvancedConfigAI } from "./CaseAdvancedConfigAI";
+import { CaseMasterAI } from "./CaseMasterAI";
+
 export function CaseProfileFormEditable({ 
   editingCase, 
   onCreated 
@@ -341,6 +349,17 @@ export function CaseProfileFormEditable({
             autoTitlePreview={autoTitlePreview}
             showPreview={showPreview}
           />
+          
+          {/* NOVO: Botão AI para seção básica */}
+          <CaseBasicSectionAI 
+            form={form}
+            setForm={setForm}
+            onFieldsUpdated={(fields) => {
+              setHighlightedFields(fields);
+              setTimeout(() => setHighlightedFields([]), 2000);
+            }}
+          />
+          
           <CaseProfileBasicSectionUnified
             form={form}
             highlightedFields={highlightedFields}
@@ -357,6 +376,18 @@ export function CaseProfileFormEditable({
             autoTitlePreview={autoTitlePreview}
             onGenerateAutoTitle={handleAutoGenerateTitle}
           />
+          
+          {/* NOVO: Botão Master ao lado do título */}
+          <div className="flex items-center gap-4 mt-4">
+            <CaseMasterAI 
+              form={form}
+              setForm={setForm}
+              onFieldsUpdated={(fields) => {
+                setHighlightedFields(fields);
+                setTimeout(() => setHighlightedFields([]), 3000);
+              }}
+            />
+          </div>
         </CaseFormGamifiedLayout>
 
         <CaseFormGamifiedLayout
@@ -364,6 +395,16 @@ export function CaseProfileFormEditable({
           title="Dados Estruturados"
           description="Configure os campos estruturados para filtros avançados e AI"
         >
+          {/* NOVO: Botão AI para dados estruturados */}
+          <CaseStructuredDataAI 
+            form={form}
+            setForm={setForm}
+            onFieldsUpdated={(fields) => {
+              setHighlightedFields(fields);
+              setTimeout(() => setHighlightedFields([]), 2000);
+            }}
+          />
+          
           <CaseStructuredFieldsSection 
             form={form}
             setForm={setForm}
@@ -389,6 +430,16 @@ export function CaseProfileFormEditable({
           title="Pergunta e Alternativas"
           description="Configure a pergunta principal e as opções de resposta"
         >
+          {/* NOVO: Botão AI para quiz completo */}
+          <CaseQuizCompleteAI 
+            form={form}
+            setForm={setForm}
+            onFieldsUpdated={(fields) => {
+              setHighlightedFields(fields);
+              setTimeout(() => setHighlightedFields([]), 2000);
+            }}
+          />
+          
           <div className="space-y-4">
             <div>
               <label className="font-semibold block">
@@ -423,6 +474,16 @@ export function CaseProfileFormEditable({
           title="Explicação e Feedback"
           description="Configure as explicações e dicas para o usuário"
         >
+          {/* NOVO: Botão AI para explicação completa */}
+          <CaseExplanationCompleteAI 
+            form={form}
+            setForm={setForm}
+            onFieldsUpdated={(fields) => {
+              setHighlightedFields(fields);
+              setTimeout(() => setHighlightedFields([]), 2000);
+            }}
+          />
+          
           <CaseProfileExplanationSectionContainer
             form={form}
             highlightedFields={highlightedFields}
@@ -438,6 +499,16 @@ export function CaseProfileFormEditable({
           title="Configurações Avançadas"
           description="Configurações de gamificação e regras especiais"
         >
+          {/* NOVO: Botão AI para config avançada */}
+          <CaseAdvancedConfigAI 
+            form={form}
+            setForm={setForm}
+            onFieldsUpdated={(fields) => {
+              setHighlightedFields(fields);
+              setTimeout(() => setHighlightedFields([]), 2000);
+            }}
+          />
+          
           <div className="space-y-4">
             <button
               type="button"
