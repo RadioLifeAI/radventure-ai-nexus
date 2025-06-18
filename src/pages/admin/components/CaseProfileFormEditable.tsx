@@ -8,6 +8,8 @@ import { CaseProfileBasicSection } from "./CaseProfileBasicSection";
 import { CaseProfileAlternativesSection } from "./CaseProfileAlternativesSection";
 import { CaseProfileExplanationSectionContainer } from "./CaseProfileExplanationSectionContainer";
 import { CaseProfileAdvancedConfigContainer } from "./CaseProfileAdvancedConfigContainer";
+import { CaseStructuredFieldsSection } from "./CaseStructuredFieldsSection";
+import { CaseReferenceSection } from "./CaseReferenceSection";
 import { useFieldUndo } from "../hooks/useFieldUndo";
 import { useCaseTitleGenerator } from "../hooks/useCaseTitleGenerator";
 import { CaseProfileFormTitleSection } from "./CaseProfileFormTitleSection";
@@ -67,6 +69,38 @@ export function CaseProfileFormEditable({
     if (editingCase) {
       setForm({
         ...editingCase,
+        // Garantir arrays vazios para campos novos
+        secondary_diagnoses: editingCase.secondary_diagnoses || [],
+        anatomical_regions: editingCase.anatomical_regions || [],
+        finding_types: editingCase.finding_types || [],
+        main_symptoms: editingCase.main_symptoms || [],
+        medical_history: editingCase.medical_history || [],
+        learning_objectives: editingCase.learning_objectives || [],
+        pathology_types: editingCase.pathology_types || [],
+        clinical_presentation_tags: editingCase.clinical_presentation_tags || [],
+        case_complexity_factors: editingCase.case_complexity_factors || [],
+        search_keywords: editingCase.search_keywords || [],
+        target_audience: editingCase.target_audience || [],
+        medical_subspecialty: editingCase.medical_subspecialty || [],
+        differential_diagnoses: editingCase.differential_diagnoses || [],
+        similar_cases_ids: editingCase.similar_cases_ids || [],
+        prerequisite_cases: editingCase.prerequisite_cases || [],
+        unlocks_cases: editingCase.unlocks_cases || [],
+        // Garantir objetos vazios para campos JSON
+        vital_signs: editingCase.vital_signs || {},
+        structured_metadata: editingCase.structured_metadata || {},
+        achievement_triggers: editingCase.achievement_triggers || {},
+        // Garantir valores padrão
+        primary_diagnosis: editingCase.primary_diagnosis || "",
+        case_classification: editingCase.case_classification || "diagnostico",
+        cid10_code: editingCase.cid10_code || "",
+        laterality: editingCase.laterality || "",
+        case_rarity: editingCase.case_rarity || "comum",
+        educational_value: editingCase.educational_value || 5,
+        clinical_relevance: editingCase.clinical_relevance || 5,
+        estimated_solve_time: editingCase.estimated_solve_time || 5,
+        exam_context: editingCase.exam_context || "rotina",
+        // Campos de referência
         is_radiopaedia_case: editingCase.is_radiopaedia_case ?? false,
         reference_citation: editingCase.reference_citation ?? "",
         reference_url: editingCase.reference_url ?? "",
@@ -78,26 +112,7 @@ export function CaseProfileFormEditable({
   const isEditMode = !!editingCase;
   const { generateTitle, abbreviateCategory, generateRandomCaseNumber } = useCaseTitleGenerator(categories);
 
-  const autoTitlePreview =
-    form.category_id && form.modality
-      ? `Caso ${abbreviateCategory(categories.find(c => String(c.id) === String(form.category_id))?.name || "")} ${form.case_number || generateRandomCaseNumber()}`
-      : "(Será definido automaticamente após salvar: Caso [ABREV] [NUM ALEATÓRIO])";
-
-  React.useEffect(() => {
-    if (!isEditMode && form.category_id && form.modality && (!form.case_number || !form.title)) {
-      const { title, case_number } = generateTitle(form.category_id, form.modality);
-      setForm((prev: any) => ({ ...prev, title, case_number }));
-    }
-  }, [form.category_id, form.modality, isEditMode]);
-
-  function handleAutoGenerateTitle() {
-    if (form.category_id && form.modality) {
-      const { title, case_number } = generateTitle(form.category_id, form.modality);
-      setForm((prev: any) => ({ ...prev, title, case_number }));
-      setHighlightedFields(["title", "case_number"]);
-      setTimeout(() => setHighlightedFields([]), 1200);
-    }
-  }
+  // ... keep existing code (autoTitlePreview, useEffect for title generation, handleAutoGenerateTitle)
 
   const undoFindings = useFieldUndo(handlers.form.findings);
   const undoClinical = useFieldUndo(handlers.form.patient_clinical_info);
@@ -197,10 +212,42 @@ export function CaseProfileFormEditable({
         ai_tutor_level: form.ai_tutor_level,
         updated_at: new Date().toISOString(),
         diagnosis_internal,
+        
+        // Campos de referência Radiopaedia
         is_radiopaedia_case: form.is_radiopaedia_case,
         reference_citation: form.is_radiopaedia_case ? form.reference_citation : null,
         reference_url: form.is_radiopaedia_case ? form.reference_url : null,
-        access_date: form.is_radiopaedia_case && form.access_date ? form.access_date : null
+        access_date: form.is_radiopaedia_case && form.access_date ? form.access_date : null,
+        
+        // Novos campos estruturados
+        primary_diagnosis: form.primary_diagnosis || null,
+        secondary_diagnoses: form.secondary_diagnoses || [],
+        case_classification: form.case_classification || "diagnostico",
+        cid10_code: form.cid10_code || null,
+        anatomical_regions: form.anatomical_regions || [],
+        finding_types: form.finding_types || [],
+        laterality: form.laterality || null,
+        main_symptoms: form.main_symptoms || [],
+        vital_signs: form.vital_signs || {},
+        medical_history: form.medical_history || [],
+        learning_objectives: form.learning_objectives || [],
+        pathology_types: form.pathology_types || [],
+        clinical_presentation_tags: form.clinical_presentation_tags || [],
+        case_complexity_factors: form.case_complexity_factors || [],
+        search_keywords: form.search_keywords || [],
+        structured_metadata: form.structured_metadata || {},
+        case_rarity: form.case_rarity || "comum",
+        educational_value: form.educational_value || 5,
+        clinical_relevance: form.clinical_relevance || 5,
+        estimated_solve_time: form.estimated_solve_time || 5,
+        prerequisite_cases: form.prerequisite_cases || [],
+        unlocks_cases: form.unlocks_cases || [],
+        achievement_triggers: form.achievement_triggers || {},
+        target_audience: form.target_audience || [],
+        medical_subspecialty: form.medical_subspecialty || [],
+        exam_context: form.exam_context || "rotina",
+        differential_diagnoses: form.differential_diagnoses || [],
+        similar_cases_ids: form.similar_cases_ids || []
       };
 
       Object.keys(payload).forEach(k => {
@@ -229,15 +276,39 @@ export function CaseProfileFormEditable({
         if (!isEditMode) resetForm();
         onCreated?.();
       } else {
+        console.error("Database error:", error);
         setFeedback(`Erro ao ${isEditMode ? "atualizar" : "cadastrar"} caso.`);
         toast({ title: `Erro ao ${isEditMode ? "atualizar" : "cadastrar"} caso!`, variant: "destructive" });
       }
     } catch (err: any) {
+      console.error("Submit error:", err);
       setFeedback(`Erro ao ${isEditMode ? "atualizar" : "cadastrar"} caso.`);
       toast({ title: `Erro ao ${isEditMode ? "atualizar" : "cadastrar"} caso!`, variant: "destructive" });
     }
     setSubmitting(false);
     setTimeout(() => setFeedback(""), 2300);
+  }
+
+  // ... keep existing code (autoTitlePreview logic, useEffect for title generation, handleAutoGenerateTitle)
+  const autoTitlePreview =
+    form.category_id && form.modality
+      ? `Caso ${abbreviateCategory(categories.find(c => String(c.id) === String(form.category_id))?.name || "")} ${form.case_number || generateRandomCaseNumber()}`
+      : "(Será definido automaticamente após salvar: Caso [ABREV] [NUM ALEATÓRIO])";
+
+  React.useEffect(() => {
+    if (!isEditMode && form.category_id && form.modality && (!form.case_number || !form.title)) {
+      const { title, case_number } = generateTitle(form.category_id, form.modality);
+      setForm((prev: any) => ({ ...prev, title, case_number }));
+    }
+  }, [form.category_id, form.modality, isEditMode]);
+
+  function handleAutoGenerateTitle() {
+    if (form.category_id && form.modality) {
+      const { title, case_number } = generateTitle(form.category_id, form.modality);
+      setForm((prev: any) => ({ ...prev, title, case_number }));
+      setHighlightedFields(["title", "case_number"]);
+      setTimeout(() => setHighlightedFields([]), 1200);
+    }
   }
 
   return (
@@ -283,6 +354,31 @@ export function CaseProfileFormEditable({
             setForm={setForm}
             autoTitlePreview={autoTitlePreview}
             onGenerateAutoTitle={handleAutoGenerateTitle}
+          />
+        </CaseFormGamifiedLayout>
+
+        <CaseFormGamifiedLayout
+          section="structured"
+          title="Dados Estruturados"
+          description="Configure os campos estruturados para filtros avançados e AI"
+        >
+          <CaseStructuredFieldsSection 
+            form={form}
+            setForm={setForm}
+            handleFormChange={handleFormChange}
+            renderTooltipTip={renderTooltipTip}
+          />
+        </CaseFormGamifiedLayout>
+
+        <CaseFormGamifiedLayout
+          section="reference"
+          title="Referência e Fonte"
+          description="Configure informações sobre a fonte do caso"
+        >
+          <CaseReferenceSection 
+            form={form}
+            handleFormChange={handleFormChange}
+            renderTooltipTip={renderTooltipTip}
           />
         </CaseFormGamifiedLayout>
 
