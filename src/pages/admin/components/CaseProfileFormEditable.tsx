@@ -116,7 +116,7 @@ export function CaseProfileFormEditable({
 
   const undoFindings = useFieldUndo(handlers.form.findings);
   const undoClinical = useFieldUndo(handlers.form.patient_clinical_info);
-  const undoDiagnosis = useFieldUndo(handlers.form.diagnosis_internal);
+  const undoDiagnosis = useFieldUndo(handlers.form.primary_diagnosis);
 
   const onSuggestFindings = async () => {
     undoFindings.handleBeforeChange(handlers.form.findings);
@@ -127,7 +127,7 @@ export function CaseProfileFormEditable({
     await handlers.handleSuggestClinicalInfo();
   };
   const onSuggestDiagnosis = async () => {
-    undoDiagnosis.handleBeforeChange(handlers.form.diagnosis_internal);
+    undoDiagnosis.handleBeforeChange(handlers.form.primary_diagnosis);
     await handlers.handleSuggestDiagnosis();
   };
 
@@ -162,7 +162,7 @@ export function CaseProfileFormEditable({
     setSubmitting(true);
     try {
       const selectedCategory = categories.find(c => String(c.id) === String(form.category_id));
-      const diagnosis_internal = form.diagnosis_internal ?? "";
+      const primary_diagnosis = form.primary_diagnosis ?? "";
 
       let image_url_arr: any[] = [];
       if (Array.isArray(form.image_url)) {
@@ -211,7 +211,6 @@ export function CaseProfileFormEditable({
         elimination_penalty_points: form.elimination_penalty_points,
         ai_tutor_level: form.ai_tutor_level,
         updated_at: new Date().toISOString(),
-        diagnosis_internal,
         
         // Campos de referência Radiopaedia
         is_radiopaedia_case: form.is_radiopaedia_case,
