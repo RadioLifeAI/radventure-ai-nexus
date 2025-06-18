@@ -352,7 +352,7 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
               min="1"
               max="10"
               value={form.clinical_relevance}
-              onChange={(e) => setForm({ ...form, clinical_relevance: parseInt e.target.value) || 5 })}
+              onChange={(e) => setForm({ ...form, clinical_relevance: parseInt(e.target.value) || 5 })}
             />
           </div>
 
