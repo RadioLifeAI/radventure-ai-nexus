@@ -20,6 +20,7 @@ import { CaseTemplateChooser } from "./CaseTemplateChooser";
 import { CaseFormGamifiedHelpers } from "./CaseFormGamifiedHelpers";
 import { CaseFormGamifiedLayout } from "./CaseFormGamifiedLayout";
 import { supabase } from "@/integrations/supabase/client";
+import { CaseSmartAutofill } from "./CaseSmartAutofill";
 
 export function CaseProfileFormEditable({ 
   editingCase, 
@@ -319,7 +320,16 @@ export function CaseProfileFormEditable({
           <CaseProgressDashboard form={form} />
           <CaseQualityRadar form={form} />
           <CaseFormGamifiedHelpers form={form} />
-          <CaseTemplateChooser setForm={setForm} />
+          
+          {/* Novo: Sistema de Auto-preenchimento Inteligente */}
+          <CaseSmartAutofill 
+            form={form} 
+            setForm={setForm}
+            onFieldsUpdated={(fields) => {
+              setHighlightedFields(fields);
+              setTimeout(() => setHighlightedFields([]), 2000);
+            }}
+          />
         </div>
       )}
 

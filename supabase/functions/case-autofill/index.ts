@@ -22,41 +22,75 @@ interface CaseData {
   search_keywords?: string[];
 }
 
-const STRUCTURED_EXTRACTION_PROMPT = `
-Você é um especialista em radiologia que deve extrair informações estruturadas de casos médicos radiológicos.
+const RADIOLOGY_TEMPLATE_PROMPT = `
+Você é um radiologista especialista que deve preencher automaticamente campos estruturados para um caso médico radiológico.
 
-Analise o seguinte caso e extraia as informações estruturadas em formato JSON:
+Baseado na modalidade e contexto fornecido, preencha TODOS os campos possíveis usando conhecimento médico especializado:
 
-REGRAS:
-- Seja preciso e use terminologia médica correta
-- Para arrays, retorne sempre arrays, mesmo que vazios
-- Use termos em português brasileiro
-- Para regiões anatômicas, seja específico (ex: "Pulmão direito", "Lobo superior esquerdo")
-- Para tipos de patologia, use classificações padrão (ex: "Infeccioso", "Neoplásico", "Inflamatório")
+REGRAS ESPECÍFICAS:
+- Para TC de Trauma: foque em lesões agudas, múltiplas regiões, urgência
+- Para RX Tórax: foque em patologias pulmonares comuns, consolidações
+- Para RM Neurológica: foque em patologias complexas, múltiplas sequências
+- Para US Abdome: foque em órgãos sólidos, vesícula, rins
+- Para Mamografia: foque em screening, lesões mamárias, BI-RADS
+- Para RX Ortopédico: foque em fraturas, articulações, trauma
 
-FORMATO DE RESPOSTA (JSON válido):
+CONTEXTO DO CASO:
+Modalidade: {modality}
+Especialidade: {specialty}
+Contexto: {context}
+Título: {title}
+
+PREENCHA TODOS OS CAMPOS EM FORMATO JSON:
 {
-  "primary_diagnosis": "Diagnóstico principal claro e específico",
+  "primary_diagnosis": "Diagnóstico principal específico",
   "secondary_diagnoses": ["Diagnóstico diferencial 1", "Diagnóstico diferencial 2"],
-  "anatomical_regions": ["Região anatômica 1", "Região anatômica 2"],
-  "finding_types": ["Tipo de achado 1", "Tipo de achado 2"],
-  "laterality": "bilateral|direito|esquerdo|central",
-  "main_symptoms": ["Sintoma 1", "Sintoma 2"],
-  "pathology_types": ["Tipo de patologia 1"],
-  "clinical_presentation_tags": ["Tag de apresentação 1", "Tag 2"],
-  "case_complexity_factors": ["Fator de complexidade 1"],
-  "learning_objectives": ["Objetivo de aprendizado 1", "Objetivo 2"],
-  "search_keywords": ["palavra-chave1", "palavra-chave2"],
   "case_classification": "diagnostico|diferencial|emergencial|didatico",
+  "anatomical_regions": ["Região anatômica específica"],
+  "finding_types": ["Tipo de achado radiológico"],
+  "pathology_types": ["Tipo de patologia"],
+  "main_symptoms": ["Sintoma principal", "Sintoma secundário"],
+  "clinical_presentation_tags": ["Tag de apresentação"],
+  "case_complexity_factors": ["Fator de complexidade"],
+  "learning_objectives": ["Objetivo educacional 1", "Objetivo 2"],
+  "search_keywords": ["palavra-chave1", "palavra-chave2"],
   "case_rarity": "comum|raro|muito_raro",
-  "educational_value": 5,
-  "clinical_relevance": 5,
+  "educational_value": 7,
+  "clinical_relevance": 8,
   "estimated_solve_time": 5,
   "exam_context": "rotina|urgencia|uti|ambulatorio",
-  "target_audience": ["Graduação", "Residência R1"]
+  "target_audience": ["Graduação", "Residência R1"],
+  "laterality": "bilateral|direito|esquerdo|central",
+  "cid10_code": "Código CID-10 se aplicável"
 }
+`;
 
-DADOS DO CASO:
+const SMART_AUTOFILL_PROMPT = `
+Você é um especialista em radiologia que deve analisar o caso fornecido e sugerir melhorias inteligentes.
+
+ANALISE O CASO ATUAL:
+{caseData}
+
+FORNEÇA SUGESTÕES INTELIGENTES:
+1. Campos vazios que podem ser preenchidos
+2. Inconsistências detectadas
+3. Sugestões de melhoria
+4. Campos relacionados que devem ser preenchidos
+
+RETORNE EM FORMATO JSON:
+{
+  "suggestions": {
+    "missing_fields": ["campo1", "campo2"],
+    "inconsistencies": ["inconsistência detectada"],
+    "improvements": ["sugestão de melhoria"],
+    "related_fields": {
+      "campo": "valor sugerido"
+    }
+  },
+  "autofill_data": {
+    // Novos campos preenchidos automaticamente
+  }
+}
 `;
 
 serve(async (req) => {
@@ -65,9 +99,8 @@ serve(async (req) => {
   }
 
   try {
-    const { caseData, action = 'full_autofill' } = await req.json();
-    console.log('🚀 Received case data:', caseData);
-    console.log('🎯 Action requested:', action);
+    const { caseData, action = 'smart_autofill', templateType = 'generic' } = await req.json();
+    console.log('🚀 Received case autofill request:', { action, templateType });
 
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openaiApiKey) {
@@ -78,24 +111,23 @@ serve(async (req) => {
     let responseFormat = 'json_object';
 
     switch (action) {
-      case 'extract_structured':
-        prompt = buildStructuredExtractionPrompt(caseData);
+      case 'template_autofill':
+        prompt = buildTemplateAutofillPrompt(caseData, templateType);
         break;
-      case 'suggest_keywords':
-        prompt = buildKeywordsPrompt(caseData);
-        responseFormat = 'text';
+      case 'smart_suggestions':
+        prompt = buildSmartSuggestionsPrompt(caseData);
         break;
-      case 'classify_complexity':
-        prompt = buildComplexityPrompt(caseData);
+      case 'field_completion':
+        prompt = buildFieldCompletionPrompt(caseData);
         break;
-      case 'suggest_learning_objectives':
-        prompt = buildLearningObjectivesPrompt(caseData);
+      case 'consistency_check':
+        prompt = buildConsistencyCheckPrompt(caseData);
         break;
       default:
-        prompt = buildFullAutofillPrompt(caseData);
+        prompt = buildSmartAutofillPrompt(caseData);
     }
 
-    console.log('📝 Generated prompt:', prompt.substring(0, 200) + '...');
+    console.log('📝 Generated prompt for action:', action);
 
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -107,12 +139,16 @@ serve(async (req) => {
         model: 'gpt-4o-mini',
         messages: [
           {
+            role: 'system',
+            content: 'Você é um radiologista especialista que auxilia na criação de casos médicos estruturados e educacionais.'
+          },
+          {
             role: 'user',
             content: prompt
           }
         ],
         response_format: { type: responseFormat },
-        max_tokens: 2000,
+        max_tokens: 2500,
         temperature: 0.3
       }),
     });
@@ -132,17 +168,13 @@ serve(async (req) => {
     }
 
     let suggestions;
-    if (responseFormat === 'json_object') {
-      try {
-        suggestions = JSON.parse(content);
-        console.log('📊 Parsed suggestions:', suggestions);
-      } catch (parseError) {
-        console.error('❌ JSON parse error:', parseError);
-        console.error('Raw content:', content);
-        throw new Error('Failed to parse OpenAI response as JSON');
-      }
-    } else {
-      suggestions = { content };
+    try {
+      suggestions = JSON.parse(content);
+      console.log('📊 Parsed suggestions:', suggestions);
+    } catch (parseError) {
+      console.error('❌ JSON parse error:', parseError);
+      console.error('Raw content:', content);
+      throw new Error('Failed to parse OpenAI response as JSON');
     }
 
     return new Response(
@@ -173,76 +205,84 @@ serve(async (req) => {
   }
 });
 
-function buildStructuredExtractionPrompt(caseData: CaseData): string {
-  return `${STRUCTURED_EXTRACTION_PROMPT}
-Título: ${caseData.title || 'Não informado'}
-Modalidade: ${caseData.modality || 'Não informado'}
-Especialidade: ${caseData.specialty || 'Não informado'}
-Achados: ${caseData.findings || 'Não informado'}
-Informações Clínicas: ${caseData.patient_clinical_info || 'Não informado'}
-Diagnóstico Atual: ${caseData.primary_diagnosis || caseData.diagnosis_internal || 'Não informado'}
+function buildTemplateAutofillPrompt(caseData: CaseData, templateType: string): string {
+  const contextMap = {
+    'trauma_tc': 'TC de Trauma - Emergência',
+    'pneumonia_rx': 'RX Tórax - Pneumonia',
+    'fratura_membro': 'RX Ortopédico - Fratura',
+    'rm_neurologico': 'RM Neurológica - Avançado',
+    'abdome_tc': 'TC Abdome - Diagnóstico',
+    'caso_raro': 'Caso Raro - Especializado'
+  };
 
-Extraia TODAS as informações estruturadas possíveis em formato JSON válido.`;
+  return RADIOLOGY_TEMPLATE_PROMPT
+    .replace('{modality}', caseData.modality || 'Não especificado')
+    .replace('{specialty}', caseData.specialty || 'Radiologia')
+    .replace('{context}', contextMap[templateType] || 'Geral')
+    .replace('{title}', caseData.title || 'Não especificado');
 }
 
-function buildKeywordsPrompt(caseData: CaseData): string {
-  return `Gere palavras-chave para busca deste caso radiológico.
-
-CASO:
-Título: ${caseData.title || 'Não informado'}
-Modalidade: ${caseData.modality || 'Não informado'}
-Achados: ${caseData.findings || 'Não informado'}
-Diagnóstico: ${caseData.primary_diagnosis || 'Não informado'}
-
-Retorne 10-15 palavras-chave relevantes separadas por vírgula, incluindo:
-- Termos médicos específicos
-- Modalidade de imagem
-- Região anatômica
-- Patologia
-- Sintomas relacionados
-
-Exemplo: pneumonia, consolidação, radiografia, tórax, pulmão, infecção, febre, dispneia`;
+function buildSmartAutofillPrompt(caseData: CaseData): string {
+  return SMART_AUTOFILL_PROMPT.replace('{caseData}', JSON.stringify(caseData, null, 2));
 }
 
-function buildComplexityPrompt(caseData: CaseData): string {
-  return `Analise a complexidade deste caso radiológico e classifique.
+function buildSmartSuggestionsPrompt(caseData: CaseData): string {
+  return `
+Analise este caso radiológico e forneça sugestões inteligentes para melhorar a qualidade:
 
-CASO:
+CASO ATUAL:
 ${JSON.stringify(caseData, null, 2)}
 
-Retorne um JSON com:
+FORNEÇA SUGESTÕES EM JSON:
 {
-  "case_rarity": "comum|raro|muito_raro",
-  "educational_value": 1-10,
-  "clinical_relevance": 1-10,
-  "estimated_solve_time": minutos,
-  "case_complexity_factors": ["fator1", "fator2"],
-  "target_audience": ["público1", "público2"]
-}`;
+  "quality_score": 85,
+  "missing_critical": ["campos críticos não preenchidos"],
+  "suggestions": ["sugestão específica 1", "sugestão 2"],
+  "auto_suggestions": {
+    "campo": "valor sugerido"
+  },
+  "consistency_alerts": ["alerta de consistência"]
+}
+`;
 }
 
-function buildLearningObjectivesPrompt(caseData: CaseData): string {
-  return `Crie objetivos de aprendizado para este caso radiológico.
+function buildFieldCompletionPrompt(caseData: CaseData): string {
+  return `
+Complete automaticamente os campos vazios deste caso radiológico:
 
-CASO:
+DADOS ATUAIS:
 ${JSON.stringify(caseData, null, 2)}
 
-Retorne um JSON com:
+PREENCHA CAMPOS VAZIOS COM BASE NO CONTEXTO EXISTENTE:
 {
-  "learning_objectives": ["objetivo1", "objetivo2", "objetivo3"],
-  "clinical_presentation_tags": ["tag1", "tag2"],
-  "differential_diagnoses": ["diagnóstico1", "diagnóstico2"]
+  "completed_fields": {
+    // Apenas campos que estavam vazios
+  },
+  "confidence_scores": {
+    "campo": 0.95
+  }
+}
+`;
 }
 
-Os objetivos devem ser específicos, mensuráveis e educacionalmente relevantes.`;
-}
+function buildConsistencyCheckPrompt(caseData: CaseData): string {
+  return `
+Verifique a consistência deste caso radiológico:
 
-function buildFullAutofillPrompt(caseData: CaseData): string {
-  return `${STRUCTURED_EXTRACTION_PROMPT}
-
-CASO COMPLETO:
+DADOS:
 ${JSON.stringify(caseData, null, 2)}
 
-Preencha TODOS os campos estruturados possíveis baseado nas informações disponíveis.
-Se algum campo não puder ser determinado, use um valor padrão apropriado.`;
+ANALISE CONSISTÊNCIA:
+{
+  "consistency_score": 90,
+  "issues": [
+    {
+      "field": "campo_problema",
+      "issue": "descrição do problema",
+      "suggestion": "sugestão de correção"
+    }
+  ],
+  "improvements": ["melhoria sugerida"]
+}
+`;
 }
