@@ -52,12 +52,14 @@ export function useRadCoinStore() {
     mutationFn: async ({ type, quantity, cost }: { type: string, quantity: number, cost: number }) => {
       if (!user?.id) throw new Error('User not authenticated');
 
-      const { data, error } = await supabase.rpc('purchase_help_aids', {
-        p_user_id: user.id,
-        p_aid_type: type,
-        p_quantity: quantity,
-        p_radcoin_cost: cost
-      });
+      // Use the custom SQL function we created
+      const { data, error } = await supabase
+        .rpc('purchase_help_aids', {
+          p_user_id: user.id,
+          p_aid_type: type,
+          p_quantity: quantity,
+          p_radcoin_cost: cost
+        });
 
       if (error) throw error;
       if (!data) throw new Error('Saldo insuficiente de RadCoins');
