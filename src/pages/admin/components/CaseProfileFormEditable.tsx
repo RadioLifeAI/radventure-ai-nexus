@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { CaseProfileFormLayout } from "./CaseProfileFormLayout";
 import { CaseProfileFormActions } from "./CaseProfileFormActions";
 import { CaseSmartAutofillAdvanced } from "./CaseSmartAutofillAdvanced";
@@ -18,20 +17,17 @@ import {
 } from "lucide-react";
 
 type Props = {
-  editingCase?: any;
-  onCreated?: () => void;
-  onSave?: (formData: any) => void;
-  onCancel?: () => void;
+  onSave: (formData: any) => void;
+  onCancel: () => void;
   initialData?: any;
 };
 
-export function CaseProfileFormEditable({ editingCase, onCreated, onSave, onCancel, initialData }: Props) {
+export function CaseProfileFormEditable({ onSave, onCancel, initialData }: Props) {
   const { specialties, difficulties } = useUnifiedFormDataSource();
   const [highlightedFields, setHighlightedFields] = useState<string[]>([]);
 
   const {
     form,
-    setForm,
     submitting,
     feedback,
     showAdvanced,
@@ -57,28 +53,11 @@ export function CaseProfileFormEditable({ editingCase, onCreated, onSave, onCanc
     handleRandomizeOptions
   } = useCaseProfileFormHandlers({ categories: specialties, difficulties });
 
-  // Initialize form with editing case data if provided
-  useEffect(() => {
-    if (editingCase) {
-      setForm(editingCase);
-    }
-  }, [editingCase, setForm]);
-
   const handleSave = async () => {
     try {
-      if (onSave) {
-        await onSave(form);
-      } else if (onCreated) {
-        await onCreated();
-      }
+      await onSave(form);
     } catch (error) {
       console.error('Erro ao salvar caso:', error);
-    }
-  };
-
-  const handleCancel = () => {
-    if (onCancel) {
-      onCancel();
     }
   };
 
@@ -188,7 +167,7 @@ export function CaseProfileFormEditable({ editingCase, onCreated, onSave, onCanc
       {/* Ações do Formulário */}
       <CaseProfileFormActions
         onSave={handleSave}
-        onCancel={handleCancel}
+        onCancel={onCancel}
         onReset={resetForm}
         onPreview={() => setShowPreview(true)}
         submitting={submitting}
