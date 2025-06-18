@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { CaseProfileBasicSection } from "./CaseProfileBasicSection";
+import { CaseProfileBasicSectionUnified } from "./CaseProfileBasicSectionUnified";
+import { CaseSmartAutofillEnhanced } from "./CaseSmartAutofillEnhanced";
 import { CaseProfileAlternativesSection } from "./CaseProfileAlternativesSection";
 import { CaseProfileExplanationSectionContainer } from "./CaseProfileExplanationSectionContainer";
 import { CaseProfileAdvancedConfigContainer } from "./CaseProfileAdvancedConfigContainer";
@@ -321,8 +322,8 @@ export function CaseProfileFormEditable({
           <CaseQualityRadar form={form} />
           <CaseFormGamifiedHelpers form={form} />
           
-          {/* Novo: Sistema de Auto-preenchimento Inteligente */}
-          <CaseSmartAutofill 
+          {/* Novo: Sistema de Auto-preenchimento Inteligente APRIMORADO */}
+          <CaseSmartAutofillEnhanced 
             form={form} 
             setForm={setForm}
             onFieldsUpdated={(fields) => {
@@ -337,29 +338,24 @@ export function CaseProfileFormEditable({
         <CaseFormGamifiedLayout
           section="basic"
           title={isEditMode ? "Editar Caso Médico" : "Criar Novo Caso Médico"}
-          description="Configure as informações básicas do caso médico"
+          description="Configure as informações básicas do caso médico (Dados Unificados)"
         >
           <CaseProfileFormTitleSection
             autoTitlePreview={autoTitlePreview}
             showPreview={showPreview}
           />
-          <CaseProfileBasicSection
+          <CaseProfileBasicSectionUnified
             form={form}
             highlightedFields={highlightedFields}
-            categories={categories}
-            difficulties={difficulties}
             handleFormChange={handleFormChange}
             handleModalityChange={handleModalityChange}
             handleAutoFillCaseDetails={handleAutoFillCaseDetails}
-            handleSuggestDiagnosis={onSuggestDiagnosis}
-            handleSuggestHint={handleSuggestHint}
             handleImageChange={handleImageChange}
             renderTooltipTip={renderTooltipTip}
             handleSuggestFindings={onSuggestFindings}
             handleSuggestClinicalInfo={onSuggestClinical}
             undoFindings={undoFindings}
             undoClinical={undoClinical}
-            undoDiagnosis={undoDiagnosis}
             setForm={setForm}
             autoTitlePreview={autoTitlePreview}
             onGenerateAutoTitle={handleAutoGenerateTitle}

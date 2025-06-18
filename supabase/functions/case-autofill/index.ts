@@ -1,5 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,18 +23,74 @@ interface CaseData {
   search_keywords?: string[];
 }
 
-const RADIOLOGY_TEMPLATE_PROMPT = `
-Você é um radiologista especialista que deve preencher automaticamente campos estruturados para um caso médico radiológico.
+// Inicializar cliente Supabase para buscar dados
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-Baseado na modalidade e contexto fornecido, preencha TODOS os campos possíveis usando conhecimento médico especializado:
+// Cache de dados para performance
+let dataCache: {
+  specialties: any[];
+  modalities: any[];
+  subtypes: any[];
+  difficulties: any[];
+  lastUpdated: number;
+} | null = null;
 
-REGRAS ESPECÍFICAS:
-- Para TC de Trauma: foque em lesões agudas, múltiplas regiões, urgência
-- Para RX Tórax: foque em patologias pulmonares comuns, consolidações
-- Para RM Neurológica: foque em patologias complexas, múltiplas sequências
-- Para US Abdome: foque em órgãos sólidos, vesícula, rins
-- Para Mamografia: foque em screening, lesões mamárias, BI-RADS
-- Para RX Ortopédico: foque em fraturas, articulações, trauma
+async function loadDatabaseData() {
+  const now = Date.now();
+  
+  // Usar cache se for recente (5 minutos)
+  if (dataCache && (now - dataCache.lastUpdated) < 5 * 60 * 1000) {
+    return dataCache;
+  }
+
+  try {
+    console.log('🔄 Carregando dados do banco...');
+    
+    const [specialtiesResult, modalitiesResult, subtypesResult, difficultiesResult] = await Promise.all([
+      supabase.from('medical_specialties').select('id, name').order('name'),
+      supabase.from('imaging_modalities').select('id, name').order('name'),
+      supabase.from('imaging_subtypes').select('id, name, modality_name').order('name'),
+      supabase.from('difficulties').select('id, level, description').order('level')
+    ]);
+
+    if (specialtiesResult.error) throw specialtiesResult.error;
+    if (modalitiesResult.error) throw modalitiesResult.error;
+    if (subtypesResult.error) throw subtypesResult.error;
+    if (difficultiesResult.error) throw difficultiesResult.error;
+
+    dataCache = {
+      specialties: specialtiesResult.data || [],
+      modalities: modalitiesResult.data || [],
+      subtypes: subtypesResult.data || [],
+      difficulties: difficultiesResult.data || [],
+      lastUpdated: now
+    };
+
+    console.log(`✅ Dados carregados: ${dataCache.specialties.length} especialidades, ${dataCache.modalities.length} modalidades`);
+    return dataCache;
+  } catch (error) {
+    console.error('❌ Erro ao carregar dados do banco:', error);
+    throw error;
+  }
+}
+
+const ENHANCED_RADIOLOGY_TEMPLATE_PROMPT = `
+Você é um radiologista especialista que deve preencher automaticamente campos estruturados para um caso médico radiológico usando DADOS REAIS DO BANCO DE DADOS.
+
+DADOS DISPONÍVEIS NO BANCO:
+Especialidades: {specialties}
+Modalidades: {modalities}  
+Subtipos: {subtypes}
+Dificuldades: {difficulties}
+
+REGRAS IMPORTANTES:
+1. Use EXATAMENTE os nomes das especialidades, modalidades e subtipos listados acima
+2. Para category_id: retorne o ID numérico da especialidade
+3. Para difficulty_level: retorne o número do nível (1-4)
+4. Para modalidade/subtipo: use os nomes exatos do banco
+5. Garanta que modalidade e subtipo sejam compatíveis
 
 CONTEXTO DO CASO:
 Modalidade: {modality}
@@ -41,8 +98,13 @@ Especialidade: {specialty}
 Contexto: {context}
 Título: {title}
 
-PREENCHA TODOS OS CAMPOS EM FORMATO JSON:
+PREENCHA EM FORMATO JSON VÁLIDO:
 {
+  "category_id": ID_NUMERICO_ESPECIALIDADE,
+  "difficulty_level": NUMERO_1_A_4,
+  "points": PONTOS_BASEADOS_NA_DIFICULDADE,
+  "modality": "NOME_EXATO_DA_MODALIDADE",
+  "subtype": "NOME_EXATO_DO_SUBTIPO",
   "primary_diagnosis": "Diagnóstico principal específico",
   "secondary_diagnoses": ["Diagnóstico diferencial 1", "Diagnóstico diferencial 2"],
   "case_classification": "diagnostico|diferencial|emergencial|didatico",
@@ -66,18 +128,17 @@ PREENCHA TODOS OS CAMPOS EM FORMATO JSON:
 `;
 
 const SMART_AUTOFILL_PROMPT = `
-Você é um especialista em radiologia que deve analisar o caso fornecido e sugerir melhorias inteligentes.
+Você é um especialista em radiologia que deve analisar o caso fornecido e sugerir melhorias inteligentes usando DADOS REAIS DO BANCO.
+
+DADOS DISPONÍVEIS:
+Especialidades: {specialties}
+Modalidades: {modalities}
+Subtipos: {subtypes}
 
 ANALISE O CASO ATUAL:
 {caseData}
 
-FORNEÇA SUGESTÕES INTELIGENTES:
-1. Campos vazios que podem ser preenchidos
-2. Inconsistências detectadas
-3. Sugestões de melhoria
-4. Campos relacionados que devem ser preenchidos
-
-RETORNE EM FORMATO JSON:
+FORNEÇA SUGESTÕES INTELIGENTES EM JSON:
 {
   "suggestions": {
     "missing_fields": ["campo1", "campo2"],
@@ -88,7 +149,11 @@ RETORNE EM FORMATO JSON:
     }
   },
   "autofill_data": {
-    // Novos campos preenchidos automaticamente
+    "category_id": ID_NUMERICO,
+    "difficulty_level": NUMERO_1_A_4,
+    "modality": "NOME_EXATO_MODALIDADE",
+    "subtype": "NOME_EXATO_SUBTIPO",
+    // outros campos preenchidos automaticamente
   }
 }
 `;
@@ -102,6 +167,9 @@ serve(async (req) => {
     const { caseData, action = 'smart_autofill', templateType = 'generic' } = await req.json();
     console.log('🚀 Received case autofill request:', { action, templateType });
 
+    // Carregar dados do banco
+    const dbData = await loadDatabaseData();
+
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openaiApiKey) {
       throw new Error('OpenAI API key not configured');
@@ -112,19 +180,19 @@ serve(async (req) => {
 
     switch (action) {
       case 'template_autofill':
-        prompt = buildTemplateAutofillPrompt(caseData, templateType);
+        prompt = buildTemplateAutofillPrompt(caseData, templateType, dbData);
         break;
       case 'smart_suggestions':
-        prompt = buildSmartSuggestionsPrompt(caseData);
+        prompt = buildSmartSuggestionsPrompt(caseData, dbData);
         break;
       case 'field_completion':
-        prompt = buildFieldCompletionPrompt(caseData);
+        prompt = buildFieldCompletionPrompt(caseData, dbData);
         break;
       case 'consistency_check':
-        prompt = buildConsistencyCheckPrompt(caseData);
+        prompt = buildConsistencyCheckPrompt(caseData, dbData);
         break;
       default:
-        prompt = buildSmartAutofillPrompt(caseData);
+        prompt = buildSmartAutofillPrompt(caseData, dbData);
     }
 
     console.log('📝 Generated prompt for action:', action);
@@ -140,7 +208,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'Você é um radiologista especialista que auxilia na criação de casos médicos estruturados e educacionais.'
+            content: 'Você é um radiologista especialista que auxilia na criação de casos médicos estruturados e educacionais. Retorne sempre um JSON válido.'
           },
           {
             role: 'user',
@@ -205,7 +273,7 @@ serve(async (req) => {
   }
 });
 
-function buildTemplateAutofillPrompt(caseData: CaseData, templateType: string): string {
+function buildTemplateAutofillPrompt(caseData: CaseData, templateType: string, dbData: any): string {
   const contextMap = {
     'trauma_tc': 'TC de Trauma - Emergência',
     'pneumonia_rx': 'RX Tórax - Pneumonia',
@@ -215,20 +283,32 @@ function buildTemplateAutofillPrompt(caseData: CaseData, templateType: string): 
     'caso_raro': 'Caso Raro - Especializado'
   };
 
-  return RADIOLOGY_TEMPLATE_PROMPT
+  return ENHANCED_RADIOLOGY_TEMPLATE_PROMPT
+    .replace('{specialties}', JSON.stringify(dbData.specialties))
+    .replace('{modalities}', JSON.stringify(dbData.modalities))
+    .replace('{subtypes}', JSON.stringify(dbData.subtypes))
+    .replace('{difficulties}', JSON.stringify(dbData.difficulties))
     .replace('{modality}', caseData.modality || 'Não especificado')
     .replace('{specialty}', caseData.specialty || 'Radiologia')
     .replace('{context}', contextMap[templateType] || 'Geral')
     .replace('{title}', caseData.title || 'Não especificado');
 }
 
-function buildSmartAutofillPrompt(caseData: CaseData): string {
-  return SMART_AUTOFILL_PROMPT.replace('{caseData}', JSON.stringify(caseData, null, 2));
+function buildSmartAutofillPrompt(caseData: CaseData, dbData: any): string {
+  return SMART_AUTOFILL_PROMPT
+    .replace('{specialties}', JSON.stringify(dbData.specialties))
+    .replace('{modalities}', JSON.stringify(dbData.modalities))
+    .replace('{subtypes}', JSON.stringify(dbData.subtypes))
+    .replace('{caseData}', JSON.stringify(caseData, null, 2));
 }
 
-function buildSmartSuggestionsPrompt(caseData: CaseData): string {
+function buildSmartSuggestionsPrompt(caseData: CaseData, dbData: any): string {
   return `
-Analise este caso radiológico e forneça sugestões inteligentes para melhorar a qualidade:
+Analise este caso radiológico e forneça sugestões inteligentes usando dados reais do banco:
+
+DADOS DO BANCO:
+Especialidades: ${JSON.stringify(dbData.specialties)}
+Modalidades: ${JSON.stringify(dbData.modalities)}
 
 CASO ATUAL:
 ${JSON.stringify(caseData, null, 2)}
@@ -239,24 +319,27 @@ FORNEÇA SUGESTÕES EM JSON:
   "missing_critical": ["campos críticos não preenchidos"],
   "suggestions": ["sugestão específica 1", "sugestão 2"],
   "auto_suggestions": {
-    "campo": "valor sugerido"
+    "campo": "valor sugerido usando dados do banco"
   },
   "consistency_alerts": ["alerta de consistência"]
 }
 `;
 }
 
-function buildFieldCompletionPrompt(caseData: CaseData): string {
+function buildFieldCompletionPrompt(caseData: CaseData, dbData: any): string {
   return `
-Complete automaticamente os campos vazios deste caso radiológico:
+Complete automaticamente os campos vazios deste caso radiológico usando dados do banco:
+
+DADOS DISPONÍVEIS:
+${JSON.stringify(dbData, null, 2)}
 
 DADOS ATUAIS:
 ${JSON.stringify(caseData, null, 2)}
 
-PREENCHA CAMPOS VAZIOS COM BASE NO CONTEXTO EXISTENTE:
+COMPLETE CAMPOS VAZIOS EM JSON:
 {
   "completed_fields": {
-    // Apenas campos que estavam vazios
+    // Apenas campos que estavam vazios, usando dados exatos do banco
   },
   "confidence_scores": {
     "campo": 0.95
@@ -265,21 +348,24 @@ PREENCHA CAMPOS VAZIOS COM BASE NO CONTEXTO EXISTENTE:
 `;
 }
 
-function buildConsistencyCheckPrompt(caseData: CaseData): string {
+function buildConsistencyCheckPrompt(caseData: CaseData, dbData: any): string {
   return `
-Verifique a consistência deste caso radiológico:
+Verifique a consistência deste caso radiológico com os dados do banco:
+
+DADOS DO BANCO:
+${JSON.stringify(dbData, null, 2)}
 
 DADOS:
 ${JSON.stringify(caseData, null, 2)}
 
-ANALISE CONSISTÊNCIA:
+ANALISE CONSISTÊNCIA EM JSON:
 {
   "consistency_score": 90,
   "issues": [
     {
       "field": "campo_problema",
       "issue": "descrição do problema",
-      "suggestion": "sugestão de correção"
+      "suggestion": "sugestão de correção usando dados do banco"
     }
   ],
   "improvements": ["melhoria sugerida"]
