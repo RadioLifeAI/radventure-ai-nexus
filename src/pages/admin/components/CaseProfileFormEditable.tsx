@@ -22,19 +22,6 @@ import { CaseFormGamifiedHelpers } from "./CaseFormGamifiedHelpers";
 import { CaseFormGamifiedLayout } from "./CaseFormGamifiedLayout";
 import { supabase } from "@/integrations/supabase/client";
 
-// Importar componentes AI especializados
-import {
-  AIStructuredDataButton,
-  AIClinicalSummaryButton,
-  AIEducationalTagsButton,
-  AIGamificationButton,
-  AIQuizCompleteButton,
-  AIExplanationFeedbackButton,
-  AIAdvancedConfigButton,
-  AIMasterAutofillButton
-} from "./CaseAIButtons";
-import { useCaseAIMaster } from "../hooks/useCaseAIMaster";
-
 export function CaseProfileFormEditable({ 
   editingCase, 
   onCreated 
@@ -77,9 +64,6 @@ export function CaseProfileFormEditable({
     handleSuggestFindings, handleSuggestClinicalInfo,
     handleRandomizeOptions
   } = handlers;
-
-  // Integrar AI Master
-  const aiMaster = useCaseAIMaster(form, setForm, setHighlightedFields);
 
   // Load editing case data into form
   useEffect(() => {
@@ -353,18 +337,10 @@ export function CaseProfileFormEditable({
           title={isEditMode ? "Editar Caso Médico" : "Criar Novo Caso Médico"}
           description="Configure as informações básicas do caso médico (Dados Unificados)"
         >
-          <div className="flex items-center gap-4 mb-4">
-            <CaseProfileFormTitleSection
-              autoTitlePreview="(autoTitlePreview)"
-              showPreview={showPreview}
-            />
-            {/* Botão Master AI */}
-            <AIMasterAutofillButton 
-              onClick={aiMaster.handleMasterAutofillAI}
-              loading={aiMaster.loading}
-            />
-          </div>
-          
+          <CaseProfileFormTitleSection
+            autoTitlePreview={autoTitlePreview}
+            showPreview={showPreview}
+          />
           <CaseProfileBasicSectionUnified
             form={form}
             highlightedFields={highlightedFields}
@@ -378,8 +354,8 @@ export function CaseProfileFormEditable({
             undoFindings={undoFindings}
             undoClinical={undoClinical}
             setForm={setForm}
-            autoTitlePreview="(autoTitlePreview)"
-            onGenerateAutoTitle={() => {}}
+            autoTitlePreview={autoTitlePreview}
+            onGenerateAutoTitle={handleAutoGenerateTitle}
           />
         </CaseFormGamifiedLayout>
 
@@ -388,44 +364,12 @@ export function CaseProfileFormEditable({
           title="Dados Estruturados"
           description="Configure os campos estruturados para filtros avançados e AI"
         >
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Diagnósticos e Estrutura Anatômica</h3>
-            <AIStructuredDataButton 
-              onClick={aiMaster.handleStructuredDataAI}
-              loading={aiMaster.loading}
-            />
-          </div>
-          
           <CaseStructuredFieldsSection 
             form={form}
             setForm={setForm}
             handleFormChange={handleFormChange}
             renderTooltipTip={renderTooltipTip}
           />
-          
-          <div className="flex justify-between items-center mt-6 mb-4">
-            <h3 className="text-lg font-semibold">Resumo Clínico Estruturado</h3>
-            <AIClinicalSummaryButton 
-              onClick={aiMaster.handleClinicalSummaryAI}
-              loading={aiMaster.loading}
-            />
-          </div>
-          
-          <div className="flex justify-between items-center mt-6 mb-4">
-            <h3 className="text-lg font-semibold">Tags e Metadados Educacionais</h3>
-            <AIEducationalTagsButton 
-              onClick={aiMaster.handleEducationalTagsAI}
-              loading={aiMaster.loading}
-            />
-          </div>
-          
-          <div className="flex justify-between items-center mt-6 mb-4">
-            <h3 className="text-lg font-semibold">Gamificação Avançada</h3>
-            <AIGamificationButton 
-              onClick={aiMaster.handleGamificationAI}
-              loading={aiMaster.loading}
-            />
-          </div>
         </CaseFormGamifiedLayout>
 
         <CaseFormGamifiedLayout
@@ -445,14 +389,6 @@ export function CaseProfileFormEditable({
           title="Pergunta e Alternativas"
           description="Configure a pergunta principal e as opções de resposta"
         >
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Quiz Completo</h3>
-            <AIQuizCompleteButton 
-              onClick={aiMaster.handleQuizCompleteAI}
-              loading={aiMaster.loading}
-            />
-          </div>
-          
           <div className="space-y-4">
             <div>
               <label className="font-semibold block">
@@ -487,14 +423,6 @@ export function CaseProfileFormEditable({
           title="Explicação e Feedback"
           description="Configure as explicações e dicas para o usuário"
         >
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Explicação Total</h3>
-            <AIExplanationFeedbackButton 
-              onClick={aiMaster.handleExplanationFeedbackAI}
-              loading={aiMaster.loading}
-            />
-          </div>
-          
           <CaseProfileExplanationSectionContainer
             form={form}
             highlightedFields={highlightedFields}
@@ -510,14 +438,6 @@ export function CaseProfileFormEditable({
           title="Configurações Avançadas"
           description="Configurações de gamificação e regras especiais"
         >
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Configurações Inteligentes</h3>
-            <AIAdvancedConfigButton 
-              onClick={aiMaster.handleAdvancedConfigAI}
-              loading={aiMaster.loading}
-            />
-          </div>
-          
           <div className="space-y-4">
             <button
               type="button"

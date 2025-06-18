@@ -78,214 +78,125 @@ async function loadDatabaseData() {
   }
 }
 
-// Prompts especializados para cada action
-const AI_PROMPTS = {
-  autofill_structured_data: `
-Analise o diagnóstico e contexto médico para gerar dados estruturados completos.
+// Prompts para diferentes ações
+const TITLE_GENERATION_PROMPT = `
+Você é um radiologista especialista que deve gerar títulos profissionais para casos médicos.
 
-CASO: {caseData}
-DADOS DO BANCO: {dbData}
+DADOS DO CASO:
+{caseData}
 
-GERE DADOS ESTRUTURADOS EM JSON:
+DADOS DISPONÍVEIS NO BANCO:
+Especialidades: {specialties}
+Modalidades: {modalities}
+
+REGRAS PARA TÍTULO:
+1. Formato: "Caso [Especialidade] - [Descrição Específica]"
+2. Seja específico e profissional
+3. Máximo 80 caracteres
+4. Use terminologia médica correta
+5. Evite abreviações desnecessárias
+6. Seja descritivo mas conciso
+
+RETORNE JSON:
+{
+  "title": "Título profissional gerado",
+  "rationale": "Explicação da escolha do título"
+}
+`;
+
+const BASIC_DATA_AUTOFILL_PROMPT = `
+Analise este caso médico e preencha automaticamente os campos básicos usando dados reais do banco.
+
+DADOS DISPONÍVEIS:
+Especialidades: {specialties}
+Modalidades: {modalities}
+Subtipos: {subtypes}
+Dificuldades: {difficulties}
+
+CASO ATUAL:
+{caseData}
+
+PREENCHA OS CAMPOS BÁSICOS EM JSON:
+{
+  "category_id": ID_NUMERICO_ESPECIALIDADE,
+  "difficulty_level": NUMERO_1_A_4,
+  "points": PONTOS_BASEADOS_NA_DIFICULDADE,
+  "modality": "NOME_EXATO_MODALIDADE",
+  "subtype": "NOME_EXATO_SUBTIPO",
+  "patient_age": "IDADE_ESTIMADA",
+  "patient_gender": "GENERO_BASEADO_CONTEXTO",
+  "symptoms_duration": "DURACAO_ESTIMADA"
+}
+`;
+
+const DIAGNOSIS_AUTOFILL_PROMPT = `
+Analise os achados radiológicos e informações clínicas para sugerir diagnósticos precisos.
+
+CASO:
+{caseData}
+
+FORNEÇA DIAGNÓSTICOS EM JSON:
 {
   "primary_diagnosis": "Diagnóstico principal específico",
   "secondary_diagnoses": ["Diagnóstico diferencial 1", "Diagnóstico diferencial 2"],
-  "case_classification": "diagnostico|diferencial|emergencial|didatico",
   "cid10_code": "Código CID-10 apropriado",
-  "anatomical_regions": ["Região anatômica específica"],
-  "finding_types": ["Tipo de achado radiológico"],
+  "case_classification": "diagnostico|diferencial|emergencial|didatico",
+  "differential_diagnoses": ["Hipótese 1", "Hipótese 2", "Hipótese 3"]
+}
+`;
+
+const STRUCTURED_DATA_PROMPT = `
+Extraia e estruture dados clínicos e radiológicos do caso fornecido.
+
+CASO:
+{caseData}
+
+EXTRAIA DADOS ESTRUTURADOS EM JSON:
+{
+  "anatomical_regions": ["Região específica 1", "Região 2"],
+  "finding_types": ["Tipo de achado 1", "Tipo 2"],
   "laterality": "bilateral|direito|esquerdo|central",
-  "pathology_types": ["Tipo de patologia"],
-  "differential_diagnoses": ["Hipótese diagnóstica 1", "Hipótese 2"]
-}`,
-
-  autofill_clinical_summary: `
-Gere um resumo clínico estruturado baseado no diagnóstico e contexto.
-
-CASO: {caseData}
-
-GERE RESUMO CLÍNICO EM JSON:
-{
   "main_symptoms": ["Sintoma principal", "Sintoma secundário"],
-  "vital_signs": {
-    "temperature": "valor",
-    "blood_pressure": "valor",
-    "heart_rate": "valor"
-  },
-  "medical_history": ["Histórico relevante 1", "Histórico 2"],
-  "symptoms_duration": "Duração estimada dos sintomas",
-  "patient_age": "Idade típica para o caso",
-  "patient_gender": "Gênero mais comum para o caso"
-}`,
-
-  autofill_educational_tags: `
-Gere tags educacionais e metadados baseados no diagnóstico.
-
-CASO: {caseData}
-
-GERE TAGS EDUCACIONAIS EM JSON:
-{
-  "learning_objectives": ["Objetivo educacional 1", "Objetivo 2"],
+  "pathology_types": ["Tipo de patologia"],
   "clinical_presentation_tags": ["Tag clínica 1", "Tag 2"],
   "case_complexity_factors": ["Fator de complexidade"],
+  "learning_objectives": ["Objetivo educacional 1", "Objetivo 2"],
   "search_keywords": ["palavra-chave1", "palavra-chave2"],
   "target_audience": ["Graduação", "Residência R1"],
-  "medical_subspecialty": ["Subespecialidade médica"],
-  "structured_metadata": {
-    "key_learning_points": ["Ponto chave 1", "Ponto 2"],
-    "common_mistakes": ["Erro comum 1", "Erro 2"]
-  }
-}`,
+  "exam_context": "rotina|urgencia|uti|ambulatorio"
+}
+`;
 
-  autofill_gamification: `
-Gere métricas de gamificação baseadas na complexidade do caso.
+const QUIZ_AUTOFILL_PROMPT = `
+Gere uma pergunta principal e alternativas baseadas no caso médico.
 
-CASO: {caseData}
+CASO:
+{caseData}
 
-GERE GAMIFICAÇÃO EM JSON:
+GERE QUIZ EM JSON:
 {
-  "case_rarity": "comum|raro|muito_raro",
-  "educational_value": 8,
-  "clinical_relevance": 9,
-  "estimated_solve_time": 7,
-  "prerequisite_cases": ["Caso básico relacionado"],
-  "unlocks_cases": ["Caso avançado que este caso libera"],
-  "achievement_triggers": {
-    "first_diagnosis": "Primeiro diagnóstico correto",
-    "speed_bonus": "Diagnóstico rápido"
-  },
-  "exam_context": "rotina|urgencia|uti|ambulatorio",
-  "similar_cases_ids": ["ID de caso similar"]
-}`,
-
-  autofill_quiz_complete: `
-Gere pergunta principal, alternativas, feedbacks e dicas curtas.
-
-CASO: {caseData}
-
-GERE QUIZ COMPLETO EM JSON:
-{
-  "main_question": "Pergunta clara e específica sobre o diagnóstico",
+  "main_question": "Pergunta clara e específica sobre o caso",
   "answer_options": [
     "Opção correta baseada no diagnóstico",
     "Distrator plausível 1",
-    "Distrator plausível 2",
+    "Distrator plausível 2", 
     "Distrator plausível 3"
   ],
   "correct_answer_index": 0,
   "answer_feedbacks": [
-    "Feedback detalhado para opção correta explicando por que está certa",
-    "Explicação sobre por que o distrator 1 está incorreto",
-    "Explicação sobre por que o distrator 2 está incorreto",
-    "Explicação sobre por que o distrator 3 está incorreto"
+    "Feedback para opção correta",
+    "Explicação sobre o distrator 1",
+    "Explicação sobre o distrator 2",
+    "Explicação sobre o distrator 3"
   ],
   "answer_short_tips": [
-    "Dica resumida para opção correta",
-    "Dica sobre o erro no distrator 1",
-    "Dica sobre o erro no distrator 2",
-    "Dica sobre o erro no distrator 3"
+    "Dica para opção correta",
+    "Dica para distrator 1",
+    "Dica para distrator 2",
+    "Dica para distrator 3"
   ]
-}`,
-
-  autofill_explanation_feedback: `
-Gere explicação detalhada e dica manual para o caso.
-
-CASO: {caseData}
-
-GERE EXPLICAÇÃO E FEEDBACK EM JSON:
-{
-  "explanation": "Explicação detalhada sobre o diagnóstico, achados radiológicos, fisiopatologia e relevância clínica. Inclua raciocínio diagnóstico step-by-step.",
-  "manual_hint": "Dica estratégica para orientar o raciocínio sem dar a resposta diretamente"
-}`,
-
-  autofill_advanced_config: `
-Configure as opções avançadas baseadas no tipo de caso.
-
-CASO: {caseData}
-
-GERE CONFIGURAÇÕES AVANÇADAS EM JSON:
-{
-  "can_skip": true,
-  "max_elimination": 2,
-  "ai_hint_enabled": true,
-  "skip_penalty_points": 2,
-  "elimination_penalty_points": 1,
-  "ai_tutor_level": "intermediario",
-  "points": 15
-}`,
-
-  master_autofill: `
-Analise completamente o caso e preencha TODOS os campos do formulário.
-
-CASO: {caseData}
-DADOS DO BANCO: {dbData}
-
-PREENCHA TUDO EM JSON:
-{
-  "basic_data": {
-    "category_id": "ID_da_especialidade",
-    "difficulty_level": "nivel_1_a_4",
-    "points": "pontos_baseados_dificuldade",
-    "modality": "modalidade_exata",
-    "subtype": "subtipo_exato"
-  },
-  "structured_data": {
-    "primary_diagnosis": "Diagnóstico principal",
-    "secondary_diagnoses": ["Diagnóstico diferencial"],
-    "case_classification": "tipo_do_caso",
-    "cid10_code": "codigo_cid10",
-    "anatomical_regions": ["regiao_anatomica"],
-    "finding_types": ["tipo_achado"],
-    "laterality": "lateralidade",
-    "pathology_types": ["tipo_patologia"],
-    "differential_diagnoses": ["diagnosticos_diferenciais"]
-  },
-  "clinical_summary": {
-    "main_symptoms": ["sintomas_principais"],
-    "vital_signs": {"temperatura": "valor"},
-    "medical_history": ["historico_medico"],
-    "symptoms_duration": "duracao_sintomas",
-    "patient_age": "idade_paciente",
-    "patient_gender": "genero_paciente"
-  },
-  "educational_tags": {
-    "learning_objectives": ["objetivos_aprendizado"],
-    "clinical_presentation_tags": ["tags_clinicas"],
-    "case_complexity_factors": ["fatores_complexidade"],
-    "search_keywords": ["palavras_chave"],
-    "target_audience": ["publico_alvo"],
-    "medical_subspecialty": ["subespecialidade"],
-    "structured_metadata": {"pontos_chave": ["pontos"]}
-  },
-  "gamification": {
-    "case_rarity": "raridade",
-    "educational_value": 8,
-    "clinical_relevance": 9,
-    "estimated_solve_time": 7,
-    "exam_context": "contexto_exame"
-  },
-  "quiz": {
-    "main_question": "pergunta_principal",
-    "answer_options": ["opcao1", "opcao2", "opcao3", "opcao4"],
-    "correct_answer_index": 0,
-    "answer_feedbacks": ["feedback1", "feedback2", "feedback3", "feedback4"],
-    "answer_short_tips": ["dica1", "dica2", "dica3", "dica4"]
-  },
-  "explanation": {
-    "explanation": "explicacao_detalhada",
-    "manual_hint": "dica_manual"
-  },
-  "advanced_config": {
-    "can_skip": true,
-    "max_elimination": 2,
-    "ai_hint_enabled": true,
-    "skip_penalty_points": 2,
-    "elimination_penalty_points": 1,
-    "ai_tutor_level": "intermediario",
-    "points": 15
-  }
-}`
-};
+}
+`;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -293,8 +204,8 @@ serve(async (req) => {
   }
 
   try {
-    const { caseData, action = 'smart_autofill' } = await req.json();
-    console.log('🚀 Received case autofill request:', { action });
+    const { caseData, action = 'smart_autofill', templateType = 'generic' } = await req.json();
+    console.log('🚀 Received case autofill request:', { action, templateType });
 
     // Carregar dados do banco
     const dbData = await loadDatabaseData();
@@ -305,35 +216,37 @@ serve(async (req) => {
     }
 
     let prompt = '';
-    
-    // Selecionar prompt baseado na action
+    let responseFormat = 'json_object';
+
     switch (action) {
+      case 'generate_title':
+        prompt = buildTitleGenerationPrompt(caseData, dbData);
+        break;
+      case 'autofill_basic_data':
+        prompt = buildBasicDataPrompt(caseData, dbData);
+        break;
+      case 'autofill_diagnosis':
+        prompt = buildDiagnosisPrompt(caseData, dbData);
+        break;
       case 'autofill_structured_data':
-        prompt = buildPrompt(AI_PROMPTS.autofill_structured_data, caseData, dbData);
+        prompt = buildStructuredDataPrompt(caseData, dbData);
         break;
-      case 'autofill_clinical_summary':
-        prompt = buildPrompt(AI_PROMPTS.autofill_clinical_summary, caseData, dbData);
+      case 'autofill_quiz':
+        prompt = buildQuizPrompt(caseData, dbData);
         break;
-      case 'autofill_educational_tags':
-        prompt = buildPrompt(AI_PROMPTS.autofill_educational_tags, caseData, dbData);
+      case 'template_autofill':
+        prompt = buildTemplateAutofillPrompt(caseData, templateType, dbData);
         break;
-      case 'autofill_gamification':
-        prompt = buildPrompt(AI_PROMPTS.autofill_gamification, caseData, dbData);
+      case 'smart_suggestions':
+        prompt = buildSmartSuggestionsPrompt(caseData, dbData);
         break;
-      case 'autofill_quiz_complete':
-        prompt = buildPrompt(AI_PROMPTS.autofill_quiz_complete, caseData, dbData);
+      case 'field_completion':
+        prompt = buildFieldCompletionPrompt(caseData, dbData);
         break;
-      case 'autofill_explanation_feedback':
-        prompt = buildPrompt(AI_PROMPTS.autofill_explanation_feedback, caseData, dbData);
-        break;
-      case 'autofill_advanced_config':
-        prompt = buildPrompt(AI_PROMPTS.autofill_advanced_config, caseData, dbData);
-        break;
-      case 'master_autofill':
-        prompt = buildPrompt(AI_PROMPTS.master_autofill, caseData, dbData);
+      case 'consistency_check':
+        prompt = buildConsistencyCheckPrompt(caseData, dbData);
         break;
       default:
-        // Fallback para actions existentes
         prompt = buildSmartAutofillPrompt(caseData, dbData);
     }
 
@@ -357,8 +270,8 @@ serve(async (req) => {
             content: prompt
           }
         ],
-        response_format: { type: 'json_object' },
-        max_tokens: 3000,
+        response_format: { type: responseFormat },
+        max_tokens: 2500,
         temperature: 0.3
       }),
     });
@@ -415,10 +328,107 @@ serve(async (req) => {
   }
 });
 
-function buildPrompt(template: string, caseData: CaseData, dbData: any): string {
-  return template
+function buildTitleGenerationPrompt(caseData: CaseData, dbData: any): string {
+  return TITLE_GENERATION_PROMPT
     .replace('{caseData}', JSON.stringify(caseData, null, 2))
-    .replace('{dbData}', JSON.stringify(dbData, null, 2));
+    .replace('{specialties}', JSON.stringify(dbData.specialties))
+    .replace('{modalities}', JSON.stringify(dbData.modalities));
+}
+
+function buildBasicDataPrompt(caseData: CaseData, dbData: any): string {
+  return BASIC_DATA_AUTOFILL_PROMPT
+    .replace('{caseData}', JSON.stringify(caseData, null, 2))
+    .replace('{specialties}', JSON.stringify(dbData.specialties))
+    .replace('{modalities}', JSON.stringify(dbData.modalities))
+    .replace('{subtypes}', JSON.stringify(dbData.subtypes))
+    .replace('{difficulties}', JSON.stringify(dbData.difficulties));
+}
+
+function buildDiagnosisPrompt(caseData: CaseData, dbData: any): string {
+  return DIAGNOSIS_AUTOFILL_PROMPT
+    .replace('{caseData}', JSON.stringify(caseData, null, 2));
+}
+
+function buildStructuredDataPrompt(caseData: CaseData, dbData: any): string {
+  return STRUCTURED_DATA_PROMPT
+    .replace('{caseData}', JSON.stringify(caseData, null, 2));
+}
+
+function buildQuizPrompt(caseData: CaseData, dbData: any): string {
+  return QUIZ_AUTOFILL_PROMPT
+    .replace('{caseData}', JSON.stringify(caseData, null, 2));
+}
+
+function buildTemplateAutofillPrompt(caseData: CaseData, templateType: string, dbData: any): string {
+  const ENHANCED_RADIOLOGY_TEMPLATE_PROMPT = `
+Você é um radiologista especialista que deve preencher automaticamente campos estruturados para um caso médico radiológico usando DADOS REAIS DO BANCO DE DADOS.
+
+DADOS DISPONÍVEIS NO BANCO:
+Especialidades: {specialties}
+Modalidades: {modalities}  
+Subtipos: {subtypes}
+Dificuldades: {difficulties}
+
+REGRAS IMPORTANTES:
+1. Use EXATAMENTE os nomes das especialidades, modalidades e subtipos listados acima
+2. Para category_id: retorne o ID numérico da especialidade
+3. Para difficulty_level: retorne o número do nível (1-4)
+4. Para modalidade/subtipo: use os nomes exatos do banco
+5. Garanta que modalidade e subtipo sejam compatíveis
+
+CONTEXTO DO CASO:
+Modalidade: {modality}
+Especialidade: {specialty}
+Contexto: {context}
+Título: {title}
+
+PREENCHA EM FORMATO JSON VÁLIDO:
+{
+  "category_id": ID_NUMERICO_ESPECIALIDADE,
+  "difficulty_level": NUMERO_1_A_4,
+  "points": PONTOS_BASEADOS_NA_DIFICULDADE,
+  "modality": "NOME_EXATO_DA_MODALIDADE",
+  "subtype": "NOME_EXATO_DO_SUBTIPO",
+  "primary_diagnosis": "Diagnóstico principal específico",
+  "secondary_diagnoses": ["Diagnóstico diferencial 1", "Diagnóstico diferencial 2"],
+  "case_classification": "diagnostico|diferencial|emergencial|didatico",
+  "anatomical_regions": ["Região anatômica específica"],
+  "finding_types": ["Tipo de achado radiológico"],
+  "pathology_types": ["Tipo de patologia"],
+  "main_symptoms": ["Sintoma principal", "Sintoma secundário"],
+  "clinical_presentation_tags": ["Tag de apresentação"],
+  "case_complexity_factors": ["Fator de complexidade"],
+  "learning_objectives": ["Objetivo educacional 1", "Objetivo 2"],
+  "search_keywords": ["palavra-chave1", "palavra-chave2"],
+  "case_rarity": "comum|raro|muito_raro",
+  "educational_value": 7,
+  "clinical_relevance": 8,
+  "estimated_solve_time": 5,
+  "exam_context": "rotina|urgencia|uti|ambulatorio",
+  "target_audience": ["Graduação", "Residência R1"],
+  "laterality": "bilateral|direito|esquerdo|central",
+  "cid10_code": "Código CID-10 se aplicável"
+}
+`;
+
+  const contextMap = {
+    'trauma_tc': 'TC de Trauma - Emergência',
+    'pneumonia_rx': 'RX Tórax - Pneumonia',
+    'fratura_membro': 'RX Ortopédico - Fratura',
+    'rm_neurologico': 'RM Neurológica - Avançado',
+    'abdome_tc': 'TC Abdome - Diagnóstico',
+    'caso_raro': 'Caso Raro - Especializado'
+  };
+
+  return ENHANCED_RADIOLOGY_TEMPLATE_PROMPT
+    .replace('{specialties}', JSON.stringify(dbData.specialties))
+    .replace('{modalities}', JSON.stringify(dbData.modalities))
+    .replace('{subtypes}', JSON.stringify(dbData.subtypes))
+    .replace('{difficulties}', JSON.stringify(dbData.difficulties))
+    .replace('{modality}', caseData.modality || 'Não especificado')
+    .replace('{specialty}', caseData.specialty || 'Radiologia')
+    .replace('{context}', contextMap[templateType] || 'Geral')
+    .replace('{title}', caseData.title || 'Não especificado');
 }
 
 function buildSmartAutofillPrompt(caseData: CaseData, dbData: any): string {
@@ -444,8 +454,8 @@ FORNEÇA SUGESTÕES INTELIGENTES EM JSON:
     }
   },
   "autofill_data": {
-    "category_id": "ID_NUMERICO",
-    "difficulty_level": "NUMERO_1_A_4",
+    "category_id": ID_NUMERICO,
+    "difficulty_level": NUMERO_1_A_4,
     "modality": "NOME_EXATO_MODALIDADE",
     "subtype": "NOME_EXATO_SUBTIPO"
   }
@@ -457,4 +467,75 @@ FORNEÇA SUGESTÕES INTELIGENTES EM JSON:
     .replace('{modalities}', JSON.stringify(dbData.modalities))
     .replace('{subtypes}', JSON.stringify(dbData.subtypes))
     .replace('{caseData}', JSON.stringify(caseData, null, 2));
+}
+
+function buildSmartSuggestionsPrompt(caseData: CaseData, dbData: any): string {
+  return `
+Analise este caso radiológico e forneça sugestões inteligentes usando dados reais do banco:
+
+DADOS DO BANCO:
+Especialidades: ${JSON.stringify(dbData.specialties)}
+Modalidades: ${JSON.stringify(dbData.modalities)}
+
+CASO ATUAL:
+${JSON.stringify(caseData, null, 2)}
+
+FORNEÇA SUGESTÕES EM JSON:
+{
+  "quality_score": 85,
+  "missing_critical": ["campos críticos não preenchidos"],
+  "suggestions": ["sugestão específica 1", "sugestão 2"],
+  "auto_suggestions": {
+    "campo": "valor sugerido usando dados do banco"
+  },
+  "consistency_alerts": ["alerta de consistência"]
+}
+`;
+}
+
+function buildFieldCompletionPrompt(caseData: CaseData, dbData: any): string {
+  return `
+Complete automaticamente os campos vazios deste caso radiológico usando dados do banco:
+
+DADOS DISPONÍVEIS:
+${JSON.stringify(dbData, null, 2)}
+
+DADOS ATUAIS:
+${JSON.stringify(caseData, null, 2)}
+
+COMPLETE CAMPOS VAZIOS EM JSON:
+{
+  "completed_fields": {
+    // Apenas campos que estavam vazios, usando dados exatos do banco
+  },
+  "confidence_scores": {
+    "campo": 0.95
+  }
+}
+`;
+}
+
+function buildConsistencyCheckPrompt(caseData: CaseData, dbData: any): string {
+  return `
+Verifique a consistência deste caso radiológico com os dados do banco:
+
+DADOS DO BANCO:
+${JSON.stringify(dbData, null, 2)}
+
+DADOS:
+${JSON.stringify(caseData, null, 2)}
+
+ANALISE CONSISTÊNCIA EM JSON:
+{
+  "consistency_score": 90,
+  "issues": [
+    {
+      "field": "campo_problema",
+      "issue": "descrição do problema",
+      "suggestion": "sugestão de correção usando dados do banco"
+    }
+  ],
+  "improvements": ["melhoria sugerida"]
+}
+`;
 }
