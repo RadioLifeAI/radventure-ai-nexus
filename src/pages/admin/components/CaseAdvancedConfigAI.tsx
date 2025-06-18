@@ -24,6 +24,16 @@ export function CaseAdvancedConfigAI({
     try {
       console.log('🤖 Iniciando AI: Config Inteligente...');
       
+      // Verificar se temos diagnóstico principal para configuração inteligente
+      if (!form.primary_diagnosis?.trim()) {
+        toast({ 
+          title: "Diagnóstico Principal Obrigatório", 
+          description: "Preencha o diagnóstico principal primeiro para configuração inteligente.",
+          variant: "destructive" 
+        });
+        return;
+      }
+      
       const suggestions = await autofillAdvancedConfig(form);
       
       if (!suggestions) {
@@ -53,9 +63,10 @@ export function CaseAdvancedConfigAI({
         setForm((prev: any) => ({ ...prev, ...updates }));
         onFieldsUpdated?.(updatedFields);
         
+        const difficulty = form.difficulty_level || 'não definida';
         toast({ 
           title: `🤖 AI: Config Inteligente Aplicada!`,
-          description: `${updatedFields.length} configurações de gamificação otimizadas para o caso.` 
+          description: `${updatedFields.length} configurações otimizadas para dificuldade ${difficulty}.` 
         });
       } else {
         toast({ 
@@ -93,7 +104,7 @@ export function CaseAdvancedConfigAI({
       </Button>
       
       <div className="text-xs text-purple-700">
-        <div>Otimiza configurações de gamificação:</div>
+        <div>Configuração baseada na dificuldade:</div>
         <div className="font-medium">Eliminações • Penalidades • AI Tutor • Conquistas</div>
       </div>
     </div>

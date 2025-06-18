@@ -37,19 +37,18 @@ export function CaseExplanationCompleteAI({
       const updatedFields: string[] = [];
       const updates: any = {};
 
-      // CORREÇÃO: Lidar com estrutura de objeto na explicação
+      // CORREÇÃO: Garantir que explanation seja sempre string
       if (suggestions.explanation) {
-        let explanationText = "";
-        
+        // Se é string, usar diretamente
         if (typeof suggestions.explanation === 'string') {
-          // Se já é string, usar diretamente
-          explanationText = suggestions.explanation;
-        } else if (typeof suggestions.explanation === 'object') {
-          // Se é objeto, converter para texto estruturado
+          updates.explanation = suggestions.explanation;
+          updatedFields.push('explanation');
+        } 
+        // Se é objeto, converter para texto estruturado
+        else if (typeof suggestions.explanation === 'object') {
           const explanationObj = suggestions.explanation;
           const sections = [];
           
-          // Processar cada seção do objeto
           Object.keys(explanationObj).forEach((key, index) => {
             const section = explanationObj[key];
             if (typeof section === 'object' && section.title && section.content) {
@@ -59,12 +58,10 @@ export function CaseExplanationCompleteAI({
             }
           });
           
-          explanationText = sections.join('\n\n');
-        }
-        
-        if (explanationText.trim()) {
-          updates.explanation = explanationText;
-          updatedFields.push('explanation');
+          if (sections.length > 0) {
+            updates.explanation = sections.join('\n\n');
+            updatedFields.push('explanation');
+          }
         }
       }
       
@@ -113,11 +110,11 @@ export function CaseExplanationCompleteAI({
         ) : (
           <BookOpen className="h-4 w-4 mr-2" />
         )}
-        🤖 AI: Explicação e Feedback
+        🤖 AI: Explicação Completa
       </Button>
       
       <div className="text-xs text-green-700">
-        <div>Gera explicação educacional completa:</div>
+        <div>Gera explicação educacional baseada no caso:</div>
         <div className="font-medium">Análise • Correlação • Diagnóstico Diferencial • Dicas</div>
       </div>
     </div>

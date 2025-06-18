@@ -24,11 +24,22 @@ export function CaseQuizCompleteAI({
     try {
       console.log('🤖 Iniciando AI: Quiz Completo baseado em diagnósticos...');
       
-      // Verificar se temos diagnóstico principal e diferenciais
-      if (!form.primary_diagnosis) {
+      // Verificar se temos diagnóstico principal
+      if (!form.primary_diagnosis?.trim()) {
         toast({ 
           title: "Diagnóstico Principal Obrigatório", 
-          description: "Preencha o diagnóstico principal primeiro. Use 'AI: Dados Estruturados' se necessário.",
+          description: "Preencha o diagnóstico principal primeiro. Use 'AI: Dados Estruturados' para gerar os diagnósticos diferenciais.",
+          variant: "destructive" 
+        });
+        return;
+      }
+
+      // Verificar se temos diagnósticos diferenciais (idealmente 3 para formar quiz)
+      const differentials = form.differential_diagnoses || [];
+      if (differentials.length < 3) {
+        toast({ 
+          title: "Diagnósticos Diferenciais Recomendados", 
+          description: "Para um quiz mais rico, use primeiro 'AI: Dados Estruturados' para gerar 4 diagnósticos diferenciais.",
           variant: "destructive" 
         });
         return;
@@ -57,14 +68,13 @@ export function CaseQuizCompleteAI({
         if (suggestions.answer_options.length === 4) {
           updates.answer_options = suggestions.answer_options;
           updatedFields.push('answer_options');
+          
+          // A primeira alternativa deve ser sempre o diagnóstico correto
+          updates.correct_answer_index = 0;
+          updatedFields.push('correct_answer_index');
         } else {
           console.warn(`⚠️ Esperadas 4 alternativas, recebidas ${suggestions.answer_options.length}`);
         }
-      }
-      
-      if (suggestions.correct_answer_index !== undefined) {
-        updates.correct_answer_index = suggestions.correct_answer_index;
-        updatedFields.push('correct_answer_index');
       }
       
       if (suggestions.answer_feedbacks && Array.isArray(suggestions.answer_feedbacks)) {
@@ -88,12 +98,12 @@ export function CaseQuizCompleteAI({
         const diffCount = form.differential_diagnoses ? form.differential_diagnoses.length : 0;
         toast({ 
           title: `🤖 AI: Quiz Completo Gerado!`,
-          description: `Quiz baseado no diagnóstico principal + ${diffCount} diagnósticos diferenciais.` 
+          description: `Quiz baseado no diagnóstico principal + ${diffCount} diagnósticos diferenciais como alternativas.` 
         });
       } else {
         toast({ 
           title: "Nenhum quiz para gerar",
-          description: "O quiz já está completo ou não pôde ser gerado. Verifique os diagnósticos."
+          description: "O quiz já está completo ou não pôde ser gerado. Verifique se há diagnósticos diferenciais."
         });
       }
 
@@ -122,12 +132,12 @@ export function CaseQuizCompleteAI({
         ) : (
           <HelpCircle className="h-4 w-4 mr-2" />
         )}
-        🤖 AI: Quiz Completo
+        🤖 AI: Quiz Inteligente
       </Button>
       
       <div className="text-xs text-yellow-700">
         <div>Gera quiz baseado nos diagnósticos:</div>
-        <div className="font-medium">Principal + 3 Diferenciais • Pergunta • Feedbacks</div>
+        <div className="font-medium">Principal como correto + 3 Diferenciais como alternativas</div>
       </div>
     </div>
   );
