@@ -183,6 +183,17 @@ export function CaseSmartAutofillEnhanced({ form, setForm, onFieldsUpdated }: Pr
     }
   };
 
+  const handleSmartSuggestions = async () => {
+    const result = await callAutofillAPI('smart_suggestions');
+    if (result) {
+      setSuggestions(result);
+      toast({ 
+        title: "Sugestões inteligentes geradas!",
+        description: "Confira as sugestões abaixo"
+      });
+    }
+  };
+
   const applyAutoSuggestion = (field: string, value: any) => {
     // Aplicar conversões específicas para campos que precisam de ID
     let convertedValue = value;
@@ -299,7 +310,7 @@ export function CaseSmartAutofillEnhanced({ form, setForm, onFieldsUpdated }: Pr
             </Button>
             
             <Button
-              onClick={() => callAutofill API('smart_suggestions')}
+              onClick={handleSmartSuggestions}
               disabled={loading}
               variant="outline"
               size="sm"
