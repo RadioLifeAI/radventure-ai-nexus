@@ -186,7 +186,7 @@ export function CaseAutofillModal({ open, onClose, form, onApplyAutofill, sugges
           {/* Ações */}
           <div className="flex justify-between items-center pt-4 border-t">
             <div className="text-sm text-gray-500">
-              {selectedSugg.onestions.size} sugestões selecionadas
+              {selectedSuggestions.size} sugestões selecionadas
             </div>
             <div className="flex gap-3">
               <Button variant="outline" onClick={onClose}>
