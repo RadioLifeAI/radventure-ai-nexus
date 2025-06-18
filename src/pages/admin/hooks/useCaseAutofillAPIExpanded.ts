@@ -6,7 +6,8 @@ import { toast } from "@/components/ui/use-toast";
 export interface AutofillOptions {
   action: 'smart_autofill' | 'template_autofill' | 'field_completion' | 'consistency_check' | 'smart_suggestions' |
          'autofill_basic_complete' | 'autofill_structured_complete' | 'autofill_quiz_complete' | 
-         'autofill_explanation_complete' | 'autofill_advanced_config' | 'autofill_master_complete';
+         'autofill_explanation_complete' | 'autofill_advanced_config' | 'autofill_master_complete' |
+         'generate_findings' | 'generate_clinical_info' | 'generate_hint';
   templateType?: string;
 }
 
@@ -88,6 +89,19 @@ export function useCaseAutofillAPIExpanded() {
     return await callAutofillAPI(caseData, { action: 'autofill_master_complete' });
   };
 
+  // Novas funções para campos individuais
+  const generateFindings = async (caseData: any) => {
+    return await callAutofillAPI(caseData, { action: 'generate_findings' });
+  };
+
+  const generateClinicalInfo = async (caseData: any) => {
+    return await callAutofillAPI(caseData, { action: 'generate_clinical_info' });
+  };
+
+  const generateHint = async (caseData: any) => {
+    return await callAutofillAPI(caseData, { action: 'generate_hint' });
+  };
+
   // Funções existentes mantidas para compatibilidade
   const smartAutofill = async (caseData: any) => {
     return await callAutofillAPI(caseData, { action: 'smart_autofill' });
@@ -119,6 +133,10 @@ export function useCaseAutofillAPIExpanded() {
     autofillExplanationComplete,
     autofillAdvancedConfig,
     autofillMasterComplete,
+    // Novas funções para campos individuais
+    generateFindings,
+    generateClinicalInfo,
+    generateHint,
     // Funções existentes
     smartAutofill,
     applyTemplate,
