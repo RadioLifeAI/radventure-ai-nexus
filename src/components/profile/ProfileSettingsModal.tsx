@@ -41,7 +41,18 @@ export function ProfileSettingsModal({ open, onClose }: ProfileSettingsModalProp
 
   const handleSave = async () => {
     try {
-      await updateProfile(formData);
+      // Prepare the data with proper typing for academic_stage
+      const updateData = {
+        ...formData,
+        academic_stage: formData.academic_stage as 'Student' | 'Intern' | 'Resident' | 'Specialist' | undefined
+      };
+      
+      // If academic_stage is empty string, set it to undefined
+      if (!updateData.academic_stage) {
+        updateData.academic_stage = undefined;
+      }
+      
+      await updateProfile(updateData);
       onClose();
     } catch (error) {
       console.error('Erro ao salvar perfil:', error);
