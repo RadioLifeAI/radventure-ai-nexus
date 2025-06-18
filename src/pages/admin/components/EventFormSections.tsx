@@ -19,7 +19,6 @@ export function BasicInfoSection({ name, setName, description, setDescription, b
       section="basic"
       title="Informações Básicas do Evento"
       description="Configure o título, descrição e banner do evento"
-      progress={100}
     >
       <div className="space-y-4">
         <div>
@@ -78,7 +77,6 @@ export function ScheduleSection({
       section="clinical"
       title="Cronograma do Evento"
       description="Defina as datas e horários para o evento"
-      progress={100}
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
@@ -155,7 +153,6 @@ export function GameConfigSection({
       section="gamification"
       title="Configurações de Gamificação"
       description="Configure as regras e prêmios do evento"
-      progress={100}
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
@@ -216,7 +213,6 @@ export function PrizeDistributionSection({ prizeDistribution, onPrizeChange }: P
       section="advanced"
       title="Distribuição de Prêmios"
       description="Configure a premiação para cada posição no ranking"
-      progress={100}
     >
       <EventFormPrizeDistribution 
         prizeDistribution={prizeDistribution} 
