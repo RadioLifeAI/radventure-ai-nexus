@@ -15,9 +15,13 @@ interface CaseFiltersProps {
     searchTerm: string;
   };
   onFiltersChange: (filters: any) => void;
+  stats?: {
+    total: number;
+    bySpecialty: Record<string, number>;
+  };
 }
 
-export const CaseFilters = React.memo(function CaseFilters({ filters, onFiltersChange }: CaseFiltersProps) {
+export const CaseFilters = React.memo(function CaseFilters({ filters, onFiltersChange, stats }: CaseFiltersProps) {
   const [localSearchTerm, setLocalSearchTerm] = useState(filters.searchTerm);
   
   // Debounce search term para evitar muitas requests
