@@ -1098,10 +1098,6 @@ export type Database = {
         Args: { p_user_id: string; p_aid_type: string; p_amount?: number }
         Returns: boolean
       }
-      create_admin_direct: {
-        Args: { p_email: string; p_full_name: string; p_type?: string }
-        Returns: string
-      }
       create_dev_user: {
         Args: {
           p_email: string
