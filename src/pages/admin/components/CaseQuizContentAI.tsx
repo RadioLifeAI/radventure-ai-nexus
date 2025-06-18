@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { MessageSquareQuestion, MessageCircle, Lightbulb, Loader2 } from "lucide-react";
+import { MessageSquareQuote, MessageCircle, Lightbulb, Loader2 } from "lucide-react";
 import { useCaseAutofillAPI } from "../hooks/useCaseAutofillAPI";
 import { toast } from "@/components/ui/use-toast";
 
@@ -67,7 +67,7 @@ export function CaseQuizContentAI({ form, setForm, onFieldsHighlighted }: CaseQu
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin mr-2" />
         ) : (
-          <MessageSquareQuestion className="h-4 w-4 mr-2" />
+          <MessageSquareQuote className="h-4 w-4 mr-2" />
         )}
         ❓ AI: Gerar Quiz Completo
       </Button>

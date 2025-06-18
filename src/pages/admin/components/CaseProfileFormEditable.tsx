@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useCaseProfileFormHandlers } from "../hooks/useCaseProfileFormHandlers";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,13 @@ import { CaseQualityRadar } from "./CaseQualityRadar";
 import { CaseTemplateChooser } from "./CaseTemplateChooser";
 import { CaseFormGamifiedHelpers } from "./CaseFormGamifiedHelpers";
 import { CaseFormGamifiedLayout } from "./CaseFormGamifiedLayout";
+import { CaseMasterAutofillAI } from "./CaseMasterAutofillAI";
+import { CaseStructuredDataAI } from "./CaseStructuredDataAI";
+import { CaseClinicalSummaryAI } from "./CaseClinicalSummaryAI";
+import { CaseEducationalTagsAI } from "./CaseEducationalTagsAI";
+import { CaseGamificationAI } from "./CaseGamificationAI";
+import { CaseQuizContentAI } from "./CaseQuizContentAI";
+import { CaseAdvancedConfigAI } from "./CaseAdvancedConfigAI";
 import { supabase } from "@/integrations/supabase/client";
 
 export function CaseProfileFormEditable({ 
@@ -87,11 +95,9 @@ export function CaseProfileFormEditable({
         similar_cases_ids: editingCase.similar_cases_ids || [],
         prerequisite_cases: editingCase.prerequisite_cases || [],
         unlocks_cases: editingCase.unlocks_cases || [],
-        // Garantir objetos vazios para campos JSON
         vital_signs: editingCase.vital_signs || {},
         structured_metadata: editingCase.structured_metadata || {},
         achievement_triggers: editingCase.achievement_triggers || {},
-        // Garantir valores padrão
         primary_diagnosis: editingCase.primary_diagnosis || "",
         case_classification: editingCase.case_classification || "diagnostico",
         cid10_code: editingCase.cid10_code || "",
@@ -101,7 +107,6 @@ export function CaseProfileFormEditable({
         clinical_relevance: editingCase.clinical_relevance || 5,
         estimated_solve_time: editingCase.estimated_solve_time || 5,
         exam_context: editingCase.exam_context || "rotina",
-        // Campos de referência
         is_radiopaedia_case: editingCase.is_radiopaedia_case ?? false,
         reference_citation: editingCase.reference_citation ?? "",
         reference_url: editingCase.reference_url ?? "",
@@ -211,13 +216,11 @@ export function CaseProfileFormEditable({
         ai_tutor_level: form.ai_tutor_level,
         updated_at: new Date().toISOString(),
         
-        // Campos de referência Radiopaedia
         is_radiopaedia_case: form.is_radiopaedia_case,
         reference_citation: form.is_radiopaedia_case ? form.reference_citation : null,
         reference_url: form.is_radiopaedia_case ? form.reference_url : null,
         access_date: form.is_radiopaedia_case && form.access_date ? form.access_date : null,
         
-        // Novos campos estruturados
         primary_diagnosis: form.primary_diagnosis || null,
         secondary_diagnoses: form.secondary_diagnoses || [],
         case_classification: form.case_classification || "diagnostico",

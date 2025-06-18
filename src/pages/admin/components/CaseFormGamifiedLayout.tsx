@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Sparkles, Brain, Stethoscope, GraduationCap, Gamepad2, MessageSquareQuestion, Settings, Database } from "lucide-react";
+import { Sparkles, Brain, Stethoscope, GraduationCap, Gamepad2, MessageSquareQuote, Settings, Database } from "lucide-react";
 
 interface CaseFormGamifiedLayoutProps {
   section: string;
@@ -24,7 +24,7 @@ export function CaseFormGamifiedLayout({
       case "clinical": return <Stethoscope className="h-5 w-5" />;
       case "educational": return <GraduationCap className="h-5 w-5" />;
       case "gamification": return <Gamepad2 className="h-5 w-5" />;
-      case "quiz": return <MessageSquareQuestion className="h-5 w-5" />;
+      case "quiz": return <MessageSquareQuote className="h-5 w-5" />;
       case "advanced": return <Settings className="h-5 w-5" />;
       default: return <Sparkles className="h-5 w-5" />;
     }

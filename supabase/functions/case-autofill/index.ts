@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0'
 
@@ -314,7 +315,6 @@ serve(async (req) => {
       case 'complete_autofill':
         prompt = buildCompleteAutofillPrompt(caseData, dbData);
         break;
-      // ... keep existing code (cases for existing actions)
       case 'generate_title':
         prompt = buildTitleGenerationPrompt(caseData, dbData);
         break;
@@ -467,7 +467,6 @@ function buildCompleteAutofillPrompt(caseData: CaseData, dbData: any): string {
     .replace('{difficulties}', JSON.stringify(dbData.difficulties));
 }
 
-// ... keep existing code (existing prompt builder functions)
 function buildTitleGenerationPrompt(caseData: CaseData, dbData: any): string {
   const TITLE_GENERATION_PROMPT = `
 Você é um radiologista especialista que deve gerar títulos profissionais para casos médicos.
@@ -797,3 +796,4 @@ ANALISE CONSISTÊNCIA EM JSON:
   "improvements": ["melhoria sugerida"]
 }
 `;
+}
