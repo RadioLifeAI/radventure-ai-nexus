@@ -43,8 +43,6 @@ export function useUserProfile() {
       return data as UserProfile;
     },
     enabled: !!user?.id && isAuthenticated,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000 // 5 minutes
   });
 
   const updateProfileMutation = useMutation({
@@ -69,13 +67,12 @@ export function useUserProfile() {
       });
     },
     onError: (error: any) => {
-      console.error('Profile update error:', error);
       toast({
         title: 'Erro ao atualizar perfil',
-        description: error.message || 'Ocorreu um erro inesperado.',
-        variant: 'destructive',
+        description: error.message,
+        variant: 'destructive'
       });
-    },
+    }
   });
 
   return {
@@ -83,6 +80,6 @@ export function useUserProfile() {
     isLoading,
     error,
     updateProfile: updateProfileMutation.mutate,
-    isUpdating: updateProfileMutation.isPending,
+    isUpdating: updateProfileMutation.isPending
   };
 }
