@@ -37,7 +37,12 @@ export function useUserProfile() {
   const { data: profile, isLoading, error } = useQuery({
     queryKey: ['user-profile', user?.id],
     queryFn: async () => {
-      if (!user?.id) throw new Error('No user ID');
+      console.log('Fetching profile for user:', user?.id);
+      
+      if (!user?.id) {
+        console.log('No user ID available');
+        throw new Error('No user ID');
+      }
       
       const { data, error } = await supabase
         .from('profiles')
@@ -46,39 +51,61 @@ export function useUserProfile() {
         .single();
 
       if (error) {
+        console.log('Profile fetch error:', error);
+        
         // Se o perfil não existir, criar um básico
         if (error.code === 'PGRST116') {
-          console.log('Perfil não encontrado, criando perfil básico...');
+          console.log('Profile not found, creating basic profile...');
+          
+          const newProfileData = {
+            id: user.id,
+            email: user.email || '',
+            username: user.email?.split('@')[0] || `user_${user.id.slice(0, 8)}`,
+            full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
+            type: 'USER' as const,
+            radcoin_balance: 0,
+            total_points: 0,
+            current_streak: 0,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+
           const { data: newProfile, error: createError } = await supabase
             .from('profiles')
-            .insert({
-              id: user.id,
-              email: user.email,
-              username: user.email?.split('@')[0] || `user_${user.id.slice(0, 8)}`,
-              full_name: user.user_metadata?.full_name || '',
-              type: 'USER',
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            })
+            .insert(newProfileData)
             .select()
             .single();
 
-          if (createError) throw createError;
+          if (createError) {
+            console.error('Error creating profile:', createError);
+            throw createError;
+          }
+
+          console.log('Profile created successfully:', newProfile);
           return newProfile as UserProfile;
         }
         throw error;
       }
       
+      console.log('Profile fetched successfully:', data);
       return data as UserProfile;
     },
     enabled: !!user?.id && isAuthenticated,
     refetchOnWindowFocus: false,
-    retry: 1,
+    retry: (failureCount, error: any) => {
+      // Tentar novamente apenas se não for erro de criação
+      return failureCount < 2 && error?.code !== 'PGRST116';
+    },
   });
 
   const updateProfileMutation = useMutation({
     mutationFn: async (updates: Partial<UserProfile>) => {
-      if (!user?.id) throw new Error('No user ID');
+      if (!user?.id) {
+        console.error('No user ID for profile update');
+        throw new Error('No user ID');
+      }
+      
+      console.log('Updating profile with data:', updates);
       
       const { data, error } = await supabase
         .from('profiles')
@@ -87,12 +114,22 @@ export function useUserProfile() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Profile update error:', error);
+        throw error;
+      }
+      
+      console.log('Profile updated successfully:', data);
       return data;
     },
     onSuccess: (updatedProfile) => {
       // Atualizar cache local
       queryClient.setQueryData(['user-profile', user?.id], updatedProfile);
+      
+      // Refresh avatar upload hook if avatar was updated
+      if (updatedProfile.avatar_url) {
+        queryClient.invalidateQueries({ queryKey: ['user-profile', user?.id] });
+      }
       
       toast({
         title: 'Perfil atualizado',

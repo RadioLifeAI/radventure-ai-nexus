@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import {
   Activity,
@@ -21,23 +22,25 @@ import { useCasesData } from "@/hooks/useCasesData";
 // Componente Card de Ações rápidas
 function ActionCard({ icon, title, description, link, color, onClick }: any) {
   return (
-    <div className="bg-[#161f38] rounded-2xl shadow-lg flex flex-col items-center p-6 min-h-[186px] hover:scale-105 transition-transform duration-200">
-      <div className={`mb-2`}>{React.cloneElement(icon, { size: 38, className: color })}</div>
+    <div className="bg-[#161f38] rounded-2xl shadow-lg flex flex-col items-center p-6 min-h-[186px] hover:scale-105 transition-transform duration-200 hover:shadow-xl group">
+      <div className={`mb-2 group-hover:scale-110 transition-transform duration-200`}>
+        {React.cloneElement(icon, { size: 38, className: color })}
+      </div>
       <span className="mt-2 text-lg font-extrabold text-white drop-shadow-sm text-center">{title}</span>
-      <span className="mt-1 text-sm text-cyan-100 text-center">{description}</span>
+      <span className="mt-1 text-sm text-cyan-100 text-center leading-relaxed">{description}</span>
       {onClick ? (
         <Button
           onClick={onClick}
           size="sm"
           variant="outline"
-          className="mt-4 border-none text-[#11d3fc] bg-white hover:bg-[#d1f6fd] font-bold px-4 rounded-xl shadow"
+          className="mt-4 border-none text-[#11d3fc] bg-white hover:bg-[#d1f6fd] font-bold px-4 rounded-xl shadow hover:shadow-lg transition-all duration-200"
         >
           <Activity size={15} className="mr-1" />
           {title === "Central de Casos" ? "Explorar" : title === "Crie sua Jornada" ? "Nova Jornada" : "Ver Eventos"}
         </Button>
       ) : (
         <Button asChild size="sm" variant="outline"
-          className="mt-4 border-none text-[#11d3fc] bg-white hover:bg-[#d1f6fd] font-bold px-4 rounded-xl shadow"
+          className="mt-4 border-none text-[#11d3fc] bg-white hover:bg-[#d1f6fd] font-bold px-4 rounded-xl shadow hover:shadow-lg transition-all duration-200"
         >
           <Link to={link || "#"}>
             <Activity size={15} className="mr-1" />
@@ -55,16 +58,6 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const isLoading = dashboardLoading || progressLoading;
-
-  // Dados do usuário (mantendo compatibilidade)
-  const user = {
-    name: profile?.full_name || "Dra. Maria Futurista",
-    city: profile?.city || "São Paulo",
-    state: profile?.state || "SP",
-    totalPoints: profile?.total_points || 3690,
-    avatar: profile?.avatar_url || "https://randomuser.me/api/portraits/women/90.jpg",
-    ranking: 7,
-  };
 
   // Combinar dados de especialidades com progresso do usuário
   const specialtiesWithProgress = specialties.map(specialty => ({
@@ -120,8 +113,8 @@ export default function Dashboard() {
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white w-full">
       <HeaderNav />
       <main className="flex-1 flex flex-col gap-4 px-2 md:px-16 pt-4 pb-10">
-        {/* Perfil principal */}
-        <UserProfile user={user} />
+        {/* Perfil principal - Agora usando dados reais */}
+        <UserProfile />
 
         {/* SEÇÃO DE EVENTOS GAMIFICADOS */}
         <EventsSectionPlayer onEnterEvent={handleEnterEvent} />
@@ -159,8 +152,10 @@ export default function Dashboard() {
                 <Brain className="h-6 w-6 text-cyan-300" />
                 Diagnóstico por Imagem
               </h2>
-              <div className="text-sm text-cyan-200">
-                {imagingSpecialties.reduce((sum, spec) => sum + spec.cases, 0)} casos disponíveis
+              <div className="text-sm text-cyan-200 flex items-center gap-2">
+                <span className="bg-cyan-500/20 px-3 py-1 rounded-full">
+                  {imagingSpecialties.reduce((sum, spec) => sum + spec.cases, 0)} casos disponíveis
+                </span>
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -182,8 +177,10 @@ export default function Dashboard() {
                 <Stethoscope className="h-6 w-6 text-cyan-300" />
                 Especialidades Médicas
               </h2>
-              <div className="text-sm text-cyan-200">
-                {medicalSpecialties.reduce((sum, spec) => sum + spec.cases, 0)} casos disponíveis
+              <div className="text-sm text-cyan-200 flex items-center gap-2">
+                <span className="bg-cyan-500/20 px-3 py-1 rounded-full">
+                  {medicalSpecialties.reduce((sum, spec) => sum + spec.cases, 0)} casos disponíveis
+                </span>
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -200,8 +197,8 @@ export default function Dashboard() {
         {/* Mensagem quando não há dados */}
         {specialties.length === 0 && (
           <section className="w-full mt-8 mb-4 text-center">
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
-              <Brain className="h-16 w-16 text-cyan-300 mx-auto mb-4" />
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-colors duration-300">
+              <Brain className="h-16 w-16 text-cyan-300 mx-auto mb-4 animate-pulse" />
               <h3 className="text-xl font-bold text-white mb-2">
                 Especialidades em Preparação
               </h3>
@@ -224,11 +221,16 @@ export default function Dashboard() {
         <div className="max-w-4xl mx-auto">
           <span className="text-cyan-100 text-sm flex items-center justify-center gap-2">
             Powered by RadVenture · Experiência para médicos do futuro 
-            <span className="text-lg">🚀</span>
+            <span className="text-lg animate-bounce">🚀</span>
           </span>
           <div className="mt-2 text-xs text-cyan-300">
             {specialties.length} especialidades • {specialties.reduce((sum, spec) => sum + spec.cases, 0)} casos • {events.length} eventos
           </div>
+          {profile && (
+            <div className="mt-1 text-xs text-cyan-400">
+              Bem-vindo, {profile.full_name || profile.username || 'Usuário'}!
+            </div>
+          )}
         </div>
       </footer>
     </div>

@@ -8,9 +8,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Camera, User, Stethoscope, Settings, Loader2 } from 'lucide-react';
+import { Camera, User, Stethoscope, Settings, Loader2, AlertTriangle } from 'lucide-react';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useAvatarUpload } from '@/hooks/useAvatarUpload';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ProfileSettingsModalProps {
   open: boolean;
@@ -18,6 +19,7 @@ interface ProfileSettingsModalProps {
 }
 
 export function ProfileSettingsModal({ open, onClose }: ProfileSettingsModalProps) {
+  const { user, isAuthenticated } = useAuth();
   const { profile, updateProfile, isUpdating } = useUserProfile();
   const { uploadAvatar, uploading } = useAvatarUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -35,11 +37,34 @@ export function ProfileSettingsModal({ open, onClose }: ProfileSettingsModalProp
     college: profile?.college || ''
   });
 
+  // Atualizar formData quando profile mudar
+  React.useEffect(() => {
+    if (profile) {
+      setFormData({
+        full_name: profile.full_name || '',
+        username: profile.username || '',
+        bio: profile.bio || '',
+        country_code: profile.country_code || '',
+        city: profile.city || '',
+        state: profile.state || '',
+        medical_specialty: profile.medical_specialty || '',
+        academic_specialty: profile.academic_specialty || '',
+        academic_stage: profile.academic_stage || '',
+        college: profile.college || ''
+      });
+    }
+  }, [profile]);
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleSave = async () => {
+    if (!user?.id || !isAuthenticated) {
+      console.error('Usuário não autenticado');
+      return;
+    }
+
     try {
       // Prepare the data with proper typing for academic_stage
       const updateData = {
@@ -61,9 +86,9 @@ export function ProfileSettingsModal({ open, onClose }: ProfileSettingsModalProp
 
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && profile?.id) {
+    if (file && user?.id) {
       try {
-        await uploadAvatar(file, profile.id);
+        await uploadAvatar(file, user.id);
       } catch (error) {
         console.error('Erro no upload do avatar:', error);
       }
@@ -73,6 +98,28 @@ export function ProfileSettingsModal({ open, onClose }: ProfileSettingsModalProp
   const triggerFileInput = () => {
     fileInputRef.current?.click();
   };
+
+  // Verificação de autenticação
+  if (!isAuthenticated || !user) {
+    return (
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              Erro de Autenticação
+            </DialogTitle>
+          </DialogHeader>
+          <div className="text-center py-4">
+            <p className="text-gray-600">Você precisa estar autenticado para acessar as configurações.</p>
+            <Button onClick={onClose} className="mt-4">
+              Fechar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
