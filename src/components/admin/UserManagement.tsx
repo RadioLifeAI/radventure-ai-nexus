@@ -131,14 +131,14 @@ export function UserManagement() {
     email: user.email,
     full_name: user.nome_completo,
     username: user.username,
-    type: user.tipo,
+    type: user.tipo as 'USER' | 'ADMIN' | 'SUPER_ADMIN',
     avatar_url: user.avatar_url,
     total_points: user.total_points,
     radcoin_balance: user.radcoin_balance,
     medical_specialty: user.especialidade_medica,
-    academic_stage: '', // Valor padrão para campos obrigatórios
-    city: '', // Valor padrão para campos obrigatórios
-    state: '', // Valor padrão para campos obrigatórios
+    academic_stage: 'Student', // Valor padrão válido
+    city: user.cidade || '', 
+    state: user.estado || '', 
     created_at: user.created_at,
     updated_at: user.updated_at
   }));
@@ -175,14 +175,14 @@ export function UserManagement() {
             email: selectedUser.email,
             full_name: selectedUser.nome_completo,
             username: selectedUser.username,
-            type: selectedUser.tipo,
+            type: selectedUser.tipo as 'USER' | 'ADMIN' | 'SUPER_ADMIN',
             avatar_url: selectedUser.avatar_url,
             total_points: selectedUser.total_points,
             radcoin_balance: selectedUser.radcoin_balance,
             medical_specialty: selectedUser.especialidade_medica,
-            academic_stage: '',
-            city: '',
-            state: '',
+            academic_stage: 'Student',
+            city: selectedUser.cidade || '',
+            state: selectedUser.estado || '',
             created_at: selectedUser.created_at,
             updated_at: selectedUser.updated_at
           }}
