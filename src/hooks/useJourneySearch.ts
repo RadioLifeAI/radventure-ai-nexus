@@ -95,6 +95,7 @@ export function useJourneySearch(filters: JourneyFilters) {
           }
         }
         
+        // Só aplicar o filtro se timeValue for um número válido
         if (timeValue !== null) {
           query = query.eq('estimated_solve_time', timeValue);
         }
