@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useCaseProfileFormHandlers } from "../hooks/useCaseProfileFormHandlers";
 import { Button } from "@/components/ui/button";
@@ -319,7 +320,7 @@ export function CaseProfileFormEditable({
   }
 
   return (
-    <div className="w-full space-y-8 animate-fade-in">
+    <div className="w-full space-y-6">
       <CaseFormPreviewModal open={showPreview} onClose={()=>setShowPreview(false)} form={form} categories={categories} difficulties={difficulties} />
 
       {!isEditMode && (
@@ -341,46 +342,11 @@ export function CaseProfileFormEditable({
         </div>
       )}
 
-      <form className="w-full space-y-8" onSubmit={handleSubmit}>
-        {/* 1. DADOS ESTRUTURADOS - Primeira seção para classificação e metadados */}
-        <CaseFormGamifiedLayout
-          section="structured"
-          title="Dados Estruturados e Referência"
-          description="Configure os campos estruturados para filtros avançados, AI e informações de fonte"
-        >
-          {/* NOVO: Botão AI para dados estruturados */}
-          <CaseStructuredDataAI 
-            form={form}
-            setForm={setForm}
-            onFieldsUpdated={(fields) => {
-              setHighlightedFields(fields);
-              setTimeout(() => setHighlightedFields([]), 2000);
-            }}
-          />
-          
-          <CaseStructuredFieldsSection 
-            form={form}
-            setForm={setForm}
-            handleFormChange={handleFormChange}
-            renderTooltipTip={renderTooltipTip}
-          />
-
-          {/* Seção de Referência integrada aqui */}
-          <div className="border-t border-gray-200 pt-6 mt-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Referência e Fonte</h3>
-            <CaseReferenceSection 
-              form={form}
-              handleFormChange={handleFormChange}
-              renderTooltipTip={renderTooltipTip}
-            />
-          </div>
-        </CaseFormGamifiedLayout>
-
-        {/* 2. DADOS BÁSICOS - Informações fundamentais do caso */}
+      <form className="w-full space-y-6" onSubmit={handleSubmit}>
         <CaseFormGamifiedLayout
           section="basic"
-          title="Dados Básicos do Caso"
-          description="Configure as informações fundamentais e identificação do caso médico"
+          title={isEditMode ? "Editar Caso Médico" : "Criar Novo Caso Médico"}
+          description="Configure as informações básicas do caso médico (Dados Unificados)"
         >
           <CaseProfileFormTitleSection
             autoTitlePreview={autoTitlePreview}
@@ -415,25 +381,45 @@ export function CaseProfileFormEditable({
           />
         </CaseFormGamifiedLayout>
 
-        {/* 3. GESTÃO AVANÇADA DE IMAGENS - Sistema robusto de imagens */}
         <CaseFormGamifiedLayout
-          section="images"
-          title="Gestão Avançada de Imagens"
-          description="Sistema robusto para upload e gerenciamento de múltiplas imagens médicas"
+          section="structured"
+          title="Dados Estruturados"
+          description="Configure os campos estruturados para filtros avançados e AI"
         >
-          <CaseAdvancedImageManagement 
-            caseId={editingCase?.id}
-            onImagesChange={(images) => {
-              console.log('Images updated:', images.length);
+          {/* NOVO: Botão AI para dados estruturados */}
+          <CaseStructuredDataAI 
+            form={form}
+            setForm={setForm}
+            onFieldsUpdated={(fields) => {
+              setHighlightedFields(fields);
+              setTimeout(() => setHighlightedFields([]), 2000);
             }}
+          />
+          
+          <CaseStructuredFieldsSection 
+            form={form}
+            setForm={setForm}
+            handleFormChange={handleFormChange}
+            renderTooltipTip={renderTooltipTip}
           />
         </CaseFormGamifiedLayout>
 
-        {/* 4. PERGUNTA E ALTERNATIVAS - Quiz e opções de resposta */}
+        <CaseFormGamifiedLayout
+          section="reference"
+          title="Referência e Fonte"
+          description="Configure informações sobre a fonte do caso"
+        >
+          <CaseReferenceSection 
+            form={form}
+            handleFormChange={handleFormChange}
+            renderTooltipTip={renderTooltipTip}
+          />
+        </CaseFormGamifiedLayout>
+
         <CaseFormGamifiedLayout
           section="quiz"
           title="Pergunta e Alternativas"
-          description="Configure a pergunta principal e as opções de resposta para o quiz"
+          description="Configure a pergunta principal e as opções de resposta"
         >
           {/* NOVO: Botão AI para quiz completo */}
           <CaseQuizCompleteAI 
@@ -445,9 +431,9 @@ export function CaseProfileFormEditable({
             }}
           />
           
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div>
-              <label className="font-semibold block text-gray-800">
+              <label className="font-semibold block">
                 Pergunta Principal *
                 {renderTooltipTip("tip-main-question", "Esta pergunta será apresentada ao usuário e guiará o raciocínio clínico.")}
               </label>
@@ -457,7 +443,7 @@ export function CaseProfileFormEditable({
                 onChange={handleFormChange} 
                 placeholder="Ex: Qual é o diagnóstico mais provável?" 
                 required 
-                className="mt-2 transition-all duration-200 focus:ring-2 focus:ring-cyan-500"
+                className="mt-2"
               />
             </div>
             <CaseProfileAlternativesSection
@@ -474,11 +460,10 @@ export function CaseProfileFormEditable({
           </div>
         </CaseFormGamifiedLayout>
 
-        {/* 5. EXPLICAÇÃO E FEEDBACK - Detalhes educacionais */}
         <CaseFormGamifiedLayout
           section="clinical"
           title="Explicação e Feedback"
-          description="Configure as explicações detalhadas e dicas educacionais para o usuário"
+          description="Configure as explicações e dicas para o usuário"
         >
           {/* NOVO: Botão AI para explicação completa */}
           <CaseExplanationCompleteAI 
@@ -500,11 +485,10 @@ export function CaseProfileFormEditable({
           />
         </CaseFormGamifiedLayout>
 
-        {/* 6. CONFIGURAÇÕES AVANÇADAS - Gamificação e regras especiais */}
         <CaseFormGamifiedLayout
           section="advanced"
           title="Configurações Avançadas"
-          description="Configurações de gamificação, regras especiais e ajustes de dificuldade"
+          description="Configurações de gamificação e regras especiais"
         >
           {/* NOVO: Botão AI para config avançada */}
           <CaseAdvancedConfigAI 
@@ -516,13 +500,13 @@ export function CaseProfileFormEditable({
             }}
           />
           
-          <div className="space-y-6">
+          <div className="space-y-4">
             <button
               type="button"
-              className="text-purple-700 font-semibold hover:text-purple-900 hover:underline transition-colors duration-200"
+              className="text-cyan-700 font-semibold hover:underline"
               onClick={() => setShowAdvanced((v: boolean) => !v)}
             >
-              {showAdvanced ? "🔽 Ocultar" : "🔧 Mostrar"} Configurações Avançadas
+              {showAdvanced ? "Ocultar" : "Mostrar"} Configurações Avançadas
             </button>
             <CaseProfileAdvancedConfigContainer
               form={form}
@@ -533,21 +517,27 @@ export function CaseProfileFormEditable({
           </div>
         </CaseFormGamifiedLayout>
 
-        {/* AÇÕES DO FORMULÁRIO - Botões de ação com visual melhorado */}
-        <div className="flex justify-between items-center pt-8 border-t-2 border-gradient-to-r from-cyan-200 to-purple-200">
-          <div className="flex items-center gap-6">
-            <Button 
-              type="submit" 
-              disabled={submitting} 
-              size="lg"
-              className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold px-8 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-            >
-              {isEditMode ? "✅ Atualizar Caso" : "🚀 Salvar Caso"}
+        {/* NOVA SEÇÃO: Gestão Avançada de Imagens */}
+        <CaseFormGamifiedLayout
+          section="advanced"
+          title="Gestão Avançada de Imagens"
+          description="Sistema robusto para upload e gerenciamento de múltiplas imagens"
+        >
+          <CaseAdvancedImageManagement 
+            caseId={editingCase?.id}
+            onImagesChange={(images) => {
+              console.log('Images updated:', images.length);
+            }}
+          />
+        </CaseFormGamifiedLayout>
+
+        <div className="flex justify-between items-center pt-6 border-t border-gray-200">
+          <div className="flex items-center gap-4">
+            <Button type="submit" disabled={submitting} size="lg">
+              {isEditMode ? "Atualizar Caso" : "Salvar Caso"}
             </Button>
             {feedback && (
-              <span className="text-sm font-medium text-cyan-700 bg-cyan-50 px-4 py-2 rounded-full border border-cyan-200 animate-fade-in">
-                {feedback}
-              </span>
+              <span className="text-sm font-medium text-cyan-700">{feedback}</span>
             )}
           </div>
         </div>
