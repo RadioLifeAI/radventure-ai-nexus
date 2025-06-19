@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { EventTemplatesModal } from "./EventTemplatesModal";
@@ -410,11 +411,14 @@ export function EventForm({ mode, initialValues = {}, loading, onSubmit, onCance
           <ConfigAlertBanner message={alertMsg} />
         </div>
 
-        <EventAISuggestions 
-          onApplySuggestion={handleAISuggestion}
-          onAutoFill={handleAutoFill}
-          currentFilters={caseFilters}
-        />
+        {/* Seção de IA integrada apenas no modo create */}
+        {mode === "create" && (
+          <EventAISuggestions 
+            onApplySuggestion={handleAISuggestion}
+            onAutoFill={handleAutoFill}
+            currentFilters={caseFilters}
+          />
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Filtros de casos com dados reais unificados */}
