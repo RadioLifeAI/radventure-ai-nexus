@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export type EventType = {
@@ -22,10 +22,11 @@ export type EventType = {
 export function useActiveEvents() {
   const [events, setEvents] = useState<EventType[]>([]);
   const [loading, setLoading] = useState(true);
+  const channelRef = useRef<any>(null);
+  const isSubscribedRef = useRef(false);
 
   useEffect(() => {
     let ignore = false;
-    let channel: any = null;
     
     async function fetchEvents() {
       if (ignore) return;
@@ -71,55 +72,89 @@ export function useActiveEvents() {
       }
     }
 
-    // Fetch initial data
+    // Função para limpar canal existente
+    const cleanupChannel = () => {
+      if (channelRef.current) {
+        try {
+          supabase.removeChannel(channelRef.current);
+        } catch (error) {
+          console.log('Channel cleanup error (expected):', error);
+        }
+        channelRef.current = null;
+        isSubscribedRef.current = false;
+      }
+    };
+
+    // Função para configurar subscription
+    const setupSubscription = () => {
+      if (ignore || isSubscribedRef.current) return;
+
+      // Limpar canal anterior se existir
+      cleanupChannel();
+
+      // Criar novo canal com nome único
+      const channelName = `events-realtime-${Date.now()}-${Math.random()}`;
+      
+      const newChannel = supabase
+        .channel(channelName)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'events'
+          },
+          () => {
+            if (!ignore) {
+              console.log('Events table changed, refetching...');
+              fetchEvents();
+            }
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'event_registrations'
+          },
+          () => {
+            if (!ignore) {
+              console.log('Event registrations changed, refetching...');
+              fetchEvents();
+            }
+          }
+        );
+
+      // Subscrever apenas uma vez
+      newChannel.subscribe((status: string) => {
+        console.log('Events subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          isSubscribedRef.current = true;
+        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+          isSubscribedRef.current = false;
+        }
+      });
+
+      channelRef.current = newChannel;
+    };
+
+    // Fetch inicial
     fetchEvents();
 
-    // Create a unique channel name to avoid conflicts
-    const channelName = `events-realtime-${Date.now()}`;
-    
-    // Configurar subscription para updates em tempo real
-    channel = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'events'
-        },
-        () => {
-          if (!ignore) {
-            fetchEvents();
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'event_registrations'
-        },
-        () => {
-          if (!ignore) {
-            fetchEvents();
-          }
-        }
-      );
-
-    // Subscribe to the channel
-    channel.subscribe((status: string) => {
-      console.log('Events subscription status:', status);
-    });
+    // Configurar subscription após um pequeno delay para evitar problemas de timing
+    const timeoutId = setTimeout(() => {
+      if (!ignore) {
+        setupSubscription();
+      }
+    }, 100);
 
     return () => {
       ignore = true;
-      if (channel) {
-        supabase.removeChannel(channel);
-        channel = null;
-      }
+      clearTimeout(timeoutId);
+      cleanupChannel();
     };
-  }, []); // Empty dependency array to ensure effect runs only once
+  }, []); // Empty dependency array - effect runs only once
 
   return { events, loading };
 }
