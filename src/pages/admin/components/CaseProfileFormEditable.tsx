@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useCaseProfileFormHandlers } from "../hooks/useCaseProfileFormHandlers";
 import { Button } from "@/components/ui/button";
@@ -369,7 +368,6 @@ export function CaseProfileFormEditable({
             highlightedFields={highlightedFields}
             handleFormChange={handleFormChange}
             handleModalityChange={handleModalityChange}
-            handleImageChange={handleImageChange}
             renderTooltipTip={renderTooltipTip}
             handleSuggestFindings={onSuggestFindings}
             handleSuggestClinicalInfo={onSuggestClinical}
@@ -413,6 +411,19 @@ export function CaseProfileFormEditable({
             form={form}
             handleFormChange={handleFormChange}
             renderTooltipTip={renderTooltipTip}
+          />
+        </CaseFormGamifiedLayout>
+
+        <CaseFormGamifiedLayout
+          section="advanced"
+          title="Gestão Avançada de Imagens"
+          description="Sistema robusto para upload e gerenciamento de múltiplas imagens"
+        >
+          <CaseAdvancedImageManagement 
+            caseId={editingCase?.id}
+            onImagesChange={(images) => {
+              console.log('Images updated:', images.length);
+            }}
           />
         </CaseFormGamifiedLayout>
 
@@ -515,20 +526,6 @@ export function CaseProfileFormEditable({
               showAdvanced={showAdvanced}
             />
           </div>
-        </CaseFormGamifiedLayout>
-
-        {/* NOVA SEÇÃO: Gestão Avançada de Imagens */}
-        <CaseFormGamifiedLayout
-          section="advanced"
-          title="Gestão Avançada de Imagens"
-          description="Sistema robusto para upload e gerenciamento de múltiplas imagens"
-        >
-          <CaseAdvancedImageManagement 
-            caseId={editingCase?.id}
-            onImagesChange={(images) => {
-              console.log('Images updated:', images.length);
-            }}
-          />
         </CaseFormGamifiedLayout>
 
         <div className="flex justify-between items-center pt-6 border-t border-gray-200">
