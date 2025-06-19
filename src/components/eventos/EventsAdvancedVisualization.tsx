@@ -17,6 +17,8 @@ import {
   Play
 } from "lucide-react";
 import { EventType } from "@/hooks/useActiveEvents";
+import { useUserAnalytics } from "@/hooks/useUserAnalytics";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Props {
   events: EventType[];
@@ -24,6 +26,8 @@ interface Props {
 }
 
 export function EventsAdvancedVisualization({ events, onEnterEvent }: Props) {
+  const { user } = useAuth();
+  const { analytics, loading: analyticsLoading } = useUserAnalytics();
   const [viewMode, setViewMode] = useState<"timeline" | "calendar" | "kanban" | "heatmap">("timeline");
 
   const getStatusColor = (status: string) => {
@@ -106,39 +110,71 @@ export function EventsAdvancedVisualization({ events, onEnterEvent }: Props) {
     </div>
   );
 
-  const renderCalendar = () => (
-    <div className="grid grid-cols-7 gap-2">
-      {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
-        <div key={day} className="p-3 text-center font-medium text-gray-600 bg-gray-50 rounded-lg">
-          {day}
-        </div>
-      ))}
-      {Array.from({ length: 35 }, (_, i) => {
-        const dayEvents = events.filter(event => 
-          new Date(event.scheduled_start).getDate() === (i % 30) + 1
-        );
-        return (
-          <div key={i} className="p-2 min-h-[80px] border border-gray-200 rounded-lg bg-white hover:bg-gray-50">
-            <div className="text-sm font-medium text-gray-600 mb-1">
-              {(i % 30) + 1}
+  const renderCalendar = () => {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDay = firstDay.getDay();
+
+    const calendarDays = [];
+    
+    // Dias vazios no início
+    for (let i = 0; i < startingDay; i++) {
+      calendarDays.push(null);
+    }
+    
+    // Dias do mês
+    for (let day = 1; day <= daysInMonth; day++) {
+      calendarDays.push(day);
+    }
+
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-7 gap-2">
+          {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
+            <div key={day} className="p-3 text-center font-medium text-gray-600 bg-gray-50 rounded-lg">
+              {day}
             </div>
-            {dayEvents.slice(0, 2).map(event => (
-              <div
-                key={event.id}
-                className="text-xs p-1 rounded bg-cyan-100 text-cyan-700 mb-1 cursor-pointer hover:bg-cyan-200"
-                onClick={() => onEnterEvent?.(event.id)}
-              >
-                {event.name.slice(0, 15)}...
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-2">
+          {calendarDays.map((day, index) => {
+            if (day === null) {
+              return <div key={index} className="p-2 min-h-[80px]"></div>;
+            }
+
+            const dayEvents = events.filter(event => {
+              const eventDate = new Date(event.scheduled_start);
+              return eventDate.getDate() === day && 
+                     eventDate.getMonth() === today.getMonth() &&
+                     eventDate.getFullYear() === today.getFullYear();
+            });
+
+            return (
+              <div key={day} className="p-2 min-h-[80px] border border-gray-200 rounded-lg bg-white hover:bg-gray-50">
+                <div className="text-sm font-medium text-gray-600 mb-1">
+                  {day}
+                </div>
+                {dayEvents.slice(0, 2).map(event => (
+                  <div
+                    key={event.id}
+                    className="text-xs p-1 rounded bg-cyan-100 text-cyan-700 mb-1 cursor-pointer hover:bg-cyan-200"
+                    onClick={() => onEnterEvent?.(event.id)}
+                  >
+                    {event.name.slice(0, 15)}...
+                  </div>
+                ))}
+                {dayEvents.length > 2 && (
+                  <div className="text-xs text-gray-500">+{dayEvents.length - 2} mais</div>
+                )}
               </div>
-            ))}
-            {dayEvents.length > 2 && (
-              <div className="text-xs text-gray-500">+{dayEvents.length - 2} mais</div>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
   const renderKanban = () => {
     const columns = [
@@ -187,44 +223,92 @@ export function EventsAdvancedVisualization({ events, onEnterEvent }: Props) {
     );
   };
 
-  const renderHeatmap = () => (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {['Neurologia', 'Cardiologia', 'Radiologia', 'Dermatologia'].map(specialty => (
-          <Card key={specialty} className="text-center">
-            <CardContent className="p-4">
-              <h4 className="font-medium mb-2">{specialty}</h4>
-              <div className="w-full h-20 bg-gradient-to-t from-blue-200 to-blue-500 rounded-lg relative">
-                <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 text-white text-xs font-bold">
-                  {Math.floor(Math.random() * 50) + 10} eventos
+  const renderHeatmap = () => {
+    if (!user || analyticsLoading) {
+      return (
+        <div className="text-center py-8">
+          {!user ? 'Faça login para ver seus dados' : 'Carregando dados...'}
+        </div>
+      );
+    }
+
+    // Performance por especialidade (dados reais)
+    const specialtyData = analytics?.specialtyPerformance || {};
+    const specialties = Object.keys(specialtyData).slice(0, 4);
+
+    // Atividade semanal (dados reais)
+    const weeklyActivity = analytics?.weeklyActivity || {};
+    const activityDays = Object.keys(weeklyActivity).sort();
+
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {specialties.map(specialty => {
+            const data = specialtyData[specialty];
+            return (
+              <Card key={specialty} className="text-center">
+                <CardContent className="p-4">
+                  <h4 className="font-medium mb-2">{specialty}</h4>
+                  <div className="w-full h-20 bg-gradient-to-t from-blue-200 to-blue-500 rounded-lg relative">
+                    <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 text-white text-xs font-bold">
+                      {data.cases} casos
+                    </div>
+                    <div className="absolute top-1 left-1/2 transform -translate-x-1/2 text-white text-xs">
+                      {data.accuracy.toFixed(0)}% acc
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Mapa de Atividade Semanal</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-7 gap-1 mb-4">
+              {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
+                <div key={day} className="text-center text-xs font-medium text-gray-600 p-1">
+                  {day}
                 </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-7 gap-1">
+              {activityDays.map(day => {
+                const activity = weeklyActivity[day] || 0;
+                const intensity = activity > 0 ? Math.min(activity / 5, 1) : 0;
+                const bgColor = activity === 0 ? 'bg-gray-100' :
+                               intensity < 0.25 ? 'bg-green-200' :
+                               intensity < 0.5 ? 'bg-green-300' :
+                               intensity < 0.75 ? 'bg-green-400' : 'bg-green-500';
+                
+                return (
+                  <div
+                    key={day}
+                    className={`w-8 h-8 rounded-sm ${bgColor} cursor-pointer hover:opacity-80`}
+                    title={`${day}: ${activity} casos resolvidos`}
+                  ></div>
+                );
+              })}
+            </div>
+            <div className="flex items-center justify-between mt-4 text-xs text-gray-600">
+              <span>Menos</span>
+              <div className="flex gap-1">
+                <div className="w-3 h-3 bg-gray-100 rounded-sm"></div>
+                <div className="w-3 h-3 bg-green-200 rounded-sm"></div>
+                <div className="w-3 h-3 bg-green-300 rounded-sm"></div>
+                <div className="w-3 h-3 bg-green-400 rounded-sm"></div>
+                <div className="w-3 h-3 bg-green-500 rounded-sm"></div>
               </div>
-            </CardContent>
-          </Card>
-        ))}
+              <span>Mais</span>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Mapa de Atividade Semanal</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-7 gap-1">
-            {Array.from({ length: 7 * 4 }, (_, i) => (
-              <div
-                key={i}
-                className={`w-8 h-8 rounded-sm ${
-                  Math.random() > 0.5 ? 'bg-green-200' : 
-                  Math.random() > 0.3 ? 'bg-green-300' : 'bg-green-500'
-                }`}
-                title={`${Math.floor(Math.random() * 10)} eventos`}
-              ></div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+    );
+  };
 
   const viewModes = [
     { id: "timeline", label: "Timeline", icon: Clock },
