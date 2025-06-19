@@ -11,7 +11,7 @@ interface JourneyFilters {
   patientAge?: string;
   patientGender?: string;
   symptomsDuration?: string;
-  // Filtros semânticos - mapeados para campos reais
+  // Filtros semânticos - campos reais do banco
   context?: string; // mapeia para exam_context
   rarity?: string; // mapeia para case_rarity
   targetAudience?: string; // mapeia para target_audience
@@ -27,7 +27,7 @@ export function useJourneySearch(filters: JourneyFilters) {
     queryFn: async () => {
       let query = supabase
         .from('medical_cases')
-        .select('id, title, specialty, modality, subtype, difficulty_level, patient_age, patient_gender, symptoms_duration, description, findings, exam_context, educational_value, estimated_solve_time, case_rarity, target_audience')
+        .select('id, title, specialty, modality, subtype, difficulty_level, patient_age, patient_gender, symptoms_duration, description, findings, exam_context, educational_value, estimated_solve_time, case_rarity, target_audience, diagnosis_internal')
         .order('difficulty_level', { ascending: true })
         .order('created_at', { ascending: true });
 
@@ -45,7 +45,11 @@ export function useJourneySearch(filters: JourneyFilters) {
       }
       
       if (filters.difficulty && filters.difficulty !== '') {
-        query = query.eq('difficulty_level', parseInt(filters.difficulty));
+        // Converter string para number para difficulty_level
+        const difficultyNumber = parseInt(filters.difficulty);
+        if (!isNaN(difficultyNumber)) {
+          query = query.eq('difficulty_level', difficultyNumber);
+        }
       }
       
       if (filters.patientAge && filters.patientAge !== '') {
@@ -60,7 +64,7 @@ export function useJourneySearch(filters: JourneyFilters) {
         query = query.eq('symptoms_duration', filters.symptomsDuration);
       }
 
-      // Filtros semânticos usando campos reais
+      // Filtros semânticos usando campos reais do banco
       if (filters.context && filters.context !== '') {
         query = query.eq('exam_context', filters.context);
       }
@@ -82,11 +86,11 @@ export function useJourneySearch(filters: JourneyFilters) {
         query = query.contains('target_audience', [filters.targetAudience]);
       }
 
-      // Busca por texto em múltiplos campos
+      // Busca por texto em múltiplos campos incluindo diagnosis_internal
       const searchQuery = filters.aiQuery || filters.searchTerm;
       if (searchQuery && searchQuery.trim() !== '') {
         const searchTerm = searchQuery.trim();
-        query = query.or(`title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,findings.ilike.%${searchTerm}%,specialty.ilike.%${searchTerm}%,modality.ilike.%${searchTerm}%`);
+        query = query.or(`title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,findings.ilike.%${searchTerm}%,specialty.ilike.%${searchTerm}%,modality.ilike.%${searchTerm}%,diagnosis_internal.ilike.%${searchTerm}%`);
       }
 
       const { data, error } = await query;
