@@ -11,6 +11,9 @@ import { CaseEditFormModal } from "./components/CaseEditFormModal";
 import { CaseQuickEditModal } from "./components/CaseQuickEditModal";
 import { CaseRichViewModal } from "./components/CaseRichViewModal";
 import { CaseSmartDuplicateModal } from "./components/CaseSmartDuplicateModal";
+import { CaseAdvancedAnalyticsModal } from "./components/CaseAdvancedAnalyticsModal";
+import { CaseEditWizardModal } from "./components/CaseEditWizardModal";
+import { CaseVersionComparisonModal } from "./components/CaseVersionComparisonModal";
 import { useCasesManagement } from "./hooks/useCasesManagement";
 import { useDisclosure } from "@mantine/hooks";
 import { Loader } from "@/components/Loader";
@@ -41,11 +44,16 @@ export default function GestaoCasos() {
     refetch
   } = useCasesManagement();
 
-  // Modal states
+  // Modal states - Phase 1
   const [editModalOpen, { open: openEditModal, close: closeEditModal }] = useDisclosure(false);
   const [quickEditModalOpen, { open: openQuickEditModal, close: closeQuickEditModal }] = useDisclosure(false);
   const [richViewModalOpen, { open: openRichViewModal, close: closeRichViewModal }] = useDisclosure(false);
   const [duplicateModalOpen, { open: openDuplicateModal, close: closeDuplicateModal }] = useDisclosure(false);
+  
+  // Modal states - Phase 2
+  const [analyticsModalOpen, { open: openAnalyticsModal, close: closeAnalyticsModal }] = useDisclosure(false);
+  const [wizardModalOpen, { open: openWizardModal, close: closeWizardModal }] = useDisclosure(false);
+  const [versionModalOpen, { open: openVersionModal, close: closeVersionModal }] = useDisclosure(false);
   
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
 
@@ -69,10 +77,27 @@ export default function GestaoCasos() {
     openDuplicateModal();
   };
 
+  // Phase 2 handlers
+  const handleAnalytics = (caseId: string) => {
+    setSelectedCaseId(caseId);
+    openAnalyticsModal();
+  };
+
+  const handleWizardEdit = (caseId: string) => {
+    setSelectedCaseId(caseId);
+    openWizardModal();
+  };
+
+  const handleVersionComparison = (caseId: string) => {
+    setSelectedCaseId(caseId);
+    openVersionModal();
+  };
+
   const handleCaseSaved = () => {
     refetch();
     closeEditModal();
     closeQuickEditModal();
+    closeWizardModal();
   };
 
   const handleCaseCreated = () => {
@@ -96,6 +121,9 @@ export default function GestaoCasos() {
             onDelete={deleteCase}
             onDuplicate={handleDuplicate}
             onView={handleView}
+            onAnalytics={handleAnalytics}
+            onWizardEdit={handleWizardEdit}
+            onVersionComparison={handleVersionComparison}
           />
         );
       case "grid":
@@ -106,6 +134,9 @@ export default function GestaoCasos() {
             onCaseSelect={handleCaseSelect}
             onEdit={handleEdit}
             onView={handleView}
+            onAnalytics={handleAnalytics}
+            onWizardEdit={handleWizardEdit}
+            onVersionComparison={handleVersionComparison}
             density={gridDensity}
           />
         );
@@ -114,6 +145,9 @@ export default function GestaoCasos() {
           <MedicalCasesTable
             cases={cases}
             onDelete={deleteCase}
+            onAnalytics={handleAnalytics}
+            onWizardEdit={handleWizardEdit}
+            onVersionComparison={handleVersionComparison}
           />
         );
       default:
@@ -164,7 +198,7 @@ export default function GestaoCasos() {
         {renderCasesView()}
       </div>
 
-      {/* Modais */}
+      {/* Modais - Phase 1 */}
       <CaseEditFormModal
         open={editModalOpen}
         onClose={closeEditModal}
@@ -185,6 +219,9 @@ export default function GestaoCasos() {
         caseId={selectedCaseId}
         onEdit={handleQuickEdit}
         onDuplicate={handleDuplicate}
+        onAnalytics={handleAnalytics}
+        onWizardEdit={handleWizardEdit}
+        onVersionComparison={handleVersionComparison}
       />
 
       <CaseSmartDuplicateModal
@@ -192,6 +229,31 @@ export default function GestaoCasos() {
         onClose={closeDuplicateModal}
         caseId={selectedCaseId}
         onCreated={handleCaseCreated}
+      />
+
+      {/* Modais - Phase 2 */}
+      <CaseAdvancedAnalyticsModal
+        open={analyticsModalOpen}
+        onClose={closeAnalyticsModal}
+        caseId={selectedCaseId}
+      />
+
+      <CaseEditWizardModal
+        open={wizardModalOpen}
+        onClose={closeWizardModal}
+        caseId={selectedCaseId}
+        onSaved={handleCaseSaved}
+      />
+
+      <CaseVersionComparisonModal
+        open={versionModalOpen}
+        onClose={closeVersionModal}
+        caseId={selectedCaseId}
+        onRestore={(versionData) => {
+          // Implementar lógica de restauração
+          console.log("Restaurar versão:", versionData);
+          closeVersionModal();
+        }}
       />
     </div>
   );
