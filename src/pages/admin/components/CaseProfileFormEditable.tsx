@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { useCaseProfileFormHandlers } from "../hooks/useCaseProfileFormHandlers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -150,23 +150,6 @@ export function CaseProfileFormEditable({
       </Tooltip>
     );
   }
-
-  // CORREÇÃO: Garantir que setForm seja uma função estável e correta
-  const stableSetForm = React.useCallback((updater: any) => {
-    console.log('🔧 stableSetForm chamada com:', typeof updater === 'function' ? 'function' : updater);
-    
-    if (typeof updater === 'function') {
-      setForm((prevForm: any) => {
-        const newForm = updater(prevForm);
-        console.log('🔧 stableSetForm - Estado anterior:', JSON.stringify(prevForm, null, 2));
-        console.log('🔧 stableSetForm - Novo estado:', JSON.stringify(newForm, null, 2));
-        return newForm;
-      });
-    } else {
-      console.log('🔧 stableSetForm - Definindo estado diretamente:', JSON.stringify(updater, null, 2));
-      setForm(updater);
-    }
-  }, [setForm]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -321,14 +304,14 @@ export function CaseProfileFormEditable({
   React.useEffect(() => {
     if (!isEditMode && form.category_id && form.modality && form.difficulty_level && (!form.case_number || !form.title)) {
       const { title, case_number } = generateTitle(Number(form.category_id), form.modality, Number(form.difficulty_level));
-      stableSetForm((prev: any) => ({ ...prev, title, case_number }));
+      setForm((prev: any) => ({ ...prev, title, case_number }));
     }
   }, [form.category_id, form.modality, form.difficulty_level, isEditMode]);
 
   function handleAutoGenerateTitle() {
     if (form.category_id && form.modality && form.difficulty_level) {
       const { title, case_number } = generateTitle(Number(form.category_id), form.modality, Number(form.difficulty_level));
-      stableSetForm((prev: any) => ({ ...prev, title, case_number }));
+      setForm((prev: any) => ({ ...prev, title, case_number }));
       setHighlightedFields(["title", "case_number"]);
       setTimeout(() => setHighlightedFields([]), 1200);
     }
@@ -347,7 +330,7 @@ export function CaseProfileFormEditable({
           {/* BOTÃO MASTER AI: Preencher TUDO - Substitui "Auto-preenchimento por Seção" */}
           <CaseMasterAI 
             form={form}
-            setForm={stableSetForm}
+            setForm={setForm}
             onFieldsUpdated={(fields) => {
               setHighlightedFields(fields);
               setTimeout(() => setHighlightedFields([]), 3000);
@@ -359,48 +342,20 @@ export function CaseProfileFormEditable({
 
       <form className="w-full space-y-6" onSubmit={handleSubmit}>
         <CaseFormGamifiedLayout
-          section="structured"
-          title="Dados Estruturados"
-          description="Configure os campos estruturados para filtros avançados e AI (PRIMEIRO PASSO)"
-        >
-          {/* CORREÇÃO: Botão AI para dados estruturados com logs de debug */}
-          <CaseStructuredDataAI 
-            form={form}
-            setForm={stableSetForm}
-            onFieldsUpdated={(fields) => {
-              console.log('📢 CaseProfileFormEditable - Campos estruturados atualizados:', fields);
-              setHighlightedFields(fields);
-              setTimeout(() => setHighlightedFields([]), 2000);
-            }}
-            onSuggestionsGenerated={(suggestions) => {
-              console.log('✅ CaseProfileFormEditable - Sugestões estruturadas geradas:', suggestions);
-            }}
-          />
-          
-          <CaseStructuredFieldsSection 
-            form={form}
-            setForm={stableSetForm}
-            handleFormChange={handleFormChange}
-            renderTooltipTip={renderTooltipTip}
-          />
-        </CaseFormGamifiedLayout>
-
-        <CaseFormGamifiedLayout
           section="basic"
           title={isEditMode ? "Editar Caso Médico" : "Criar Novo Caso Médico"}
-          description="Configure as informações básicas do caso médico (SEGUNDO PASSO - requer dados estruturados)"
+          description="Configure as informações básicas do caso médico (Dados Unificados)"
         >
           <CaseProfileFormTitleSection
             autoTitlePreview={autoTitlePreview}
             showPreview={showPreview}
           />
           
-          {/* CORREÇÃO: Botão AI para seção básica com validação melhorada */}
+          {/* NOVO: Botão AI para seção básica */}
           <CaseBasicSectionAI 
             form={form}
-            setForm={stableSetForm}
+            setForm={setForm}
             onFieldsUpdated={(fields) => {
-              console.log('📢 CaseProfileFormEditable - Campos básicos atualizados:', fields);
               setHighlightedFields(fields);
               setTimeout(() => setHighlightedFields([]), 2000);
             }}
@@ -418,9 +373,32 @@ export function CaseProfileFormEditable({
             handleSuggestClinicalInfo={onSuggestClinical}
             undoFindings={undoFindings}
             undoClinical={undoClinical}
-            setForm={stableSetForm}
+            setForm={setForm}
             autoTitlePreview={autoTitlePreview}
             onGenerateAutoTitle={handleAutoGenerateTitle}
+          />
+        </CaseFormGamifiedLayout>
+
+        <CaseFormGamifiedLayout
+          section="structured"
+          title="Dados Estruturados"
+          description="Configure os campos estruturados para filtros avançados e AI"
+        >
+          {/* NOVO: Botão AI para dados estruturados */}
+          <CaseStructuredDataAI 
+            form={form}
+            setForm={setForm}
+            onFieldsUpdated={(fields) => {
+              setHighlightedFields(fields);
+              setTimeout(() => setHighlightedFields([]), 2000);
+            }}
+          />
+          
+          <CaseStructuredFieldsSection 
+            form={form}
+            setForm={setForm}
+            handleFormChange={handleFormChange}
+            renderTooltipTip={renderTooltipTip}
           />
         </CaseFormGamifiedLayout>
 
@@ -444,7 +422,7 @@ export function CaseProfileFormEditable({
           {/* NOVO: Botão AI para quiz completo */}
           <CaseQuizCompleteAI 
             form={form}
-            setForm={stableSetForm}
+            setForm={setForm}
             onFieldsUpdated={(fields) => {
               setHighlightedFields(fields);
               setTimeout(() => setHighlightedFields([]), 2000);
@@ -488,7 +466,7 @@ export function CaseProfileFormEditable({
           {/* NOVO: Botão AI para explicação completa */}
           <CaseExplanationCompleteAI 
             form={form}
-            setForm={stableSetForm}
+            setForm={setForm}
             onFieldsUpdated={(fields) => {
               setHighlightedFields(fields);
               setTimeout(() => setHighlightedFields([]), 2000);
@@ -513,7 +491,7 @@ export function CaseProfileFormEditable({
           {/* NOVO: Botão AI para config avançada */}
           <CaseAdvancedConfigAI 
             form={form}
-            setForm={stableSetForm}
+            setForm={setForm}
             onFieldsUpdated={(fields) => {
               setHighlightedFields(fields);
               setTimeout(() => setHighlightedFields([]), 2000);

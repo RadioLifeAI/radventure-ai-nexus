@@ -20,6 +20,12 @@ const TARGET_AUDIENCE_BASE = [
   "Especialização", "Mestrado", "Doutorado", "Educação Continuada"
 ];
 
+const FINDING_TYPES_BASE = [
+  "Consolidação", "Massa", "Nódulo", "Derrame", "Pneumotórax", "Atelectasia", 
+  "Bronquiectasias", "Cavitação", "Calcificação", "Linfadenopatia", "Fratura", 
+  "Luxação", "Edema", "Inflamação"
+];
+
 const LEARNING_OBJECTIVES_BASE = [
   "Reconhecer achados radiológicos", "Diferenciar patologias", "Identificar achados específicos", 
   "Avaliar correlação clínica", "Compreender fisiopatologia"
@@ -28,7 +34,8 @@ const LEARNING_OBJECTIVES_BASE = [
 export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, renderTooltipTip }: Props) {
   const { suggestions, generateSuggestions } = useDynamicSuggestions();
 
-  console.log('🎨 CaseStructuredFieldsSection - Renderizando (SEM botão AI duplicado)');
+  // Verificar se diagnóstico principal foi preenchido antes de permitir usar o botão
+  const canUseStructuredAI = form.primary_diagnosis?.trim();
 
   // Aplicar diagnósticos diferenciais automaticamente quando gerados
   useEffect(() => {
@@ -64,10 +71,22 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
     }
   };
 
+  const handleSuggestionsGenerated = async (generatedSuggestions: any) => {
+    // Atualizar as sugestões dinâmicas quando o botão AI for clicado
+    await generateSuggestions(form.primary_diagnosis);
+  };
+
   return (
     <div className="space-y-6">
-      {/* NOTA: Botão AI removido daqui - está no CaseFormGamifiedLayout */}
-      
+      {/* Aviso quando AI não está disponível */}
+      {!canUseStructuredAI && (
+        <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+          <div className="text-sm text-gray-600">
+            💡 Preencha o <strong>Diagnóstico Principal</strong> primeiro para habilitar a AI de Dados Estruturados
+          </div>
+        </div>
+      )}
+
       {/* Diagnóstico Estruturado */}
       <div className="p-4 border border-blue-200 rounded-lg bg-blue-50">
         <h3 className="font-semibold text-blue-900 mb-4 flex items-center gap-2">
@@ -161,7 +180,7 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
             value={form.finding_types || []}
             onChange={handleTagChange}
             placeholder="Digite um tipo de achado"
-            suggestions={suggestions.finding_types || []}
+            suggestions={suggestions.finding_types || FINDING_TYPES_BASE}
             loading={false}
             label="Tipos de Achados 🤖"
           />
