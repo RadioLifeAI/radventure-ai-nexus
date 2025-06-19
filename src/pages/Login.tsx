@@ -5,10 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
-import { CreateAdminUser } from "@/components/admin/CreateAdminUser";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Rocket, Target, TrendingUp, Bot, Award, Globe, Users } from "lucide-react";
+import { Rocket, Target, TrendingUp, Bot, Award, Users } from "lucide-react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -17,25 +14,6 @@ export default function Login() {
   const [isSignUp, setIsSignUp] = useState(false);
   const navigate = useNavigate();
   const { signIn, signUp, loading } = useAuth();
-
-  // Verificar se existem admins no sistema
-  const { data: hasAdmins, isLoading: checkingAdmins } = useQuery({
-    queryKey: ['check-admins'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('type', 'ADMIN')
-        .limit(1);
-      
-      if (error) {
-        console.warn('Erro ao verificar admins:', error);
-        return false;
-      }
-      
-      return (data && data.length > 0);
-    }
-  });
 
   const handleSignIn = async () => {
     if (!email || !password) {
@@ -62,34 +40,6 @@ export default function Login() {
       navigate("/app");
     }
   };
-
-  // Se não há admins no sistema, mostrar criador de admin
-  if (!checkingAdmins && hasAdmins === false) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] p-4">
-        <div className="space-y-6">
-          <div className="text-center text-white mb-8">
-            <h1 className="text-3xl font-bold mb-2">Sistema Sem Admin</h1>
-            <p className="text-cyan-100">
-              Crie o primeiro administrador para começar a usar o sistema
-            </p>
-          </div>
-          
-          <CreateAdminUser />
-          
-          <div className="text-center">
-            <Button 
-              variant="ghost" 
-              className="text-white hover:text-cyan-200"
-              onClick={() => window.location.reload()}
-            >
-              Atualizar Página
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white flex">
@@ -243,6 +193,18 @@ export default function Login() {
                 <h4 className="font-bold text-lg">Comunidade Colaborativa</h4>
                 <p className="text-cyan-100">Troque experiências com especialistas globais</p>
               </div>
+            </div>
+          </div>
+
+          {/* Imagem Central */}
+          <div className="flex justify-center my-8">
+            <div className="relative">
+              <img 
+                src="/lovable-uploads/9f1aaa04-f7a1-4a04-93fe-aa5c6edabeef.png" 
+                alt="Radiologista analisando exames" 
+                className="rounded-2xl shadow-2xl max-w-sm w-full border-2 border-cyan-400/30"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/20 to-transparent rounded-2xl"></div>
             </div>
           </div>
 
