@@ -5,18 +5,28 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
-import { User, Shield, Mail } from "lucide-react";
+import { User, Shield, Mail, Lock } from "lucide-react";
 
 export function CreateAdminUser() {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
   const handleCreateAdmin = async () => {
-    if (!email || !fullName) {
+    if (!email || !fullName || !password) {
       toast({
         title: "❌ Campos obrigatórios",
-        description: "Preencha email e nome completo",
+        description: "Preencha email, senha e nome completo",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      toast({
+        title: "❌ Senha muito curta",
+        description: "A senha deve ter pelo menos 6 caracteres",
         variant: "destructive"
       });
       return;
@@ -25,21 +35,27 @@ export function CreateAdminUser() {
     setIsCreating(true);
     
     try {
-      console.log('Criando admin via função create_admin_direct...');
+      console.log('Criando admin via Edge Function...');
       
-      const { data, error } = await supabase
-        .rpc('create_admin_direct', {
-          p_email: email,
-          p_full_name: fullName,
-          p_type: 'ADMIN'
-        });
+      const { data, error } = await supabase.functions.invoke('create-admin-user', {
+        body: {
+          email,
+          password,
+          full_name: fullName,
+          type: 'ADMIN'
+        }
+      });
 
       if (error) {
-        console.error('Erro ao criar admin:', error);
-        throw error;
+        console.error('Erro na Edge Function:', error);
+        throw new Error(error.message || 'Erro ao chamar Edge Function');
       }
 
-      console.log('Admin criado com sucesso. ID:', data);
+      if (!data?.success) {
+        throw new Error(data?.error || 'Falha na criação do usuário');
+      }
+
+      console.log('Admin criado com sucesso:', data.user);
       
       toast({
         title: "✅ Admin criado com sucesso!",
@@ -48,6 +64,7 @@ export function CreateAdminUser() {
 
       // Limpar campos
       setEmail("");
+      setPassword("");
       setFullName("");
 
     } catch (error: any) {
@@ -68,9 +85,9 @@ export function CreateAdminUser() {
         <div className="mx-auto w-12 h-12 bg-gradient-to-r from-red-500 to-purple-600 rounded-full flex items-center justify-center mb-4">
           <Shield className="h-6 w-6 text-white" />
         </div>
-        <CardTitle className="text-xl font-bold">Criar Admin Imediato</CardTitle>
+        <CardTitle className="text-xl font-bold">Criar Admin Seguro</CardTitle>
         <CardDescription>
-          Criar usuário administrador diretamente no banco de dados
+          Criar usuário administrador usando Edge Function segura
         </CardDescription>
       </CardHeader>
       
@@ -91,6 +108,20 @@ export function CreateAdminUser() {
         
         <div className="space-y-2">
           <label className="text-sm font-medium flex items-center gap-2">
+            <Lock className="h-4 w-4" />
+            Senha
+          </label>
+          <Input
+            type="password"
+            placeholder="Mínimo 6 caracteres"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={isCreating}
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <label className="text-sm font-medium flex items-center gap-2">
             <User className="h-4 w-4" />
             Nome Completo
           </label>
@@ -105,7 +136,7 @@ export function CreateAdminUser() {
         
         <Button 
           onClick={handleCreateAdmin}
-          disabled={isCreating || !email || !fullName}
+          disabled={isCreating || !email || !fullName || !password}
           className="w-full bg-gradient-to-r from-red-500 to-purple-600 hover:from-red-600 hover:to-purple-700"
         >
           {isCreating ? (
@@ -116,13 +147,13 @@ export function CreateAdminUser() {
           ) : (
             <>
               <Shield className="h-4 w-4 mr-2" />
-              Criar Admin Agora
+              Criar Admin Seguro
             </>
           )}
         </Button>
         
         <div className="text-xs text-gray-500 text-center mt-4">
-          ⚠️ Este admin será criado diretamente no banco com role TechAdmin
+          ✅ Usando Edge Function com auth.admin.createUser() + triggers automáticos
         </div>
       </CardContent>
     </Card>

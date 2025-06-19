@@ -1279,6 +1279,15 @@ export type Database = {
         Args: { p_email: string; p_full_name: string; p_type?: string }
         Returns: string
       }
+      create_user_with_auth: {
+        Args: {
+          p_email: string
+          p_password: string
+          p_full_name: string
+          p_type?: string
+        }
+        Returns: Json
+      }
       log_signup_event: {
         Args: {
           p_user_id: string
