@@ -167,7 +167,7 @@ export function EventFormAISection({
           <TabsContent value="automations" className="space-y-4">
             <div className="bg-white rounded-lg p-4 border">
               <EventAutomationHub
-                onConfigureAutomation={onConfigureAutomization}
+                onConfigureAutomation={onConfigureAutomation}
                 onToggleAutomation={() => {}}
                 onCreateRule={() => {}}
               />

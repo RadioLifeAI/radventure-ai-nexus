@@ -17,10 +17,27 @@ import {
   Target
 } from "lucide-react";
 
+interface EventData {
+  name?: string;
+  description?: string;
+  scheduled_start?: string;
+  scheduled_end?: string;
+  prize_radcoins?: number;
+  number_of_cases?: number;
+  duration_minutes?: number;
+  durationMinutes?: number;
+  max_participants?: number;
+  banner_url?: string;
+  auto_start?: boolean;
+  prize_distribution?: any[];
+  case_filters?: any;
+  [key: string]: any;
+}
+
 export default function CreateEvent() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [eventData, setEventData] = useState({});
+  const [eventData, setEventData] = useState<EventData>({});
   const [currentFilters, setCurrentFilters] = useState({});
 
   async function handleSubmit(values: any) {
@@ -76,7 +93,8 @@ export default function CreateEvent() {
     scheduledStart.setHours(parseInt(hours), parseInt(minutes), 0, 0);
     
     const scheduledEnd = new Date(scheduledStart);
-    scheduledEnd.setMinutes(scheduledEnd.getMinutes() + (eventData.durationMinutes || 30));
+    const durationMinutes = eventData.durationMinutes || eventData.duration_minutes || 30;
+    scheduledEnd.setMinutes(scheduledEnd.getMinutes() + durationMinutes);
 
     setEventData(prev => ({
       ...prev,
