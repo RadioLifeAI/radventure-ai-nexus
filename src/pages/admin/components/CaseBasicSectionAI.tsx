@@ -24,29 +24,58 @@ export function CaseBasicSectionAI({
   const { autofillBasicComplete, loading } = useCaseAutofillAPIExpanded();
   const { generateTitle } = useCaseTitleGenerator(categories);
 
-  // CORREÇÃO: Verificar se os dados estruturados estão preenchidos (ao invés de só diagnóstico)
-  const hasStructuredData = form.primary_diagnosis?.trim() && 
-                           form.differential_diagnoses?.length >= 2 &&
-                           form.anatomical_regions?.length > 0;
+  // CORREÇÃO: Validação mais flexível e com logs de debug
+  const hasStructuredData = React.useMemo(() => {
+    const hasPrimary = form.primary_diagnosis?.trim();
+    const hasDifferentials = Array.isArray(form.differential_diagnoses) && form.differential_diagnoses.length >= 1;
+    const hasAnatomical = Array.isArray(form.anatomical_regions) && form.anatomical_regions.length >= 1;
+    
+    // Log de debug para identificar o problema
+    console.log('🔍 DEBUG - Validação hasStructuredData:', {
+      primary_diagnosis: form.primary_diagnosis,
+      differential_diagnoses: form.differential_diagnoses,
+      anatomical_regions: form.anatomical_regions,
+      hasPrimary,
+      hasDifferentials,
+      hasAnatomical,
+      finalResult: hasPrimary && hasDifferentials && hasAnatomical
+    });
+    
+    return hasPrimary && hasDifferentials && hasAnatomical;
+  }, [form.primary_diagnosis, form.differential_diagnoses, form.anatomical_regions]);
 
   const handleAutofillBasicComplete = async () => {
     try {
       console.log('🤖 Iniciando AI: Dados Básicos...');
+      console.log('🔍 Form completo:', form);
       
       // CORREÇÃO: Verificar se os dados estruturados estão completos
       if (!hasStructuredData) {
+        console.log('❌ Dados estruturados incompletos:', {
+          primary_diagnosis: form.primary_diagnosis,
+          differential_diagnoses: form.differential_diagnoses,
+          anatomical_regions: form.anatomical_regions
+        });
+        
         toast({ 
           title: "Dados Estruturados Obrigatórios", 
-          description: "Preencha primeiro os dados estruturados (diagnóstico principal, diferenciais e regiões anatômicas) para gerar dados básicos.",
+          description: "Preencha primeiro: Diagnóstico Principal + Diagnósticos Diferenciais + Regiões Anatômicas",
           variant: "destructive" 
         });
         return;
       }
       
+      console.log('✅ Dados estruturados válidos, chamando API...');
+      
       const suggestions = await autofillBasicComplete(form);
       
       if (!suggestions) {
-        console.log('❌ Nenhuma sugestão recebida');
+        console.log('❌ Nenhuma sugestão recebida da API');
+        toast({ 
+          title: "Erro na AI", 
+          description: "Não foi possível gerar sugestões. Tente novamente.",
+          variant: "destructive" 
+        });
         return;
       }
 
@@ -93,6 +122,7 @@ export function CaseBasicSectionAI({
       }
 
       if (Object.keys(updates).length > 0) {
+        console.log('🔄 Atualizando formulário com:', updates);
         setForm((prev: any) => ({ ...prev, ...updates }));
         onFieldsUpdated?.(updatedFields);
         
@@ -103,6 +133,7 @@ export function CaseBasicSectionAI({
           description: `${updatedFields.length} campos básicos atualizados incluindo categoria, dificuldade e modalidade${titleMessage}.` 
         });
       } else {
+        console.log('⚠️ Nenhum campo para atualizar');
         toast({ 
           title: "Nenhum campo básico para atualizar",
           description: "Os dados básicos já estão completos ou não puderam ser determinados."
@@ -124,7 +155,7 @@ export function CaseBasicSectionAI({
       <Button
         type="button"
         onClick={handleAutofillBasicComplete}
-        disabled={loading || disabled || !hasStructuredData}
+        disabled={loading || disabled}
         variant="outline"
         size="sm"
         className={`${hasStructuredData ? 'bg-blue-500 text-white hover:bg-blue-600 border-blue-500' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
@@ -142,7 +173,12 @@ export function CaseBasicSectionAI({
         <div className="font-medium">Categoria • Dificuldade • Modalidade • Demografia • Título Automático</div>
         {!hasStructuredData && (
           <div className="text-red-600 font-semibold mt-1">
-            ⚠️ Preencha primeiro: Diagnóstico + Diferenciais + Regiões Anatômicas
+            ⚠️ Preencha primeiro: Diagnóstico Principal + Diagnósticos Diferenciais + Regiões Anatômicas
+          </div>
+        )}
+        {hasStructuredData && (
+          <div className="text-green-600 font-semibold mt-1">
+            ✅ Dados estruturados completos - Pronto para usar!
           </div>
         )}
       </div>
