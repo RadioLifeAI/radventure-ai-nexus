@@ -8,6 +8,9 @@ import { CasesCardsView } from "./components/CasesCardsView";
 import { CasesGridView } from "./components/CasesGridView";
 import { MedicalCasesTable } from "./components/MedicalCasesTable";
 import { CaseEditFormModal } from "./components/CaseEditFormModal";
+import { CaseQuickEditModal } from "./components/CaseQuickEditModal";
+import { CaseRichViewModal } from "./components/CaseRichViewModal";
+import { CaseSmartDuplicateModal } from "./components/CaseSmartDuplicateModal";
 import { useCasesManagement } from "./hooks/useCasesManagement";
 import { useDisclosure } from "@mantine/hooks";
 import { Loader } from "@/components/Loader";
@@ -38,7 +41,12 @@ export default function GestaoCasos() {
     refetch
   } = useCasesManagement();
 
+  // Modal states
   const [editModalOpen, { open: openEditModal, close: closeEditModal }] = useDisclosure(false);
+  const [quickEditModalOpen, { open: openQuickEditModal, close: closeQuickEditModal }] = useDisclosure(false);
+  const [richViewModalOpen, { open: openRichViewModal, close: closeRichViewModal }] = useDisclosure(false);
+  const [duplicateModalOpen, { open: openDuplicateModal, close: closeDuplicateModal }] = useDisclosure(false);
+  
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
 
   const handleEdit = (caseId: string) => {
@@ -46,19 +54,30 @@ export default function GestaoCasos() {
     openEditModal();
   };
 
+  const handleQuickEdit = (caseId: string) => {
+    setSelectedCaseId(caseId);
+    openQuickEditModal();
+  };
+
   const handleView = (caseId: string) => {
-    // Implementar modal de visualização
-    console.log("Visualizar caso:", caseId);
+    setSelectedCaseId(caseId);
+    openRichViewModal();
   };
 
   const handleDuplicate = (caseId: string) => {
-    // Implementar duplicação
-    console.log("Duplicar caso:", caseId);
+    setSelectedCaseId(caseId);
+    openDuplicateModal();
   };
 
   const handleCaseSaved = () => {
     refetch();
     closeEditModal();
+    closeQuickEditModal();
+  };
+
+  const handleCaseCreated = () => {
+    refetch();
+    closeDuplicateModal();
   };
 
   const renderCasesView = () => {
@@ -145,12 +164,34 @@ export default function GestaoCasos() {
         {renderCasesView()}
       </div>
 
-      {/* Modal de Edição */}
+      {/* Modais */}
       <CaseEditFormModal
         open={editModalOpen}
         onClose={closeEditModal}
         caseId={selectedCaseId}
         onSaved={handleCaseSaved}
+      />
+
+      <CaseQuickEditModal
+        open={quickEditModalOpen}
+        onClose={closeQuickEditModal}
+        caseId={selectedCaseId}
+        onSaved={handleCaseSaved}
+      />
+
+      <CaseRichViewModal
+        open={richViewModalOpen}
+        onClose={closeRichViewModal}
+        caseId={selectedCaseId}
+        onEdit={handleQuickEdit}
+        onDuplicate={handleDuplicate}
+      />
+
+      <CaseSmartDuplicateModal
+        open={duplicateModalOpen}
+        onClose={closeDuplicateModal}
+        caseId={selectedCaseId}
+        onCreated={handleCaseCreated}
       />
     </div>
   );
