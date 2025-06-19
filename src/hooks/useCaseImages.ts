@@ -35,6 +35,34 @@ export function useCaseImages(caseId?: string) {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
 
+  // Função para converter dados do Supabase para CaseImage
+  const transformDbImageToCaseImage = (dbImage: any): CaseImage => {
+    return {
+      id: dbImage.id,
+      case_id: dbImage.case_id,
+      original_filename: dbImage.original_filename,
+      original_url: dbImage.original_url,
+      thumbnail_url: dbImage.thumbnail_url,
+      medium_url: dbImage.medium_url,
+      large_url: dbImage.large_url,
+      file_size_bytes: dbImage.file_size_bytes,
+      dimensions: dbImage.dimensions && typeof dbImage.dimensions === 'object' 
+        ? dbImage.dimensions as { width: number; height: number; aspect_ratio: number }
+        : undefined,
+      formats: dbImage.formats && typeof dbImage.formats === 'object'
+        ? dbImage.formats as { webp_url?: string; jpeg_url?: string; avif_url?: string }
+        : undefined,
+      processing_status: dbImage.processing_status as 'pending' | 'processing' | 'completed' | 'failed',
+      metadata: dbImage.metadata && typeof dbImage.metadata === 'object'
+        ? dbImage.metadata as Record<string, any>
+        : undefined,
+      legend: dbImage.legend,
+      sequence_order: dbImage.sequence_order,
+      created_at: dbImage.created_at,
+      processed_at: dbImage.processed_at,
+    };
+  };
+
   // Carregar imagens do caso
   const fetchImages = async () => {
     if (!caseId) return;
@@ -48,7 +76,9 @@ export function useCaseImages(caseId?: string) {
         .order('sequence_order', { ascending: true });
 
       if (error) throw error;
-      setImages(data || []);
+      
+      const transformedImages = (data || []).map(transformDbImageToCaseImage);
+      setImages(transformedImages);
     } catch (error: any) {
       console.error('Erro ao carregar imagens:', error);
       toast({
