@@ -295,22 +295,22 @@ export function CaseProfileFormEditable({
     setTimeout(() => setFeedback(""), 2300);
   }
 
-  // Fix autoTitlePreview to use 3 arguments
+  // Fix autoTitlePreview - Convert strings to numbers for generateTitle
   const autoTitlePreview =
     form.category_id && form.modality && form.difficulty_level
-      ? generateTitle(form.category_id, form.modality, form.difficulty_level).title
+      ? generateTitle(Number(form.category_id), form.modality, Number(form.difficulty_level)).title
       : "(Será definido automaticamente: Caso [Especialidade] [Dificuldade] [Modalidade] #[NUM])";
 
   React.useEffect(() => {
     if (!isEditMode && form.category_id && form.modality && form.difficulty_level && (!form.case_number || !form.title)) {
-      const { title, case_number } = generateTitle(form.category_id, form.modality, form.difficulty_level);
+      const { title, case_number } = generateTitle(Number(form.category_id), form.modality, Number(form.difficulty_level));
       setForm((prev: any) => ({ ...prev, title, case_number }));
     }
   }, [form.category_id, form.modality, form.difficulty_level, isEditMode]);
 
   function handleAutoGenerateTitle() {
     if (form.category_id && form.modality && form.difficulty_level) {
-      const { title, case_number } = generateTitle(form.category_id, form.modality, form.difficulty_level);
+      const { title, case_number } = generateTitle(Number(form.category_id), form.modality, Number(form.difficulty_level));
       setForm((prev: any) => ({ ...prev, title, case_number }));
       setHighlightedFields(["title", "case_number"]);
       setTimeout(() => setHighlightedFields([]), 1200);
@@ -335,6 +335,7 @@ export function CaseProfileFormEditable({
               setHighlightedFields(fields);
               setTimeout(() => setHighlightedFields([]), 3000);
             }}
+            categories={categories}
           />
         </div>
       )}

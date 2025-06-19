@@ -1,7 +1,6 @@
 
 import React from "react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
@@ -13,30 +12,21 @@ type Props = {
   handleShortTipChange: any;
   handleCorrectChange: any;
   handleSuggestAlternatives: any;
-  handleRandomizeOptions: any; // NOVO
+  handleRandomizeOptions: any;
   renderTooltipTip: any;
 };
 
 export function CaseProfileAlternativesSection({
   form, highlightedFields, handleOptionChange, handleOptionFeedbackChange,
-  handleShortTipChange, handleCorrectChange, handleSuggestAlternatives, handleRandomizeOptions, renderTooltipTip
+  handleShortTipChange, handleCorrectChange, renderTooltipTip
 }: Props) {
   return (
     <div>
       <div className="flex items-end gap-2 mb-1">
         <label className="font-semibold">
           Alternativas do Quiz *
-          {renderTooltipTip("tip-alternatives", "Varie as alternativas para aumentar o nível de desafio! Em breve, será possível embaralhar as opções no modo revisão.")}
+          {renderTooltipTip("tip-alternatives", "Configure as 4 alternativas do quiz. Use o botão 'AI: Quiz Inteligente' acima para preenchimento automático com embaralhamento incluído.")}
         </label>
-        <Button type="button" onClick={handleSuggestAlternatives} variant="secondary">
-          Gerar Alternativas
-        </Button>
-        <Button type="button" onClick={handleRandomizeOptions} variant="ghost" title="Embaralhar Alternativas">
-          <span className="flex items-center gap-1">
-            <svg xmlns="http://www.w3.org/2000/svg" className="inline w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M16 3h5v5m0 0l-8.5 8.5a5 5 0 01-7.07 0v0a5 5 0 010-7.07L16 3zm0 0l5 5" /></svg>
-            Embaralhar
-          </span>
-        </Button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
         {["A", "B", "C", "D"].map((letter, idx) => (
@@ -76,4 +66,3 @@ export function CaseProfileAlternativesSection({
     </div>
   );
 }
-
