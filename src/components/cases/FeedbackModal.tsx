@@ -1,10 +1,23 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Clock, Target, Zap, Star, ArrowRight, RotateCcw } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Trophy, 
+  Clock, 
+  Target, 
+  Zap, 
+  Star, 
+  ArrowRight, 
+  RotateCcw,
+  TrendingUp,
+  BookOpen,
+  Brain,
+  Award
+} from "lucide-react";
 
 type Props = {
   open: boolean;
@@ -20,6 +33,7 @@ type Props = {
     penalty: number;
     selectedIndex?: number;
     answerFeedbacks?: string[];
+    confidence?: number;
   };
   onNextCase: () => void;
   onReviewCase: () => void;
@@ -36,6 +50,8 @@ export function FeedbackModal({
   onNextCase,
   onReviewCase
 }: Props) {
+  const [activeTab, setActiveTab] = useState("summary");
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -48,39 +64,43 @@ export function FeedbackModal({
       .toLowerCase()
       .trim()
       .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '') // Remove acentos
-      .replace(/[^\w\s]/g, '') // Remove pontuação
-      .replace(/\s+/g, ' '); // Normaliza espaços
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^\w\s]/g, '')
+      .replace(/\s+/g, ' ');
   };
 
-  // Verificação adicional para casos onde as respostas são textualmente iguais
   const actuallyCorrect = isCorrect || normalizeText(selectedAnswer) === normalizeText(correctAnswer);
 
-  // Obter o feedback da alternativa selecionada - com verificação mais robusta
   let selectedFeedback = '';
   if (performance.answerFeedbacks && performance.selectedIndex !== undefined) {
     const feedbacks = performance.answerFeedbacks;
     const selectedIdx = performance.selectedIndex;
     
-    // Verificar se o índice é válido e se há feedback para essa posição
     if (selectedIdx >= 0 && selectedIdx < feedbacks.length && feedbacks[selectedIdx]) {
       selectedFeedback = feedbacks[selectedIdx].trim();
     }
   }
 
-  console.log('Debug FeedbackModal:', {
-    selectedIndex: performance.selectedIndex,
-    answerFeedbacks: performance.answerFeedbacks,
-    selectedFeedback,
-    isCorrect,
-    actuallyCorrect,
-    selectedAnswer,
-    correctAnswer
-  });
+  // Métricas de performance avançadas
+  const getPerformanceLevel = () => {
+    let score = 0;
+    if (actuallyCorrect) score += 40;
+    if (performance.timeSpent < 120) score += 20;
+    if (performance.helpUsed.length === 0) score += 20;
+    if (performance.confidence && performance.confidence > 70) score += 20;
+    
+    if (score >= 80) return { level: 'Excelente', color: 'bg-green-500', icon: Trophy };
+    if (score >= 60) return { level: 'Bom', color: 'bg-blue-500', icon: Star };
+    if (score >= 40) return { level: 'Regular', color: 'bg-yellow-500', icon: Target };
+    return { level: 'Precisa Melhorar', color: 'bg-red-500', icon: TrendingUp };
+  };
+
+  const performanceLevel = getPerformanceLevel();
+  const PerformanceIcon = performanceLevel.icon;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {actuallyCorrect ? (
@@ -97,115 +117,194 @@ export function FeedbackModal({
           </DialogTitle>
         </DialogHeader>
 
-        {/* Performance Summary */}
-        <Card className={`border-2 ${actuallyCorrect ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
-          <CardContent className="p-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center">
-                <div className="flex items-center justify-center mb-1">
-                  <Trophy className="text-yellow-500" size={20} />
-                </div>
-                <div className="text-2xl font-bold">{actuallyCorrect ? performance.points : 0}</div>
-                <div className="text-xs text-gray-600">Pontos</div>
-              </div>
-              
-              <div className="text-center">
-                <div className="flex items-center justify-center mb-1">
-                  <Clock className="text-blue-500" size={20} />
-                </div>
-                <div className="text-2xl font-bold">{formatTime(performance.timeSpent)}</div>
-                <div className="text-xs text-gray-600">Tempo</div>
-              </div>
-              
-              <div className="text-center">
-                <div className="flex items-center justify-center mb-1">
-                  <Zap className="text-purple-500" size={20} />
-                </div>
-                <div className="text-2xl font-bold">{performance.helpUsed.length}</div>
-                <div className="text-xs text-gray-600">Ajudas</div>
-              </div>
-              
-              <div className="text-center">
-                <div className="flex items-center justify-center mb-1">
-                  <Star className="text-orange-500" size={20} />
-                </div>
-                <div className="text-2xl font-bold">
-                  {actuallyCorrect ? "100%" : "0%"}
-                </div>
-                <div className="text-xs text-gray-600">Precisão</div>
-              </div>
-            </div>
-            
-            {performance.penalty > 0 && (
-              <div className="mt-3 p-2 bg-orange-100 border border-orange-200 rounded">
-                <div className="text-sm text-orange-700">
-                  <strong>Penalizações:</strong> -{performance.penalty} pontos
-                </div>
-              </div>
-            )}
-            
-            {performance.helpUsed.length > 0 && (
-              <div className="mt-3">
-                <div className="text-sm font-medium mb-1">Ajudas utilizadas:</div>
-                <div className="flex gap-1 flex-wrap">
-                  {performance.helpUsed.map((help, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
-                      {help}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="summary">Resumo</TabsTrigger>
+            <TabsTrigger value="analysis">Análise Detalhada</TabsTrigger>
+            <TabsTrigger value="insights">Insights de Aprendizado</TabsTrigger>
+          </TabsList>
 
-        {/* Answer Review */}
-        <Card>
-          <CardContent className="p-4">
-            <h3 className="font-semibold mb-3">Revisão da Resposta</h3>
-            
-            <div className="space-y-2 mb-4">
-              <div className="flex items-start gap-2">
-                <span className="font-medium">Sua resposta:</span>
-                <span className={actuallyCorrect ? 'text-green-600' : 'text-red-600'}>
-                  {selectedAnswer}
-                </span>
-              </div>
-              
-              {!actuallyCorrect && (
-                <div className="flex items-start gap-2">
-                  <span className="font-medium">Resposta correta:</span>
-                  <span className="text-green-600">{correctAnswer}</span>
+          <TabsContent value="summary" className="space-y-4">
+            {/* Performance Header */}
+            <Card className={`border-2 ${actuallyCorrect ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-3 rounded-full ${performanceLevel.color}`}>
+                      <PerformanceIcon className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold">Performance: {performanceLevel.level}</h3>
+                      <p className="text-gray-600">Pontuação baseada em precisão, tempo e ajudas</p>
+                    </div>
+                  </div>
+                  {performance.confidence && (
+                    <Badge className="bg-purple-100 text-purple-800 px-3 py-1">
+                      Confiança: {performance.confidence}%
+                    </Badge>
+                  )}
                 </div>
-              )}
-            </div>
-            
-            {/* Feedback da alternativa selecionada */}
+
+                {/* Métricas Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center p-3 bg-white rounded-lg border">
+                    <Trophy className="text-yellow-500 mx-auto mb-2" size={24} />
+                    <div className="text-2xl font-bold">{actuallyCorrect ? performance.points : 0}</div>
+                    <div className="text-xs text-gray-600">Pontos</div>
+                  </div>
+                  
+                  <div className="text-center p-3 bg-white rounded-lg border">
+                    <Clock className="text-blue-500 mx-auto mb-2" size={24} />
+                    <div className="text-2xl font-bold">{formatTime(performance.timeSpent)}</div>
+                    <div className="text-xs text-gray-600">Tempo</div>
+                  </div>
+                  
+                  <div className="text-center p-3 bg-white rounded-lg border">
+                    <Zap className="text-purple-500 mx-auto mb-2" size={24} />
+                    <div className="text-2xl font-bold">{performance.helpUsed.length}</div>
+                    <div className="text-xs text-gray-600">Ajudas</div>
+                  </div>
+                  
+                  <div className="text-center p-3 bg-white rounded-lg border">
+                    <Star className="text-orange-500 mx-auto mb-2" size={24} />
+                    <div className="text-2xl font-bold">{actuallyCorrect ? "100%" : "0%"}</div>
+                    <div className="text-xs text-gray-600">Precisão</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Answer Review */}
+            <Card>
+              <CardContent className="p-4">
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <BookOpen className="h-5 w-5" />
+                  Revisão da Resposta
+                </h3>
+                
+                <div className="space-y-3">
+                  <div className="p-3 rounded-lg border bg-gray-50">
+                    <span className="font-medium text-gray-700">Sua resposta:</span>
+                    <p className={`mt-1 ${actuallyCorrect ? 'text-green-600' : 'text-red-600'}`}>
+                      {selectedAnswer}
+                    </p>
+                  </div>
+                  
+                  {!actuallyCorrect && (
+                    <div className="p-3 rounded-lg border bg-green-50">
+                      <span className="font-medium text-gray-700">Resposta correta:</span>
+                      <p className="text-green-600 mt-1">{correctAnswer}</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="analysis" className="space-y-4">
+            {/* Feedback da Alternativa */}
             {selectedFeedback && (
-              <div className={`border rounded p-3 mb-4 ${
-                actuallyCorrect 
-                  ? 'bg-green-50 border-green-200' 
-                  : 'bg-red-50 border-red-200'
-              }`}>
-                <h4 className={`font-medium mb-2 ${
-                  actuallyCorrect ? 'text-green-800' : 'text-red-800'
-                }`}>
-                  Feedback da sua resposta:
-                </h4>
-                <p className={`text-sm leading-relaxed ${
-                  actuallyCorrect ? 'text-green-700' : 'text-red-700'
-                }`}>
-                  {selectedFeedback}
-                </p>
-              </div>
+              <Card className={`${actuallyCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                <CardContent className="p-4">
+                  <h4 className={`font-medium mb-2 flex items-center gap-2 ${
+                    actuallyCorrect ? 'text-green-800' : 'text-red-800'
+                  }`}>
+                    <Brain className="h-5 w-5" />
+                    Feedback da sua resposta:
+                  </h4>
+                  <p className={`text-sm leading-relaxed ${
+                    actuallyCorrect ? 'text-green-700' : 'text-red-700'
+                  }`}>
+                    {selectedFeedback}
+                  </p>
+                </CardContent>
+              </Card>
             )}
             
-            <div className="bg-blue-50 border border-blue-200 rounded p-3">
-              <h4 className="font-medium text-blue-800 mb-2">Explicação:</h4>
-              <p className="text-blue-700 text-sm leading-relaxed">{explanation}</p>
-            </div>
-          </CardContent>
-        </Card>
+            {/* Explicação Detalhada */}
+            <Card className="bg-blue-50 border-blue-200">
+              <CardContent className="p-4">
+                <h4 className="font-medium text-blue-800 mb-2 flex items-center gap-2">
+                  <BookOpen className="h-5 w-5" />
+                  Explicação Detalhada:
+                </h4>
+                <p className="text-blue-700 text-sm leading-relaxed whitespace-pre-line">
+                  {explanation}
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Penalizações */}
+            {(performance.penalty > 0 || performance.helpUsed.length > 0) && (
+              <Card className="bg-orange-50 border-orange-200">
+                <CardContent className="p-4">
+                  <h4 className="font-medium text-orange-800 mb-2">Análise de Ajudas e Penalizações</h4>
+                  
+                  {performance.penalty > 0 && (
+                    <div className="mb-3">
+                      <span className="text-orange-700 font-medium">Penalizações:</span>
+                      <span className="text-orange-600 ml-2">-{performance.penalty} pontos</span>
+                    </div>
+                  )}
+                  
+                  {performance.helpUsed.length > 0 && (
+                    <div>
+                      <div className="text-orange-700 font-medium mb-1">Ajudas utilizadas:</div>
+                      <div className="flex gap-1 flex-wrap">
+                        {performance.helpUsed.map((help, index) => (
+                          <Badge key={index} variant="secondary" className="text-xs">
+                            {help}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="insights" className="space-y-4">
+            <Card className="bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200">
+              <CardContent className="p-6">
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
+                  <Brain className="h-5 w-5 text-purple-600" />
+                  Insights de Aprendizado
+                </h3>
+                
+                <div className="space-y-4">
+                  {/* Performance Insights */}
+                  <div className="bg-white rounded-lg p-4 border">
+                    <h4 className="font-medium mb-2">Análise de Performance</h4>
+                    <ul className="text-sm text-gray-700 space-y-1">
+                      {actuallyCorrect && <li>✅ Excelente! Você demonstrou conhecimento sólido neste caso.</li>}
+                      {performance.timeSpent < 60 && <li>⚡ Muito rápido! Cuidado para não perder detalhes importantes.</li>}
+                      {performance.timeSpent > 300 && <li>🤔 Tomou tempo para analisar - isso é positivo para casos complexos.</li>}
+                      {performance.helpUsed.length === 0 && <li>🎯 Resolveu sem ajudas - demonstra confiança no conhecimento.</li>}
+                      {performance.helpUsed.length > 2 && <li>💡 Muitas ajudas utilizadas - considere revisar este tópico.</li>}
+                    </ul>
+                  </div>
+
+                  {/* Recomendações */}
+                  <div className="bg-white rounded-lg p-4 border">
+                    <h4 className="font-medium mb-2 flex items-center gap-2">
+                      <Award className="h-4 w-4 text-blue-600" />
+                      Próximos Passos
+                    </h4>
+                    <ul className="text-sm text-gray-700 space-y-1">
+                      {!actuallyCorrect && <li>📚 Revise os conceitos relacionados a este caso</li>}
+                      <li>🔄 Pratique casos similares para reforçar o aprendizado</li>
+                      <li>🎯 Continue praticando para melhorar sua precisão</li>
+                      {performance.confidence && performance.confidence < 50 && (
+                        <li>💪 Trabalhe na confiança - estude mais este tópico</li>
+                      )}
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
         {/* Action Buttons */}
         <div className="flex gap-3 mt-6">

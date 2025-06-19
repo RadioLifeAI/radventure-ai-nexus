@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -18,22 +17,19 @@ import {
   Zap, 
   SkipForward,
   X,
-  ChevronLeft,
-  ChevronRight,
-  ZoomIn,
-  ZoomOut,
-  RotateCcw,
-  Award,
   Stethoscope,
   Activity,
   CheckCircle,
   XCircle,
-  MessageSquare
+  Maximize
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserHelpAids } from "@/hooks/useUserHelpAids";
 import { useToast } from "@/components/ui/use-toast";
+import { CaseProgressBar } from "@/components/cases/CaseProgressBar";
+import { ConfidenceSelector } from "@/components/cases/ConfidenceSelector";
+import { EnhancedImageViewer } from "@/components/cases/EnhancedImageViewer";
 
 interface CasePreviewModalEnhancedProps {
   open: boolean;
@@ -56,7 +52,6 @@ export function CasePreviewModalEnhanced({
 }: CasePreviewModalEnhancedProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [imageZoom, setImageZoom] = useState(1);
   const [showExplanation, setShowExplanation] = useState(false);
   const [eliminatedOptions, setEliminatedOptions] = useState<number[]>([]);
   const [hasAnswered, setHasAnswered] = useState(false);
@@ -65,10 +60,24 @@ export function CasePreviewModalEnhanced({
   const [showTutorHint, setShowTutorHint] = useState(false);
   const [tutorQuestion, setTutorQuestion] = useState("");
   const [tutorHintText, setTutorHintText] = useState("");
+  const [startTime] = useState(Date.now());
+  const [timeSpent, setTimeSpent] = useState(0);
+  const [confidence, setConfidence] = useState(50);
+  const [currentStep, setCurrentStep] = useState<'analysis' | 'answer' | 'feedback'>('analysis');
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { helpAids, consumeHelp, getTutorHint, isGettingHint } = useUserHelpAids();
+
+  // Timer effect
+  useEffect(() => {
+    if (open && !hasAnswered) {
+      const interval = setInterval(() => {
+        setTimeSpent(Math.floor((Date.now() - startTime) / 1000));
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [open, hasAnswered, startTime]);
 
   const { data: caseData, isLoading } = useQuery({
     queryKey: ["case-preview", caseId],
@@ -113,7 +122,6 @@ export function CasePreviewModalEnhanced({
     enabled: !externalDifficulties,
   });
 
-  // Verificar se usuário já respondeu este caso
   const { data: userCaseHistory } = useQuery({
     queryKey: ["user-case-history", caseId],
     queryFn: async () => {
@@ -136,7 +144,7 @@ export function CasePreviewModalEnhanced({
   });
 
   const submitAnswerMutation = useMutation({
-    mutationFn: async ({ answerIndex, helpUsed }: { answerIndex: number, helpUsed: any }) => {
+    mutationFn: async ({ answerIndex, helpUsed, userConfidence }: { answerIndex: number, helpUsed: any, userConfidence: number }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
@@ -144,7 +152,6 @@ export function CasePreviewModalEnhanced({
       const correct = answerIndex === actualCaseData.correct_answer_index;
       let points = correct ? (actualCaseData.points || 100) : 0;
 
-      // Aplicar penalidades por ajudas usadas
       if (helpUsed.eliminationUsed > 0) {
         points -= (actualCaseData.elimination_penalty_points || 10) * helpUsed.eliminationUsed;
       }
@@ -152,7 +159,7 @@ export function CasePreviewModalEnhanced({
         points -= actualCaseData.skip_penalty_points || 20;
       }
 
-      points = Math.max(0, points); // Nunca negative
+      points = Math.max(0, points);
 
       const { error } = await supabase
         .from("user_case_history")
@@ -164,14 +171,15 @@ export function CasePreviewModalEnhanced({
           details: {
             selected_answer: answerIndex,
             help_used: helpUsed,
-            eliminated_options: eliminatedOptions
+            eliminated_options: eliminatedOptions,
+            confidence: userConfidence,
+            time_spent: timeSpent
           },
           help_used: helpUsed
         });
 
       if (error) throw error;
 
-      // Atualizar pontos do usuário usando RPC ou raw query
       const { error: profileError } = await supabase.rpc('process_case_completion', {
         p_user_id: user.id,
         p_case_id: actualCaseData.id,
@@ -187,6 +195,7 @@ export function CasePreviewModalEnhanced({
       setPointsEarned(data.points);
       setHasAnswered(true);
       setShowExplanation(true);
+      setCurrentStep('feedback');
       queryClient.invalidateQueries({ queryKey: ["user-case-history"] });
     },
     onError: (error) => {
@@ -215,7 +224,8 @@ export function CasePreviewModalEnhanced({
       setTutorQuestion("");
       setTutorHintText("");
       setCurrentImageIndex(0);
-      setImageZoom(1);
+      setConfidence(50);
+      setCurrentStep(userCaseHistory ? 'feedback' : 'analysis');
     }
   }, [open, actualCaseData, userCaseHistory]);
 
@@ -254,6 +264,7 @@ export function CasePreviewModalEnhanced({
     if (hasAnswered || isAdminView) return;
     
     setSelectedAnswer(index);
+    setCurrentStep('answer');
     
     const helpUsed = {
       eliminationUsed: eliminatedOptions.length,
@@ -261,7 +272,7 @@ export function CasePreviewModalEnhanced({
       aiTutorUsed: !!tutorHintText
     };
 
-    submitAnswerMutation.mutate({ answerIndex: index, helpUsed });
+    submitAnswerMutation.mutate({ answerIndex: index, helpUsed, userConfidence: confidence });
   };
 
   const handleEliminateOption = () => {
@@ -274,7 +285,6 @@ export function CasePreviewModalEnhanced({
       return;
     }
 
-    // Encontrar uma opção incorreta para eliminar
     const availableOptions = [0, 1, 2, 3].filter(i => 
       i !== form.correct_answer_index && !eliminatedOptions.includes(i)
     );
@@ -304,8 +314,8 @@ export function CasePreviewModalEnhanced({
     };
 
     consumeHelp({ aidType: 'skip' });
-    submitAnswerMutation.mutate({ answerIndex: -1, helpUsed }); // -1 indica skip
-    onClose(); // Fechar modal após pular
+    submitAnswerMutation.mutate({ answerIndex: -1, helpUsed, userConfidence: confidence });
+    onClose();
   };
 
   const handleRequestTutorHint = () => {
@@ -332,18 +342,6 @@ export function CasePreviewModalEnhanced({
         }
       }
     );
-  };
-
-  const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % images.length);
-  };
-
-  const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
-  };
-
-  const resetImageView = () => {
-    setImageZoom(1);
   };
 
   if (isLoading) {
@@ -387,7 +385,7 @@ export function CasePreviewModalEnhanced({
                     {difficulty}
                   </Badge>
                   <Badge className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold px-3 py-1 flex items-center gap-1">
-                    <Award className="h-4 w-4" />
+                    <Target className="h-4 w-4" />
                     {form.points || 100} pts
                   </Badge>
                   {hasAnswered && (
@@ -421,93 +419,28 @@ export function CasePreviewModalEnhanced({
           </div>
         </div>
 
+        {/* Progress Bar */}
+        {!isAdminView && (
+          <div className="px-6 py-4 border-b">
+            <CaseProgressBar
+              currentStep={currentStep}
+              timeSpent={timeSpent}
+              hasAnswered={hasAnswered}
+              isCorrect={isCorrect}
+            />
+          </div>
+        )}
+
         {/* Layout Principal - 3 Colunas */}
         <div className="flex h-full overflow-hidden">
           {/* Coluna 1: Imagem Médica */}
           <div className="w-80 bg-white border-r border-gray-200 p-4 flex flex-col">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-800 flex items-center gap-2">
-                <Target className="h-5 w-5 text-blue-600" />
-                Imagem Médica
-              </h3>
-              {images.length > 1 && (
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={prevImage}
-                    disabled={images.length <= 1}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm text-gray-600 px-2">
-                    {currentImageIndex + 1}/{images.length}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={nextImage}
-                    disabled={images.length <= 1}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-            </div>
-
-            <div className="flex-1 relative bg-gray-100 rounded-lg overflow-hidden">
-              {images.length > 0 ? (
-                <div className="relative h-full">
-                  <img
-                    src={typeof images[currentImageIndex] === 'object' ? 
-                      images[currentImageIndex].url : images[currentImageIndex]}
-                    alt={`Imagem médica ${currentImageIndex + 1}`}
-                    className="w-full h-full object-contain transition-transform duration-300"
-                    style={{ transform: `scale(${imageZoom})` }}
-                  />
-                  <div className="absolute bottom-2 right-2 flex gap-2">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setImageZoom(prev => Math.min(prev + 0.2, 3))}
-                    >
-                      <ZoomIn className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setImageZoom(prev => Math.max(prev - 0.2, 0.5))}
-                    >
-                      <ZoomOut className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={resetImageView}
-                    >
-                      <RotateCcw className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                  <Target className="h-16 w-16 mb-4 text-gray-300" />
-                  <p className="text-center">Nenhuma imagem disponível</p>
-                  <p className="text-sm text-center mt-2">
-                    Imagens médicas aparecerão aqui
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Legenda da Imagem */}
-            {images.length > 0 && typeof images[currentImageIndex] === 'object' && images[currentImageIndex].legend && (
-              <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <p className="text-sm text-blue-800 font-medium">
-                  {images[currentImageIndex].legend}
-                </p>
-              </div>
-            )}
+            <EnhancedImageViewer
+              images={images}
+              currentIndex={currentImageIndex}
+              onIndexChange={setCurrentImageIndex}
+              className="flex-1"
+            />
           </div>
 
           {/* Coluna 2: Caso Clínico Principal */}
@@ -567,6 +500,17 @@ export function CasePreviewModalEnhanced({
                   {form.main_question || "Pergunta não definida"}
                 </p>
               </div>
+
+              {/* Sistema de Confiança */}
+              {!isAdminView && !hasAnswered && (
+                <div className="mb-6">
+                  <ConfidenceSelector
+                    confidence={confidence}
+                    onConfidenceChange={setConfidence}
+                    disabled={hasAnswered}
+                  />
+                </div>
+              )}
 
               {/* Alternativas */}
               <div className="space-y-3">
