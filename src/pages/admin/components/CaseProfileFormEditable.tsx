@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useCaseProfileFormHandlers } from "../hooks/useCaseProfileFormHandlers";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ import { CaseQualityRadar } from "./CaseQualityRadar";
 import { CaseTemplateChooser } from "./CaseTemplateChooser";
 import { CaseFormGamifiedHelpers } from "./CaseFormGamifiedHelpers";
 import { CaseFormGamifiedLayout } from "./CaseFormGamifiedLayout";
+import { CaseAdvancedImageManagement } from "./CaseAdvancedImageManagement";
 import { supabase } from "@/integrations/supabase/client";
 
 // Novos componentes AI por seção

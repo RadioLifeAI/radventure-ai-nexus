@@ -214,6 +214,74 @@ export type Database = {
           },
         ]
       }
+      case_images: {
+        Row: {
+          case_id: string | null
+          created_at: string | null
+          dimensions: Json | null
+          file_size_bytes: number | null
+          formats: Json | null
+          id: string
+          large_url: string | null
+          legend: string | null
+          medium_url: string | null
+          metadata: Json | null
+          original_filename: string
+          original_url: string
+          processed_at: string | null
+          processing_status: string | null
+          sequence_order: number | null
+          thumbnail_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          case_id?: string | null
+          created_at?: string | null
+          dimensions?: Json | null
+          file_size_bytes?: number | null
+          formats?: Json | null
+          id?: string
+          large_url?: string | null
+          legend?: string | null
+          medium_url?: string | null
+          metadata?: Json | null
+          original_filename: string
+          original_url: string
+          processed_at?: string | null
+          processing_status?: string | null
+          sequence_order?: number | null
+          thumbnail_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          case_id?: string | null
+          created_at?: string | null
+          dimensions?: Json | null
+          file_size_bytes?: number | null
+          formats?: Json | null
+          id?: string
+          large_url?: string | null
+          legend?: string | null
+          medium_url?: string | null
+          metadata?: Json | null
+          original_filename?: string
+          original_url?: string
+          processed_at?: string | null
+          processing_status?: string | null
+          sequence_order?: number | null
+          thumbnail_url?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "case_images_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "medical_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       difficulties: {
         Row: {
           description: string | null
