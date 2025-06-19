@@ -16,6 +16,22 @@ type Props = {
   renderTooltipTip: (id: string, text: string) => React.ReactNode;
 };
 
+const TARGET_AUDIENCE_BASE = [
+  "Graduação", "Residência R1", "Residência R2", "Residência R3",
+  "Especialização", "Mestrado", "Doutorado", "Educação Continuada"
+];
+
+const FINDING_TYPES_BASE = [
+  "Consolidação", "Massa", "Nódulo", "Derrame", "Pneumotórax", "Atelectasia", 
+  "Bronquiectasias", "Cavitação", "Calcificação", "Linfadenopatia", "Fratura", 
+  "Luxação", "Edema", "Inflamação"
+];
+
+const LEARNING_OBJECTIVES_BASE = [
+  "Reconhecer achados radiológicos", "Diferenciar patologias", "Identificar achados específicos", 
+  "Avaliar correlação clínica", "Compreender fisiopatologia"
+];
+
 export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, renderTooltipTip }: Props) {
   const { suggestions, generateSuggestions } = useDynamicSuggestions();
 
@@ -77,73 +93,6 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
           </div>
         </div>
       )}
-
-      {/* Seção de Referência Integrada */}
-      <div className="p-4 border border-indigo-200 rounded-lg bg-indigo-50">
-        <h3 className="font-semibold text-indigo-900 mb-4 flex items-center gap-2">
-          <Sparkles size={20} />
-          Referência e Fonte
-        </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex items-center space-x-2">
-            <input 
-              type="checkbox" 
-              id="is_radiopaedia_case"
-              checked={form.is_radiopaedia_case}
-              onChange={handleFormChange}
-            />
-            <label htmlFor="is_radiopaedia_case" className="text-sm font-medium">
-              Este caso é do Radiopaedia
-            </label>
-          </div>
-        </div>
-
-        {form.is_radiopaedia_case && (
-          <div className="mt-4 space-y-4">
-            <div>
-              <label className="font-semibold block mb-2">
-                Citação da Referência *
-                {renderTooltipTip("tip-reference-citation", "Como citar este caso do Radiopaedia")}
-              </label>
-              <Input
-                name="reference_citation"
-                value={form.reference_citation}
-                onChange={handleFormChange}
-                placeholder="Ex: Smith J. Pneumonia case. Radiopaedia. Case 12345."
-                required={form.is_radiopaedia_case}
-              />
-            </div>
-            
-            <div>
-              <label className="font-semibold block mb-2">
-                URL de Referência *
-                {renderTooltipTip("tip-reference-url", "Link direto para o caso no Radiopaedia")}
-              </label>
-              <Input
-                name="reference_url"
-                value={form.reference_url}
-                onChange={handleFormChange}
-                placeholder="https://radiopaedia.org/cases/..."
-                required={form.is_radiopaedia_case}
-              />
-            </div>
-            
-            <div>
-              <label className="font-semibold block mb-2">
-                Data de Acesso
-                {renderTooltipTip("tip-access-date", "Quando você acessou este caso pela última vez")}
-              </label>
-              <Input
-                type="date"
-                name="access_date"
-                value={form.access_date}
-                onChange={handleFormChange}
-              />
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* Diagnóstico Estruturado */}
       <div className="p-4 border border-blue-200 rounded-lg bg-blue-50">
@@ -238,7 +187,7 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
             value={form.finding_types || []}
             onChange={handleTagChange}
             placeholder="Digite um tipo de achado"
-            suggestions={suggestions.finding_types || []}
+            suggestions={suggestions.finding_types || FINDING_TYPES_BASE}
             loading={false}
             label="Tipos de Achados 🤖"
           />
@@ -331,7 +280,7 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
             value={form.learning_objectives || []}
             onChange={handleTagChange}
             placeholder="Digite um objetivo de aprendizado"
-            suggestions={suggestions.learning_objectives || []}
+            suggestions={suggestions.learning_objectives || LEARNING_OBJECTIVES_BASE}
             loading={false}
             label="Objetivos de Aprendizado 🤖"
           />
@@ -455,7 +404,7 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
               value={form.target_audience || []}
               onChange={handleTagChange}
               placeholder="Digite o público-alvo"
-              suggestions={suggestions.target_audience || []}
+              suggestions={suggestions.target_audience || TARGET_AUDIENCE_BASE}
               loading={false}
               label="Público-alvo 🤖"
             />
