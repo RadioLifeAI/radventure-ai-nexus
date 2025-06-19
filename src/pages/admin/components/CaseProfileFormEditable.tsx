@@ -517,6 +517,20 @@ export function CaseProfileFormEditable({
           </div>
         </CaseFormGamifiedLayout>
 
+        {/* NOVA SEÇÃO: Gestão Avançada de Imagens */}
+        <CaseFormGamifiedLayout
+          section="advanced"
+          title="Gestão Avançada de Imagens"
+          description="Sistema robusto para upload e gerenciamento de múltiplas imagens"
+        >
+          <CaseAdvancedImageManagement 
+            caseId={editingCase?.id}
+            onImagesChange={(images) => {
+              console.log('Images updated:', images.length);
+            }}
+          />
+        </CaseFormGamifiedLayout>
+
         <div className="flex justify-between items-center pt-6 border-t border-gray-200">
           <div className="flex items-center gap-4">
             <Button type="submit" disabled={submitting} size="lg">
