@@ -22,7 +22,7 @@ export function CaseStructuredDataAI({
 }: CaseStructuredDataAIProps) {
   const { autofillStructuredComplete, loading } = useCaseAutofillAPIExpanded();
 
-  // CORREÇÃO: Validação robusta do diagnóstico principal
+  // Validação robusta do diagnóstico principal
   const hasPrimaryDiagnosis = React.useMemo(() => {
     const diagnosis = form.primary_diagnosis?.trim();
     const isValid = Boolean(diagnosis && diagnosis.length > 3);
@@ -72,7 +72,7 @@ export function CaseStructuredDataAI({
 
       console.log('✅ CaseStructuredDataAI - Sugestões recebidas:', suggestions);
 
-      // CORREÇÃO: Aplicar sugestões estruturadas de forma mais robusta
+      // APLICAÇÃO DE SUGESTÕES ESTRUTURADAS DE FORMA ROBUSTA
       const updatedFields: string[] = [];
       const updates: any = {};
 
@@ -116,16 +116,19 @@ export function CaseStructuredDataAI({
 
       if (Object.keys(updates).length > 0) {
         console.log('🔄 CaseStructuredDataAI - Aplicando updates:', updates);
+        console.log('🔍 CaseStructuredDataAI - Form antes da atualização:', form);
         
-        // CORREÇÃO CRÍTICA: Forçar atualização com callback
+        // CORREÇÃO CRÍTICA: Forçar atualização com callback robusto
         setForm((prevForm: any) => {
           const newForm = { ...prevForm, ...updates };
-          console.log('🔄 CaseStructuredDataAI - Form atualizado de:', prevForm);
-          console.log('🔄 CaseStructuredDataAI - Form atualizado para:', newForm);
+          console.log('✅ CaseStructuredDataAI - Form atualizado com sucesso!');
+          console.log('🔍 CaseStructuredDataAI - Form anterior:', prevForm);
+          console.log('🔍 CaseStructuredDataAI - Form novo:', newForm);
+          console.log('🔍 CaseStructuredDataAI - Diferenças aplicadas:', updates);
           
-          // Forçar re-render após timeout para garantir propagação
+          // Verificação de propagação após timeout
           setTimeout(() => {
-            console.log('🔄 CaseStructuredDataAI - Estado final após timeout:', newForm);
+            console.log('🔄 CaseStructuredDataAI - Verificação pós-atualização (após 100ms)');
           }, 100);
           
           return newForm;
@@ -144,10 +147,10 @@ export function CaseStructuredDataAI({
           description: `${updatedFields.length} campos estruturados atualizados incluindo diagnóstico principal e diferenciais.` 
         });
       } else {
-        console.log('⚠️ CaseStructuredDataAI - Nenhum campo para atualizar');
+        console.log('⚠️ CaseStructuredDataAI - Nenhum campo válido para atualizar');
         toast({ 
-          title: "Dados já preenchidos",
-          description: "Os dados estruturados já estão completos ou não puderam ser determinados."
+          title: "Dados insuficientes", 
+          description: "Não foi possível determinar dados estruturados com as informações fornecidas."
         });
       }
 

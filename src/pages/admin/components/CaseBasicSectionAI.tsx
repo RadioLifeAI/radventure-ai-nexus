@@ -21,80 +21,87 @@ export function CaseBasicSectionAI({
   disabled = false,
   categories = []
 }: CaseBasicSectionAIProps) {
-  const { autofillBasicComplete, loading } = useCaseAutofillAPIExpanded();
+  const { autofillBasicComplete, autofillMasterComplete, loading } = useCaseAutofillAPIExpanded();
   const { generateTitle } = useCaseTitleGenerator(categories);
 
-  // CORREÇÃO: Validação mais rigorosa e com logs detalhados
-  const hasStructuredData = React.useMemo(() => {
-    console.log('🔍 CaseBasicSectionAI - Validando dados estruturados:', {
+  // CORREÇÃO: Validação simplificada - apenas diagnóstico principal
+  const hasPrimaryDiagnosis = React.useMemo(() => {
+    const diagnosis = form.primary_diagnosis?.trim();
+    const isValid = Boolean(diagnosis && diagnosis.length > 3);
+    
+    console.log('🔍 CaseBasicSectionAI - Validação simplificada (apenas diagnóstico):', {
       primary_diagnosis: form.primary_diagnosis,
-      differential_diagnoses: form.differential_diagnoses,
-      anatomical_regions: form.anatomical_regions,
-      primary_diagnosis_length: form.primary_diagnosis?.trim()?.length,
-      differential_diagnoses_length: Array.isArray(form.differential_diagnoses) ? form.differential_diagnoses.length : 0,
-      anatomical_regions_length: Array.isArray(form.anatomical_regions) ? form.anatomical_regions.length : 0
-    });
-
-    const hasPrimary = Boolean(form.primary_diagnosis?.trim() && form.primary_diagnosis.trim().length > 3);
-    const hasDifferentials = Array.isArray(form.differential_diagnoses) && form.differential_diagnoses.length >= 1;
-    const hasAnatomical = Array.isArray(form.anatomical_regions) && form.anatomical_regions.length >= 1;
-    
-    const result = hasPrimary && hasDifferentials && hasAnatomical;
-    
-    console.log('🔍 CaseBasicSectionAI - Resultado da validação:', {
-      hasPrimary,
-      hasDifferentials,
-      hasAnatomical,
-      finalResult: result
+      trimmed: diagnosis,
+      length: diagnosis?.length,
+      isValid
     });
     
-    return result;
-  }, [form.primary_diagnosis, form.differential_diagnoses, form.anatomical_regions]);
+    return isValid;
+  }, [form.primary_diagnosis]);
 
   const handleAutofillBasicComplete = async () => {
     try {
       console.log('🤖 CaseBasicSectionAI - Iniciando preenchimento de dados básicos...');
-      console.log('🔍 CaseBasicSectionAI - Estado atual do form:', {
-        primary_diagnosis: form.primary_diagnosis,
-        differential_diagnoses: form.differential_diagnoses,
-        anatomical_regions: form.anatomical_regions,
-        category_id: form.category_id,
-        difficulty_level: form.difficulty_level,
-        modality: form.modality
-      });
+      console.log('🔍 CaseBasicSectionAI - Estado atual do form:', form);
       
-      if (!hasStructuredData) {
-        console.log('❌ CaseBasicSectionAI - Dados estruturados incompletos');
+      if (!hasPrimaryDiagnosis) {
+        console.log('❌ CaseBasicSectionAI - Diagnóstico principal obrigatório');
         toast({ 
-          title: "Dados Estruturados Obrigatórios", 
-          description: "Use primeiro o botão 'AI: Dados Estruturados' para preencher: Diagnóstico Principal + Diagnósticos Diferenciais + Regiões Anatômicas",
+          title: "Diagnóstico Principal Obrigatório", 
+          description: "Preencha o diagnóstico principal primeiro para usar a AI de Dados Básicos",
           variant: "destructive" 
         });
         return;
       }
       
-      console.log('✅ CaseBasicSectionAI - Dados estruturados válidos, chamando API...');
+      console.log('✅ CaseBasicSectionAI - Diagnóstico válido, tentando API básica...');
       
-      const suggestions = await autofillBasicComplete(form);
+      // TENTATIVA 1: Usar API básica específica
+      let suggestions = await autofillBasicComplete(form);
       
-      if (!suggestions) {
-        console.log('❌ CaseBasicSectionAI - Nenhuma sugestão recebida da API');
+      // MODO DE RECUPERAÇÃO: Se falhar, usar master AI e filtrar dados básicos
+      if (!suggestions || Object.keys(suggestions).length === 0) {
+        console.log('⚠️ CaseBasicSectionAI - API básica falhou, tentando modo de recuperação com Master AI...');
+        
+        const masterSuggestions = await autofillMasterComplete(form);
+        
+        if (masterSuggestions) {
+          // Filtrar apenas campos básicos do resultado completo
+          const basicFields = [
+            'category_id', 'difficulty_level', 'points', 'modality', 'subtype',
+            'patient_age', 'patient_gender', 'symptoms_duration', 'findings', 
+            'patient_clinical_info'
+          ];
+          
+          suggestions = {};
+          basicFields.forEach(field => {
+            if (masterSuggestions[field] !== undefined) {
+              suggestions[field] = masterSuggestions[field];
+            }
+          });
+          
+          console.log('🔄 CaseBasicSectionAI - Usando dados filtrados do Master AI:', suggestions);
+        }
+      }
+      
+      if (!suggestions || Object.keys(suggestions).length === 0) {
+        console.log('❌ CaseBasicSectionAI - Nenhuma sugestão recebida em ambas as tentativas');
         toast({ 
-          title: "Erro na AI", 
-          description: "Não foi possível gerar sugestões. Tente novamente.",
+          title: "Erro na AI de Dados Básicos", 
+          description: "Não foi possível gerar sugestões. Tente o botão 'AI preencher tudo' como alternativa.",
           variant: "destructive" 
         });
         return;
       }
 
-      console.log('✅ CaseBasicSectionAI - Sugestões recebidas:', suggestions);
+      console.log('✅ CaseBasicSectionAI - Sugestões finais recebidas:', suggestions);
 
-      // CORREÇÃO: Aplicar sugestões de forma mais robusta com validação
+      // APLICAÇÃO ROBUSTA DAS SUGESTÕES
       const updatedFields: string[] = [];
       const updates: any = {};
 
-      // Campos básicos com validação de tipo
-      const basicFields = [
+      // Campos básicos com validação de tipo e logs detalhados
+      const basicFieldsConfig = [
         { field: 'category_id', type: 'number' },
         { field: 'difficulty_level', type: 'number' },
         { field: 'points', type: 'number' },
@@ -107,18 +114,23 @@ export function CaseBasicSectionAI({
         { field: 'patient_clinical_info', type: 'string' }
       ];
 
-      basicFields.forEach(({ field, type }) => {
+      basicFieldsConfig.forEach(({ field, type }) => {
         if (suggestions[field] !== undefined && suggestions[field] !== null && suggestions[field] !== '') {
           let value = suggestions[field];
           
           // Conversão de tipos quando necessário
           if (type === 'number' && typeof value !== 'number') {
-            value = parseInt(value) || value;
+            const numValue = parseInt(value);
+            if (!isNaN(numValue)) {
+              value = numValue;
+            }
           }
           
           updates[field] = value;
           updatedFields.push(field);
-          console.log(`✅ CaseBasicSectionAI - Campo ${field} será atualizado:`, value);
+          console.log(`✅ CaseBasicSectionAI - Campo ${field} será atualizado de "${form[field]}" para "${value}"`);
+        } else {
+          console.log(`⚠️ CaseBasicSectionAI - Campo ${field} ignorado: valor inválido "${suggestions[field]}"`);
         }
       });
 
@@ -142,16 +154,19 @@ export function CaseBasicSectionAI({
 
       if (Object.keys(updates).length > 0) {
         console.log('🔄 CaseBasicSectionAI - Aplicando updates:', updates);
+        console.log('🔄 CaseBasicSectionAI - Form antes da atualização:', form);
         
-        // CORREÇÃO CRÍTICA: Garantir atualização imutável correta com callback
+        // CORREÇÃO CRÍTICA: Garantir atualização imutável com callback e logs
         setForm((prevForm: any) => {
           const newForm = { ...prevForm, ...updates };
-          console.log('🔄 CaseBasicSectionAI - Form atualizado de:', prevForm);
-          console.log('🔄 CaseBasicSectionAI - Form atualizado para:', newForm);
+          console.log('✅ CaseBasicSectionAI - Form atualizado com sucesso!');
+          console.log('🔍 CaseBasicSectionAI - Form anterior:', prevForm);
+          console.log('🔍 CaseBasicSectionAI - Form novo:', newForm);
+          console.log('🔍 CaseBasicSectionAI - Diferenças aplicadas:', updates);
           
-          // Forçar re-render após timeout para garantir propagação
+          // Verificação de propagação após timeout
           setTimeout(() => {
-            console.log('🔄 CaseBasicSectionAI - Estado final após timeout:', newForm);
+            console.log('🔄 CaseBasicSectionAI - Verificação pós-atualização (após 100ms)');
           }, 100);
           
           return newForm;
@@ -171,35 +186,35 @@ export function CaseBasicSectionAI({
         });
         
       } else {
-        console.log('⚠️ CaseBasicSectionAI - Nenhum campo para atualizar');
+        console.log('⚠️ CaseBasicSectionAI - Nenhum campo válido para atualizar');
         toast({ 
-          title: "Dados já preenchidos",
-          description: "Os dados básicos já estão completos ou não puderam ser determinados."
+          title: "Dados insuficientes",
+          description: "Não foi possível determinar os dados básicos com as informações fornecidas."
         });
       }
 
     } catch (error) {
-      console.error('💥 CaseBasicSectionAI - Erro:', error);
+      console.error('💥 CaseBasicSectionAI - Erro geral:', error);
       toast({ 
         title: "Erro na AI de Dados Básicos", 
-        description: "Tente novamente ou preencha os dados estruturados primeiro.",
+        description: "Tente novamente ou use o botão 'AI preencher tudo' como alternativa.",
         variant: "destructive" 
       });
     }
   };
 
-  console.log('🎨 CaseBasicSectionAI - Renderizando com hasStructuredData:', hasStructuredData);
+  console.log('🎨 CaseBasicSectionAI - Renderizando com hasPrimaryDiagnosis:', hasPrimaryDiagnosis);
 
   return (
     <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
       <Button
         type="button"
         onClick={handleAutofillBasicComplete}
-        disabled={loading || disabled || !hasStructuredData}
+        disabled={loading || disabled || !hasPrimaryDiagnosis}
         variant="outline"
         size="sm"
         className={`${
-          hasStructuredData 
+          hasPrimaryDiagnosis 
             ? 'bg-blue-500 text-white hover:bg-blue-600 border-blue-500' 
             : 'bg-gray-300 text-gray-500 cursor-not-allowed border-gray-300'
         }`}
@@ -216,14 +231,14 @@ export function CaseBasicSectionAI({
       <div className="text-xs text-blue-700">
         <div>Preenche dados fundamentais do caso:</div>
         <div className="font-medium">Categoria • Dificuldade • Modalidade • Demografia • Título</div>
-        {!hasStructuredData && (
+        {!hasPrimaryDiagnosis && (
           <div className="text-red-600 font-semibold mt-1">
-            ⚠️ Use primeiro 'AI: Dados Estruturados' - Diagnóstico Principal + Diagnósticos Diferenciais + Regiões Anatômicas
+            💡 Preencha o Diagnóstico Principal primeiro para habilitar a AI de Dados Básicos
           </div>
         )}
-        {hasStructuredData && (
+        {hasPrimaryDiagnosis && (
           <div className="text-green-600 font-semibold mt-1">
-            ✅ Dados estruturados completos - Pronto para usar!
+            ✅ Diagnóstico preenchido - Pronto para usar! (Modo de recuperação ativo)
           </div>
         )}
       </div>
