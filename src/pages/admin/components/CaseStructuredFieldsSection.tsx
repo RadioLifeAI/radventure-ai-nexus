@@ -20,12 +20,7 @@ const TARGET_AUDIENCE_BASE = [
   "Especialização", "Mestrado", "Doutorado", "Educação Continuada"
 ];
 
-const FINDING_TYPES_BASE = [
-  "Consolidação", "Massa", "Nódulo", "Derrame", "Pneumotórax", "Atelectasia", 
-  "Bronquiectasias", "Cavitação", "Calcificação", "Linfadenopatia", "Fratura", 
-  "Luxação", "Edema", "Inflamação"
-];
-
+// CORREÇÃO: Remover tags fixas - serão geradas dinamicamente
 const LEARNING_OBJECTIVES_BASE = [
   "Reconhecer achados radiológicos", "Diferenciar patologias", "Identificar achados específicos", 
   "Avaliar correlação clínica", "Compreender fisiopatologia"
@@ -180,7 +175,7 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
             value={form.finding_types || []}
             onChange={handleTagChange}
             placeholder="Digite um tipo de achado"
-            suggestions={suggestions.finding_types || FINDING_TYPES_BASE}
+            suggestions={suggestions.finding_types || []}
             loading={false}
             label="Tipos de Achados 🤖"
           />

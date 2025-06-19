@@ -24,15 +24,20 @@ export function CaseBasicSectionAI({
   const { autofillBasicComplete, loading } = useCaseAutofillAPIExpanded();
   const { generateTitle } = useCaseTitleGenerator(categories);
 
+  // CORREÇÃO: Verificar se os dados estruturados estão preenchidos (ao invés de só diagnóstico)
+  const hasStructuredData = form.primary_diagnosis?.trim() && 
+                           form.differential_diagnoses?.length >= 2 &&
+                           form.anatomical_regions?.length > 0;
+
   const handleAutofillBasicComplete = async () => {
     try {
       console.log('🤖 Iniciando AI: Dados Básicos...');
       
-      // Verificar se temos diagnóstico principal
-      if (!form.primary_diagnosis?.trim()) {
+      // CORREÇÃO: Verificar se os dados estruturados estão completos
+      if (!hasStructuredData) {
         toast({ 
-          title: "Diagnóstico Principal Obrigatório", 
-          description: "Preencha o diagnóstico principal primeiro para gerar dados básicos.",
+          title: "Dados Estruturados Obrigatórios", 
+          description: "Preencha primeiro os dados estruturados (diagnóstico principal, diferenciais e regiões anatômicas) para gerar dados básicos.",
           variant: "destructive" 
         });
         return;
@@ -108,7 +113,7 @@ export function CaseBasicSectionAI({
       console.error('💥 Erro na AI de dados básicos:', error);
       toast({ 
         title: "Erro na AI de Dados Básicos", 
-        description: "Tente novamente ou preencha o diagnóstico principal primeiro.",
+        description: "Tente novamente ou preencha os dados estruturados primeiro.",
         variant: "destructive" 
       });
     }
@@ -119,10 +124,10 @@ export function CaseBasicSectionAI({
       <Button
         type="button"
         onClick={handleAutofillBasicComplete}
-        disabled={loading || disabled}
+        disabled={loading || disabled || !hasStructuredData}
         variant="outline"
         size="sm"
-        className="bg-blue-500 text-white hover:bg-blue-600 border-blue-500"
+        className={`${hasStructuredData ? 'bg-blue-500 text-white hover:bg-blue-600 border-blue-500' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
       >
         {loading ? (
           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -135,6 +140,11 @@ export function CaseBasicSectionAI({
       <div className="text-xs text-blue-700">
         <div>Preenche dados fundamentais do caso:</div>
         <div className="font-medium">Categoria • Dificuldade • Modalidade • Demografia • Título Automático</div>
+        {!hasStructuredData && (
+          <div className="text-red-600 font-semibold mt-1">
+            ⚠️ Preencha primeiro: Diagnóstico + Diferenciais + Regiões Anatômicas
+          </div>
+        )}
       </div>
     </div>
   );

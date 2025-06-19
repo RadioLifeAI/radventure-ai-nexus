@@ -342,16 +342,30 @@ export function CaseProfileFormEditable({
 
       <form className="w-full space-y-6" onSubmit={handleSubmit}>
         <CaseFormGamifiedLayout
+          section="structured"
+          title="Dados Estruturados"
+          description="Configure os campos estruturados para filtros avançados e AI (PRIMEIRO PASSO)"
+        >
+          {/* CORREÇÃO: Remover o botão AI duplicado - já existe integrado na seção */}
+          <CaseStructuredFieldsSection 
+            form={form}
+            setForm={setForm}
+            handleFormChange={handleFormChange}
+            renderTooltipTip={renderTooltipTip}
+          />
+        </CaseFormGamifiedLayout>
+
+        <CaseFormGamifiedLayout
           section="basic"
           title={isEditMode ? "Editar Caso Médico" : "Criar Novo Caso Médico"}
-          description="Configure as informações básicas do caso médico (Dados Unificados)"
+          description="Configure as informações básicas do caso médico (SEGUNDO PASSO - requer dados estruturados)"
         >
           <CaseProfileFormTitleSection
             autoTitlePreview={autoTitlePreview}
             showPreview={showPreview}
           />
           
-          {/* NOVO: Botão AI para seção básica */}
+          {/* CORREÇÃO: Botão AI para seção básica com validação de dependência */}
           <CaseBasicSectionAI 
             form={form}
             setForm={setForm}
@@ -376,29 +390,6 @@ export function CaseProfileFormEditable({
             setForm={setForm}
             autoTitlePreview={autoTitlePreview}
             onGenerateAutoTitle={handleAutoGenerateTitle}
-          />
-        </CaseFormGamifiedLayout>
-
-        <CaseFormGamifiedLayout
-          section="structured"
-          title="Dados Estruturados"
-          description="Configure os campos estruturados para filtros avançados e AI"
-        >
-          {/* NOVO: Botão AI para dados estruturados */}
-          <CaseStructuredDataAI 
-            form={form}
-            setForm={setForm}
-            onFieldsUpdated={(fields) => {
-              setHighlightedFields(fields);
-              setTimeout(() => setHighlightedFields([]), 2000);
-            }}
-          />
-          
-          <CaseStructuredFieldsSection 
-            form={form}
-            setForm={setForm}
-            handleFormChange={handleFormChange}
-            renderTooltipTip={renderTooltipTip}
           />
         </CaseFormGamifiedLayout>
 
