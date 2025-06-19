@@ -1,5 +1,6 @@
+
 import React, { useState } from "react";
-import HeaderNav from "@/components/HeaderNav";
+import { HeaderNav } from "@/components/HeaderNav";
 import { JourneyCreator } from "@/components/journey/JourneyCreator";
 import { JourneyList } from "@/components/journey/JourneyList";
 import { JourneyExecutionModal } from "@/components/journey/JourneyExecutionModal";

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import {
   Activity,
@@ -10,7 +11,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import HeaderNav from "@/components/HeaderNav";
+import { HeaderNav } from "@/components/HeaderNav";
 import { UserProfile } from "@/components/UserProfile";
 import { EventsSectionPlayer } from "@/components/EventsSectionPlayer";
 import { SpecialtyCard } from "@/components/dashboard/SpecialtyCard";
@@ -75,15 +76,15 @@ export default function Dashboard() {
 
   // Handlers para botões de ação - CORRIGIDO
   const handleCentralCasos = () => {
-    navigate('/casos');
+    navigate('/app/casos');
   };
 
   const handleCriarJornada = () => {
-    navigate('/create-journey');
+    navigate('/app/criar-jornada');
   };
 
   const handleEventos = () => {
-    navigate('/eventos');
+    navigate('/app/eventos');
   };
 
   // Separar especialidades por tipo

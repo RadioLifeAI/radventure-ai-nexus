@@ -1,9 +1,10 @@
+
 import React, { useState } from "react";
 import { useActiveEvents } from "@/hooks/useActiveEvents";
 import { useEventFilters } from "@/hooks/useEventFilters";
 import { useEventMetrics } from "@/hooks/useEventMetrics";
 import { useNavigate } from "react-router-dom";
-import HeaderNav from "@/components/HeaderNav";
+import { HeaderNav } from "@/components/HeaderNav";
 import { EventFilterBarFunctional } from "@/components/eventos/EventFilterBarFunctional";
 import { UpcomingEventsSlider } from "@/components/eventos/UpcomingEventsSlider";
 import { EventsGrid } from "@/components/eventos/EventsGrid";
@@ -51,7 +52,7 @@ export default function EventosEnhanced() {
   const highlights = filteredEvents.slice(0, 2);
 
   const handleEnterEvent = (eventId: string) => {
-    navigate(`/evento/${eventId}`);
+    navigate(`/app/evento/${eventId}`);
   };
 
   return (

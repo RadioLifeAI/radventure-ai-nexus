@@ -6,71 +6,32 @@ import { UserStatsCards } from "./users/UserStatsCards";
 import { UserManagementHeader } from "./users/UserManagementHeader";
 import { UserManagementTabs } from "./users/UserManagementTabs";
 import { UserEditModal } from "./users/UserEditModal";
+import type { UserProfile } from "@/types/admin";
 import { toast } from "sonner";
-
-interface UsuarioAppProfile {
-  id: string;
-  email: string;
-  nome_completo: string;
-  username: string;
-  tipo: 'USER' | 'ADMIN' | 'SUPER_ADMIN';
-  avatar_url?: string;
-  radcoin_balance: number;
-  total_points: number;
-  current_streak: number;
-  especialidade_medica?: string;
-  cidade?: string;
-  estado?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-// Interface para compatibilidade com componente existente
-interface UserProfile {
-  id: string;
-  email: string;
-  full_name: string;
-  username: string;
-  type: 'USER' | 'ADMIN' | 'SUPER_ADMIN';
-  avatar_url?: string;
-  total_points: number;
-  radcoin_balance: number;
-  medical_specialty?: string;
-  academic_stage?: 'Student' | 'Intern' | 'Resident' | 'Specialist';
-  city?: string;
-  state?: string;
-  created_at: string;
-  updated_at: string;
-}
 
 export function UserManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<"all" | "USER" | "ADMIN">("all");
-  const [selectedUser, setSelectedUser] = useState<UsuarioAppProfile | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const { data: users = [], isLoading, refetch } = useQuery({
-    queryKey: ["usuarios-app", searchTerm, filterType],
+    queryKey: ["admin-users", searchTerm, filterType],
     queryFn: async () => {
-      console.log("Carregando usuários do novo sistema...");
+      console.log("Carregando usuários para gestão...");
       
       let query = supabase
-        .from("usuarios_app")
+        .from("profiles")
         .select("*")
-        .eq("ativo", true)
         .order("created_at", { ascending: false });
 
       if (filterType !== "all") {
-        if (filterType === "ADMIN") {
-          query = query.in("tipo", ["ADMIN", "SUPER_ADMIN"]);
-        } else {
-          query = query.eq("tipo", filterType);
-        }
+        query = query.eq("type", filterType);
       }
 
       if (searchTerm) {
         query = query.or(
-          `nome_completo.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,username.ilike.%${searchTerm}%`
+          `full_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,username.ilike.%${searchTerm}%`
         );
       }
 
@@ -81,37 +42,34 @@ export function UserManagement() {
       }
       
       console.log("Usuários carregados:", data?.length);
-      return data as UsuarioAppProfile[];
+      return data as UserProfile[];
     },
   });
 
   const handleEditUser = (user: UserProfile) => {
-    const originalUser = users.find(u => u.id === user.id);
-    if (originalUser) {
-      setSelectedUser(originalUser);
-      setIsEditModalOpen(true);
-    }
+    setSelectedUser(user);
+    setIsEditModalOpen(true);
   };
 
   const handleBanUser = async (userId: string) => {
     try {
-      console.log("Desativando usuário:", userId);
+      console.log("Banindo usuário:", userId);
       
       const { error } = await supabase
-        .from("usuarios_app")
+        .from("profiles")
         .update({ 
-          ativo: false,
+          type: "USER",
           updated_at: new Date().toISOString() 
         })
         .eq("id", userId);
 
       if (error) throw error;
 
-      toast.success("Usuário foi desativado com sucesso!");
+      toast.success("Usuário foi restrito com sucesso!");
       refetch();
     } catch (error: any) {
-      console.error("Erro ao desativar usuário:", error);
-      toast.error(`Erro ao desativar usuário: ${error.message}`);
+      console.error("Erro ao restringir usuário:", error);
+      toast.error(`Erro ao restringir usuário: ${error.message}`);
     }
   };
 
@@ -125,25 +83,7 @@ export function UserManagement() {
   const activeUsers = users.filter(user => 
     user.updated_at && new Date(user.updated_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
   ).length;
-  const adminUsers = users.filter(user => user.tipo === "ADMIN" || user.tipo === "SUPER_ADMIN").length;
-
-  // Adaptar dados para compatibilidade com componente existente
-  const adaptedUsers: UserProfile[] = users.map(user => ({
-    id: user.id,
-    email: user.email,
-    full_name: user.nome_completo,
-    username: user.username,
-    type: user.tipo,
-    avatar_url: user.avatar_url,
-    total_points: user.total_points,
-    radcoin_balance: user.radcoin_balance,
-    medical_specialty: user.especialidade_medica,
-    academic_stage: 'Student' as 'Student' | 'Intern' | 'Resident' | 'Specialist',
-    city: user.cidade || '', 
-    state: user.estado || '', 
-    created_at: user.created_at,
-    updated_at: user.updated_at
-  }));
+  const adminUsers = users.filter(user => user.type === "ADMIN").length;
 
   return (
     <div className="space-y-6">
@@ -160,7 +100,7 @@ export function UserManagement() {
       />
 
       <UserManagementTabs
-        users={adaptedUsers}
+        users={users}
         isLoading={isLoading}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
@@ -170,29 +110,12 @@ export function UserManagement() {
         onBanUser={handleBanUser}
       />
 
-      {selectedUser && (
-        <UserEditModal
-          user={{
-            id: selectedUser.id,
-            email: selectedUser.email,
-            full_name: selectedUser.nome_completo,
-            username: selectedUser.username,
-            type: selectedUser.tipo,
-            avatar_url: selectedUser.avatar_url,
-            total_points: selectedUser.total_points,
-            radcoin_balance: selectedUser.radcoin_balance,
-            medical_specialty: selectedUser.especialidade_medica,
-            academic_stage: 'Student' as 'Student' | 'Intern' | 'Resident' | 'Specialist',
-            city: selectedUser.cidade || '',
-            state: selectedUser.estado || '',
-            created_at: selectedUser.created_at,
-            updated_at: selectedUser.updated_at
-          }}
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          onUserUpdated={handleUserUpdated}
-        />
-      )}
+      <UserEditModal
+        user={selectedUser}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onUserUpdated={handleUserUpdated}
+      />
     </div>
   );
 }

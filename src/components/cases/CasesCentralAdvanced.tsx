@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import HeaderNav from "@/components/HeaderNav";
+import { HeaderNav } from "@/components/HeaderNav";
 import { AdvancedCasesDashboard } from "./advanced/AdvancedCasesDashboard";
 import { CaseFilters } from "./CaseFilters";
 import { CasesGrid } from "./CasesGrid";

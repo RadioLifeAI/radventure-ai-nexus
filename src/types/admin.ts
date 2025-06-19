@@ -1,3 +1,4 @@
+
 export type AdminRole = 
   | 'DEV'
   | 'TechAdmin'
@@ -27,17 +28,16 @@ export type UserProfile = {
   email: string;
   username: string;
   full_name: string;
-  type: 'USER' | 'ADMIN' | 'SUPER_ADMIN';
-  academic_stage?: 'Student' | 'Intern' | 'Resident' | 'Specialist';
-  medical_specialty?: string;
+  type: 'USER' | 'ADMIN';
+  academic_stage: 'Student' | 'Intern' | 'Resident' | 'Specialist';
+  medical_specialty: string;
   total_points: number;
   radcoin_balance: number;
   created_at: string;
   updated_at: string;
-  city?: string;
-  state?: string;
+  city: string;
+  state: string;
   bio?: string;
-  avatar_url?: string;
 };
 
 export type SubscriptionPlan = {

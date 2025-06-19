@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import HeaderNav from "@/components/HeaderNav";
+import { HeaderNav } from "@/components/HeaderNav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -83,7 +84,7 @@ export default function EventoDetalhes() {
         description: "Não foi possível carregar os detalhes do evento.",
         variant: "destructive"
       });
-      navigate("/eventos");
+      navigate("/app/eventos");
     } finally {
       setLoadingEvent(false);
     }
@@ -153,7 +154,7 @@ export default function EventoDetalhes() {
     }
 
     // Navegar para área de resolução de casos do evento
-    navigate(`/evento/${event.id}/arena`);
+    navigate(`/app/evento/${event.id}/arena`);
   };
 
   const getStatusColor = (status: string) => {
@@ -192,7 +193,7 @@ export default function EventoDetalhes() {
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-4">Evento não encontrado</h2>
-            <Button onClick={() => navigate("/eventos")} variant="outline">
+            <Button onClick={() => navigate("/app/eventos")} variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar aos Eventos
             </Button>
@@ -211,7 +212,7 @@ export default function EventoDetalhes() {
         <div className="mb-6">
           <Button
             variant="ghost"
-            onClick={() => navigate("/eventos")}
+            onClick={() => navigate("/app/eventos")}
             className="text-cyan-400 hover:text-white mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />

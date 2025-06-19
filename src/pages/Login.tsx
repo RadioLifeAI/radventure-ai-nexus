@@ -1,184 +1,193 @@
 
-import React, { useState, useEffect } from "react";
-import { Navigate } from "react-router-dom";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useUsuariosApp } from "@/hooks/useUsuariosApp";
-import { Loader2, Eye, EyeOff, Shield } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Brain, Target, TrendingUp, Award } from "lucide-react";
 
 export default function Login() {
-  const [activeTab, setActiveTab] = useState("login");
-  const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    nome_completo: ""
-  });
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
+  const navigate = useNavigate();
+  const { signIn, signUp, loading } = useAuth();
 
-  const { login, register, loading, isAuthenticated } = useUsuariosApp();
+  const handleSignIn = async () => {
+    if (!email || !password) {
+      alert("Por favor, preencha todos os campos.");
+      return;
+    }
 
-  // Redirecionar se já estiver logado
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
-  }
+    const { error } = await signIn(email, password);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (activeTab === "login") {
-      const result = await login(formData.email, formData.password);
-      // O redirecionamento será feito automaticamente se o login for bem-sucedido
-    } else {
-      const result = await register(formData.email, formData.password, formData.nome_completo);
-      if (result.success) {
-        // Após registro, mudar para tab de login
-        setActiveTab("login");
-        setFormData({ ...formData, password: "", nome_completo: "" });
-      }
+    if (!error) {
+      navigate("/app");
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleSignUp = async () => {
+    if (!email || !password || !fullName) {
+      alert("Por favor, preencha todos os campos.");
+      return;
+    }
+
+    const { error } = await signUp(email, password, fullName);
+
+    if (!error) {
+      navigate("/app");
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mb-4">
-            <Shield className="h-8 w-8 text-white" />
+    <div className="min-h-screen bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white flex">
+      {/* Lado Esquerdo - Formulário de Login */}
+      <div className="w-full lg:w-2/5 flex items-center justify-center p-8">
+        <div className="w-full max-w-sm space-y-8">
+          {/* Logo RadVenture */}
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-3 mb-8">
+              <div className="bg-cyan-500 p-2.5 rounded-xl shadow-lg">
+                <Brain className="text-white" size={32}/>
+              </div>
+              <span className="text-3xl font-bold tracking-tight">RadVenture</span>
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-2xl font-bold text-white">
+                {isSignUp ? "Criar conta" : "Bem vindo de volta!"}
+              </h1>
+              <p className="text-cyan-100 text-sm">
+                {isSignUp ? "Junte-se à aventura radiológica" : "Acesse sua conta"}
+              </p>
+            </div>
           </div>
-          <CardTitle className="text-2xl">RadVenture</CardTitle>
-          <CardDescription>
-            Sistema de Casos Médicos Interativos
-          </CardDescription>
-        </CardHeader>
 
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Entrar</TabsTrigger>
-              <TabsTrigger value="register">Criar Conta</TabsTrigger>
-            </TabsList>
+          {/* Formulário */}
+          <div className="space-y-4">
+            {isSignUp && (
+              <Input
+                type="text"
+                placeholder="Nome completo"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-cyan-400 focus:ring-cyan-400/20 h-12"
+              />
+            )}
+            
+            <Input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-cyan-400 focus:ring-cyan-400/20 h-12"
+            />
+            
+            <Input
+              type="password"
+              placeholder="Senha"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-cyan-400 focus:ring-cyan-400/20 h-12"
+            />
 
-            <form onSubmit={handleSubmit}>
-              <TabsContent value="login" className="space-y-4 mt-6">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Senha</Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Sua senha"
-                      value={formData.password}
-                      onChange={(e) => handleInputChange("password", e.target.value)}
-                      required
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Entrando...
-                    </>
-                  ) : (
-                    "Entrar"
-                  )}
-                </Button>
-                
-                <div className="bg-blue-50 rounded-lg p-4 text-center text-sm">
-                  <p className="font-medium text-blue-900 mb-2">Conta de Administrador</p>
-                  <p className="text-blue-700"><strong>Email:</strong> admin@radventure.com</p>
-                  <p className="text-blue-700"><strong>Senha:</strong> admin123</p>
-                </div>
-              </TabsContent>
+            <Button
+              className="w-full bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 hover:from-cyan-500 hover:via-blue-600 hover:to-violet-600 text-white font-semibold h-12 text-base rounded-lg shadow-lg transition-all duration-200"
+              onClick={isSignUp ? handleSignUp : handleSignIn}
+              disabled={loading}
+            >
+              {loading ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              ) : (
+                <>
+                  → {isSignUp ? "Começar Aventura" : "Entrar no Jogo"}
+                </>
+              )}
+            </Button>
 
-              <TabsContent value="register" className="space-y-4 mt-6">
-                <div className="space-y-2">
-                  <Label htmlFor="nome_completo">Nome Completo</Label>
-                  <Input
-                    id="nome_completo"
-                    type="text"
-                    placeholder="Seu nome completo"
-                    value={formData.nome_completo}
-                    onChange={(e) => handleInputChange("nome_completo", e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="register-email">Email</Label>
-                  <Input
-                    id="register-email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="register-password">Senha</Label>
-                  <div className="relative">
-                    <Input
-                      id="register-password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Mínimo 6 caracteres"
-                      value={formData.password}
-                      onChange={(e) => handleInputChange("password", e.target.value)}
-                      required
-                      minLength={6}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Criando conta...
-                    </>
-                  ) : (
-                    "Criar Conta"
-                  )}
-                </Button>
-              </TabsContent>
-            </form>
-          </Tabs>
-        </CardContent>
-      </Card>
+            <div className="text-center pt-4">
+              <button
+                onClick={() => setIsSignUp(!isSignUp)}
+                className="text-cyan-200 hover:text-white text-sm transition-colors"
+              >
+                {isSignUp
+                  ? "Já tem conta? Fazer login"
+                  : "Não tem conta? Criar uma nova"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Lado Direito - Conteúdo Motivacional */}
+      <div className="hidden lg:flex lg:w-3/5 items-center justify-center p-12">
+        <div className="max-w-xl space-y-10">
+          {/* Título Principal */}
+          <div className="space-y-4">
+            <h2 className="text-4xl font-extrabold leading-tight">
+              A JORNADA DO <span className="text-cyan-300">MESTRE RADIOLOGISTA</span> COMEÇA AQUI
+            </h2>
+            <p className="text-xl text-cyan-100">
+              Entre no game. Vença cada diagnóstico.
+            </p>
+          </div>
+
+          {/* Lista de Benefícios (3 principais) */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="bg-cyan-500/20 p-3 rounded-full flex-shrink-0">
+                <Target className="text-cyan-300" size={24}/>
+              </div>
+              <div>
+                <h4 className="font-bold text-lg">Desafios Reais de Diagnóstico</h4>
+                <p className="text-cyan-100">Domine radiologia com casos clínicos autênticos</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <div className="bg-green-500/20 p-3 rounded-full flex-shrink-0">
+                <TrendingUp className="text-green-300" size={24}/>
+              </div>
+              <div>
+                <h4 className="font-bold text-lg">Progresso de Nível</h4>
+                <p className="text-cyan-100">De Interno a Mestre Radiologista: evolua constantemente</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <div className="bg-yellow-500/20 p-3 rounded-full flex-shrink-0">
+                <Award className="text-yellow-300" size={24}/>
+              </div>
+              <div>
+                <h4 className="font-bold text-lg">Rankings Globais</h4>
+                <p className="text-cyan-100">Compete com médicos do mundo todo e conquiste prêmios</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Imagem Central */}
+          <div className="flex justify-center">
+            <div className="relative">
+              <img 
+                src="/lovable-uploads/700e8efa-9b79-4685-9b4f-81c2a6fb5967.png" 
+                alt="Radiologista futurista analisando exames" 
+                className="rounded-2xl shadow-2xl max-w-xs w-full border-2 border-cyan-400/30"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/10 to-transparent rounded-2xl"></div>
+            </div>
+          </div>
+
+          {/* Frase Motivacional Final */}
+          <div className="border-l-4 border-cyan-400 pl-6">
+            <p className="text-xl font-semibold">
+              "Cada diagnóstico é uma vitória. Você está pronto?"
+            </p>
+            <p className="text-cyan-200 mt-2">
+              Suba de nível na sua jornada médica
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
