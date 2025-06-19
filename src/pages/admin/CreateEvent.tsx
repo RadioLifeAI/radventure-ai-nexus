@@ -4,19 +4,41 @@ import { useNavigate } from "react-router-dom";
 import { BackToDashboard } from "@/components/navigation/BackToDashboard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { AIIntegratedEventForm } from "./components/AIIntegratedEventForm";
+import { EventForm } from "./components/EventForm";
+import { EventFormAISection } from "./components/EventFormAISection";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { 
+import {
   Sparkles,
+  Edit,
   Brain,
-  Users,
-  TrendingUp
+  Calendar,
+  Target
 } from "lucide-react";
+
+interface EventData {
+  name?: string;
+  description?: string;
+  scheduled_start?: string;
+  scheduled_end?: string;
+  prize_radcoins?: number;
+  number_of_cases?: number;
+  duration_minutes?: number;
+  durationMinutes?: number;
+  max_participants?: number;
+  banner_url?: string;
+  auto_start?: boolean;
+  prize_distribution?: any[];
+  case_filters?: any;
+  [key: string]: any;
+}
 
 export default function CreateEvent() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [eventData, setEventData] = useState<EventData>({});
+  const [currentFilters, setCurrentFilters] = useState({});
 
   async function handleSubmit(values: any) {
     setLoading(true);
@@ -48,81 +70,135 @@ export default function CreateEvent() {
     }
   }
 
+  const handleApplySuggestion = (suggestion: any) => {
+    setEventData(prev => ({ ...prev, ...suggestion }));
+  };
+
+  const handleAutoFill = (data: any) => {
+    setEventData(prev => ({ ...prev, ...data }));
+  };
+
+  const handleApplyTemplate = (template: any) => {
+    setEventData(prev => ({ ...prev, ...template }));
+    setCurrentFilters(template.caseFilters || {});
+  };
+
+  const handleApplyOptimization = (optimization: any) => {
+    setEventData(prev => ({ ...prev, ...optimization }));
+  };
+
+  const handleSelectSchedule = (date: Date, time: string) => {
+    const scheduledStart = new Date(date);
+    const [hours, minutes] = time.split(':');
+    scheduledStart.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+    
+    const scheduledEnd = new Date(scheduledStart);
+    const durationMinutes = eventData.durationMinutes || eventData.duration_minutes || 30;
+    scheduledEnd.setMinutes(scheduledEnd.getMinutes() + durationMinutes);
+
+    setEventData(prev => ({
+      ...prev,
+      scheduled_start: scheduledStart.toISOString().slice(0, 16),
+      scheduled_end: scheduledEnd.toISOString().slice(0, 16)
+    }));
+
+    toast({
+      title: "📅 Horário selecionado!",
+      description: `Evento agendado para ${date.toLocaleDateString('pt-BR')} às ${time}`,
+      className: "bg-blue-50 border-blue-200"
+    });
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <BackToDashboard variant="back" />
-        <div className="flex items-center gap-3">
-          <Badge className="bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700">
-            <Brain className="h-3 w-3 mr-1" />
-            IA Avançada
-          </Badge>
-          <Badge className="bg-gradient-to-r from-green-100 to-blue-100 text-green-700">
-            <Users className="h-3 w-3 mr-1" />
-            Colaboração Real-time
-          </Badge>
-          <Badge className="bg-gradient-to-r from-orange-100 to-red-100 text-orange-700">
-            <TrendingUp className="h-3 w-3 mr-1" />
-            Analytics Avançado
-          </Badge>
-        </div>
+        <Badge className="bg-purple-100 text-purple-700">
+          <Sparkles className="h-3 w-3 mr-1" />
+          Powered by AI
+        </Badge>
       </div>
 
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-2">
-          Sistema de Criação de Eventos com IA
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">
+          Criar Novo Evento
         </h1>
-        <p className="text-gray-600 max-w-2xl mx-auto">
-          Utilize nossa inteligência artificial avançada, colaboração em tempo real e analytics de performance 
-          para criar eventos médicos otimizados e de alto engajamento
+        <p className="text-gray-600">
+          Use nossa inteligência artificial para criar eventos otimizados e de alto engajamento
         </p>
       </div>
 
-      <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-blue-50">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-purple-900">
-            <Sparkles className="h-6 w-6 text-purple-600" />
-            Sistema Completo de IA e Colaboração
-          </CardTitle>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-            <div className="bg-white p-4 rounded-lg border border-purple-200">
-              <h3 className="font-semibold text-purple-800 mb-2">🤖 IA Inteligente</h3>
-              <ul className="text-sm text-purple-700 space-y-1">
-                <li>• Sugestões contextuais</li>
-                <li>• Otimização automática</li>
-                <li>• Agendamento inteligente</li>
-                <li>• Análise de performance</li>
-              </ul>
-            </div>
-            <div className="bg-white p-4 rounded-lg border border-blue-200">
-              <h3 className="font-semibold text-blue-800 mb-2">👥 Colaboração</h3>
-              <ul className="text-sm text-blue-700 space-y-1">
-                <li>• Edição em tempo real</li>
-                <li>• Sistema de comentários</li>
-                <li>• Controle de versões</li>
-                <li>• Workflow de aprovação</li>
-              </ul>
-            </div>
-            <div className="bg-white p-4 rounded-lg border border-green-200">
-              <h3 className="font-semibold text-green-800 mb-2">📊 Analytics</h3>
-              <ul className="text-sm text-green-700 space-y-1">
-                <li>• Métricas em tempo real</li>
-                <li>• Dashboard executivo</li>
-                <li>• Relatórios automáticos</li>
-                <li>• Insights preditivos</li>
-              </ul>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <AIIntegratedEventForm
-            mode="create"
-            loading={loading}
-            onSubmit={handleSubmit}
-            onCancel={() => navigate("/admin/events")}
+      <Tabs defaultValue="ai-assistant" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="ai-assistant" className="flex items-center gap-2">
+            <Brain className="h-4 w-4" />
+            Assistente de IA
+          </TabsTrigger>
+          <TabsTrigger value="manual-form" className="flex items-center gap-2">
+            <Edit className="h-4 w-4" />
+            Formulário Manual
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="ai-assistant" className="space-y-6">
+          <EventFormAISection
+            onApplySuggestion={handleApplySuggestion}
+            onAutoFill={handleAutoFill}
+            onApplyTemplate={handleApplyTemplate}
+            onApplyOptimization={handleApplyOptimization}
+            onSelectSchedule={handleSelectSchedule}
+            onConfigureAutomation={() => {}}
+            currentFilters={currentFilters}
+            eventData={eventData}
           />
-        </CardContent>
-      </Card>
+
+          {/* Formulário com dados preenchidos pela IA */}
+          {Object.keys(eventData).length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="h-5 w-5 text-green-600" />
+                  Dados Preenchidos pela IA
+                </CardTitle>
+                <p className="text-sm text-gray-600">
+                  Revise e ajuste os dados antes de criar o evento
+                </p>
+              </CardHeader>
+              <CardContent>
+                <EventForm
+                  mode="create"
+                  initialValues={eventData}
+                  loading={loading}
+                  onSubmit={handleSubmit}
+                  onCancel={() => navigate("/admin/events")}
+                />
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="manual-form" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Edit className="h-5 w-5 text-blue-600" />
+                Formulário Manual de Criação
+              </CardTitle>
+              <p className="text-sm text-gray-600">
+                Preencha manualmente todos os campos do evento
+              </p>
+            </CardHeader>
+            <CardContent>
+              <EventForm
+                mode="create"
+                loading={loading}
+                onSubmit={handleSubmit}
+                onCancel={() => navigate("/admin/events")}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
