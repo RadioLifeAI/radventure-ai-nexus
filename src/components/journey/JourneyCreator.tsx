@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,9 +14,12 @@ import {
   X,
   Sparkles,
   Save,
-  Search
+  Search,
+  Zap,
+  TrendingUp
 } from "lucide-react";
-import { AdvancedJourneyFilters } from "./AdvancedJourneyFilters";
+import { SmartJourneyFilters } from "./SmartJourneyFilters";
+import { IntelligentJourneyModal } from "./IntelligentJourneyModal";
 import { JourneyExecutionModal } from "./JourneyExecutionModal";
 import { useJourneySearch } from "@/hooks/useJourneySearch";
 import { useJourneyManagement } from "@/hooks/useJourneyManagement";
@@ -30,7 +32,7 @@ export function JourneyCreator() {
   const [objectives, setObjectives] = useState<string[]>([]);
   const [newObjective, setNewObjective] = useState("");
   
-  // Estados dos filtros
+  // Estados dos filtros expandidos
   const [filters, setFilters] = useState({
     specialty: "",
     modality: "",
@@ -39,13 +41,22 @@ export function JourneyCreator() {
     searchTerm: "",
     patientAge: "",
     patientGender: "",
-    symptomsDuration: ""
+    symptomsDuration: "",
+    // Novos filtros semânticos
+    context: "",
+    rarity: "",
+    targetAudience: "",
+    educationalValue: "",
+    estimatedTime: "",
+    urgency: "",
+    aiQuery: ""
   });
 
   // Estados da UI
   const [executionModalOpen, setExecutionModalOpen] = useState(false);
+  const [intelligentModalOpen, setIntelligentModalOpen] = useState(false);
   const [currentJourney, setCurrentJourney] = useState<any>(null);
-  const [showPreview, setShowPreview] = useState(false);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   // Hooks
   const { data: searchResults, isLoading: searchLoading } = useJourneySearch(filters);
@@ -65,10 +76,10 @@ export function JourneyCreator() {
     setObjectives(objectives.filter((_, i) => i !== index));
   };
 
-  // Auto-preenchimento com IA
+  // Auto-preenchimento com IA melhorado
   const handleAutoFillWithAI = async () => {
     try {
-      const context = `Quero criar uma jornada com os seguintes parâmetros: ${title || 'título não definido'}, ${description || 'descrição não definida'}`;
+      const context = `Quero criar uma jornada com os seguintes parâmetros: ${title || 'título não definido'}, ${description || 'descrição não definida'}. Filtros aplicados: ${JSON.stringify(filters)}`;
       const aiData = await getAutoFill(filters, context);
       
       if (aiData) {
@@ -90,6 +101,50 @@ export function JourneyCreator() {
     } catch (error) {
       console.error("Erro no auto-preenchimento:", error);
     }
+  };
+
+  // Novo: Handler para recomendações inteligentes
+  const handleSmartRecommendations = async () => {
+    try {
+      const context = `Perfil do usuário e filtros atuais para recomendações: ${JSON.stringify(filters)}`;
+      const recommendations = await getAutoFill(filters, context);
+      
+      if (recommendations && recommendations.suggestedFilters) {
+        setFilters(prev => ({ ...prev, ...recommendations.suggestedFilters }));
+        toast({
+          title: "🎯 Recomendações aplicadas!",
+          description: "Filtros otimizados baseados em IA para seu perfil",
+          className: "bg-blue-50 border-blue-200"
+        });
+      }
+    } catch (error) {
+      console.error("Erro nas recomendações:", error);
+    }
+  };
+
+  // Novo: Handler para criação com modal inteligente
+  const handleIntelligentCreate = (journeyData: any) => {
+    // Aplicar dados do modal inteligente
+    setTitle(journeyData.title || `Jornada Personalizada: ${journeyData.specialty}`);
+    setDescription(journeyData.objective || journeyData.description);
+    setObjectives(journeyData.objectives || []);
+    
+    // Aplicar filtros baseados nas escolhas do usuário
+    const smartFilters = {
+      specialty: journeyData.specialty,
+      difficulty: journeyData.difficulty === 'progressive' ? '' : journeyData.difficulty,
+      targetAudience: journeyData.experience,
+      estimatedTime: journeyData.timeAvailable,
+      educationalValue: 'high'
+    };
+    
+    setFilters(prev => ({ ...prev, ...smartFilters }));
+    
+    toast({
+      title: "🚀 Jornada inteligente configurada!",
+      description: "Configuração baseada nas suas respostas aplicada com sucesso",
+      className: "bg-green-50 border-green-200"
+    });
   };
 
   // Criar jornada
@@ -174,35 +229,45 @@ export function JourneyCreator() {
 
   return (
     <div className="space-y-6">
-      {/* Header com ações */}
+      {/* Header melhorado com ações inteligentes */}
       <Card className="bg-gradient-to-r from-purple-500 to-blue-600 text-white">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <BookOpen className="h-8 w-8" />
               <div>
-                <CardTitle className="text-2xl">Criar Jornada de Aprendizado</CardTitle>
-                <p className="text-purple-100">Use IA para criar trilhas personalizadas baseadas em seus objetivos</p>
+                <CardTitle className="text-2xl">Criador Inteligente de Jornadas</CardTitle>
+                <p className="text-purple-100">Use IA avançada para criar trilhas personalizadas e envolventes</p>
               </div>
             </div>
-            <Button
-              onClick={handleAutoFillWithAI}
-              disabled={aiLoading}
-              variant="secondary"
-              className="bg-white/20 hover:bg-white/30 text-white border-white/30"
-            >
-              {aiLoading ? (
-                <>
-                  <Brain className="h-4 w-4 mr-2 animate-spin" />
-                  IA Trabalhando...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Auto-Preencher com IA
-                </>
-              )}
-            </Button>
+            <div className="flex gap-3">
+              <Button
+                onClick={() => setIntelligentModalOpen(true)}
+                variant="secondary"
+                className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+              >
+                <Brain className="h-4 w-4 mr-2" />
+                Assistente IA
+              </Button>
+              <Button
+                onClick={handleAutoFillWithAI}
+                disabled={aiLoading}
+                variant="secondary"
+                className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+              >
+                {aiLoading ? (
+                  <>
+                    <Brain className="h-4 w-4 mr-2 animate-spin" />
+                    IA Trabalhando...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Auto-Preencher
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </CardHeader>
       </Card>
@@ -270,7 +335,7 @@ export function JourneyCreator() {
             </CardContent>
           </Card>
 
-          {/* Ações */}
+          {/* Ações melhoradas */}
           <Card>
             <CardContent className="p-4">
               <div className="flex gap-3">
@@ -297,58 +362,99 @@ export function JourneyCreator() {
           </Card>
         </div>
 
-        {/* Filtros e Resultados */}
+        {/* Filtros Inteligentes e Resultados */}
         <div className="space-y-6">
-          <AdvancedJourneyFilters
+          <SmartJourneyFilters
             filters={filters}
             onFiltersChange={setFilters}
-            onAutoFillWithAI={handleAutoFillWithAI}
+            onAIRecommendation={handleSmartRecommendations}
             isLoadingAI={aiLoading}
             casesFound={searchResults?.length || 0}
           />
 
-          {/* Resultados da busca */}
+          {/* Resultados da busca melhorados */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Search className="h-5 w-5 text-purple-600" />
-                Casos Encontrados ({searchResults?.length || 0})
+                Casos Encontrados
+                <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+                  {searchResults?.length || 0} casos
+                </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
               {searchLoading ? (
-                <div className="text-center py-4 text-gray-600">
-                  Buscando casos...
+                <div className="text-center py-8">
+                  <Brain className="h-8 w-8 text-purple-600 mx-auto mb-2 animate-spin" />
+                  <p className="text-gray-600">IA analisando casos disponíveis...</p>
                 </div>
               ) : searchResults && searchResults.length > 0 ? (
-                <div className="space-y-2 max-h-60 overflow-y-auto">
+                <div className="space-y-3 max-h-80 overflow-y-auto">
+                  {/* Estatísticas rápidas */}
+                  <div className="grid grid-cols-3 gap-2 mb-4">
+                    {[
+                      { label: "Fácil", count: searchResults.filter(c => c.difficulty_level <= 2).length, color: "bg-green-100 text-green-800" },
+                      { label: "Médio", count: searchResults.filter(c => c.difficulty_level === 3).length, color: "bg-yellow-100 text-yellow-800" },
+                      { label: "Difícil", count: searchResults.filter(c => c.difficulty_level >= 4).length, color: "bg-red-100 text-red-800" }
+                    ].map(stat => (
+                      <div key={stat.label} className={`p-2 rounded text-center ${stat.color}`}>
+                        <div className="font-bold">{stat.count}</div>
+                        <div className="text-xs">{stat.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                  
                   {searchResults.slice(0, 10).map((case_item) => (
-                    <div key={case_item.id} className="p-2 border rounded bg-gray-50">
-                      <p className="font-medium text-sm">{case_item.title}</p>
-                      <div className="flex gap-2 mt-1">
+                    <div key={case_item.id} className="p-3 border rounded-lg bg-gradient-to-r from-gray-50 to-blue-50 hover:from-blue-50 hover:to-purple-50 transition-all">
+                      <p className="font-medium text-sm mb-2">{case_item.title}</p>
+                      <div className="flex flex-wrap gap-1 mb-2">
                         <Badge variant="outline" className="text-xs">{case_item.specialty}</Badge>
                         <Badge variant="outline" className="text-xs">{case_item.modality}</Badge>
                         {case_item.difficulty_level && (
-                          <Badge variant="outline" className="text-xs">Nível {case_item.difficulty_level}</Badge>
+                          <Badge 
+                            variant="outline" 
+                            className={`text-xs ${
+                              case_item.difficulty_level <= 2 ? 'border-green-500 text-green-700' :
+                              case_item.difficulty_level === 3 ? 'border-yellow-500 text-yellow-700' :
+                              'border-red-500 text-red-700'
+                            }`}
+                          >
+                            Nível {case_item.difficulty_level}
+                          </Badge>
                         )}
                       </div>
+                      {case_item.description && (
+                        <p className="text-xs text-gray-600 line-clamp-2">{case_item.description}</p>
+                      )}
                     </div>
                   ))}
                   {searchResults.length > 10 && (
-                    <p className="text-sm text-gray-500 text-center">
-                      ... e mais {searchResults.length - 10} casos
-                    </p>
+                    <div className="text-center py-3 border-t">
+                      <p className="text-sm text-gray-500">
+                        ... e mais {searchResults.length - 10} casos
+                      </p>
+                    </div>
                   )}
                 </div>
               ) : (
-                <div className="text-center py-4 text-gray-600">
-                  Configure os filtros para encontrar casos médicos
+                <div className="text-center py-8">
+                  <Target className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-600 mb-2">Nenhum caso encontrado</p>
+                  <p className="text-sm text-gray-500">Ajuste os filtros ou use as sugestões da IA</p>
                 </div>
               )}
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* Modal Inteligente */}
+      <IntelligentJourneyModal
+        isOpen={intelligentModalOpen}
+        onClose={() => setIntelligentModalOpen(false)}
+        onCreateJourney={handleIntelligentCreate}
+      />
 
       {/* Modal de Execução/Preview */}
       {executionModalOpen && currentJourney && (
