@@ -346,7 +346,20 @@ export function CaseProfileFormEditable({
           title="Dados Estruturados"
           description="Configure os campos estruturados para filtros avançados e AI (PRIMEIRO PASSO)"
         >
-          {/* CORREÇÃO: Remover o botão AI duplicado - já existe integrado na seção */}
+          {/* ADICIONANDO o botão AI para dados estruturados */}
+          <CaseStructuredDataAI 
+            form={form}
+            setForm={setForm}
+            onFieldsUpdated={(fields) => {
+              setHighlightedFields(fields);
+              setTimeout(() => setHighlightedFields([]), 2000);
+            }}
+            onSuggestionsGenerated={(suggestions) => {
+              // Integrar com o sistema de sugestões dinâmicas
+              console.log('✅ Sugestões estruturadas geradas:', suggestions);
+            }}
+          />
+          
           <CaseStructuredFieldsSection 
             form={form}
             setForm={setForm}
@@ -365,7 +378,7 @@ export function CaseProfileFormEditable({
             showPreview={showPreview}
           />
           
-          {/* CORREÇÃO: Botão AI para seção básica com validação de dependência */}
+          {/* Botão AI para seção básica com validação de dependência */}
           <CaseBasicSectionAI 
             form={form}
             setForm={setForm}
