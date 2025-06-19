@@ -13,7 +13,6 @@ import { AITutorManagement } from "@/components/admin/AITutorManagement";
 import { AchievementManagement } from "@/components/admin/AchievementManagement";
 import { SystemMonitoringIntegrated } from "@/components/admin/SystemMonitoringIntegrated";
 import { RewardManagement } from "@/components/admin/RewardManagement";
-import { AdvancedSettings } from "@/components/admin/AdvancedSettings";
 import { APIKeyManagement } from "@/components/admin/APIKeyManagement";
 import { StripeManagement } from "@/components/admin/StripeManagement";
 import { Crown, Sparkles, Shield, Zap } from "lucide-react";
@@ -73,7 +72,6 @@ export default function AdminPanel() {
             
             {/* Rotas implementadas */}
             <Route path="recompensas" element={<RewardManagement />} />
-            <Route path="configuracoes" element={<AdvancedSettings />} />
             <Route path="chaves-api" element={<APIKeyManagement />} />
             <Route path="config-stripe" element={<StripeManagement />} />
           </Routes>
