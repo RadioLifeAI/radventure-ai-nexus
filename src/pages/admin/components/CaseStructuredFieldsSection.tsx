@@ -5,7 +5,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sparkles } from "lucide-react";
 import { DynamicTagInput } from "./DynamicTagInput";
-import { CaseStructuredDataAI } from "./CaseStructuredDataAI";
 import { useDynamicSuggestions } from "../hooks/useDynamicSuggestions";
 import { toast } from "@/components/ui/use-toast";
 
@@ -79,14 +78,8 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
 
   return (
     <div className="space-y-6">
-      {/* Botão AI Dados Estruturados - ÚNICO e FUNCIONAL */}
-      {canUseStructuredAI ? (
-        <CaseStructuredDataAI 
-          form={form} 
-          setForm={setForm}
-          onSuggestionsGenerated={handleSuggestionsGenerated}
-        />
-      ) : (
+      {/* Aviso quando AI não está disponível */}
+      {!canUseStructuredAI && (
         <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
           <div className="text-sm text-gray-600">
             💡 Preencha o <strong>Diagnóstico Principal</strong> primeiro para habilitar a AI de Dados Estruturados
