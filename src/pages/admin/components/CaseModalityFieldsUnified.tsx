@@ -2,7 +2,7 @@
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MODALITIES_SUBTYPES } from "../utils/modalitiesSubtypes";
+import { modalitiesSubtypes } from "../utils/modalitiesSubtypes";
 
 type Props = {
   form: any;
@@ -19,7 +19,7 @@ export function CaseModalityFieldsUnified({
   highlightedFields, 
   renderTooltipTip 
 }: Props) {
-  const selectedModality = MODALITIES_SUBTYPES.find(item => item?.modality === form.modality);
+  const selectedModality = modalitiesSubtypes.find(item => item?.value === form.modality);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -33,9 +33,9 @@ export function CaseModalityFieldsUnified({
             <SelectValue placeholder="Selecione a modalidade" />
           </SelectTrigger>
           <SelectContent>
-            {MODALITIES_SUBTYPES.map((item) => (
-              <SelectItem key={item.modality} value={item.modality}>
-                {item.modality}
+            {modalitiesSubtypes.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -57,8 +57,8 @@ export function CaseModalityFieldsUnified({
           </SelectTrigger>
           <SelectContent>
             {selectedModality?.subtypes.map((subtype) => (
-              <SelectItem key={subtype} value={subtype}>
-                {subtype}
+              <SelectItem key={subtype.value} value={subtype.value}>
+                {subtype.label}
               </SelectItem>
             ))}
           </SelectContent>
