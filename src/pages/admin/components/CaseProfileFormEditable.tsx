@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useCaseProfileFormHandlers } from "../hooks/useCaseProfileFormHandlers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -150,6 +150,23 @@ export function CaseProfileFormEditable({
       </Tooltip>
     );
   }
+
+  // CORREÇÃO: Garantir que setForm seja uma função estável
+  const stableSetForm = React.useCallback((updater: any) => {
+    console.log('🔧 stableSetForm chamada com:', typeof updater === 'function' ? 'function' : updater);
+    
+    if (typeof updater === 'function') {
+      setForm((prevForm: any) => {
+        const newForm = updater(prevForm);
+        console.log('🔧 stableSetForm - Estado anterior:', prevForm);
+        console.log('🔧 stableSetForm - Novo estado:', newForm);
+        return newForm;
+      });
+    } else {
+      console.log('🔧 stableSetForm - Definindo estado diretamente:', updater);
+      setForm(updater);
+    }
+  }, [setForm]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -304,14 +321,14 @@ export function CaseProfileFormEditable({
   React.useEffect(() => {
     if (!isEditMode && form.category_id && form.modality && form.difficulty_level && (!form.case_number || !form.title)) {
       const { title, case_number } = generateTitle(Number(form.category_id), form.modality, Number(form.difficulty_level));
-      setForm((prev: any) => ({ ...prev, title, case_number }));
+      stableSetForm((prev: any) => ({ ...prev, title, case_number }));
     }
   }, [form.category_id, form.modality, form.difficulty_level, isEditMode]);
 
   function handleAutoGenerateTitle() {
     if (form.category_id && form.modality && form.difficulty_level) {
       const { title, case_number } = generateTitle(Number(form.category_id), form.modality, Number(form.difficulty_level));
-      setForm((prev: any) => ({ ...prev, title, case_number }));
+      stableSetForm((prev: any) => ({ ...prev, title, case_number }));
       setHighlightedFields(["title", "case_number"]);
       setTimeout(() => setHighlightedFields([]), 1200);
     }
@@ -330,7 +347,7 @@ export function CaseProfileFormEditable({
           {/* BOTÃO MASTER AI: Preencher TUDO - Substitui "Auto-preenchimento por Seção" */}
           <CaseMasterAI 
             form={form}
-            setForm={setForm}
+            setForm={stableSetForm}
             onFieldsUpdated={(fields) => {
               setHighlightedFields(fields);
               setTimeout(() => setHighlightedFields([]), 3000);
@@ -349,7 +366,7 @@ export function CaseProfileFormEditable({
           {/* ADICIONANDO o botão AI para dados estruturados */}
           <CaseStructuredDataAI 
             form={form}
-            setForm={setForm}
+            setForm={stableSetForm}
             onFieldsUpdated={(fields) => {
               setHighlightedFields(fields);
               setTimeout(() => setHighlightedFields([]), 2000);
@@ -362,7 +379,7 @@ export function CaseProfileFormEditable({
           
           <CaseStructuredFieldsSection 
             form={form}
-            setForm={setForm}
+            setForm={stableSetForm}
             handleFormChange={handleFormChange}
             renderTooltipTip={renderTooltipTip}
           />
@@ -378,10 +395,10 @@ export function CaseProfileFormEditable({
             showPreview={showPreview}
           />
           
-          {/* Botão AI para seção básica com validação de dependência */}
+          {/* Botão AI para seção básica com validação de dependência - USANDO stableSetForm */}
           <CaseBasicSectionAI 
             form={form}
-            setForm={setForm}
+            setForm={stableSetForm}
             onFieldsUpdated={(fields) => {
               setHighlightedFields(fields);
               setTimeout(() => setHighlightedFields([]), 2000);
@@ -400,7 +417,7 @@ export function CaseProfileFormEditable({
             handleSuggestClinicalInfo={onSuggestClinical}
             undoFindings={undoFindings}
             undoClinical={undoClinical}
-            setForm={setForm}
+            setForm={stableSetForm}
             autoTitlePreview={autoTitlePreview}
             onGenerateAutoTitle={handleAutoGenerateTitle}
           />
@@ -426,7 +443,7 @@ export function CaseProfileFormEditable({
           {/* NOVO: Botão AI para quiz completo */}
           <CaseQuizCompleteAI 
             form={form}
-            setForm={setForm}
+            setForm={stableSetForm}
             onFieldsUpdated={(fields) => {
               setHighlightedFields(fields);
               setTimeout(() => setHighlightedFields([]), 2000);
@@ -470,7 +487,7 @@ export function CaseProfileFormEditable({
           {/* NOVO: Botão AI para explicação completa */}
           <CaseExplanationCompleteAI 
             form={form}
-            setForm={setForm}
+            setForm={stableSetForm}
             onFieldsUpdated={(fields) => {
               setHighlightedFields(fields);
               setTimeout(() => setHighlightedFields([]), 2000);
@@ -495,7 +512,7 @@ export function CaseProfileFormEditable({
           {/* NOVO: Botão AI para config avançada */}
           <CaseAdvancedConfigAI 
             form={form}
-            setForm={setForm}
+            setForm={stableSetForm}
             onFieldsUpdated={(fields) => {
               setHighlightedFields(fields);
               setTimeout(() => setHighlightedFields([]), 2000);

@@ -24,13 +24,12 @@ export function CaseBasicSectionAI({
   const { autofillBasicComplete, loading } = useCaseAutofillAPIExpanded();
   const { generateTitle } = useCaseTitleGenerator(categories);
 
-  // CORREÇÃO: Validação mais flexível e com logs de debug
+  // Validação mais flexível e com logs de debug
   const hasStructuredData = React.useMemo(() => {
     const hasPrimary = form.primary_diagnosis?.trim();
     const hasDifferentials = Array.isArray(form.differential_diagnoses) && form.differential_diagnoses.length >= 1;
     const hasAnatomical = Array.isArray(form.anatomical_regions) && form.anatomical_regions.length >= 1;
     
-    // Log de debug para identificar o problema
     console.log('🔍 DEBUG - Validação hasStructuredData:', {
       primary_diagnosis: form.primary_diagnosis,
       differential_diagnoses: form.differential_diagnoses,
@@ -47,16 +46,11 @@ export function CaseBasicSectionAI({
   const handleAutofillBasicComplete = async () => {
     try {
       console.log('🤖 Iniciando AI: Dados Básicos...');
-      console.log('🔍 Form completo:', form);
+      console.log('🔍 Estado do form ANTES da chamada:', JSON.stringify(form, null, 2));
+      console.log('🔍 Tipo da função setForm:', typeof setForm);
       
-      // CORREÇÃO: Verificar se os dados estruturados estão completos
       if (!hasStructuredData) {
-        console.log('❌ Dados estruturados incompletos:', {
-          primary_diagnosis: form.primary_diagnosis,
-          differential_diagnoses: form.differential_diagnoses,
-          anatomical_regions: form.anatomical_regions
-        });
-        
+        console.log('❌ Dados estruturados incompletos');
         toast({ 
           title: "Dados Estruturados Obrigatórios", 
           description: "Preencha primeiro: Diagnóstico Principal + Diagnósticos Diferenciais + Regiões Anatômicas",
@@ -81,11 +75,11 @@ export function CaseBasicSectionAI({
 
       console.log('✅ Sugestões básicas recebidas:', suggestions);
 
-      // Aplicar sugestões ao formulário
+      // CORREÇÃO PRINCIPAL: Aplicar sugestões ao formulário de forma mais robusta
       const updatedFields: string[] = [];
       const updates: any = {};
 
-      // Mapeamento dos campos básicos com correção de tipos
+      // Mapeamento dos campos básicos
       const fieldMappings = [
         'category_id', 'difficulty_level', 'points', 'modality', 'subtype',
         'patient_age', 'patient_gender', 'symptoms_duration', 'findings', 'patient_clinical_info'
@@ -122,9 +116,21 @@ export function CaseBasicSectionAI({
       }
 
       if (Object.keys(updates).length > 0) {
-        console.log('🔄 Atualizando formulário com:', updates);
-        setForm((prev: any) => ({ ...prev, ...updates }));
-        onFieldsUpdated?.(updatedFields);
+        console.log('🔄 ANTES de atualizar - Estado atual do form:', JSON.stringify(form, null, 2));
+        console.log('🔄 Updates que serão aplicados:', JSON.stringify(updates, null, 2));
+        
+        // CORREÇÃO CRÍTICA: Garantir atualização imutável e forçar re-render
+        setForm((prevForm: any) => {
+          const newForm = { ...prevForm, ...updates };
+          console.log('🔄 DEPOIS de atualizar - Novo estado do form:', JSON.stringify(newForm, null, 2));
+          return newForm;
+        });
+        
+        // Notificar campos atualizados
+        if (onFieldsUpdated && updatedFields.length > 0) {
+          console.log('📢 Notificando campos atualizados:', updatedFields);
+          onFieldsUpdated(updatedFields);
+        }
         
         const titleMessage = updates.title ? ` | Título: "${updates.title}"` : '';
         
@@ -132,6 +138,17 @@ export function CaseBasicSectionAI({
           title: `🤖 AI: Dados Básicos Preenchidos!`,
           description: `${updatedFields.length} campos básicos atualizados incluindo categoria, dificuldade e modalidade${titleMessage}.` 
         });
+        
+        // Debug adicional: Verificar se os campos foram realmente atualizados na UI
+        setTimeout(() => {
+          console.log('🔍 Verificação pós-update (500ms depois):', {
+            category_id: form.category_id,
+            difficulty_level: form.difficulty_level,
+            modality: form.modality,
+            title: form.title
+          });
+        }, 500);
+        
       } else {
         console.log('⚠️ Nenhum campo para atualizar');
         toast({ 
