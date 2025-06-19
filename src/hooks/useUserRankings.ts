@@ -43,8 +43,9 @@ export function useUserRankings() {
   const fetchRankings = async () => {
     try {
       setLoading(true);
+      console.log("🏆 Buscando rankings reais da tabela profiles");
 
-      // Ranking global por pontos
+      // Ranking global por pontos (dados reais da tabela profiles)
       const { data: globalData, error: globalError } = await supabase
         .from("profiles")
         .select("id, full_name, username, avatar_url, total_points, current_streak, medical_specialty")
@@ -59,6 +60,7 @@ export function useUserRankings() {
       }));
 
       setGlobalRankings(globalWithRank);
+      console.log("🏆 Rankings globais carregados:", globalWithRank.slice(0, 5));
 
       // Encontrar posição do usuário atual
       if (user) {
@@ -89,10 +91,11 @@ export function useUserRankings() {
           }));
 
           setSpecialtyRankings(specialtyWithRank);
+          console.log(`🏆 Rankings por especialidade (${userData.medical_specialty}):`, specialtyWithRank.slice(0, 3));
         }
       }
     } catch (error) {
-      console.error("Erro ao buscar rankings:", error);
+      console.error("❌ Erro ao buscar rankings:", error);
     } finally {
       setLoading(false);
     }
@@ -100,6 +103,8 @@ export function useUserRankings() {
 
   const fetchEventRanking = async (eventId: string) => {
     try {
+      console.log("🏆 Buscando ranking do evento:", eventId);
+      
       const { data, error } = await supabase
         .from("event_rankings")
         .select(`
@@ -114,7 +119,7 @@ export function useUserRankings() {
 
       if (error) throw error;
 
-      // Buscar dados dos usuários separadamente
+      // Buscar dados dos usuários separadamente (dados reais)
       const userIds = (data || []).map(ranking => ranking.user_id);
       const { data: usersData } = await supabase
         .from("profiles")
@@ -139,9 +144,10 @@ export function useUserRankings() {
         [eventId]: rankings
       }));
 
+      console.log("🏆 Ranking do evento carregado:", rankings.slice(0, 3));
       return rankings;
     } catch (error) {
-      console.error("Erro ao buscar ranking do evento:", error);
+      console.error("❌ Erro ao buscar ranking do evento:", error);
       return [];
     }
   };

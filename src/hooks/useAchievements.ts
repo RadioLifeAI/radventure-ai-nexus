@@ -37,8 +37,9 @@ export function useAchievements() {
   const fetchAchievements = async () => {
     try {
       setLoading(true);
+      console.log("🏅 Buscando conquistas reais do sistema");
 
-      // Buscar todas as conquistas ativas
+      // Buscar todas as conquistas ativas (dados reais)
       const { data: achievementsData, error: achievementsError } = await supabase
         .from("achievement_system")
         .select("*")
@@ -48,8 +49,9 @@ export function useAchievements() {
       if (achievementsError) throw achievementsError;
 
       setAchievements(achievementsData || []);
+      console.log("🏅 Conquistas carregadas:", achievementsData?.length || 0);
 
-      // Se o usuário estiver logado, buscar progresso
+      // Se o usuário estiver logado, buscar progresso real
       if (user) {
         const { data: progressData, error: progressError } = await supabase
           .from("user_achievements_progress")
@@ -68,9 +70,10 @@ export function useAchievements() {
         }));
 
         setUserProgress(mappedProgress);
+        console.log("🏅 Progresso de conquistas carregado:", mappedProgress.length);
       }
     } catch (error) {
-      console.error("Erro ao buscar conquistas:", error);
+      console.error("❌ Erro ao buscar conquistas:", error);
     } finally {
       setLoading(false);
     }

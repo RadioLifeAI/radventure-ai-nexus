@@ -5,6 +5,9 @@ import { AdminRole, hasPermission, ResourceType, PermissionAction } from "@/type
 import { useAuth } from "./useAuth";
 import { useUserProfile } from "./useUserProfile";
 
+// Flag de desenvolvimento - quando true, todos os usuários autenticados são admin
+const IS_DEVELOPMENT = true;
+
 export function useAdminPermissions() {
   const [userRoles, setUserRoles] = useState<AdminRole[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,6 +35,16 @@ export function useAdminPermissions() {
     try {
       console.log("🔍 Carregando permissões para usuário:", user.id);
 
+      // Durante desenvolvimento, todos os usuários autenticados são admin
+      if (IS_DEVELOPMENT) {
+        console.log("🚀 MODO DESENVOLVIMENTO: Usuário automaticamente admin");
+        setIsAdmin(true);
+        setUserRoles(["TechAdmin", "DEV"]);
+        setLoading(false);
+        return;
+      }
+
+      // Lógica normal de produção (quando IS_DEVELOPMENT = false)
       const isUserAdmin = profile?.type === 'ADMIN';
       setIsAdmin(isUserAdmin);
 
@@ -72,7 +85,13 @@ export function useAdminPermissions() {
   const checkPermission = (resource: ResourceType, action: PermissionAction): boolean => {
     if (!isAuthenticated || !user) return false;
     
-    // Sistema limpo: todos os admins têm acesso total
+    // Durante desenvolvimento, todos os usuários autenticados têm permissão total
+    if (IS_DEVELOPMENT) {
+      console.log(`✅ MODO DESENVOLVIMENTO: ${resource}.${action} = true`);
+      return true;
+    }
+    
+    // Lógica normal de produção
     const hasPermissionResult = isAdmin;
     console.log(`✅ Verificando permissão: ${resource}.${action} = ${hasPermissionResult}`);
     return hasPermissionResult;
@@ -81,7 +100,13 @@ export function useAdminPermissions() {
   const hasAnyAdminRole = (): boolean => {
     if (!isAuthenticated || !user) return false;
     
-    // Sistema limpo: basta ser ADMIN
+    // Durante desenvolvimento, todos os usuários autenticados são admin
+    if (IS_DEVELOPMENT) {
+      console.log(`✅ MODO DESENVOLVIMENTO: hasAnyAdminRole = true`);
+      return true;
+    }
+    
+    // Lógica normal de produção
     const hasRole = isAdmin;
     console.log(`✅ hasAnyAdminRole: ${hasRole}`);
     return hasRole;

@@ -48,8 +48,9 @@ export function useUserAnalytics() {
 
     try {
       setLoading(true);
+      console.log("📊 Buscando analytics reais para usuário:", user.id);
 
-      // Buscar histórico de casos
+      // Buscar histórico de casos (dados reais)
       const { data: caseHistory, error: caseError } = await supabase
         .from("user_case_history")
         .select(`
@@ -64,7 +65,7 @@ export function useUserAnalytics() {
 
       if (caseError) throw caseError;
 
-      // Buscar participação em eventos
+      // Buscar participação em eventos (dados reais)
       const { data: eventData, error: eventError } = await supabase
         .from("event_registrations")
         .select(`
@@ -75,20 +76,20 @@ export function useUserAnalytics() {
 
       if (eventError) throw eventError;
 
-      // Buscar rankings do usuário em eventos
+      // Buscar rankings do usuário em eventos (dados reais)
       const { data: rankingsData } = await supabase
         .from("event_rankings")
         .select("rank, score")
         .eq("user_id", user.id);
 
-      // Buscar dados do perfil do usuário
+      // Buscar dados do perfil do usuário (dados reais)
       const { data: profileData } = await supabase
         .from("profiles")
         .select("current_streak")
         .eq("id", user.id)
         .single();
 
-      // Calcular estatísticas
+      // Calcular estatísticas baseadas em dados reais
       const totalCases = caseHistory?.length || 0;
       const correctAnswers = caseHistory?.filter(h => h.is_correct).length || 0;
       const accuracy = totalCases > 0 ? (correctAnswers / totalCases) * 100 : 0;
@@ -96,7 +97,7 @@ export function useUserAnalytics() {
         ? (caseHistory?.reduce((sum, h) => sum + (h.points || 0), 0) || 0) / totalCases 
         : 0;
 
-      // Performance por especialidade
+      // Performance por especialidade (dados reais)
       const specialtyPerformance: Record<string, any> = {};
       caseHistory?.forEach(history => {
         const specialty = history.medical_cases?.specialty || 'Outros';
@@ -114,7 +115,7 @@ export function useUserAnalytics() {
         data.accuracy = data.cases > 0 ? (data.correct / data.cases) * 100 : 0;
       });
 
-      // Atividade semanal (últimos 7 dias)
+      // Atividade semanal (últimos 7 dias) - dados reais
       const weeklyActivity: Record<string, number> = {};
       const today = new Date();
       for (let i = 6; i >= 0; i--) {
@@ -126,7 +127,7 @@ export function useUserAnalytics() {
         ).length || 0;
       }
 
-      // Tendências mensais (últimos 6 meses)
+      // Tendências mensais (últimos 6 meses) - dados reais
       const monthlyTrends: Record<string, any> = {};
       for (let i = 5; i >= 0; i--) {
         const date = new Date(today);
@@ -146,7 +147,7 @@ export function useUserAnalytics() {
         };
       }
 
-      // Participação em eventos
+      // Participação em eventos (dados reais)
       const eventParticipation = {
         total: eventData?.length || 0,
         completed: eventData?.filter(e => e.events?.status === 'FINISHED').length || 0,
@@ -158,7 +159,7 @@ export function useUserAnalytics() {
           sum + (r.rank || 0), 0) / rankingsData.length;
       }
 
-      setAnalytics({
+      const analyticsData = {
         totalCases,
         correctAnswers,
         accuracy,
@@ -172,10 +173,13 @@ export function useUserAnalytics() {
           lastActivity: caseHistory?.[0]?.answered_at || ''
         },
         eventParticipation
-      });
+      };
+
+      console.log("📊 Analytics calculados com dados reais:", analyticsData);
+      setAnalytics(analyticsData);
 
     } catch (error) {
-      console.error("Erro ao buscar analytics:", error);
+      console.error("❌ Erro ao buscar analytics:", error);
     } finally {
       setLoading(false);
     }
