@@ -1,172 +1,195 @@
 
 import React, { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { 
-  Home, 
-  Trophy, 
-  Calendar, 
-  BarChart3, 
-  FileText, 
-  Settings, 
-  LogOut, 
-  User,
-  ChevronDown,
-  Loader2,
-  Rocket
-} from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useAuth } from "@/hooks/useAuth";
-import { useUserProfile } from "@/hooks/useUserProfile";
-import { ProfileSettingsModal } from "@/components/profile/ProfileSettingsModal";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { useUsuariosApp } from "@/hooks/useUsuariosApp";
+import { LoginModal } from "@/components/auth/LoginModal";
+import { User, LogOut, Settings, Shield, Crown, Coins } from "lucide-react";
 
-export function HeaderNav() {
-  const location = useLocation();
+export default function HeaderNav() {
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const { usuario, logout, isAuthenticated, isAdmin } = useUsuariosApp();
   const navigate = useNavigate();
-  const { signOut, user } = useAuth();
-  const { profile, isLoading: profileLoading } = useUserProfile();
-  const [showProfileSettings, setShowProfileSettings] = useState(false);
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
   };
 
-  const navItems = [
-    { name: "Dashboard", href: "/dashboard", icon: Home },
-    { name: "Casos", href: "/app/casos", icon: FileText },
-    { name: "Eventos", href: "/app/eventos", icon: Calendar },
-    { name: "Rankings", href: "/app/rankings", icon: Trophy },
-    { name: "Estatísticas", href: "/app/estatisticas", icon: BarChart3 },
-  ];
-
-  const isActiveRoute = (path: string) => {
-    return location.pathname === path || location.pathname.startsWith(path + '/');
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map(word => word[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
   };
 
-  // Dados do usuário - agora usando dados reais do perfil
-  const userData = {
-    name: profile?.full_name || profile?.username || user?.email?.split('@')[0] || 'Usuário',
-    avatar: profile?.avatar_url,
-    email: profile?.email || user?.email || '',
-    points: profile?.total_points || 0,
-    radcoins: profile?.radcoin_balance || 0
+  const getUserTypeColor = (tipo: string) => {
+    switch (tipo) {
+      case 'SUPER_ADMIN': return 'bg-red-500 text-white';
+      case 'ADMIN': return 'bg-purple-500 text-white';
+      default: return 'bg-blue-500 text-white';
+    }
+  };
+
+  const getUserTypeLabel = (tipo: string) => {
+    switch (tipo) {
+      case 'SUPER_ADMIN': return 'Super Admin';
+      case 'ADMIN': return 'Admin';
+      default: return 'Usuário';
+    }
   };
 
   return (
-    <>
-      <header className="bg-gradient-to-r from-[#1a2b5c] via-[#2c4aa6] to-[#0ea5e9] shadow-lg border-b border-cyan-400/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            {/* Logo */}
-            <Link to="/dashboard" className="flex items-center space-x-3">
-              <div className="bg-white/10 rounded-full p-2">
-                <Rocket className="h-8 w-8 text-cyan-300" />
-              </div>
-              <span className="text-2xl font-bold text-white">RadVenture</span>
-            </Link>
+    <header className="border-b bg-white shadow-sm sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
+          <Link to="/" className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">RV</span>
+            </div>
+            <span className="text-xl font-bold text-gray-900">RadVenture</span>
+          </Link>
 
-            {/* Navigation */}
-            <nav className="hidden md:flex space-x-1">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = isActiveRoute(item.href);
-                return (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      isActive
-                        ? 'bg-white/20 text-white shadow-lg'
-                        : 'text-cyan-100 hover:bg-white/10 hover:text-white'
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span>{item.name}</span>
-                  </Link>
-                );
-              })}
+          {/* Navigation */}
+          {isAuthenticated && (
+            <nav className="hidden md:flex items-center space-x-6">
+              <Link to="/dashboard" className="text-gray-700 hover:text-blue-600 font-medium">
+                Dashboard
+              </Link>
+              <Link to="/casos" className="text-gray-700 hover:text-blue-600 font-medium">
+                Casos
+              </Link>
+              <Link to="/eventos" className="text-gray-700 hover:text-blue-600 font-medium">
+                Eventos
+              </Link>
+              <Link to="/rankings" className="text-gray-700 hover:text-blue-600 font-medium">
+                Rankings
+              </Link>
+              {isAdmin && (
+                <Link to="/admin" className="text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1">
+                  <Shield className="h-4 w-4" />
+                  Admin
+                </Link>
+              )}
             </nav>
+          )}
 
-            {/* User Menu */}
-            <div className="flex items-center space-x-4">
-              {/* RadCoins Display */}
-              <div className="hidden sm:flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-3 py-1">
-                <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                <span className="text-sm text-white font-medium">
-                  {userData.radcoins.toLocaleString()} RadCoins
-                </span>
-              </div>
+          {/* User Menu */}
+          <div className="flex items-center space-x-4">
+            {isAuthenticated ? (
+              <>
+                {/* RadCoins */}
+                <div className="flex items-center gap-1 bg-yellow-50 px-3 py-1 rounded-full">
+                  <Coins className="h-4 w-4 text-yellow-600" />
+                  <span className="text-sm font-medium text-yellow-700">
+                    {usuario?.radcoin_balance?.toLocaleString() || 0}
+                  </span>
+                </div>
 
-              {/* User Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="flex items-center space-x-2 hover:bg-white/10 rounded-full p-2"
-                  >
-                    {profileLoading ? (
-                      <Loader2 className="h-8 w-8 animate-spin text-cyan-300" />
-                    ) : (
-                      <Avatar className="h-8 w-8 border-2 border-cyan-300">
-                        <AvatarImage src={userData.avatar} />
-                        <AvatarFallback className="bg-cyan-100 text-cyan-700">
-                          {userData.name[0]?.toUpperCase() || 'U'}
+                {/* User Avatar */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage 
+                          src={usuario?.avatar_url} 
+                          alt={usuario?.nome_completo || "Usuário"} 
+                        />
+                        <AvatarFallback className="bg-blue-100 text-blue-600">
+                          {getInitials(usuario?.nome_completo || "U")}
                         </AvatarFallback>
                       </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-80" align="end">
+                    <div className="p-3">
+                      <div className="flex items-center space-x-3">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage 
+                            src={usuario?.avatar_url} 
+                            alt={usuario?.nome_completo || "Usuário"} 
+                          />
+                          <AvatarFallback className="bg-blue-100 text-blue-600">
+                            {getInitials(usuario?.nome_completo || "U")}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {usuario?.nome_completo}
+                          </p>
+                          <p className="text-sm text-gray-500 truncate">
+                            {usuario?.email}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge className={getUserTypeColor(usuario?.tipo || 'USER')}>
+                              {usuario?.tipo === 'SUPER_ADMIN' && <Crown className="h-3 w-3 mr-1" />}
+                              {usuario?.tipo === 'ADMIN' && <Shield className="h-3 w-3 mr-1" />}
+                              {getUserTypeLabel(usuario?.tipo || 'USER')}
+                            </Badge>
+                            <span className="text-xs text-gray-500">
+                              {usuario?.total_points} pts
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <DropdownMenuSeparator />
+                    
+                    <DropdownMenuItem className="cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      Perfil
+                    </DropdownMenuItem>
+                    
+                    <DropdownMenuItem className="cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Configurações
+                    </DropdownMenuItem>
+                    
+                    {isAdmin && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          className="cursor-pointer text-purple-600"
+                          onClick={() => navigate('/admin')}
+                        >
+                          <Shield className="mr-2 h-4 w-4" />
+                          Painel Admin
+                        </DropdownMenuItem>
+                      </>
                     )}
-                    <div className="hidden sm:block text-left">
-                      <div className="text-sm font-medium text-white">
-                        {userData.name}
-                      </div>
-                      <div className="text-xs text-cyan-200">
-                        {userData.points.toLocaleString()} pts
-                      </div>
-                    </div>
-                    <ChevronDown className="h-4 w-4 text-cyan-200" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium">{userData.name}</p>
-                      <p className="text-xs text-muted-foreground">{userData.email}</p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setShowProfileSettings(true)}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Gerenciar Conta</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/app/estatisticas')}>
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Meu Perfil</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Sair</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+                    
+                    <DropdownMenuSeparator />
+                    
+                    <DropdownMenuItem 
+                      className="cursor-pointer text-red-600"
+                      onClick={handleLogout}
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sair
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <Button onClick={() => setIsLoginModalOpen(true)}>
+                Entrar
+              </Button>
+            )}
           </div>
         </div>
-      </header>
+      </div>
 
-      {/* Profile Settings Modal */}
-      <ProfileSettingsModal 
-        open={showProfileSettings}
-        onClose={() => setShowProfileSettings(false)}
+      <LoginModal 
+        isOpen={isLoginModalOpen} 
+        onClose={() => setIsLoginModalOpen(false)} 
       />
-    </>
+    </header>
   );
 }
