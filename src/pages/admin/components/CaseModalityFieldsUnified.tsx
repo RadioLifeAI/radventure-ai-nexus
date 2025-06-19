@@ -1,70 +1,68 @@
 
 import React from "react";
-import { useUnifiedFormDataSource } from "@/hooks/useUnifiedFormDataSource";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MODALITIES_SUBTYPES } from "../utils/modalitiesSubtypes";
 
 type Props = {
-  value: { modality: string; subtype: string };
-  onChange: (val: { modality: string; subtype: string }) => void;
+  form: any;
+  handleFormChange: any;
+  handleModalityChange: any;
+  highlightedFields: string[];
+  renderTooltipTip: any;
 };
 
-export function CaseModalityFieldsUnified({ value, onChange }: Props) {
-  const { modalities, isLoading } = useUnifiedFormDataSource();
-  
-  const currentModality = modalities.find(m => m.name === value.modality);
-  
-  if (isLoading) {
-    return (
-      <div className="grid md:grid-cols-2 gap-4">
-        <div>
-          <label className="font-semibold block">Modalidade Principal *</label>
-          <div className="w-full border rounded px-2 py-2 text-gray-500">
-            Carregando modalidades...
-          </div>
-        </div>
-        <div>
-          <label className="font-semibold block">Subtipo *</label>
-          <div className="w-full border rounded px-2 py-2 text-gray-500">
-            Carregando subtipos...
-          </div>
-        </div>
-      </div>
-    );
-  }
+export function CaseModalityFieldsUnified({ 
+  form, 
+  handleFormChange, 
+  handleModalityChange, 
+  highlightedFields, 
+  renderTooltipTip 
+}: Props) {
+  const selectedModality = MODALITIES_SUBTYPES.find(item => item?.modality === form.modality);
 
   return (
-    <div className="grid md:grid-cols-2 gap-4">
-      <div>
-        <label className="font-semibold block">Modalidade Principal *</label>
-        <select
-          className="w-full border rounded px-2 py-2"
-          value={value.modality}
-          onChange={e => onChange({ modality: e.target.value, subtype: "" })}
-          required
-        >
-          <option value="">Selecione a modalidade</option>
-          {modalities.map((m) => (
-            <option key={m.id} value={m.name}>
-              {m.name}
-            </option>
-          ))}
-        </select>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className={`${highlightedFields.includes("modality") ? "ring-2 ring-cyan-400 rounded" : ""}`}>
+        <label className="font-semibold block">
+          Modalidade *
+          {renderTooltipTip("tip-modality", "Tipo de exame médico (ex: Radiografia, Tomografia, Ressonância).")}
+        </label>
+        <Select value={form.modality || ''} onValueChange={handleModalityChange}>
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione a modalidade" />
+          </SelectTrigger>
+          <SelectContent>
+            {MODALITIES_SUBTYPES.map((item) => (
+              <SelectItem key={item.modality} value={item.modality}>
+                {item.modality}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
-      <div>
-        <label className="font-semibold block">Subtipo *</label>
-        <select
-          className="w-full border rounded px-2 py-2"
-          value={value.subtype}
-          onChange={e => onChange({ modality: value.modality, subtype: e.target.value })}
-          required={!!value.modality}
-          disabled={!value.modality}
+
+      <div className={`${highlightedFields.includes("subtype") ? "ring-2 ring-cyan-400 rounded" : ""}`}>
+        <label className="font-semibold block">
+          Subtipo
+          {renderTooltipTip("tip-subtype", "Subtipo específico do exame dentro da modalidade selecionada.")}
+        </label>
+        <Select 
+          value={form.subtype || ''} 
+          onValueChange={(value) => handleFormChange({ target: { name: 'subtype', value } })}
+          disabled={!selectedModality}
         >
-          <option value="">Selecione o subtipo</option>
-          {currentModality?.subtypes.map(sub => (
-            <option key={sub.id} value={sub.name}>
-              {sub.name}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger>
+            <SelectValue placeholder={selectedModality ? "Selecione o subtipo" : "Primeiro selecione uma modalidade"} />
+          </SelectTrigger>
+          <SelectContent>
+            {selectedModality?.subtypes.map((subtype) => (
+              <SelectItem key={subtype} value={subtype}>
+                {subtype}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );

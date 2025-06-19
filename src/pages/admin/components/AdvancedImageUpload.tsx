@@ -36,7 +36,7 @@ const resizeImage = (file: File, maxWidth: number, maxHeight: number, quality: n
   return new Promise((resolve) => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    const img = new Image();
+    const img = document.createElement('img'); // Fix: Use document.createElement instead of new Image()
     
     img.onload = () => {
       // Calcular dimensões mantendo proporção
@@ -155,7 +155,7 @@ export function AdvancedImageUpload({
       ]);
 
       // Obter dimensões da imagem original
-      const img = new Image();
+      const img = document.createElement('img'); // Fix: Use document.createElement instead of new Image()
       const dimensions = await new Promise<{ width: number; height: number }>((resolve) => {
         img.onload = () => resolve({ width: img.width, height: img.height });
         img.src = URL.createObjectURL(file);
