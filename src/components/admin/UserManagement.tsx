@@ -36,7 +36,7 @@ interface UserProfile {
   total_points: number;
   radcoin_balance: number;
   medical_specialty?: string;
-  academic_stage?: string;
+  academic_stage?: 'Student' | 'Intern' | 'Resident' | 'Specialist';
   city?: string;
   state?: string;
   created_at: string;
@@ -138,7 +138,7 @@ export function UserManagement() {
     total_points: user.total_points,
     radcoin_balance: user.radcoin_balance,
     medical_specialty: user.especialidade_medica,
-    academic_stage: 'Student', // Valor padrão válido
+    academic_stage: 'Student' as 'Student' | 'Intern' | 'Resident' | 'Specialist',
     city: user.cidade || '', 
     state: user.estado || '', 
     created_at: user.created_at,
@@ -182,7 +182,7 @@ export function UserManagement() {
             total_points: selectedUser.total_points,
             radcoin_balance: selectedUser.radcoin_balance,
             medical_specialty: selectedUser.especialidade_medica,
-            academic_stage: 'Student',
+            academic_stage: 'Student' as 'Student' | 'Intern' | 'Resident' | 'Specialist',
             city: selectedUser.cidade || '',
             state: selectedUser.estado || '',
             created_at: selectedUser.created_at,
