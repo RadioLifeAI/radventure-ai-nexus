@@ -1,161 +1,191 @@
 
 import React from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
+  Eye, 
   Edit, 
-  MoreVertical,
-  Eye,
+  Brain,
   Target,
   Calendar,
-  Image as ImageIcon
+  BarChart,
+  Wand2,
+  GitCompare,
+  MoreHorizontal
 } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-type Case = {
-  id: string;
-  title: string;
-  specialty: string;
-  modality: string;
-  difficulty_level: number;
-  points: number;
-  created_at: string;
-  is_radiopaedia_case: boolean;
-  image_url?: any;
-};
-
-type Props = {
-  cases: Case[];
+interface Props {
+  cases: any[];
   selectedCases: string[];
   onCaseSelect: (caseId: string) => void;
   onEdit: (caseId: string) => void;
   onView: (caseId: string) => void;
+  onAnalytics?: (caseId: string) => void;
+  onWizardEdit?: (caseId: string) => void;
+  onVersionComparison?: (caseId: string) => void;
   density: number;
-};
+}
 
-export function CasesGridView({
-  cases,
-  selectedCases,
-  onCaseSelect,
-  onEdit,
+export function CasesGridView({ 
+  cases, 
+  selectedCases, 
+  onCaseSelect, 
+  onEdit, 
   onView,
-  density
+  onAnalytics,
+  onWizardEdit,
+  onVersionComparison,
+  density 
 }: Props) {
   const getDifficultyColor = (level: number) => {
     const colors = {
-      1: "bg-green-500",
-      2: "bg-yellow-500", 
-      3: "bg-orange-500",
-      4: "bg-red-500",
-      5: "bg-purple-500"
+      1: "bg-green-100 text-green-700",
+      2: "bg-yellow-100 text-yellow-700",
+      3: "bg-orange-100 text-orange-700",
+      4: "bg-red-100 text-red-700",
+      5: "bg-purple-100 text-purple-700"
     };
-    return colors[level as keyof typeof colors] || "bg-gray-500";
+    return colors[level as keyof typeof colors] || "bg-gray-100 text-gray-700";
   };
 
-  const getGridCols = () => {
-    const cols = {
-      1: "grid-cols-1",
-      2: "grid-cols-2", 
-      3: "grid-cols-3",
-      4: "grid-cols-4"
+  const getDifficultyLabel = (level: number) => {
+    const labels = {
+      1: "Muito Fácil",
+      2: "Fácil", 
+      3: "Moderado",
+      4: "Difícil",
+      5: "Muito Difícil"
     };
-    return cols[density as keyof typeof cols] || "grid-cols-3";
+    return labels[level as keyof typeof labels] || "Indefinido";
   };
+
+  const getDensityClasses = () => {
+    switch (density) {
+      case 1: return "grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4";
+      case 2: return "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
+      case 3: return "grid-cols-1 md:grid-cols-2 gap-8";
+      default: return "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
+    }
+  };
+
+  if (cases.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-gray-400 text-lg mb-2">Nenhum caso encontrado</div>
+        <div className="text-gray-500 text-sm">Ajuste os filtros ou crie um novo caso</div>
+      </div>
+    );
+  }
 
   return (
-    <div className={`grid ${getGridCols()} gap-3`}>
+    <div className={`grid ${getDensityClasses()}`}>
       {cases.map((case_) => (
-        <div 
-          key={case_.id} 
-          className="group relative bg-white rounded-lg border hover:shadow-md transition-all duration-200 overflow-hidden"
-        >
-          {/* Selection checkbox */}
-          <div className="absolute top-2 left-2 z-10">
-            <Checkbox
-              checked={selectedCases.includes(case_.id)}
-              onCheckedChange={() => onCaseSelect(case_.id)}
-              className="bg-white data-[state=checked]:bg-blue-600"
-            />
-          </div>
+        <Card key={case_.id} className="hover:shadow-lg transition-shadow">
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <Checkbox
+                  checked={selectedCases.includes(case_.id)}
+                  onCheckedChange={() => onCaseSelect(case_.id)}
+                />
+                <div className="flex-1">
+                  <h3 className="font-medium text-sm line-clamp-2">{case_.title}</h3>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {case_.specialty} • {case_.modality}
+                  </p>
+                </div>
+              </div>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => onView(case_.id)}>
+                    <Eye className="h-4 w-4 mr-2" />
+                    Visualizar
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onEdit(case_.id)}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Editar
+                  </DropdownMenuItem>
+                  {onWizardEdit && (
+                    <DropdownMenuItem onClick={() => onWizardEdit(case_.id)}>
+                      <Wand2 className="h-4 w-4 mr-2" />
+                      Editor Wizard
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  {onAnalytics && (
+                    <DropdownMenuItem onClick={() => onAnalytics(case_.id)}>
+                      <BarChart className="h-4 w-4 mr-2" />
+                      Analytics
+                    </DropdownMenuItem>
+                  )}
+                  {onVersionComparison && (
+                    <DropdownMenuItem onClick={() => onVersionComparison(case_.id)}>
+                      <GitCompare className="h-4 w-4 mr-2" />
+                      Versões
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </CardHeader>
 
-          {/* Difficulty indicator */}
-          <div className={`absolute top-2 right-2 w-3 h-3 rounded-full ${getDifficultyColor(case_.difficulty_level)}`} />
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Badge className={getDifficultyColor(case_.difficulty_level)}>
+                <Brain className="h-3 w-3 mr-1" />
+                {getDifficultyLabel(case_.difficulty_level)}
+              </Badge>
+              <Badge variant="secondary">
+                <Target className="h-3 w-3 mr-1" />
+                {case_.points} pts
+              </Badge>
+            </div>
 
-          {/* Image */}
-          <div className="aspect-video bg-gray-100 flex items-center justify-center">
-            {case_.image_url && Array.isArray(case_.image_url) && case_.image_url.length > 0 ? (
-              <img 
-                src={case_.image_url[0]} 
-                alt={case_.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <ImageIcon className="h-6 w-6 text-gray-400" />
+            {case_.findings && (
+              <p className="text-xs text-gray-600 line-clamp-2">
+                {case_.findings}
+              </p>
             )}
-          </div>
 
-          {/* Content */}
-          <div className="p-3 space-y-2">
-            <h3 className="font-medium text-sm line-clamp-2 text-gray-900">
-              {case_.title}
-            </h3>
-            
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-1 text-gray-500">
-                <Target className="h-3 w-3" />
-                {case_.points}
-              </div>
-              <div className="flex items-center gap-1 text-gray-500">
+            <div className="flex items-center justify-between text-xs text-gray-500">
+              <div className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
-                {format(new Date(case_.created_at), "dd/MM", { locale: ptBR })}
+                {new Date(case_.created_at).toLocaleDateString('pt-BR')}
               </div>
+              {case_.is_radiopaedia_case && (
+                <Badge variant="outline" className="text-xs">
+                  Radiopaedia
+                </Badge>
+              )}
             </div>
 
-            <div className="flex gap-1">
-              <Badge variant="secondary" className="text-xs px-1 py-0">
-                {case_.specialty.split(" ")[0]}
-              </Badge>
-              <Badge variant="outline" className="text-xs px-1 py-0">
-                {case_.modality.split(" ")[0]}
-              </Badge>
-            </div>
-          </div>
-
-          {/* Hover actions */}
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-            <div className="flex gap-1">
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => onView(case_.id)}
-                className="h-7 px-2 text-xs"
-              >
+            <div className="flex gap-1 pt-2">
+              <Button size="sm" variant="outline" onClick={() => onView(case_.id)} className="flex-1">
                 <Eye className="h-3 w-3 mr-1" />
                 Ver
               </Button>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => onEdit(case_.id)}
-                className="h-7 px-2 text-xs"
-              >
+              <Button size="sm" variant="outline" onClick={() => onEdit(case_.id)} className="flex-1">
                 <Edit className="h-3 w-3 mr-1" />
                 Editar
               </Button>
             </div>
-          </div>
-
-          {/* Radiopaedia badge */}
-          {case_.is_radiopaedia_case && (
-            <div className="absolute bottom-2 right-2">
-              <Badge variant="outline" className="text-xs border-blue-200 text-blue-600">
-                RP
-              </Badge>
-            </div>
-          )}
-        </div>
+          </CardContent>
+        </Card>
       ))}
     </div>
   );

@@ -15,8 +15,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2 } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
+import { Edit, Trash2, BarChart, Wand2, GitCompare, MoreHorizontal } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "@/hooks/use-toast";
 import { useDisclosure } from "@mantine/hooks";
 import { CaseEditFormModal } from "../components/CaseEditFormModal";
 import { CaseReferenceDisplay } from "./CaseReferenceDisplay";
@@ -24,9 +31,18 @@ import { CaseReferenceDisplay } from "./CaseReferenceDisplay";
 type Props = {
   cases: any[];
   onDelete: (id: string) => void;
+  onAnalytics?: (caseId: string) => void;
+  onWizardEdit?: (caseId: string) => void;
+  onVersionComparison?: (caseId: string) => void;
 };
 
-export function MedicalCasesTable({ cases, onDelete }: Props) {
+export function MedicalCasesTable({ 
+  cases, 
+  onDelete, 
+  onAnalytics,
+  onWizardEdit,
+  onVersionComparison 
+}: Props) {
   const [editModalOpen, { open: openEditModal, close: closeEditModal }] = useDisclosure(false);
   const [selectedCaseId, setSelectedCaseId] = React.useState<string | null>(null);
 
@@ -89,22 +105,46 @@ export function MedicalCasesTable({ cases, onDelete }: Props) {
       id: "actions",
       header: "Ações",
       cell: ({ row }) => (
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="secondary"
-            size="icon"
-            onClick={() => handleEditClick(row.original.id)}
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="destructive"
-            size="icon"
-            onClick={() => handleDeleteClick(row.original.id)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => handleEditClick(row.original.id)}>
+              <Edit className="h-4 w-4 mr-2" />
+              Editar
+            </DropdownMenuItem>
+            {onWizardEdit && (
+              <DropdownMenuItem onClick={() => onWizardEdit(row.original.id)}>
+                <Wand2 className="h-4 w-4 mr-2" />
+                Editor Wizard
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            {onAnalytics && (
+              <DropdownMenuItem onClick={() => onAnalytics(row.original.id)}>
+                <BarChart className="h-4 w-4 mr-2" />
+                Analytics
+              </DropdownMenuItem>
+            )}
+            {onVersionComparison && (
+              <DropdownMenuItem onClick={() => onVersionComparison(row.original.id)}>
+                <GitCompare className="h-4 w-4 mr-2" />
+                Versões
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              onClick={() => handleDeleteClick(row.original.id)}
+              className="text-red-600 focus:text-red-600"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       ),
     },
   ];
