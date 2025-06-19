@@ -78,7 +78,15 @@ export function useJourneySearch(filters: JourneyFilters) {
       }
 
       if (filters.estimatedTime && filters.estimatedTime !== '') {
-        query = query.eq('estimated_solve_time', filters.estimatedTime);
+        // Converter string para number para estimated_solve_time se necessário
+        // Assumindo que estimatedTime pode ser um número em string ou um valor direto
+        const timeNumber = parseInt(filters.estimatedTime);
+        if (!isNaN(timeNumber)) {
+          query = query.eq('estimated_solve_time', timeNumber);
+        } else {
+          // Se não for um número, usar como string (caso o campo aceite strings também)
+          query = query.eq('estimated_solve_time', filters.estimatedTime);
+        }
       }
 
       // Filtro por público-alvo usando array real
