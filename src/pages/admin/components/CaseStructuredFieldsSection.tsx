@@ -35,6 +35,9 @@ const LEARNING_OBJECTIVES_BASE = [
 export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, renderTooltipTip }: Props) {
   const { suggestions, generateSuggestions } = useDynamicSuggestions();
 
+  // Verificar se diagnóstico principal foi preenchido antes de permitir usar o botão
+  const canUseStructuredAI = form.primary_diagnosis?.trim();
+
   // Aplicar diagnósticos diferenciais automaticamente quando gerados
   useEffect(() => {
     if (suggestions.differential_diagnoses && suggestions.differential_diagnoses.length > 0) {
@@ -76,12 +79,20 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
 
   return (
     <div className="space-y-6">
-      {/* Botão AI Dados Estruturados - ÚNICO */}
-      <CaseStructuredDataAI 
-        form={form} 
-        setForm={setForm}
-        onSuggestionsGenerated={handleSuggestionsGenerated}
-      />
+      {/* Botão AI Dados Estruturados - ÚNICO e FUNCIONAL */}
+      {canUseStructuredAI ? (
+        <CaseStructuredDataAI 
+          form={form} 
+          setForm={setForm}
+          onSuggestionsGenerated={handleSuggestionsGenerated}
+        />
+      ) : (
+        <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+          <div className="text-sm text-gray-600">
+            💡 Preencha o <strong>Diagnóstico Principal</strong> primeiro para habilitar a AI de Dados Estruturados
+          </div>
+        </div>
+      )}
 
       {/* Diagnóstico Estruturado */}
       <div className="p-4 border border-blue-200 rounded-lg bg-blue-50">
@@ -94,7 +105,7 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
           <div>
             <label className="font-semibold block mb-2">
               Diagnóstico Primário *
-              {renderTooltipTip("tip-primary-diagnosis", "Diagnóstico principal do caso - use o botão AI acima para gerar dados estruturados")}
+              {renderTooltipTip("tip-primary-diagnosis", "Diagnóstico principal do caso - OBRIGATÓRIO para ativar todas as IAs")}
             </label>
             <Input
               name="primary_diagnosis"
@@ -104,7 +115,7 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
               className="focus:ring-2 focus:ring-blue-500"
             />
             <div className="text-xs text-blue-600 mt-1">
-              💡 Após preencher, clique no botão "🤖 AI: Dados Estruturados" acima
+              📋 <strong>SEQUÊNCIA:</strong> Diagnóstico → Estruturados → Básicos → Quiz → Explicação → Config
             </div>
           </div>
 

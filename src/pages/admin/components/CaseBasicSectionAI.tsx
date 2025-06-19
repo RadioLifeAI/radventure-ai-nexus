@@ -3,6 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Brain, Loader2 } from "lucide-react";
 import { useCaseAutofillAPIExpanded } from "../hooks/useCaseAutofillAPIExpanded";
+import { useCaseTitleGenerator } from "../hooks/useCaseTitleGenerator";
 import { toast } from "@/components/ui/use-toast";
 
 interface CaseBasicSectionAIProps {
@@ -10,15 +11,18 @@ interface CaseBasicSectionAIProps {
   setForm: (form: any) => void;
   onFieldsUpdated?: (fields: string[]) => void;
   disabled?: boolean;
+  categories?: { id: number; name: string }[];
 }
 
 export function CaseBasicSectionAI({ 
   form, 
   setForm, 
   onFieldsUpdated,
-  disabled = false 
+  disabled = false,
+  categories = []
 }: CaseBasicSectionAIProps) {
   const { autofillBasicComplete, loading } = useCaseAutofillAPIExpanded();
+  const { generateTitle } = useCaseTitleGenerator(categories);
 
   const handleAutofillBasicComplete = async () => {
     try {
@@ -69,13 +73,29 @@ export function CaseBasicSectionAI({
         }
       });
 
+      // GERAÇÃO AUTOMÁTICA DO TÍTULO
+      if (updates.category_id && updates.modality && updates.difficulty_level) {
+        const titleData = generateTitle(
+          updates.category_id, 
+          updates.modality, 
+          updates.difficulty_level
+        );
+        updates.title = titleData.title;
+        updates.case_number = titleData.case_number;
+        updatedFields.push('title', 'case_number');
+        
+        console.log('📝 Título gerado automaticamente:', titleData.title);
+      }
+
       if (Object.keys(updates).length > 0) {
         setForm((prev: any) => ({ ...prev, ...updates }));
         onFieldsUpdated?.(updatedFields);
         
+        const titleMessage = updates.title ? ` | Título: "${updates.title}"` : '';
+        
         toast({ 
           title: `🤖 AI: Dados Básicos Preenchidos!`,
-          description: `${updatedFields.length} campos básicos atualizados incluindo categoria, dificuldade e modalidade.` 
+          description: `${updatedFields.length} campos básicos atualizados incluindo categoria, dificuldade e modalidade${titleMessage}.` 
         });
       } else {
         toast({ 
@@ -114,7 +134,7 @@ export function CaseBasicSectionAI({
       
       <div className="text-xs text-blue-700">
         <div>Preenche dados fundamentais do caso:</div>
-        <div className="font-medium">Categoria • Dificuldade • Modalidade • Demografia • Achados</div>
+        <div className="font-medium">Categoria • Dificuldade • Modalidade • Demografia • Título Automático</div>
       </div>
     </div>
   );

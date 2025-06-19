@@ -106,6 +106,9 @@ REGRAS DE CONFIGURAÇÃO INTELIGENTE:
 - ai_tutor_level: "basico" para dificuldade 1-2, "detalhado" para 3-4
 - achievement_triggers: baseado no diagnóstico e complexidade
 
+IMPORTANTE: NUNCA use valores como "string", "número", "boolean" ou outros placeholders.
+Use apenas valores específicos e válidos.
+
 Retorne EXATAMENTE este JSON:
 {
   "can_skip": boolean,
@@ -135,6 +138,16 @@ function buildPromptMasterComplete({ diagnosis, contextData }: { diagnosis: stri
 
 Com base no diagnóstico fornecido, preencha TODOS os campos possíveis para criar um caso médico educacional completo.
 
+REGRAS CRÍTICAS - NUNCA VIOLE ESTAS REGRAS:
+1. NUNCA use valores como "string", "diagnóstico_correto", "número", "boolean" ou outros placeholders
+2. NUNCA revele o diagnóstico nos campos "findings", "patient_clinical_info", "main_question"
+3. Use valores específicos e realistas para todos os campos
+4. Para category_id: use números 1-10 baseado na especialidade
+5. Para difficulty_level: use números 1-4 baseado na complexidade
+6. Para answer_options: use o diagnóstico real como primeira opção e diagnósticos diferenciais como outras opções
+7. Sempre gere exatamente 4 diagnósticos diferenciais diferentes do diagnóstico principal
+8. Sempre gere exatamente 4 alternativas com feedbacks correspondentes
+
 IMPORTANTE: Este é um preenchimento MASTER que deve incluir:
 1. Dados básicos (categoria, dificuldade, modalidade, demografia)
 2. Achados radiológicos neutros (sem revelar diagnóstico)
@@ -143,14 +156,6 @@ IMPORTANTE: Este é um preenchimento MASTER que deve incluir:
 5. Quiz completo baseado nos diagnósticos
 6. Explicação educacional detalhada
 7. Configurações avançadas inteligentes
-
-REGRAS CRÍTICAS:
-- NUNCA use valores como "string", "diagnóstico_correto" ou outros placeholders
-- NUNCA revele o diagnóstico nos campos "findings", "patient_clinical_info", "main_question"
-- Use valores específicos e realistas para todos os campos
-- Para category_id: use números 1-10 baseado na especialidade
-- Para difficulty_level: use números 1-4 baseado na complexidade
-- Para answer_options: use o diagnóstico real como primeira opção e diagnósticos diferenciais como outras opções
 
 Retorne EXATAMENTE este JSON estruturado:
 {
@@ -189,6 +194,46 @@ Retorne EXATAMENTE este JSON estruturado:
       content: `Diagnóstico: ${diagnosis}`
     }
   ];
+}
+
+// Função para validar e limpar saídas
+function validateAndCleanSuggestions(suggestions: any): any {
+  const cleaned = { ...suggestions };
+  
+  // Lista de valores inválidos que devem ser removidos
+  const invalidValues = ["string", "diagnóstico_correto", "número", "boolean", "array", "object", "null", "undefined"];
+  
+  Object.keys(cleaned).forEach(key => {
+    const value = cleaned[key];
+    
+    // Remover valores literais inválidos
+    if (typeof value === 'string' && invalidValues.includes(value.toLowerCase())) {
+      console.warn(`⚠️ Removendo valor inválido "${value}" do campo ${key}`);
+      delete cleaned[key];
+      return;
+    }
+    
+    // Validar arrays
+    if (Array.isArray(value)) {
+      const cleanedArray = value.filter(item => 
+        typeof item === 'string' && 
+        item.trim() !== '' && 
+        !invalidValues.includes(item.toLowerCase())
+      );
+      
+      if (cleanedArray.length !== value.length) {
+        console.warn(`⚠️ Array ${key} continha valores inválidos, removidos`);
+        cleaned[key] = cleanedArray;
+      }
+      
+      // Se array ficou vazio, remover completamente
+      if (cleanedArray.length === 0) {
+        delete cleaned[key];
+      }
+    }
+  });
+  
+  return cleaned;
 }
 
 serve(async (req) => {
@@ -347,16 +392,9 @@ serve(async (req) => {
       suggestions = JSON.parse(content);
       console.log('📊 Parsed suggestions:', suggestions);
       
-      // VALIDAÇÃO ADICIONAL: Remover valores "string" inválidos
-      const cleanedSuggestions = { ...suggestions };
-      Object.keys(cleanedSuggestions).forEach(key => {
-        if (cleanedSuggestions[key] === "string" || cleanedSuggestions[key] === "diagnóstico_correto") {
-          console.warn(`⚠️ Removendo valor inválido "${cleanedSuggestions[key]}" do campo ${key}`);
-          delete cleanedSuggestions[key];
-        }
-      });
-      
-      suggestions = cleanedSuggestions;
+      // VALIDAÇÃO E LIMPEZA APRIMORADA
+      suggestions = validateAndCleanSuggestions(suggestions);
+      console.log('🧹 Cleaned suggestions:', suggestions);
       
     } catch (parseError) {
       console.error('❌ JSON parse error:', parseError);

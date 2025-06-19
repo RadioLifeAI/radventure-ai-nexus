@@ -21,17 +21,44 @@ export function CaseQuizCompleteAI({
 }: CaseQuizCompleteAIProps) {
   const { autofillQuizComplete, loading } = useCaseAutofillAPIExpanded();
 
+  // Verificar se as etapas anteriores foram concluídas
+  const checkPrerequisites = () => {
+    if (!form.primary_diagnosis?.trim()) {
+      toast({ 
+        title: "Diagnóstico Principal Obrigatório", 
+        description: "Preencha o diagnóstico principal primeiro.",
+        variant: "destructive" 
+      });
+      return false;
+    }
+
+    if (!form.differential_diagnoses || form.differential_diagnoses.length < 4) {
+      toast({ 
+        title: "Diagnósticos Diferenciais Incompletos", 
+        description: "Execute 'AI: Dados Estruturados' primeiro para gerar 4 diagnósticos diferenciais.",
+        variant: "destructive" 
+      });
+      return false;
+    }
+
+    if (!form.category_id || !form.difficulty_level || !form.modality) {
+      toast({ 
+        title: "Dados Básicos Incompletos", 
+        description: "Execute 'AI: Dados Básicos' primeiro para definir categoria, dificuldade e modalidade.",
+        variant: "destructive" 
+      });
+      return false;
+    }
+
+    return true;
+  };
+
   const handleAutofillQuizComplete = async () => {
     try {
       console.log('🤖 Iniciando AI: Quiz Inteligente...');
       
-      // Verificar se temos diagnóstico principal
-      if (!form.primary_diagnosis?.trim()) {
-        toast({ 
-          title: "Diagnóstico Principal Obrigatório", 
-          description: "Preencha o diagnóstico principal primeiro para gerar quiz inteligente.",
-          variant: "destructive" 
-        });
+      // Verificar pré-requisitos
+      if (!checkPrerequisites()) {
         return;
       }
       
@@ -98,7 +125,7 @@ export function CaseQuizCompleteAI({
       console.error('💥 Erro na AI de quiz:', error);
       toast({ 
         title: "Erro na AI de Quiz Inteligente", 
-        description: "Tente novamente ou preencha o diagnóstico principal primeiro.",
+        description: "Tente novamente ou verifique se as etapas anteriores foram concluídas.",
         variant: "destructive" 
       });
     }
@@ -135,6 +162,11 @@ export function CaseQuizCompleteAI({
     });
   };
 
+  // Verificar se pode usar o Quiz AI
+  const canUseQuizAI = form.primary_diagnosis?.trim() && 
+                       form.differential_diagnoses?.length >= 4 &&
+                       form.category_id && form.difficulty_level && form.modality;
+
   return (
     <div className="space-y-3">
       {/* Botão Principal AI Quiz */}
@@ -142,10 +174,10 @@ export function CaseQuizCompleteAI({
         <Button
           type="button"
           onClick={handleAutofillQuizComplete}
-          disabled={loading || disabled}
+          disabled={loading || disabled || !canUseQuizAI}
           variant="outline"
           size="sm"
-          className="bg-green-500 text-white hover:bg-green-600 border-green-500"
+          className="bg-green-500 text-white hover:bg-green-600 border-green-500 disabled:bg-gray-400"
         >
           {loading ? (
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -158,6 +190,9 @@ export function CaseQuizCompleteAI({
         <div className="text-xs text-green-700">
           <div>Gera quiz baseado no diagnóstico:</div>
           <div className="font-medium">Pergunta • 4 Alternativas • Feedbacks • Embaralha</div>
+          {!canUseQuizAI && (
+            <div className="text-red-600 font-medium">⚠️ Complete: Diagnóstico → Estruturados → Básicos</div>
+          )}
         </div>
       </div>
 

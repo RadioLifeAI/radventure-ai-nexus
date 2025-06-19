@@ -20,17 +20,35 @@ export function CaseAdvancedConfigAI({
 }: CaseAdvancedConfigAIProps) {
   const { autofillAdvancedConfig, loading } = useCaseAutofillAPIExpanded();
 
+  // Verificar se as etapas anteriores foram concluídas
+  const checkPrerequisites = () => {
+    if (!form.primary_diagnosis?.trim()) {
+      toast({ 
+        title: "Diagnóstico Principal Obrigatório", 
+        description: "Preencha o diagnóstico principal primeiro.",
+        variant: "destructive" 
+      });
+      return false;
+    }
+
+    if (!form.difficulty_level || !form.modality) {
+      toast({ 
+        title: "Dados Básicos Incompletos", 
+        description: "Execute 'AI: Dados Básicos' primeiro para definir dificuldade e modalidade.",
+        variant: "destructive" 
+      });
+      return false;
+    }
+
+    return true;
+  };
+
   const handleAutofillAdvancedConfig = async () => {
     try {
       console.log('🤖 Iniciando AI: Config Inteligente...');
       
-      // Verificar se temos diagnóstico principal para configuração inteligente
-      if (!form.primary_diagnosis?.trim()) {
-        toast({ 
-          title: "Diagnóstico Principal Obrigatório", 
-          description: "Preencha o diagnóstico principal primeiro para configuração inteligente.",
-          variant: "destructive" 
-        });
+      // Verificar pré-requisitos
+      if (!checkPrerequisites()) {
         return;
       }
       
@@ -79,21 +97,26 @@ export function CaseAdvancedConfigAI({
       console.error('💥 Erro na AI de config avançada:', error);
       toast({ 
         title: "Erro na AI de Config Inteligente", 
-        description: "Tente novamente ou preencha o diagnóstico principal primeiro.",
+        description: "Tente novamente ou verifique se as etapas anteriores foram concluídas.",
         variant: "destructive" 
       });
     }
   };
+
+  // Verificar se pode usar o Config AI
+  const canUseConfigAI = form.primary_diagnosis?.trim() && 
+                         form.difficulty_level && 
+                         form.modality;
 
   return (
     <div className="flex items-center gap-2 p-3 bg-purple-50 border border-purple-200 rounded-lg">
       <Button
         type="button"
         onClick={handleAutofillAdvancedConfig}
-        disabled={loading || disabled}
+        disabled={loading || disabled || !canUseConfigAI}
         variant="outline"
         size="sm"
-        className="bg-purple-500 text-white hover:bg-purple-600 border-purple-500"
+        className="bg-purple-500 text-white hover:bg-purple-600 border-purple-500 disabled:bg-gray-400"
       >
         {loading ? (
           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -106,6 +129,9 @@ export function CaseAdvancedConfigAI({
       <div className="text-xs text-purple-700">
         <div>Configuração baseada na dificuldade:</div>
         <div className="font-medium">Eliminações • Penalidades • AI Tutor • Conquistas</div>
+        {!canUseConfigAI && (
+          <div className="text-red-600 font-medium">⚠️ Complete: Diagnóstico → Básicos</div>
+        )}
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Wand2, Loader2 } from "lucide-react";
 import { useCaseAutofillAPIExpanded } from "../hooks/useCaseAutofillAPIExpanded";
+import { useCaseTitleGenerator } from "../hooks/useCaseTitleGenerator";
 import { toast } from "@/components/ui/use-toast";
 
 interface CaseMasterAIProps {
@@ -10,15 +11,18 @@ interface CaseMasterAIProps {
   setForm: (form: any) => void;
   onFieldsUpdated?: (fields: string[]) => void;
   disabled?: boolean;
+  categories?: { id: number; name: string }[];
 }
 
 export function CaseMasterAI({ 
   form, 
   setForm, 
   onFieldsUpdated,
-  disabled = false 
+  disabled = false,
+  categories = []
 }: CaseMasterAIProps) {
   const { autofillMasterComplete, loading } = useCaseAutofillAPIExpanded();
+  const { generateTitle } = useCaseTitleGenerator(categories);
 
   const handleAutofillMasterComplete = async () => {
     try {
@@ -122,6 +126,20 @@ export function CaseMasterAI({
         updates.answer_options = correctedOptions.slice(0, 4);
       }
 
+      // GERAÇÃO AUTOMÁTICA DO TÍTULO MASTER
+      if (updates.category_id && updates.modality && updates.difficulty_level) {
+        const titleData = generateTitle(
+          updates.category_id, 
+          updates.modality, 
+          updates.difficulty_level
+        );
+        updates.title = titleData.title;
+        updates.case_number = titleData.case_number;
+        updatedFields.push('title', 'case_number');
+        
+        console.log('📝 Título MASTER gerado automaticamente:', titleData.title);
+      }
+
       if (Object.keys(updates).length > 0) {
         setForm((prev: any) => ({ ...prev, ...updates }));
         onFieldsUpdated?.(updatedFields);
@@ -134,9 +152,11 @@ export function CaseMasterAI({
           updatedFields.some(f => configFields.includes(f)) ? 'Configurações' : ''
         ].filter(Boolean).join(' • ');
         
+        const titleMessage = updates.title ? ` | Título: "${updates.title}"` : '';
+        
         toast({ 
           title: `🪄 AI MASTER: Formulário Completo!`,
-          description: `${updatedFields.length} campos preenchidos: ${sections}` 
+          description: `${updatedFields.length} campos preenchidos: ${sections}${titleMessage}` 
         });
       } else {
         toast({ 
@@ -175,7 +195,7 @@ export function CaseMasterAI({
       
       <div className="text-sm text-purple-700">
         <div className="font-bold">AUTO-PREENCHIMENTO INTELIGENTE:</div>
-        <div className="text-xs">Sequência: Básicos → Estruturados → Quiz → Explicação → Config</div>
+        <div className="text-xs">Sequência: Básicos (+ Título) → Estruturados → Quiz → Explicação → Config</div>
       </div>
     </div>
   );
