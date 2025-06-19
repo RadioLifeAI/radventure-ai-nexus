@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -12,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import AdminPanel from "./pages/AdminPanel";
 import CasoUsuarioView from "./pages/CasoUsuarioView";
 import Eventos from "./pages/Eventos";
+import EventoDetalhes from "./pages/EventoDetalhes";
 import RankingEventos from "./pages/RankingEventos";
 import Rankings from "./pages/Rankings";
 import Estatisticas from "./pages/Estatisticas";
@@ -36,6 +36,7 @@ const App = () => (
           <Route path="/app/casos" element={<Casos />} />
           <Route path="/app/caso/:id" element={<CasoUsuarioView />} />
           <Route path="/app/eventos" element={<Eventos />} />
+          <Route path="/app/evento/:id" element={<EventoDetalhes />} />
           <Route path="/app/ranking-eventos" element={<RankingEventos />} />
           <Route path="/app/rankings" element={<Rankings />} />
           <Route path="/app/estatisticas" element={<Estatisticas />} />

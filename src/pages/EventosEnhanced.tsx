@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useActiveEvents } from "@/hooks/useActiveEvents";
 import { useNavigate } from "react-router-dom";
@@ -34,10 +33,10 @@ export default function EventosEnhanced() {
   // Em destaque: próximos 2 eventos
   const highlights = events.slice(0, 2);
   const activeEvents = events.filter(e => e.status === 'ACTIVE').length;
-  const totalParticipants = events.reduce((sum, event) => sum + (event.max_participants || 0), 0);
+  const totalParticipants = events.reduce((sum, event) => sum + (event.participant_count || 0), 0);
 
   const handleEnterEvent = (eventId: string) => {
-    navigate(`/evento/${eventId}`);
+    navigate(`/app/evento/${eventId}`);
   };
 
   const quickStats = [
@@ -87,7 +86,10 @@ export default function EventosEnhanced() {
           </div>
           <div className="flex items-center gap-3">
             <EventsNotificationSystem />
-            <Button className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600">
+            <Button 
+              className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600"
+              onClick={() => navigate("/admin/events/create")}
+            >
               <Sparkles className="h-4 w-4 mr-2" />
               Criar Evento
             </Button>
