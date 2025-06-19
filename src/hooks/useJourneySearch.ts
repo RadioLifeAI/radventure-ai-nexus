@@ -11,13 +11,13 @@ interface JourneyFilters {
   patientAge?: string;
   patientGender?: string;
   symptomsDuration?: string;
-  // Novos filtros semânticos
-  context?: string;
-  rarity?: string;
-  targetAudience?: string;
-  educationalValue?: string;
-  estimatedTime?: string;
-  urgency?: string;
+  // Filtros semânticos - mapeados para campos reais
+  context?: string; // mapeia para exam_context
+  rarity?: string; // mapeia para case_rarity
+  targetAudience?: string; // mapeia para target_audience
+  educationalValue?: string; // usa educational_value real
+  estimatedTime?: string; // mapeia para estimated_solve_time
+  urgency?: string; // simulado baseado em outros campos
   aiQuery?: string;
 }
 
@@ -27,7 +27,7 @@ export function useJourneySearch(filters: JourneyFilters) {
     queryFn: async () => {
       let query = supabase
         .from('medical_cases')
-        .select('id, title, specialty, modality, subtype, difficulty_level, patient_age, patient_gender, symptoms_duration, description, findings, case_context, educational_value, estimated_time, urgency_level')
+        .select('id, title, specialty, modality, subtype, difficulty_level, patient_age, patient_gender, symptoms_duration, description, findings, exam_context, educational_value, estimated_solve_time, case_rarity, target_audience')
         .order('difficulty_level', { ascending: true })
         .order('created_at', { ascending: true });
 
@@ -60,13 +60,13 @@ export function useJourneySearch(filters: JourneyFilters) {
         query = query.eq('symptoms_duration', filters.symptomsDuration);
       }
 
-      // Novos filtros semânticos
+      // Filtros semânticos usando campos reais
       if (filters.context && filters.context !== '') {
-        query = query.eq('case_context', filters.context);
+        query = query.eq('exam_context', filters.context);
       }
 
-      if (filters.urgency && filters.urgency !== '') {
-        query = query.eq('urgency_level', filters.urgency);
+      if (filters.rarity && filters.rarity !== '') {
+        query = query.eq('case_rarity', filters.rarity);
       }
 
       if (filters.educationalValue && filters.educationalValue !== '') {
@@ -74,43 +74,15 @@ export function useJourneySearch(filters: JourneyFilters) {
       }
 
       if (filters.estimatedTime && filters.estimatedTime !== '') {
-        query = query.eq('estimated_time', filters.estimatedTime);
+        query = query.eq('estimated_solve_time', filters.estimatedTime);
       }
 
-      // Filtro por público-alvo baseado na dificuldade
+      // Filtro por público-alvo usando array real
       if (filters.targetAudience && filters.targetAudience !== '') {
-        const audienceMap: Record<string, number[]> = {
-          'graduation': [1, 2],
-          'r1': [2, 3],
-          'r2': [3, 4],
-          'r3': [4, 5],
-          'specialist': [4, 5]
-        };
-        
-        const difficultyRange = audienceMap[filters.targetAudience];
-        if (difficultyRange) {
-          query = query.gte('difficulty_level', difficultyRange[0])
-                      .lte('difficulty_level', difficultyRange[1]);
-        }
+        query = query.contains('target_audience', [filters.targetAudience]);
       }
 
-      // Filtro por raridade (simulado baseado na frequência na base)
-      if (filters.rarity && filters.rarity !== '') {
-        const rarityMap: Record<string, string> = {
-          'common': '>10',
-          'uncommon': '1-10',
-          'rare': '<1',
-          'very-rare': '<0.1'
-        };
-        
-        // Implementar lógica de raridade quando o campo estiver disponível
-        // Por enquanto, usar uma aproximação baseada na dificuldade
-        if (filters.rarity === 'rare' || filters.rarity === 'very-rare') {
-          query = query.gte('difficulty_level', 4);
-        }
-      }
-
-      // Busca por texto em múltiplos campos (incluindo IA query)
+      // Busca por texto em múltiplos campos
       const searchQuery = filters.aiQuery || filters.searchTerm;
       if (searchQuery && searchQuery.trim() !== '') {
         const searchTerm = searchQuery.trim();
@@ -130,23 +102,24 @@ export function useJourneySearch(filters: JourneyFilters) {
         return acc;
       }, [] as typeof data) || [];
 
-      // Aplicar filtros adicionais que não estão no banco
+      // Aplicar filtros adicionais simulados
       let filteredCases = uniqueCases;
 
-      // Filtro por tempo estimado (simulado)
-      if (filters.estimatedTime && filters.estimatedTime !== '') {
-        const timeMap: Record<string, (level: number) => boolean> = {
-          'fast': (level) => level <= 2,
-          'medium': (level) => level === 3,
-          'long': (level) => level >= 4
-        };
-        
-        const timeFilter = timeMap[filters.estimatedTime];
-        if (timeFilter) {
-          filteredCases = filteredCases.filter(case_item => 
-            timeFilter(case_item.difficulty_level || 1)
-          );
-        }
+      // Filtro por urgência simulado (baseado em exam_context e difficulty_level)
+      if (filters.urgency && filters.urgency !== '') {
+        filteredCases = filteredCases.filter(case_item => {
+          const isEmergency = case_item.exam_context === 'emergency' || case_item.exam_context === 'icu';
+          const isHighDifficulty = (case_item.difficulty_level || 1) >= 3;
+          
+          if (filters.urgency === 'high') {
+            return isEmergency || isHighDifficulty;
+          } else if (filters.urgency === 'medium') {
+            return !isEmergency && (case_item.difficulty_level || 1) === 2;
+          } else if (filters.urgency === 'low') {
+            return !isEmergency && (case_item.difficulty_level || 1) === 1;
+          }
+          return true;
+        });
       }
 
       return filteredCases;

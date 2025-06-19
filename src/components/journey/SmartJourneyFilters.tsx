@@ -89,6 +89,7 @@ export function SmartJourneyFilters({
     }
   ];
 
+  // Opções reais baseadas nos campos do banco
   const contextOptions = [
     { value: "emergency", label: "Emergência", icon: Activity },
     { value: "ambulatory", label: "Ambulatório", icon: Users },
@@ -97,10 +98,10 @@ export function SmartJourneyFilters({
   ];
 
   const rarityOptions = [
-    { value: "common", label: "Comum (>10% casos)", color: "bg-green-100 text-green-800" },
-    { value: "uncommon", label: "Incomum (1-10%)", color: "bg-yellow-100 text-yellow-800" },
-    { value: "rare", label: "Raro (<1%)", color: "bg-orange-100 text-orange-800" },
-    { value: "very-rare", label: "Muito Raro (<0.1%)", color: "bg-red-100 text-red-800" }
+    { value: "common", label: "Comum", color: "bg-green-100 text-green-800" },
+    { value: "uncommon", label: "Incomum", color: "bg-yellow-100 text-yellow-800" },
+    { value: "rare", label: "Raro", color: "bg-orange-100 text-orange-800" },
+    { value: "very_rare", label: "Muito Raro", color: "bg-red-100 text-red-800" }
   ];
 
   const audienceOptions = [
@@ -109,6 +110,18 @@ export function SmartJourneyFilters({
     { value: "r2", label: "R2", description: "2º ano residência" },
     { value: "r3", label: "R3+", description: "3º ano+ residência" },
     { value: "specialist", label: "Especialização", description: "Pós-graduação" }
+  ];
+
+  const educationalValueOptions = [
+    { value: "high", label: "Alto", color: "bg-green-500" },
+    { value: "medium", label: "Médio", color: "bg-yellow-500" },
+    { value: "low", label: "Baixo", color: "bg-gray-500" }
+  ];
+
+  const timeOptions = [
+    { value: "fast", label: "<10min", icon: Zap },
+    { value: "medium", label: "10-20min", icon: Clock },
+    { value: "long", label: ">20min", icon: Target }
   ];
 
   return (
@@ -314,11 +327,7 @@ export function SmartJourneyFilters({
               <div className="bg-white rounded-lg p-3 border">
                 <label className="font-medium text-gray-700 mb-2 block">Valor Educacional</label>
                 <div className="flex gap-2">
-                  {[
-                    { value: "high", label: "Alto", color: "bg-green-500" },
-                    { value: "medium", label: "Médio", color: "bg-yellow-500" },
-                    { value: "basic", label: "Básico", color: "bg-gray-500" }
-                  ].map((edu) => (
+                  {educationalValueOptions.map((edu) => (
                     <Badge
                       key={edu.value}
                       variant={filters.educationalValue === edu.value ? "default" : "outline"}
@@ -338,11 +347,7 @@ export function SmartJourneyFilters({
               <div className="bg-white rounded-lg p-3 border">
                 <label className="font-medium text-gray-700 mb-2 block">Tempo Estimado</label>
                 <div className="flex gap-2">
-                  {[
-                    { value: "fast", label: "<5min", icon: Zap },
-                    { value: "medium", label: "5-15min", icon: Clock },
-                    { value: "long", label: ">15min", icon: Target }
-                  ].map((time) => {
+                  {timeOptions.map((time) => {
                     const Icon = time.icon;
                     return (
                       <Badge

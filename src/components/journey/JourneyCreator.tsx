@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,7 +33,7 @@ export function JourneyCreator() {
   const [objectives, setObjectives] = useState<string[]>([]);
   const [newObjective, setNewObjective] = useState("");
   
-  // Estados dos filtros expandidos
+  // Estados dos filtros corrigidos
   const [filters, setFilters] = useState({
     specialty: "",
     modality: "",
@@ -42,7 +43,7 @@ export function JourneyCreator() {
     patientAge: "",
     patientGender: "",
     symptomsDuration: "",
-    // Novos filtros semânticos
+    // Filtros semânticos
     context: "",
     rarity: "",
     targetAudience: "",
@@ -135,7 +136,17 @@ export function JourneyCreator() {
       difficulty: journeyData.difficulty === 'progressive' ? '' : journeyData.difficulty,
       targetAudience: journeyData.experience,
       estimatedTime: journeyData.timeAvailable,
-      educationalValue: 'high'
+      educationalValue: 'high',
+      modality: "",
+      subtype: "",
+      searchTerm: "",
+      patientAge: "",
+      patientGender: "",
+      symptomsDuration: "",
+      context: "",
+      rarity: "",
+      urgency: "",
+      aiQuery: ""
     };
     
     setFilters(prev => ({ ...prev, ...smartFilters }));
@@ -191,7 +202,14 @@ export function JourneyCreator() {
         searchTerm: "",
         patientAge: "",
         patientGender: "",
-        symptomsDuration: ""
+        symptomsDuration: "",
+        context: "",
+        rarity: "",
+        targetAudience: "",
+        educationalValue: "",
+        estimatedTime: "",
+        urgency: "",
+        aiQuery: ""
       });
       
     } catch (error) {
@@ -394,9 +412,9 @@ export function JourneyCreator() {
                   {/* Estatísticas rápidas */}
                   <div className="grid grid-cols-3 gap-2 mb-4">
                     {[
-                      { label: "Fácil", count: searchResults.filter(c => c.difficulty_level <= 2).length, color: "bg-green-100 text-green-800" },
-                      { label: "Médio", count: searchResults.filter(c => c.difficulty_level === 3).length, color: "bg-yellow-100 text-yellow-800" },
-                      { label: "Difícil", count: searchResults.filter(c => c.difficulty_level >= 4).length, color: "bg-red-100 text-red-800" }
+                      { label: "Fácil", count: searchResults.filter(c => (c.difficulty_level || 1) <= 2).length, color: "bg-green-100 text-green-800" },
+                      { label: "Médio", count: searchResults.filter(c => (c.difficulty_level || 1) === 3).length, color: "bg-yellow-100 text-yellow-800" },
+                      { label: "Difícil", count: searchResults.filter(c => (c.difficulty_level || 1) >= 4).length, color: "bg-red-100 text-red-800" }
                     ].map(stat => (
                       <div key={stat.label} className={`p-2 rounded text-center ${stat.color}`}>
                         <div className="font-bold">{stat.count}</div>
