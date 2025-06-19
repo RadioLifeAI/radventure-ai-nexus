@@ -1,3 +1,4 @@
+
 import React from "react";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { Routes, Route } from "react-router-dom";
@@ -15,29 +16,7 @@ import { RewardManagement } from "@/components/admin/RewardManagement";
 import { AdvancedSettings } from "@/components/admin/AdvancedSettings";
 import { APIKeyManagement } from "@/components/admin/APIKeyManagement";
 import { StripeManagement } from "@/components/admin/StripeManagement";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings, Crown, Sparkles, Shield, Zap } from "lucide-react";
-
-// Componente de página em construção
-function UnderConstruction({ title }: { title: string }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Settings className="h-5 w-5 text-gray-500" />
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="text-center text-gray-500 py-12">
-          <Settings className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-semibold mb-2">Em Desenvolvimento</h3>
-          <p>Esta seção será implementada em breve</p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+import { Crown, Sparkles, Shield, Zap } from "lucide-react";
 
 export default function AdminPanel() {
   return (
@@ -92,15 +71,11 @@ export default function AdminPanel() {
             <Route path="create-event" element={<CreateEvent />} />
             <Route path="events" element={<EventsManagement />} />
             
-            {/* Novas rotas implementadas */}
+            {/* Rotas implementadas */}
             <Route path="recompensas" element={<RewardManagement />} />
             <Route path="configuracoes" element={<AdvancedSettings />} />
             <Route path="chaves-api" element={<APIKeyManagement />} />
             <Route path="config-stripe" element={<StripeManagement />} />
-            
-            {/* Rotas ainda em desenvolvimento */}
-            <Route path="textos-ui" element={<UnderConstruction title="Textos da UI" />} />
-            <Route path="config-assinatura" element={<UnderConstruction title="Config. Assinatura" />} />
           </Routes>
         </section>
       </main>

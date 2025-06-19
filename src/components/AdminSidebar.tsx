@@ -2,26 +2,21 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  Activity,
   Calendar,
   Users,
-  User,
   FileText,
   Settings,
   Gift,
   CreditCard,
   KeyRound,
-  LayoutDashboard,
-  MessageSquare,
-  Zap,
+  BarChart3,
+  Monitor,
   BookOpen,
   Trophy,
   Brain,
-  BarChart3,
-  Monitor,
 } from "lucide-react";
 
-// Menu admin integrado com todas as funcionalidades
+// Menu admin limpo - apenas funcionalidades implementadas
 const adminMenu = [
   { label: "Analytics", icon: <BarChart3 size={20} />, to: "/admin/analytics" },
   { label: "Criar Eventos", icon: <Calendar size={20} />, to: "/admin/create-event" },
@@ -35,10 +30,8 @@ const adminMenu = [
   { label: "Monitoramento", icon: <Monitor size={20} />, to: "/admin/monitoramento" },
   { label: "Recompensas", icon: <Gift size={20} />, to: "/admin/recompensas" },
   { label: "Configurações", icon: <Settings size={20} />, to: "/admin/configuracoes" },
-  { label: "Textos da UI", icon: <MessageSquare size={20} />, to: "/admin/textos-ui" },
-  { label: "Config. Assinatura", icon: <CreditCard size={20} />, to: "/admin/config-assinatura" },
-  { label: "Config. Stripe", icon: <CreditCard size={20} />, to: "/admin/config-stripe" },
   { label: "Chaves API", icon: <KeyRound size={20} />, to: "/admin/chaves-api" },
+  { label: "Config. Stripe", icon: <CreditCard size={20} />, to: "/admin/config-stripe" },
 ];
 
 export function AdminSidebar() {
