@@ -19,6 +19,8 @@ interface UsuarioAppProfile {
   total_points: number;
   current_streak: number;
   especialidade_medica?: string;
+  cidade?: string;
+  estado?: string;
   created_at: string;
   updated_at: string;
 }
@@ -131,7 +133,7 @@ export function UserManagement() {
     email: user.email,
     full_name: user.nome_completo,
     username: user.username,
-    type: user.tipo as 'USER' | 'ADMIN' | 'SUPER_ADMIN',
+    type: user.tipo,
     avatar_url: user.avatar_url,
     total_points: user.total_points,
     radcoin_balance: user.radcoin_balance,
@@ -175,7 +177,7 @@ export function UserManagement() {
             email: selectedUser.email,
             full_name: selectedUser.nome_completo,
             username: selectedUser.username,
-            type: selectedUser.tipo as 'USER' | 'ADMIN' | 'SUPER_ADMIN',
+            type: selectedUser.tipo,
             avatar_url: selectedUser.avatar_url,
             total_points: selectedUser.total_points,
             radcoin_balance: selectedUser.radcoin_balance,
