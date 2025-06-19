@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { CreateAdminUser } from "@/components/admin/CreateAdminUser";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Rocket, Target, TrendingUp, Bot, Award, Globe, Users } from "lucide-react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -64,7 +66,7 @@ export default function Login() {
   // Se não há admins no sistema, mostrar criador de admin
   if (!checkingAdmins && hasAdmins === false) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#111C44] via-[#162850] to-[#0286d0] p-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] p-4">
         <div className="space-y-6">
           <div className="text-center text-white mb-8">
             <h1 className="text-3xl font-bold mb-2">Sistema Sem Admin</h1>
@@ -90,73 +92,169 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#111C44] via-[#162850] to-[#0286d0] p-4">
-      <div className="w-full max-w-md space-y-6">
-        <div className="text-center text-white">
-          <h1 className="text-3xl font-bold">
-            {isSignUp ? "Criar Conta" : "Acessar"}
-          </h1>
-          <p className="text-cyan-100">
-            {isSignUp
-              ? "Crie sua conta e comece agora mesmo!"
-              : "Entre com seu email e senha"}
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white flex">
+      {/* Lado Esquerdo - Formulário de Login */}
+      <div className="w-full lg:w-2/5 flex items-center justify-center p-8">
+        <div className="w-full max-w-md space-y-8">
+          {/* Logo RadVenture */}
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <span className="bg-cyan-500 p-2 rounded-full shadow-md">
+                <Rocket className="text-white" size={28}/>
+              </span>
+              <span className="text-3xl font-bold tracking-tight">RadVenture</span>
+            </div>
+            <h1 className="text-2xl font-bold mb-2">
+              {isSignUp ? "Criar Nova Conta" : "Bem vindo de volta!"}
+            </h1>
+            <p className="text-cyan-100">
+              {isSignUp
+                ? "Junte-se à aventura radiológica"
+                : "Continue sua jornada médica"}
+            </p>
+          </div>
 
-        <div className="space-y-4">
-          {isSignUp && (
+          {/* Formulário */}
+          <div className="space-y-6">
+            {isSignUp && (
+              <div>
+                <Label className="text-white text-sm font-medium">Nome Completo</Label>
+                <Input
+                  type="text"
+                  placeholder="Seu nome completo"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-cyan-400"
+                />
+              </div>
+            )}
+            
             <div>
-              <Label className="text-white">Nome Completo</Label>
+              <Label className="text-white text-sm font-medium">Email</Label>
               <Input
-                type="text"
-                placeholder="Seu nome completo"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
+                type="email"
+                placeholder="seu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-cyan-400"
               />
             </div>
-          )}
-          <div>
-            <Label className="text-white">Email</Label>
-            <Input
-              type="email"
-              placeholder="seu@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-          <div>
-            <Label className="text-white">Senha</Label>
-            <Input
-              type="password"
-              placeholder="Sua senha secreta"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            
+            <div>
+              <Label className="text-white text-sm font-medium">Senha</Label>
+              <Input
+                type="password"
+                placeholder="Sua senha secreta"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-cyan-400"
+              />
+            </div>
+
+            <Button
+              className="w-full bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 font-bold px-6 py-3 text-lg hover:scale-105 transition-transform"
+              onClick={isSignUp ? handleSignUp : handleSignIn}
+              disabled={loading}
+            >
+              {loading ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              ) : (
+                <>
+                  {isSignUp ? "→ Começar Aventura" : "→ Entrar no Jogo"}
+                </>
+              )}
+            </Button>
+
+            <div className="text-center">
+              <Button
+                variant="link"
+                onClick={() => setIsSignUp(!isSignUp)}
+                className="text-cyan-200 hover:text-white text-sm"
+              >
+                {isSignUp
+                  ? "Já tem conta? Fazer login"
+                  : "Não tem conta? Criar uma nova"}
+              </Button>
+            </div>
           </div>
         </div>
+      </div>
 
-        <Button
-          className="w-full"
-          onClick={isSignUp ? handleSignUp : handleSignIn}
-          disabled={loading}
-        >
-          {loading ? (
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-          ) : (
-            isSignUp ? "Criar Conta" : "Acessar"
-          )}
-        </Button>
+      {/* Lado Direito - Conteúdo Motivacional */}
+      <div className="hidden lg:flex lg:w-3/5 items-center justify-center p-12">
+        <div className="max-w-2xl space-y-8">
+          {/* Título Principal */}
+          <div className="space-y-4">
+            <h2 className="text-4xl md:text-5xl font-extrabold leading-tight">
+              A JORNADA DO <span className="text-cyan-300">MESTRE RADIOLOGISTA</span> COMEÇA AQUI
+            </h2>
+            <p className="text-xl text-cyan-100">
+              Entre no game. Vença cada diagnóstico.
+            </p>
+          </div>
 
-        <div className="text-center text-white">
-          <Button
-            variant="link"
-            onClick={() => setIsSignUp(!isSignUp)}
-            className="text-sm"
-          >
-            {isSignUp
-              ? "Já tem uma conta? Acessar"
-              : "Não tem uma conta? Criar conta"}
-          </Button>
+          {/* Lista de Benefícios */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="bg-cyan-500/20 p-3 rounded-full">
+                <Target className="text-cyan-300" size={24}/>
+              </div>
+              <div>
+                <h4 className="font-bold text-lg">Desafios Reais de Diagnóstico</h4>
+                <p className="text-cyan-100">Domine radiologia com casos clínicos autênticos</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <div className="bg-green-500/20 p-3 rounded-full">
+                <TrendingUp className="text-green-300" size={24}/>
+              </div>
+              <div>
+                <h4 className="font-bold text-lg">Progresso de Nível</h4>
+                <p className="text-cyan-100">De Interno a Mestre Radiologista: evolua constantemente</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <div className="bg-violet-500/20 p-3 rounded-full">
+                <Bot className="text-violet-300" size={24}/>
+              </div>
+              <div>
+                <h4 className="font-bold text-lg">IA-Tutora Interativa</h4>
+                <p className="text-cyan-100">Orientação inteligente que estimula, não entrega respostas</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="bg-yellow-500/20 p-3 rounded-full">
+                <Award className="text-yellow-300" size={24}/>
+              </div>
+              <div>
+                <h4 className="font-bold text-lg">Rankings Globais</h4>
+                <p className="text-cyan-100">Compete com médicos do mundo todo e conquiste prêmios</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="bg-blue-500/20 p-3 rounded-full">
+                <Users className="text-blue-300" size={24}/>
+              </div>
+              <div>
+                <h4 className="font-bold text-lg">Comunidade Colaborativa</h4>
+                <p className="text-cyan-100">Troque experiências com especialistas globais</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Frase Motivacional Final */}
+          <div className="border-l-4 border-cyan-400 pl-6 mt-8">
+            <p className="text-xl font-semibold">
+              "Cada diagnóstico é uma vitória. Você está pronto?"
+            </p>
+            <p className="text-cyan-200 mt-2">
+              Suba de nível na sua jornada médica
+            </p>
+          </div>
         </div>
       </div>
     </div>
