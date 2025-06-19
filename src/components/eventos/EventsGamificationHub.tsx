@@ -17,6 +17,7 @@ import {
 import { useAchievements } from "@/hooks/useAchievements";
 import { useUserRankings } from "@/hooks/useUserRankings";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 export function EventsGamificationHub() {
   const { user } = useAuth();
@@ -25,6 +26,31 @@ export function EventsGamificationHub() {
 
   const completedAchievements = getCompletedAchievements();
   const inProgressAchievements = getInProgressAchievements();
+
+  // Buscar dados do perfil do usuário
+  const [userProfile, setUserProfile] = React.useState<any>(null);
+
+  React.useEffect(() => {
+    if (user) {
+      fetchUserProfile();
+    }
+  }, [user]);
+
+  const fetchUserProfile = async () => {
+    if (!user) return;
+    
+    try {
+      const { data } = await supabase
+        .from("profiles")
+        .select("total_points, current_streak")
+        .eq("id", user.id)
+        .single();
+      
+      setUserProfile(data);
+    } catch (error) {
+      console.error("Erro ao buscar perfil:", error);
+    }
+  };
 
   const getRarityColor = (rarity: string) => {
     const colors = {
@@ -77,7 +103,7 @@ export function EventsGamificationHub() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-purple-100 text-sm">Pontos Totais</p>
-                <p className="text-2xl font-bold">{user.total_points?.toLocaleString() || 0}</p>
+                <p className="text-2xl font-bold">{userProfile?.total_points?.toLocaleString() || 0}</p>
               </div>
               <Trophy className="h-8 w-8 text-purple-200" />
             </div>
@@ -101,7 +127,7 @@ export function EventsGamificationHub() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-red-100 text-sm">Sequência Atual</p>
-                <p className="text-2xl font-bold">{user.current_streak || 0} dias</p>
+                <p className="text-2xl font-bold">{userProfile?.current_streak || 0} dias</p>
               </div>
               <Flame className="h-8 w-8 text-red-200" />
             </div>

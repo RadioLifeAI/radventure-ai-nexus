@@ -64,25 +64,32 @@ export function useUserRankings() {
       if (user) {
         const userPosition = globalWithRank.findIndex(p => p.id === user.id);
         setUserRank(userPosition !== -1 ? userPosition + 1 : null);
-      }
 
-      // Ranking por especialidade (se usuário tem especialidade)
-      if (user?.medical_specialty) {
-        const { data: specialtyData, error: specialtyError } = await supabase
+        // Buscar dados do usuário do profiles para obter medical_specialty
+        const { data: userData } = await supabase
           .from("profiles")
-          .select("id, full_name, username, avatar_url, total_points, current_streak, medical_specialty")
-          .eq("medical_specialty", user.medical_specialty)
-          .order("total_points", { ascending: false })
-          .limit(50);
+          .select("medical_specialty")
+          .eq("id", user.id)
+          .single();
 
-        if (specialtyError) throw specialtyError;
+        // Ranking por especialidade (se usuário tem especialidade)
+        if (userData?.medical_specialty) {
+          const { data: specialtyData, error: specialtyError } = await supabase
+            .from("profiles")
+            .select("id, full_name, username, avatar_url, total_points, current_streak, medical_specialty")
+            .eq("medical_specialty", userData.medical_specialty)
+            .order("total_points", { ascending: false })
+            .limit(50);
 
-        const specialtyWithRank = (specialtyData || []).map((profile, index) => ({
-          ...profile,
-          rank: index + 1
-        }));
+          if (specialtyError) throw specialtyError;
 
-        setSpecialtyRankings(specialtyWithRank);
+          const specialtyWithRank = (specialtyData || []).map((profile, index) => ({
+            ...profile,
+            rank: index + 1
+          }));
+
+          setSpecialtyRankings(specialtyWithRank);
+        }
       }
     } catch (error) {
       console.error("Erro ao buscar rankings:", error);
@@ -96,32 +103,36 @@ export function useUserRankings() {
       const { data, error } = await supabase
         .from("event_rankings")
         .select(`
-          *,
-          profiles (
-            full_name,
-            username,
-            avatar_url,
-            medical_specialty
-          )
+          id,
+          event_id,
+          user_id,
+          score,
+          rank
         `)
         .eq("event_id", eventId)
         .order("rank", { ascending: true });
 
       if (error) throw error;
 
-      const rankings = (data || []).map(ranking => ({
-        id: ranking.id,
-        event_id: ranking.event_id,
-        user_id: ranking.user_id,
-        score: ranking.score,
-        rank: ranking.rank,
-        user: {
-          full_name: ranking.profiles?.full_name || '',
-          username: ranking.profiles?.username || '',
-          avatar_url: ranking.profiles?.avatar_url || '',
-          medical_specialty: ranking.profiles?.medical_specialty || ''
-        }
-      }));
+      // Buscar dados dos usuários separadamente
+      const userIds = (data || []).map(ranking => ranking.user_id);
+      const { data: usersData } = await supabase
+        .from("profiles")
+        .select("id, full_name, username, avatar_url, medical_specialty")
+        .in("id", userIds);
+
+      const rankings = (data || []).map(ranking => {
+        const userData = usersData?.find(u => u.id === ranking.user_id);
+        return {
+          ...ranking,
+          user: {
+            full_name: userData?.full_name || '',
+            username: userData?.username || '',
+            avatar_url: userData?.avatar_url || '',
+            medical_specialty: userData?.medical_specialty || ''
+          }
+        };
+      });
 
       setEventRankings(prev => ({
         ...prev,

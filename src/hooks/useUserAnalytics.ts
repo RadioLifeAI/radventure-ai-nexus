@@ -57,8 +57,7 @@ export function useUserAnalytics() {
           medical_cases (
             specialty,
             points,
-            category_id,
-            medical_specialties (name)
+            category_id
           )
         `)
         .eq("user_id", user.id);
@@ -70,12 +69,24 @@ export function useUserAnalytics() {
         .from("event_registrations")
         .select(`
           *,
-          events (name, status),
-          event_rankings (rank, score)
+          events (name, status)
         `)
         .eq("user_id", user.id);
 
       if (eventError) throw eventError;
+
+      // Buscar rankings do usuário em eventos
+      const { data: rankingsData } = await supabase
+        .from("event_rankings")
+        .select("rank, score")
+        .eq("user_id", user.id);
+
+      // Buscar dados do perfil do usuário
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("current_streak")
+        .eq("id", user.id)
+        .single();
 
       // Calcular estatísticas
       const totalCases = caseHistory?.length || 0;
@@ -142,12 +153,9 @@ export function useUserAnalytics() {
         averageRank: 0
       };
 
-      if (eventData && eventData.length > 0) {
-        const rankedEvents = eventData.filter(e => e.event_rankings?.rank);
-        if (rankedEvents.length > 0) {
-          eventParticipation.averageRank = rankedEvents.reduce((sum, e) => 
-            sum + (e.event_rankings?.rank || 0), 0) / rankedEvents.length;
-        }
+      if (rankingsData && rankingsData.length > 0) {
+        eventParticipation.averageRank = rankingsData.reduce((sum, r) => 
+          sum + (r.rank || 0), 0) / rankingsData.length;
       }
 
       setAnalytics({
@@ -159,8 +167,8 @@ export function useUserAnalytics() {
         weeklyActivity,
         monthlyTrends,
         streakData: {
-          current: user.current_streak || 0,
-          longest: user.current_streak || 0, // TODO: implementar longest streak
+          current: profileData?.current_streak || 0,
+          longest: profileData?.current_streak || 0, // TODO: implementar longest streak
           lastActivity: caseHistory?.[0]?.answered_at || ''
         },
         eventParticipation

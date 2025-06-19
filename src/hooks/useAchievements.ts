@@ -61,7 +61,13 @@ export function useAchievements() {
 
         if (progressError) throw progressError;
 
-        setUserProgress(progressData || []);
+        // Mapear os dados para o formato correto
+        const mappedProgress = (progressData || []).map(progress => ({
+          ...progress,
+          achievement: progress.achievement_system
+        }));
+
+        setUserProgress(mappedProgress);
       }
     } catch (error) {
       console.error("Erro ao buscar conquistas:", error);
