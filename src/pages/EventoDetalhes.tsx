@@ -34,7 +34,7 @@ interface EventDetails {
   max_participants?: number;
   number_of_cases?: number;
   event_type?: string;
-  prize_distribution?: any[];
+  prize_distribution?: any;
 }
 
 export default function EventoDetalhes() {
@@ -69,7 +69,14 @@ export default function EventoDetalhes() {
         .single();
 
       if (error) throw error;
-      setEvent(data);
+      
+      // Garantir que prize_distribution seja um array
+      const eventWithValidDistribution = {
+        ...data,
+        prize_distribution: Array.isArray(data.prize_distribution) ? data.prize_distribution : []
+      };
+      
+      setEvent(eventWithValidDistribution);
     } catch (error: any) {
       console.error("Erro ao buscar evento:", error);
       toast({
@@ -111,6 +118,7 @@ export default function EventoDetalhes() {
         description: "Você precisa estar logado para se inscrever em eventos.",
         variant: "destructive"
       });
+      navigate("/login");
       return;
     }
 
@@ -285,7 +293,7 @@ export default function EventoDetalhes() {
             </div>
 
             {/* Distribuição de Prêmios */}
-            {event.prize_distribution && Array.isArray(event.prize_distribution) && (
+            {event.prize_distribution && Array.isArray(event.prize_distribution) && event.prize_distribution.length > 0 && (
               <Card className="bg-white/10 backdrop-blur-sm border-white/20">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">

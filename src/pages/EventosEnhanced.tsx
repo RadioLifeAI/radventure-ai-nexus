@@ -1,18 +1,23 @@
+
 import React, { useState } from "react";
 import { useActiveEvents } from "@/hooks/useActiveEvents";
+import { useEventFilters } from "@/hooks/useEventFilters";
+import { useEventMetrics } from "@/hooks/useEventMetrics";
 import { useNavigate } from "react-router-dom";
 import { HeaderNav } from "@/components/HeaderNav";
-import { EventFilterBar } from "@/components/eventos/EventFilterBar";
+import { EventFilterBarFunctional } from "@/components/eventos/EventFilterBarFunctional";
 import { UpcomingEventsSlider } from "@/components/eventos/UpcomingEventsSlider";
 import { EventsGrid } from "@/components/eventos/EventsGrid";
 import { EventsDashboardRealTime } from "@/components/eventos/EventsDashboardRealTime";
 import { EventsAdvancedVisualization } from "@/components/eventos/EventsAdvancedVisualization";
 import { EventsGamificationHub } from "@/components/eventos/EventsGamificationHub";
 import { EventsNotificationSystem } from "@/components/eventos/EventsNotificationSystem";
+import { EventMetricsCards } from "@/components/eventos/EventMetricsCards";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Zap,
   BarChart3,
@@ -27,48 +32,28 @@ import {
 
 export default function EventosEnhanced() {
   const { events, loading } = useActiveEvents();
+  const { metrics, loading: metricsLoading } = useEventMetrics();
+  const { 
+    filters, 
+    applyFilters, 
+    updateFilter, 
+    updateArrayFilter, 
+    clearFilters, 
+    hasActiveFilters 
+  } = useEventFilters();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [activeView, setActiveView] = useState("dashboard");
 
-  // Em destaque: próximos 2 eventos
-  const highlights = events.slice(0, 2);
-  const activeEvents = events.filter(e => e.status === 'ACTIVE').length;
-  const totalParticipants = events.reduce((sum, event) => sum + (event.participant_count || 0), 0);
+  // Aplicar filtros aos eventos
+  const filteredEvents = applyFilters(events);
+
+  // Em destaque: próximos 2 eventos filtrados
+  const highlights = filteredEvents.slice(0, 2);
 
   const handleEnterEvent = (eventId: string) => {
     navigate(`/app/evento/${eventId}`);
   };
-
-  const quickStats = [
-    {
-      label: "Eventos Ativos",
-      value: activeEvents,
-      icon: Zap,
-      color: "text-green-500",
-      bgColor: "bg-green-50"
-    },
-    {
-      label: "Total de Eventos",
-      value: events.length,
-      icon: Calendar,
-      color: "text-blue-500",
-      bgColor: "bg-blue-50"
-    },
-    {
-      label: "Participantes",
-      value: totalParticipants,
-      icon: Users,
-      color: "text-purple-500",
-      bgColor: "bg-purple-50"
-    },
-    {
-      label: "Prêmios Totais",
-      value: `${events.reduce((sum, event) => sum + event.prize_radcoins, 0)} RC`,
-      icon: Trophy,
-      color: "text-yellow-500",
-      bgColor: "bg-yellow-50"
-    }
-  ];
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white">
@@ -86,34 +71,29 @@ export default function EventosEnhanced() {
           </div>
           <div className="flex items-center gap-3">
             <EventsNotificationSystem />
-            <Button 
-              className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600"
-              onClick={() => navigate("/admin/events/create")}
-            >
-              <Sparkles className="h-4 w-4 mr-2" />
-              Criar Evento
-            </Button>
+            {user && (
+              <Button 
+                className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600"
+                onClick={() => navigate("/admin/events/create")}
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                Criar Evento
+              </Button>
+            )}
+            {!user && (
+              <Button 
+                variant="outline"
+                className="text-white border-white hover:bg-white hover:text-blue-900"
+                onClick={() => navigate("/login")}
+              >
+                Fazer Login
+              </Button>
+            )}
           </div>
         </div>
 
-        {/* Stats rápidas */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {quickStats.map((stat, index) => (
-            <Card key={index} className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 transition-all">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-cyan-200">{stat.label}</p>
-                    <p className="text-2xl font-bold text-white">{stat.value}</p>
-                  </div>
-                  <div className={`p-2 rounded-lg ${stat.bgColor}`}>
-                    <stat.icon className={`h-5 w-5 ${stat.color}`} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {/* Métricas em tempo real */}
+        <EventMetricsCards metrics={metrics} loading={metricsLoading} />
 
         {/* Slider de eventos em destaque */}
         <UpcomingEventsSlider highlights={highlights} />
@@ -149,7 +129,7 @@ export default function EventosEnhanced() {
             </TabsContent>
 
             <TabsContent value="visualization">
-              <EventsAdvancedVisualization events={events} onEnterEvent={handleEnterEvent} />
+              <EventsAdvancedVisualization events={filteredEvents} onEnterEvent={handleEnterEvent} />
             </TabsContent>
 
             <TabsContent value="gamification">
@@ -158,11 +138,20 @@ export default function EventosEnhanced() {
 
             <TabsContent value="events">
               <div className="space-y-6">
-                <EventFilterBar />
+                <EventFilterBarFunctional
+                  filters={filters}
+                  onUpdateFilter={updateFilter}
+                  onUpdateArrayFilter={updateArrayFilter}
+                  onClearFilters={clearFilters}
+                  hasActiveFilters={hasActiveFilters}
+                  totalEvents={events.length}
+                  filteredEvents={filteredEvents.length}
+                />
+                
                 {loading ? (
                   <div className="text-cyan-400 mt-6 animate-fade-in">Carregando eventos...</div>
                 ) : (
-                  <EventsGrid events={events} onEnterEvent={handleEnterEvent} />
+                  <EventsGrid events={filteredEvents} onEnterEvent={handleEnterEvent} />
                 )}
               </div>
             </TabsContent>
@@ -211,6 +200,38 @@ export default function EventosEnhanced() {
                         </div>
                       </div>
                     </div>
+
+                    {/* Estatísticas de autenticação */}
+                    {user ? (
+                      <div className="bg-white/5 rounded-lg p-4">
+                        <h4 className="font-medium text-white mb-3">Seu Desempenho</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-cyan-400">{metrics.userRegistrations}</div>
+                            <div className="text-sm text-cyan-200">Eventos Inscritos</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-green-400">{metrics.userCompletedEvents}</div>
+                            <div className="text-sm text-cyan-200">Eventos Concluídos</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-yellow-400">
+                              {metrics.userCompletedEvents > 0 
+                                ? Math.round((metrics.userCompletedEvents / metrics.userRegistrations) * 100) 
+                                : 0}%
+                            </div>
+                            <div className="text-sm text-cyan-200">Taxa de Conclusão</div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-white/5 rounded-lg p-4 text-center">
+                        <h4 className="font-medium text-white mb-3">Faça Login para Ver Suas Estatísticas</h4>
+                        <Button onClick={() => navigate("/login")} className="bg-cyan-600 hover:bg-cyan-700">
+                          Fazer Login
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
