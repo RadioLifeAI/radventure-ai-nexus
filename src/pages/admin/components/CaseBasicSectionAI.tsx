@@ -35,7 +35,7 @@ export function CaseBasicSectionAI({
       anatomical_regions_length: Array.isArray(form.anatomical_regions) ? form.anatomical_regions.length : 0
     });
 
-    const hasPrimary = Boolean(form.primary_diagnosis?.trim());
+    const hasPrimary = Boolean(form.primary_diagnosis?.trim() && form.primary_diagnosis.trim().length > 3);
     const hasDifferentials = Array.isArray(form.differential_diagnoses) && form.differential_diagnoses.length >= 1;
     const hasAnatomical = Array.isArray(form.anatomical_regions) && form.anatomical_regions.length >= 1;
     
@@ -67,7 +67,7 @@ export function CaseBasicSectionAI({
         console.log('❌ CaseBasicSectionAI - Dados estruturados incompletos');
         toast({ 
           title: "Dados Estruturados Obrigatórios", 
-          description: "Preencha primeiro: Diagnóstico Principal + Diagnósticos Diferenciais + Regiões Anatômicas",
+          description: "Use primeiro o botão 'AI: Dados Estruturados' para preencher: Diagnóstico Principal + Diagnósticos Diferenciais + Regiões Anatômicas",
           variant: "destructive" 
         });
         return;
@@ -143,11 +143,17 @@ export function CaseBasicSectionAI({
       if (Object.keys(updates).length > 0) {
         console.log('🔄 CaseBasicSectionAI - Aplicando updates:', updates);
         
-        // CORREÇÃO CRÍTICA: Garantir atualização imutável correta
+        // CORREÇÃO CRÍTICA: Garantir atualização imutável correta com callback
         setForm((prevForm: any) => {
           const newForm = { ...prevForm, ...updates };
           console.log('🔄 CaseBasicSectionAI - Form atualizado de:', prevForm);
           console.log('🔄 CaseBasicSectionAI - Form atualizado para:', newForm);
+          
+          // Forçar re-render após timeout para garantir propagação
+          setTimeout(() => {
+            console.log('🔄 CaseBasicSectionAI - Estado final após timeout:', newForm);
+          }, 100);
+          
           return newForm;
         });
         
@@ -189,10 +195,15 @@ export function CaseBasicSectionAI({
       <Button
         type="button"
         onClick={handleAutofillBasicComplete}
-        disabled={loading || disabled}
+        disabled={loading || disabled || !hasStructuredData}
         variant="outline"
         size="sm"
-        className={`${hasStructuredData ? 'bg-blue-500 text-white hover:bg-blue-600 border-blue-500' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+        className={`${
+          hasStructuredData 
+            ? 'bg-blue-500 text-white hover:bg-blue-600 border-blue-500' 
+            : 'bg-gray-300 text-gray-500 cursor-not-allowed border-gray-300'
+        }`}
+        data-testid="ai-basic-data-button"
       >
         {loading ? (
           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -207,7 +218,7 @@ export function CaseBasicSectionAI({
         <div className="font-medium">Categoria • Dificuldade • Modalidade • Demografia • Título</div>
         {!hasStructuredData && (
           <div className="text-red-600 font-semibold mt-1">
-            ⚠️ Preencha primeiro: Diagnóstico Principal + Diagnósticos Diferenciais + Regiões Anatômicas
+            ⚠️ Use primeiro 'AI: Dados Estruturados' - Diagnóstico Principal + Diagnósticos Diferenciais + Regiões Anatômicas
           </div>
         )}
         {hasStructuredData && (

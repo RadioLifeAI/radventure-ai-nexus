@@ -22,9 +22,36 @@ export function CaseStructuredDataAI({
 }: CaseStructuredDataAIProps) {
   const { autofillStructuredComplete, loading } = useCaseAutofillAPIExpanded();
 
+  // CORREÇÃO: Validação robusta do diagnóstico principal
+  const hasPrimaryDiagnosis = React.useMemo(() => {
+    const diagnosis = form.primary_diagnosis?.trim();
+    const isValid = Boolean(diagnosis && diagnosis.length > 3);
+    
+    console.log('🔍 CaseStructuredDataAI - Validação diagnóstico:', {
+      primary_diagnosis: form.primary_diagnosis,
+      trimmed: diagnosis,
+      length: diagnosis?.length,
+      isValid
+    });
+    
+    return isValid;
+  }, [form.primary_diagnosis]);
+
   const handleAutofillStructuredComplete = async () => {
     try {
       console.log('🤖 CaseStructuredDataAI - Iniciando preenchimento de dados estruturados...');
+      
+      // VALIDAÇÃO OBRIGATÓRIA
+      if (!hasPrimaryDiagnosis) {
+        console.log('❌ CaseStructuredDataAI - Diagnóstico principal obrigatório');
+        toast({ 
+          title: "💡 Diagnóstico Principal Obrigatório", 
+          description: "Preencha o diagnóstico principal primeiro para habilitar a AI de Dados Estruturados",
+          variant: "destructive" 
+        });
+        return;
+      }
+      
       console.log('🔍 CaseStructuredDataAI - Estado inicial do form:', {
         primary_diagnosis: form.primary_diagnosis,
         differential_diagnoses: form.differential_diagnoses,
@@ -45,11 +72,11 @@ export function CaseStructuredDataAI({
 
       console.log('✅ CaseStructuredDataAI - Sugestões recebidas:', suggestions);
 
-      // CORREÇÃO: Aplicar sugestões estruturadas de forma robusta
+      // CORREÇÃO: Aplicar sugestões estruturadas de forma mais robusta
       const updatedFields: string[] = [];
       const updates: any = {};
 
-      // Campos estruturados principais
+      // Campos estruturados principais com validação rigorosa
       const structuredFields = [
         'primary_diagnosis', 'secondary_diagnoses', 'case_classification', 'cid10_code',
         'anatomical_regions', 'finding_types', 'laterality', 'main_symptoms', 
@@ -90,11 +117,17 @@ export function CaseStructuredDataAI({
       if (Object.keys(updates).length > 0) {
         console.log('🔄 CaseStructuredDataAI - Aplicando updates:', updates);
         
-        // CORREÇÃO: Garantir atualização imutável
+        // CORREÇÃO CRÍTICA: Forçar atualização com callback
         setForm((prevForm: any) => {
           const newForm = { ...prevForm, ...updates };
           console.log('🔄 CaseStructuredDataAI - Form atualizado de:', prevForm);
           console.log('🔄 CaseStructuredDataAI - Form atualizado para:', newForm);
+          
+          // Forçar re-render após timeout para garantir propagação
+          setTimeout(() => {
+            console.log('🔄 CaseStructuredDataAI - Estado final após timeout:', newForm);
+          }, 100);
+          
           return newForm;
         });
         
@@ -128,17 +161,22 @@ export function CaseStructuredDataAI({
     }
   };
 
-  console.log('🎨 CaseStructuredDataAI - Renderizando botão');
+  console.log('🎨 CaseStructuredDataAI - Renderizando botão com hasPrimaryDiagnosis:', hasPrimaryDiagnosis);
 
   return (
     <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
       <Button
         type="button"
         onClick={handleAutofillStructuredComplete}
-        disabled={loading || disabled}
+        disabled={loading || disabled || !hasPrimaryDiagnosis}
         variant="outline"
         size="sm"
-        className="bg-green-500 text-white hover:bg-green-600 border-green-500"
+        className={`${
+          hasPrimaryDiagnosis 
+            ? 'bg-green-500 text-white hover:bg-green-600 border-green-500' 
+            : 'bg-gray-300 text-gray-500 cursor-not-allowed border-gray-300'
+        }`}
+        data-testid="ai-structured-data-button"
       >
         {loading ? (
           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -151,9 +189,16 @@ export function CaseStructuredDataAI({
       <div className="text-xs text-green-700">
         <div>Preenche campos estruturados automaticamente:</div>
         <div className="font-medium">Diagnóstico • Diferenciais • Regiões Anatômicas • Metadados</div>
-        <div className="text-green-600 font-semibold mt-1">
-          ✅ Use PRIMEIRO - Base para todos os outros botões AI
-        </div>
+        {!hasPrimaryDiagnosis && (
+          <div className="text-red-600 font-semibold mt-1">
+            💡 Preencha o Diagnóstico Principal primeiro para habilitar a AI de Dados Estruturados
+          </div>
+        )}
+        {hasPrimaryDiagnosis && (
+          <div className="text-green-600 font-semibold mt-1">
+            ✅ Use PRIMEIRO - Base para todos os outros botões AI
+          </div>
+        )}
       </div>
     </div>
   );
