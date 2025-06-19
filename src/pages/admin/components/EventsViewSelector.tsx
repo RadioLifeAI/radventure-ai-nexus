@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,7 +19,7 @@ import {
 import {
   LayoutGrid,
   Calendar,
-  Timeline,
+  Clock,
   BarChart3,
   SortAsc,
   SortDesc,
@@ -28,8 +27,7 @@ import {
   MoreHorizontal,
   Eye,
   Users,
-  Trophy,
-  Clock
+  Trophy
 } from "lucide-react";
 
 export type EventViewMode = "cards" | "timeline" | "calendar" | "analytics";
@@ -68,7 +66,7 @@ export function EventsViewSelector({
     },
     {
       mode: "timeline" as EventViewMode,
-      icon: Timeline,
+      icon: Clock,
       label: "Timeline",
       description: "Linha do tempo cronológica"
     },

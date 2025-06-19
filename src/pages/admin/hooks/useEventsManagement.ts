@@ -66,7 +66,7 @@ export function useEventsManagement() {
       }
 
       if (filters.status.length > 0) {
-        query = query.in("status", filters.status);
+        query = query.in("status", filters.status as ("SCHEDULED" | "ACTIVE" | "FINISHED")[]);
       }
 
       if (filters.event_type.length > 0) {

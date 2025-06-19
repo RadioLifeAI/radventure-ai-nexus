@@ -1,6 +1,5 @@
-
-import React from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import React, { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,17 +15,18 @@ import {
   Clock,
   Users,
   Trophy,
+  MoreHorizontal,
   Edit,
   Eye,
   Copy,
-  MoreHorizontal,
   Trash2,
   BarChart3,
-  Wand2,
   Play,
-  Pause,
   Target
 } from "lucide-react";
+import { EventRichViewModal } from "./EventRichViewModal";
+import { EventSmartDuplicateModal } from "./EventSmartDuplicateModal";
+import { EventAdvancedAnalyticsModal } from "./EventAdvancedAnalyticsModal";
 
 interface Event {
   id: string;
@@ -67,6 +67,10 @@ export function EventsCardsView({
   onAnalytics,
   onToggleStatus
 }: Props) {
+  const [richViewModal, setRichViewModal] = useState<{ open: boolean; event: any }>({ open: false, event: null });
+  const [duplicateModal, setDuplicateModal] = useState<{ open: boolean; event: any }>({ open: false, event: null });
+  const [analyticsModal, setAnalyticsModal] = useState<{ open: boolean; event: any }>({ open: false, event: null });
+
   const getStatusColor = (status: string) => {
     const colors = {
       DRAFT: "bg-gray-100 text-gray-700",
@@ -115,6 +119,23 @@ export function EventsCardsView({
     return prizeDistribution.reduce((total, prize) => total + (prize.prize || 0), 0);
   };
 
+  const handleRichView = (event: any) => {
+    setRichViewModal({ open: true, event });
+  };
+
+  const handleSmartDuplicate = (event: any) => {
+    setDuplicateModal({ open: true, event });
+  };
+
+  const handleAdvancedAnalytics = (event: any) => {
+    setAnalyticsModal({ open: true, event });
+  };
+
+  const handleDuplicateComplete = (duplicatedEvent: any) => {
+    onDuplicate(duplicatedEvent.id);
+    setDuplicateModal({ open: false, event: null });
+  };
+
   if (events.length === 0) {
     return (
       <div className="text-center py-12">
@@ -125,183 +146,199 @@ export function EventsCardsView({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {events.map((event) => (
-        <Card key={event.id} className="hover:shadow-lg transition-all duration-200 border-2 hover:border-orange-200">
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {events.map((event) => {
+          const statusColors = getStatusColor(event.status);
+          const isSelected = selectedEvents.includes(event.id);
+          const isActive = event.status === "ACTIVE";
+          const canStart = event.status === "SCHEDULED" && new Date(event.scheduled_start) <= new Date();
+
+          return (
+            <Card 
+              key={event.id} 
+              className={`relative transition-all duration-200 hover:shadow-lg ${
+                isSelected ? "ring-2 ring-blue-500 shadow-blue-100" : ""
+              } ${isActive ? "ring-2 ring-green-400 shadow-green-100" : ""}`}
+            >
+              {/* Checkbox de seleção */}
+              <div className="absolute top-4 left-4 z-10">
                 <Checkbox
-                  checked={selectedEvents.includes(event.id)}
+                  checked={isSelected}
                   onCheckedChange={() => onEventSelect(event.id)}
+                  className="bg-white border-2 border-gray-300"
                 />
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg line-clamp-2 text-gray-800">
+              </div>
+
+              {/* Menu de ações */}
+              <div className="absolute top-4 right-4 z-10">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="bg-white shadow-sm">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-white">
+                    <DropdownMenuItem onClick={() => handleRichView(event)}>
+                      <Eye className="h-4 w-4 mr-2" />
+                      Visualização Rica
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onEdit(event.id)}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Editar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleSmartDuplicate(event)}>
+                      <Copy className="h-4 w-4 mr-2" />
+                      Duplicação Inteligente
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleAdvancedAnalytics(event)}>
+                      <BarChart3 className="h-4 w-4 mr-2" />
+                      Analytics Avançado
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    {canStart && (
+                      <DropdownMenuItem onClick={() => onToggleStatus(event.id)}>
+                        <Play className="h-4 w-4 mr-2" />
+                        Iniciar Evento
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem 
+                      onClick={() => onDelete(event.id)}
+                      className="text-red-600"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Excluir
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              {/* Banner do evento */}
+              {event.banner_url && (
+                <div className="h-40 bg-gradient-to-r from-blue-500 to-purple-600 rounded-t-lg relative overflow-hidden">
+                  <img
+                    src={event.banner_url}
+                    alt={event.name}
+                    className="w-full h-full object-cover"
+                  />
+                  {isActive && (
+                    <div className="absolute top-2 left-2">
+                      <Badge className="bg-red-500 text-white animate-pulse">
+                        AO VIVO
+                      </Badge>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <CardContent className="p-6">
+                {/* Título e status */}
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-2">
                     {event.name}
                   </h3>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {getEventTypeLabel(event.event_type)}
+                  <div className="flex items-center gap-2">
+                    <Badge className={statusColors}>
+                      {getStatusLabel(event.status)}
+                    </Badge>
+                    {canStart && (
+                      <Badge className="bg-orange-100 text-orange-700">
+                        Pronto para Iniciar
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                {/* Descrição */}
+                {event.description && (
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                    {event.description}
                   </p>
-                </div>
-              </div>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => onView(event.id)}>
-                    <Eye className="h-4 w-4 mr-2" />
-                    Visualizar
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onEdit(event.id)}>
-                    <Edit className="h-4 w-4 mr-2" />
-                    Editar
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onDuplicate(event.id)}>
-                    <Copy className="h-4 w-4 mr-2" />
-                    Duplicar
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  {onAnalytics && (
-                    <DropdownMenuItem onClick={() => onAnalytics(event.id)}>
-                      <BarChart3 className="h-4 w-4 mr-2" />
-                      Analytics
-                    </DropdownMenuItem>
-                  )}
-                  {onToggleStatus && event.status === "SCHEDULED" && (
-                    <DropdownMenuItem onClick={() => onToggleStatus(event.id)}>
-                      <Play className="h-4 w-4 mr-2" />
-                      Iniciar Evento
-                    </DropdownMenuItem>
-                  )}
-                  {onToggleStatus && event.status === "ACTIVE" && (
-                    <DropdownMenuItem onClick={() => onToggleStatus(event.id)}>
-                      <Pause className="h-4 w-4 mr-2" />
-                      Pausar Evento
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    onClick={() => onDelete(event.id)}
-                    className="text-red-600 focus:text-red-600"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Excluir
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </CardHeader>
-
-          <CardContent className="space-y-4">
-            {/* Banner do Evento */}
-            {event.banner_url && (
-              <div className="w-full h-32 rounded-lg overflow-hidden">
-                <img
-                  src={event.banner_url}
-                  alt={event.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            )}
-
-            {/* Status e Tipo */}
-            <div className="flex items-center justify-between">
-              <Badge className={getStatusColor(event.status)}>
-                {getStatusLabel(event.status)}
-              </Badge>
-              {event.auto_start && (
-                <Badge variant="outline" className="text-green-600 border-green-200">
-                  Auto-start
-                </Badge>
-              )}
-            </div>
-
-            {/* Descrição */}
-            {event.description && (
-              <p className="text-sm text-gray-600 line-clamp-2">
-                {event.description}
-              </p>
-            )}
-
-            {/* Informações do Evento */}
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center gap-2 text-gray-600">
-                <Calendar className="h-4 w-4" />
-                <span>Início: {formatDate(event.scheduled_start)}</span>
-              </div>
-              <div className="flex items-center gap-2 text-gray-600">
-                <Clock className="h-4 w-4" />
-                <span>Fim: {formatDate(event.scheduled_end)}</span>
-              </div>
-              {event.max_participants && (
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Users className="h-4 w-4" />
-                  <span>Máx. {event.max_participants} participantes</span>
-                </div>
-              )}
-              {event.number_of_cases && (
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Target className="h-4 w-4" />
-                  <span>{event.number_of_cases} casos</span>
-                </div>
-              )}
-            </div>
-
-            {/* Prêmios */}
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Trophy className="h-4 w-4 text-yellow-600" />
-                  <span className="font-semibold text-yellow-800">
-                    {event.prize_radcoins} RadCoins
-                  </span>
-                </div>
-                {event.prize_distribution && Array.isArray(event.prize_distribution) && (
-                  <span className="text-xs text-yellow-600">
-                    Top 3: {event.prize_distribution.slice(0, 3).map(p => p.prize).join(', ')}
-                  </span>
                 )}
-              </div>
-            </div>
 
-            {/* Ações Rápidas */}
-            <div className="flex gap-2 pt-2">
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={() => onView(event.id)}
-                className="flex-1"
-              >
-                <Eye className="h-3 w-3 mr-1" />
-                Ver
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={() => onEdit(event.id)}
-                className="flex-1"
-              >
-                <Edit className="h-3 w-3 mr-1" />
-                Editar
-              </Button>
-              {onAnalytics && (
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={() => onAnalytics(event.id)}
-                  className="px-2"
-                >
-                  <BarChart3 className="h-3 w-3" />
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+                {/* Métricas principais */}
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="text-center p-3 bg-blue-50 rounded-lg">
+                    <Calendar className="h-5 w-5 text-blue-500 mx-auto mb-1" />
+                    <div className="text-xs text-blue-600 font-medium">Início</div>
+                    <div className="text-sm font-semibold text-blue-800">
+                      {formatDate(event.scheduled_start)}
+                    </div>
+                  </div>
+
+                  <div className="text-center p-3 bg-green-50 rounded-lg">
+                    <Users className="h-5 w-5 text-green-500 mx-auto mb-1" />
+                    <div className="text-xs text-green-600 font-medium">Participantes</div>
+                    <div className="text-sm font-semibold text-green-800">
+                      {event.max_participants || "Ilimitado"}
+                    </div>
+                  </div>
+
+                  <div className="text-center p-3 bg-yellow-50 rounded-lg">
+                    <Trophy className="h-5 w-5 text-yellow-500 mx-auto mb-1" />
+                    <div className="text-xs text-yellow-600 font-medium">Prêmio</div>
+                    <div className="text-sm font-semibold text-yellow-800">
+                      {event.prize_radcoins} RC
+                    </div>
+                  </div>
+
+                  <div className="text-center p-3 bg-purple-50 rounded-lg">
+                    <Target className="h-5 w-5 text-purple-500 mx-auto mb-1" />
+                    <div className="text-xs text-purple-600 font-medium">Casos</div>
+                    <div className="text-sm font-semibold text-purple-800">
+                      {event.number_of_cases}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Ações principais */}
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleRichView(event)}
+                    className="flex-1"
+                  >
+                    <Eye className="h-3 w-3 mr-1" />
+                    Ver
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => onEdit(event.id)}
+                    className="flex-1"
+                  >
+                    <Edit className="h-3 w-3 mr-1" />
+                    Editar
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Modais */}
+      <EventRichViewModal
+        open={richViewModal.open}
+        onClose={() => setRichViewModal({ open: false, event: null })}
+        event={richViewModal.event}
+        onEdit={onEdit}
+        onDuplicate={handleSmartDuplicate}
+        onAnalytics={handleAdvancedAnalytics}
+      />
+
+      <EventSmartDuplicateModal
+        open={duplicateModal.open}
+        onClose={() => setDuplicateModal({ open: false, event: null })}
+        event={duplicateModal.event}
+        onDuplicate={handleDuplicateComplete}
+      />
+
+      <EventAdvancedAnalyticsModal
+        open={analyticsModal.open}
+        onClose={() => setAnalyticsModal({ open: false, event: null })}
+        event={analyticsModal.event}
+      />
+    </>
   );
 }
