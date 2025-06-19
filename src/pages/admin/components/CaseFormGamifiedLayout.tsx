@@ -2,11 +2,11 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Target, Lightbulb, Settings, Users, Trophy, Database, BookOpen } from "lucide-react";
+import { Brain, Target, Lightbulb, Settings, Users, Trophy, Database, BookOpen, Images } from "lucide-react";
 
 interface CaseFormGamifiedLayoutProps {
   children: React.ReactNode;
-  section: "basic" | "clinical" | "quiz" | "advanced" | "gamification" | "structured" | "reference";
+  section: "basic" | "clinical" | "quiz" | "advanced" | "gamification" | "structured" | "reference" | "images";
   title: string;
   description?: string;
   progress?: number;
@@ -77,6 +77,14 @@ export function CaseFormGamifiedLayout({
           border: "border-indigo-200",
           badge: "Referência"
         };
+      case "images":
+        return {
+          icon: Images,
+          color: "emerald",
+          gradient: "from-emerald-50 to-teal-50",
+          border: "border-emerald-200",
+          badge: "Imagens"
+        };
       default:
         return {
           icon: Target,
@@ -92,7 +100,7 @@ export function CaseFormGamifiedLayout({
   const Icon = config.icon;
 
   return (
-    <Card className={`border-2 ${config.border} bg-gradient-to-br ${config.gradient} shadow-lg hover:shadow-xl transition-all duration-300`}>
+    <Card className={`border-2 ${config.border} bg-gradient-to-br ${config.gradient} shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in`}>
       <CardHeader className="pb-4">
         <CardTitle className={`flex items-center gap-2 text-${config.color}-800`}>
           <Icon className={`h-5 w-5 text-${config.color}-500`} />

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useCaseProfileFormHandlers } from "../hooks/useCaseProfileFormHandlers";
 import { Button } from "@/components/ui/button";
@@ -343,10 +342,35 @@ export function CaseProfileFormEditable({
       )}
 
       <form className="w-full space-y-6" onSubmit={handleSubmit}>
+        {/* SEÇÃO 1: DADOS ESTRUTURADOS (PRIMEIRA) */}
+        <CaseFormGamifiedLayout
+          section="structured"
+          title="Dados Estruturados"
+          description="Configure os campos estruturados para filtros avançados e AI (incluindo referência)"
+        >
+          {/* NOVO: Botão AI para dados estruturados */}
+          <CaseStructuredDataAI 
+            form={form}
+            setForm={setForm}
+            onFieldsUpdated={(fields) => {
+              setHighlightedFields(fields);
+              setTimeout(() => setHighlightedFields([]), 2000);
+            }}
+          />
+          
+          <CaseStructuredFieldsSection 
+            form={form}
+            setForm={setForm}
+            handleFormChange={handleFormChange}
+            renderTooltipTip={renderTooltipTip}
+          />
+        </CaseFormGamifiedLayout>
+
+        {/* SEÇÃO 2: DADOS BÁSICOS */}
         <CaseFormGamifiedLayout
           section="basic"
-          title={isEditMode ? "Editar Caso Médico" : "Criar Novo Caso Médico"}
-          description="Configure as informações básicas do caso médico (Dados Unificados)"
+          title={isEditMode ? "Editar Caso Médico" : "Dados Básicos do Caso"}
+          description="Configure as informações básicas do caso médico"
         >
           <CaseProfileFormTitleSection
             autoTitlePreview={autoTitlePreview}
@@ -381,41 +405,21 @@ export function CaseProfileFormEditable({
           />
         </CaseFormGamifiedLayout>
 
+        {/* SEÇÃO 3: GESTÃO AVANÇADA DE IMAGENS */}
         <CaseFormGamifiedLayout
-          section="structured"
-          title="Dados Estruturados"
-          description="Configure os campos estruturados para filtros avançados e AI"
+          section="images"
+          title="Gestão Avançada de Imagens"
+          description="Sistema robusto para upload e gerenciamento de múltiplas imagens com modais avançados"
         >
-          {/* NOVO: Botão AI para dados estruturados */}
-          <CaseStructuredDataAI 
-            form={form}
-            setForm={setForm}
-            onFieldsUpdated={(fields) => {
-              setHighlightedFields(fields);
-              setTimeout(() => setHighlightedFields([]), 2000);
+          <CaseAdvancedImageManagement 
+            caseId={editingCase?.id}
+            onImagesChange={(images) => {
+              console.log('Images updated:', images.length);
             }}
           />
-          
-          <CaseStructuredFieldsSection 
-            form={form}
-            setForm={setForm}
-            handleFormChange={handleFormChange}
-            renderTooltipTip={renderTooltipTip}
-          />
         </CaseFormGamifiedLayout>
 
-        <CaseFormGamifiedLayout
-          section="reference"
-          title="Referência e Fonte"
-          description="Configure informações sobre a fonte do caso"
-        >
-          <CaseReferenceSection 
-            form={form}
-            handleFormChange={handleFormChange}
-            renderTooltipTip={renderTooltipTip}
-          />
-        </CaseFormGamifiedLayout>
-
+        {/* SEÇÃO 4: QUIZ E ALTERNATIVAS */}
         <CaseFormGamifiedLayout
           section="quiz"
           title="Pergunta e Alternativas"
@@ -460,6 +464,7 @@ export function CaseProfileFormEditable({
           </div>
         </CaseFormGamifiedLayout>
 
+        {/* SEÇÃO 5: EXPLICAÇÃO E FEEDBACK */}
         <CaseFormGamifiedLayout
           section="clinical"
           title="Explicação e Feedback"
@@ -485,6 +490,7 @@ export function CaseProfileFormEditable({
           />
         </CaseFormGamifiedLayout>
 
+        {/* SEÇÃO 6: CONFIGURAÇÕES AVANÇADAS */}
         <CaseFormGamifiedLayout
           section="advanced"
           title="Configurações Avançadas"
@@ -515,20 +521,6 @@ export function CaseProfileFormEditable({
               showAdvanced={showAdvanced}
             />
           </div>
-        </CaseFormGamifiedLayout>
-
-        {/* NOVA SEÇÃO: Gestão Avançada de Imagens */}
-        <CaseFormGamifiedLayout
-          section="advanced"
-          title="Gestão Avançada de Imagens"
-          description="Sistema robusto para upload e gerenciamento de múltiplas imagens"
-        >
-          <CaseAdvancedImageManagement 
-            caseId={editingCase?.id}
-            onImagesChange={(images) => {
-              console.log('Images updated:', images.length);
-            }}
-          />
         </CaseFormGamifiedLayout>
 
         <div className="flex justify-between items-center pt-6 border-t border-gray-200">
