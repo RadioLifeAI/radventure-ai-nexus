@@ -83,7 +83,22 @@ export function CaseMasterAI({
 
       allFields.forEach(field => {
         if (suggestions[field] !== undefined && suggestions[field] !== null) {
-          updates[field] = suggestions[field];
+          // CORREÇÃO: Não aplicar valores "string" literais
+          if (suggestions[field] === "string" || suggestions[field] === "diagnóstico_correto") {
+            console.warn(`⚠️ Ignorando valor literal "${suggestions[field]}" para campo ${field}`);
+            return;
+          }
+          
+          // Conversão específica para campos numéricos
+          if (field === 'category_id' && typeof suggestions[field] === 'number') {
+            updates[field] = suggestions[field];
+          } else if (field === 'difficulty_level' && typeof suggestions[field] === 'number') {
+            updates[field] = suggestions[field];
+          } else if (field === 'points' && typeof suggestions[field] === 'number') {
+            updates[field] = suggestions[field];
+          } else {
+            updates[field] = suggestions[field];
+          }
           updatedFields.push(field);
         }
       });
@@ -96,12 +111,15 @@ export function CaseMasterAI({
         updates.differential_diagnoses = suggestions.differential_diagnoses.slice(0, 4);
       }
 
-      // VALIDAÇÃO ESPECÍFICA: Quiz baseado em diagnósticos
+      // VALIDAÇÃO ESPECÍFICA: Quiz baseado em diagnósticos - Corrigir alternativas com "diagnóstico_correto"
       if (suggestions.answer_options && Array.isArray(suggestions.answer_options)) {
-        if (suggestions.answer_options.length !== 4) {
-          console.warn(`⚠️ Esperadas 4 alternativas no quiz, recebidas ${suggestions.answer_options.length}`);
-        }
-        updates.answer_options = suggestions.answer_options.slice(0, 4);
+        const correctedOptions = suggestions.answer_options.map((option: string, index: number) => {
+          if (option === "diagnóstico_correto" && suggestions.correct_answer_index === index) {
+            return form.primary_diagnosis || suggestions.primary_diagnosis || "Opção correta";
+          }
+          return option;
+        });
+        updates.answer_options = correctedOptions.slice(0, 4);
       }
 
       if (Object.keys(updates).length > 0) {

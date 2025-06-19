@@ -126,7 +126,7 @@ Modalidade: ${modality || 'não especificado'}`
   ];
 }
 
-// Nova função para preenchimento completo master
+// FUNÇÃO CORRIGIDA: preenchimento completo master
 function buildPromptMasterComplete({ diagnosis, contextData }: { diagnosis: string, contextData?: any }) {
   return [
     {
@@ -144,38 +144,44 @@ IMPORTANTE: Este é um preenchimento MASTER que deve incluir:
 6. Explicação educacional detalhada
 7. Configurações avançadas inteligentes
 
-REGRA CRÍTICA: NUNCA revele o diagnóstico nos campos "findings", "patient_clinical_info", "main_question" ou alternativas.
+REGRAS CRÍTICAS:
+- NUNCA use valores como "string", "diagnóstico_correto" ou outros placeholders
+- NUNCA revele o diagnóstico nos campos "findings", "patient_clinical_info", "main_question"
+- Use valores específicos e realistas para todos os campos
+- Para category_id: use números 1-10 baseado na especialidade
+- Para difficulty_level: use números 1-4 baseado na complexidade
+- Para answer_options: use o diagnóstico real como primeira opção e diagnósticos diferenciais como outras opções
 
 Retorne EXATAMENTE este JSON estruturado:
 {
-  "category_id": number,
-  "difficulty_level": number,
-  "points": number,
-  "modality": "string",
-  "subtype": "string",
-  "patient_age": "string",
-  "patient_gender": "string",
-  "symptoms_duration": "string",
-  "findings": "string - achados neutros",
-  "patient_clinical_info": "string - resumo neutro",
-  "primary_diagnosis": "string",
+  "category_id": 1,
+  "difficulty_level": 2,
+  "points": 10,
+  "modality": "Radiografia de tórax",
+  "subtype": "PA",
+  "patient_age": "45 anos",
+  "patient_gender": "masculino",
+  "symptoms_duration": "5 dias",
+  "findings": "descrição neutra dos achados radiológicos",
+  "patient_clinical_info": "resumo clínico neutro",
+  "primary_diagnosis": "${diagnosis}",
   "differential_diagnoses": ["diff1", "diff2", "diff3", "diff4"],
-  "anatomical_regions": ["string1", "string2"],
-  "main_symptoms": ["string1", "string2"],
-  "learning_objectives": ["obj1", "obj2", "obj3"],
-  "main_question": "string - pergunta neutra",
-  "answer_options": ["diagnóstico_correto", "diff1", "diff2", "diff3"],
+  "anatomical_regions": ["região1", "região2"],
+  "main_symptoms": ["sintoma1", "sintoma2"],
+  "learning_objectives": ["objetivo1", "objetivo2", "objetivo3"],
+  "main_question": "pergunta neutra sobre o caso",
+  "answer_options": ["${diagnosis}", "diferencial1", "diferencial2", "diferencial3"],
   "correct_answer_index": 0,
-  "answer_feedbacks": ["feedback_correto", "feedback_diff1", "feedback_diff2", "feedback_diff3"],
+  "answer_feedbacks": ["feedback correto", "feedback diff1", "feedback diff2", "feedback diff3"],
   "answer_short_tips": ["dica1", "dica2", "dica3", "dica4"],
-  "explanation": "string - explicação educacional completa",
-  "manual_hint": "string - dica concisa",
-  "can_skip": boolean,
-  "max_elimination": number,
-  "ai_hint_enabled": boolean,
-  "skip_penalty_points": number,
-  "elimination_penalty_points": number,
-  "ai_tutor_level": "basico|detalhado"
+  "explanation": "explicação educacional completa",
+  "manual_hint": "dica concisa",
+  "can_skip": false,
+  "max_elimination": 1,
+  "ai_hint_enabled": true,
+  "skip_penalty_points": 2,
+  "elimination_penalty_points": 1,
+  "ai_tutor_level": "detalhado"
 }`
     },
     {
@@ -340,6 +346,18 @@ serve(async (req) => {
     try {
       suggestions = JSON.parse(content);
       console.log('📊 Parsed suggestions:', suggestions);
+      
+      // VALIDAÇÃO ADICIONAL: Remover valores "string" inválidos
+      const cleanedSuggestions = { ...suggestions };
+      Object.keys(cleanedSuggestions).forEach(key => {
+        if (cleanedSuggestions[key] === "string" || cleanedSuggestions[key] === "diagnóstico_correto") {
+          console.warn(`⚠️ Removendo valor inválido "${cleanedSuggestions[key]}" do campo ${key}`);
+          delete cleanedSuggestions[key];
+        }
+      });
+      
+      suggestions = cleanedSuggestions;
+      
     } catch (parseError) {
       console.error('❌ JSON parse error:', parseError);
       console.error('Raw content:', content);

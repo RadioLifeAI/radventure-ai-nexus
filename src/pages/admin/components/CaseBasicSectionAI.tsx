@@ -20,9 +20,19 @@ export function CaseBasicSectionAI({
 }: CaseBasicSectionAIProps) {
   const { autofillBasicComplete, loading } = useCaseAutofillAPIExpanded();
 
-  const handleAutofillBasicSection = async () => {
+  const handleAutofillBasicComplete = async () => {
     try {
-      console.log('🤖 Iniciando AI: Dados Básicos Expandidos...');
+      console.log('🤖 Iniciando AI: Dados Básicos...');
+      
+      // Verificar se temos diagnóstico principal
+      if (!form.primary_diagnosis?.trim()) {
+        toast({ 
+          title: "Diagnóstico Principal Obrigatório", 
+          description: "Preencha o diagnóstico principal primeiro para gerar dados básicos.",
+          variant: "destructive" 
+        });
+        return;
+      }
       
       const suggestions = await autofillBasicComplete(form);
       
@@ -31,75 +41,45 @@ export function CaseBasicSectionAI({
         return;
       }
 
-      console.log('✅ Sugestões recebidas:', suggestions);
+      console.log('✅ Sugestões básicas recebidas:', suggestions);
 
       // Aplicar sugestões ao formulário
       const updatedFields: string[] = [];
       const updates: any = {};
 
-      // Campos básicos existentes
-      if (suggestions.category_id) {
-        updates.category_id = suggestions.category_id;
-        updatedFields.push('category_id');
-      }
-      
-      if (suggestions.difficulty_level) {
-        updates.difficulty_level = suggestions.difficulty_level;
-        updatedFields.push('difficulty_level');
-      }
-      
-      if (suggestions.points) {
-        updates.points = suggestions.points;
-        updatedFields.push('points');
-      }
-      
-      if (suggestions.modality) {
-        updates.modality = suggestions.modality;
-        updatedFields.push('modality');
-      }
-      
-      if (suggestions.subtype) {
-        updates.subtype = suggestions.subtype;
-        updatedFields.push('subtype');
-      }
-      
-      if (suggestions.patient_age) {
-        updates.patient_age = suggestions.patient_age;
-        updatedFields.push('patient_age');
-      }
-      
-      if (suggestions.patient_gender) {
-        updates.patient_gender = suggestions.patient_gender;
-        updatedFields.push('patient_gender');
-      }
-      
-      if (suggestions.symptoms_duration) {
-        updates.symptoms_duration = suggestions.symptoms_duration;
-        updatedFields.push('symptoms_duration');
-      }
+      // Mapeamento dos campos básicos com correção de tipos
+      const fieldMappings = [
+        'category_id', 'difficulty_level', 'points', 'modality', 'subtype',
+        'patient_age', 'patient_gender', 'symptoms_duration', 'findings', 'patient_clinical_info'
+      ];
 
-      // NOVOS CAMPOS: Achados radiológicos e resumo clínico
-      if (suggestions.findings) {
-        updates.findings = suggestions.findings;
-        updatedFields.push('findings');
-      }
-      
-      if (suggestions.patient_clinical_info) {
-        updates.patient_clinical_info = suggestions.patient_clinical_info;
-        updatedFields.push('patient_clinical_info');
-      }
+      fieldMappings.forEach(field => {
+        if (suggestions[field] !== undefined && suggestions[field] !== null) {
+          // Conversão específica para campos numéricos
+          if (field === 'category_id' && typeof suggestions[field] === 'number') {
+            updates[field] = suggestions[field];
+          } else if (field === 'difficulty_level' && typeof suggestions[field] === 'number') {
+            updates[field] = suggestions[field];
+          } else if (field === 'points' && typeof suggestions[field] === 'number') {
+            updates[field] = suggestions[field];
+          } else {
+            updates[field] = suggestions[field];
+          }
+          updatedFields.push(field);
+        }
+      });
 
       if (Object.keys(updates).length > 0) {
         setForm((prev: any) => ({ ...prev, ...updates }));
         onFieldsUpdated?.(updatedFields);
         
         toast({ 
-          title: `🤖 AI: Dados Básicos Expandidos!`,
-          description: `${updatedFields.length} campos atualizados incluindo achados e resumo clínico.` 
+          title: `🤖 AI: Dados Básicos Preenchidos!`,
+          description: `${updatedFields.length} campos básicos atualizados incluindo categoria, dificuldade e modalidade.` 
         });
       } else {
         toast({ 
-          title: "Nenhum campo para atualizar",
+          title: "Nenhum campo básico para atualizar",
           description: "Os dados básicos já estão completos ou não puderam ser determinados."
         });
       }
@@ -118,7 +98,7 @@ export function CaseBasicSectionAI({
     <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
       <Button
         type="button"
-        onClick={handleAutofillBasicSection}
+        onClick={handleAutofillBasicComplete}
         disabled={loading || disabled}
         variant="outline"
         size="sm"
@@ -133,8 +113,8 @@ export function CaseBasicSectionAI({
       </Button>
       
       <div className="text-xs text-blue-700">
-        <div>Analisa diagnóstico + contexto para sugerir:</div>
-        <div className="font-medium">Categoria • Dificuldade • Modalidade • Demografia • Achados • Resumo</div>
+        <div>Preenche dados fundamentais do caso:</div>
+        <div className="font-medium">Categoria • Dificuldade • Modalidade • Demografia • Achados</div>
       </div>
     </div>
   );

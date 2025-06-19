@@ -1,8 +1,9 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { HelpCircle, Loader2 } from "lucide-react";
+import { BookOpen, Loader2, Shuffle } from "lucide-react";
 import { useCaseAutofillAPIExpanded } from "../hooks/useCaseAutofillAPIExpanded";
+import { shuffleAlternativesWithFeedback } from "../hooks/shuffleUtils";
 import { toast } from "@/components/ui/use-toast";
 
 interface CaseQuizCompleteAIProps {
@@ -22,29 +23,18 @@ export function CaseQuizCompleteAI({
 
   const handleAutofillQuizComplete = async () => {
     try {
-      console.log('🤖 Iniciando AI: Quiz Completo baseado em diagnósticos...');
+      console.log('🤖 Iniciando AI: Quiz Inteligente...');
       
       // Verificar se temos diagnóstico principal
       if (!form.primary_diagnosis?.trim()) {
         toast({ 
           title: "Diagnóstico Principal Obrigatório", 
-          description: "Preencha o diagnóstico principal primeiro. Use 'AI: Dados Estruturados' para gerar os diagnósticos diferenciais.",
+          description: "Preencha o diagnóstico principal primeiro para gerar quiz inteligente.",
           variant: "destructive" 
         });
         return;
       }
-
-      // Verificar se temos diagnósticos diferenciais (idealmente 3 para formar quiz)
-      const differentials = form.differential_diagnoses || [];
-      if (differentials.length < 3) {
-        toast({ 
-          title: "Diagnósticos Diferenciais Recomendados", 
-          description: "Para um quiz mais rico, use primeiro 'AI: Dados Estruturados' para gerar 4 diagnósticos diferenciais.",
-          variant: "destructive" 
-        });
-        return;
-      }
-
+      
       const suggestions = await autofillQuizComplete(form);
       
       if (!suggestions) {
@@ -52,92 +42,142 @@ export function CaseQuizCompleteAI({
         return;
       }
 
-      console.log('✅ Sugestões recebidas:', suggestions);
+      console.log('✅ Sugestões de quiz recebidas:', suggestions);
 
       // Aplicar sugestões ao formulário
       const updatedFields: string[] = [];
       const updates: any = {};
 
-      if (suggestions.main_question) {
-        updates.main_question = suggestions.main_question;
-        updatedFields.push('main_question');
-      }
-      
-      if (suggestions.answer_options && Array.isArray(suggestions.answer_options)) {
-        // Garantir que temos exatamente 4 alternativas
-        if (suggestions.answer_options.length === 4) {
-          updates.answer_options = suggestions.answer_options;
-          updatedFields.push('answer_options');
-          
-          // A primeira alternativa deve ser sempre o diagnóstico correto
-          updates.correct_answer_index = 0;
-          updatedFields.push('correct_answer_index');
-        } else {
-          console.warn(`⚠️ Esperadas 4 alternativas, recebidas ${suggestions.answer_options.length}`);
+      // Mapeamento dos campos do quiz
+      const quizFields = [
+        'main_question', 'answer_options', 'correct_answer_index', 
+        'answer_feedbacks', 'answer_short_tips'
+      ];
+
+      quizFields.forEach(field => {
+        if (suggestions[field] !== undefined && suggestions[field] !== null) {
+          updates[field] = suggestions[field];
+          updatedFields.push(field);
         }
-      }
-      
-      if (suggestions.answer_feedbacks && Array.isArray(suggestions.answer_feedbacks)) {
-        if (suggestions.answer_feedbacks.length === 4) {
-          updates.answer_feedbacks = suggestions.answer_feedbacks;
-          updatedFields.push('answer_feedbacks');
-        }
-      }
-      
-      if (suggestions.answer_short_tips && Array.isArray(suggestions.answer_short_tips)) {
-        if (suggestions.answer_short_tips.length === 4) {
-          updates.answer_short_tips = suggestions.answer_short_tips;
-          updatedFields.push('answer_short_tips');
-        }
+      });
+
+      // EMBARALHAR AUTOMATICAMENTE APÓS GERAR O QUIZ
+      if (updates.answer_options && Array.isArray(updates.answer_options) && updates.answer_options.length === 4) {
+        const shuffled = shuffleAlternativesWithFeedback(
+          updates.answer_options,
+          updates.answer_feedbacks || [],
+          updates.answer_short_tips || [],
+          updates.correct_answer_index || 0
+        );
+        
+        updates.answer_options = shuffled.options;
+        updates.answer_feedbacks = shuffled.feedbacks;
+        updates.answer_short_tips = shuffled.tips;
+        updates.correct_answer_index = shuffled.correctIdx;
+        
+        console.log('🔀 Quiz embaralhado automaticamente após geração');
       }
 
       if (Object.keys(updates).length > 0) {
         setForm((prev: any) => ({ ...prev, ...updates }));
         onFieldsUpdated?.(updatedFields);
         
-        const diffCount = form.differential_diagnoses ? form.differential_diagnoses.length : 0;
+        const optionsCount = updates.answer_options ? updates.answer_options.length : 0;
         toast({ 
-          title: `🤖 AI: Quiz Completo Gerado!`,
-          description: `Quiz baseado no diagnóstico principal + ${diffCount} diagnósticos diferenciais como alternativas.` 
+          title: `🤖 AI: Quiz Inteligente Gerado!`,
+          description: `Quiz completo com ${optionsCount} alternativas geradas e embaralhadas automaticamente.` 
         });
       } else {
         toast({ 
-          title: "Nenhum quiz para gerar",
-          description: "O quiz já está completo ou não pôde ser gerado. Verifique se há diagnósticos diferenciais."
+          title: "Nenhum campo de quiz para atualizar",
+          description: "O quiz já está completo ou não pôde ser determinado."
         });
       }
 
     } catch (error) {
-      console.error('💥 Erro na AI de quiz completo:', error);
+      console.error('💥 Erro na AI de quiz:', error);
       toast({ 
-        title: "Erro na AI de Quiz Completo", 
-        description: "Tente novamente ou preencha os diagnósticos primeiro.",
+        title: "Erro na AI de Quiz Inteligente", 
+        description: "Tente novamente ou preencha o diagnóstico principal primeiro.",
         variant: "destructive" 
       });
     }
   };
 
+  const handleShuffleQuiz = () => {
+    if (!form.answer_options || form.answer_options.length !== 4) {
+      toast({
+        title: "Quiz Incompleto",
+        description: "Preencha todas as 4 alternativas antes de embaralhar.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const shuffled = shuffleAlternativesWithFeedback(
+      form.answer_options,
+      form.answer_feedbacks || [],
+      form.answer_short_tips || [],
+      form.correct_answer_index || 0
+    );
+
+    setForm((prev: any) => ({
+      ...prev,
+      answer_options: shuffled.options,
+      answer_feedbacks: shuffled.feedbacks,
+      answer_short_tips: shuffled.tips,
+      correct_answer_index: shuffled.correctIdx,
+    }));
+
+    toast({
+      title: "🔀 Quiz Embaralhado!",
+      description: "Alternativas reorganizadas mantendo a integridade dos feedbacks."
+    });
+  };
+
   return (
-    <div className="flex items-center gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-      <Button
-        type="button"
-        onClick={handleAutofillQuizComplete}
-        disabled={loading || disabled}
-        variant="outline"
-        size="sm"
-        className="bg-yellow-500 text-white hover:bg-yellow-600 border-yellow-500"
-      >
-        {loading ? (
-          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-        ) : (
-          <HelpCircle className="h-4 w-4 mr-2" />
-        )}
-        🤖 AI: Quiz Inteligente
-      </Button>
-      
-      <div className="text-xs text-yellow-700">
-        <div>Gera quiz baseado nos diagnósticos:</div>
-        <div className="font-medium">Principal como correto + 3 Diferenciais como alternativas</div>
+    <div className="space-y-3">
+      {/* Botão Principal AI Quiz */}
+      <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+        <Button
+          type="button"
+          onClick={handleAutofillQuizComplete}
+          disabled={loading || disabled}
+          variant="outline"
+          size="sm"
+          className="bg-green-500 text-white hover:bg-green-600 border-green-500"
+        >
+          {loading ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <BookOpen className="h-4 w-4 mr-2" />
+          )}
+          🤖 AI: Quiz Inteligente
+        </Button>
+        
+        <div className="text-xs text-green-700">
+          <div>Gera quiz baseado no diagnóstico:</div>
+          <div className="font-medium">Pergunta • 4 Alternativas • Feedbacks • Embaralha</div>
+        </div>
+      </div>
+
+      {/* Botão Separado para Embaralhar */}
+      <div className="flex items-center gap-2 p-2 bg-orange-50 border border-orange-200 rounded-lg">
+        <Button
+          type="button"
+          onClick={handleShuffleQuiz}
+          disabled={!form.answer_options || form.answer_options.length !== 4}
+          variant="outline"
+          size="sm"
+          className="bg-orange-500 text-white hover:bg-orange-600 border-orange-500"
+        >
+          <Shuffle className="h-4 w-4 mr-2" />
+          🔀 Embaralhar Quiz
+        </Button>
+        
+        <div className="text-xs text-orange-700">
+          Reorganiza alternativas mantendo feedbacks corretos
+        </div>
       </div>
     </div>
   );

@@ -76,7 +76,7 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
 
   return (
     <div className="space-y-6">
-      {/* Botão AI Dados Estruturados */}
+      {/* Botão AI Dados Estruturados - ÚNICO */}
       <CaseStructuredDataAI 
         form={form} 
         setForm={setForm}
