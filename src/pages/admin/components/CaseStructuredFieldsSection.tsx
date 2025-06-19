@@ -20,7 +20,6 @@ const TARGET_AUDIENCE_BASE = [
   "Especialização", "Mestrado", "Doutorado", "Educação Continuada"
 ];
 
-// CORREÇÃO: Remover tags fixas - serão geradas dinamicamente
 const LEARNING_OBJECTIVES_BASE = [
   "Reconhecer achados radiológicos", "Diferenciar patologias", "Identificar achados específicos", 
   "Avaliar correlação clínica", "Compreender fisiopatologia"
@@ -29,8 +28,7 @@ const LEARNING_OBJECTIVES_BASE = [
 export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, renderTooltipTip }: Props) {
   const { suggestions, generateSuggestions } = useDynamicSuggestions();
 
-  // Verificar se diagnóstico principal foi preenchido antes de permitir usar o botão
-  const canUseStructuredAI = form.primary_diagnosis?.trim();
+  console.log('🎨 CaseStructuredFieldsSection - Renderizando (SEM botão AI duplicado)');
 
   // Aplicar diagnósticos diferenciais automaticamente quando gerados
   useEffect(() => {
@@ -66,22 +64,10 @@ export function CaseStructuredFieldsSection({ form, setForm, handleFormChange, r
     }
   };
 
-  const handleSuggestionsGenerated = async (generatedSuggestions: any) => {
-    // Atualizar as sugestões dinâmicas quando o botão AI for clicado
-    await generateSuggestions(form.primary_diagnosis);
-  };
-
   return (
     <div className="space-y-6">
-      {/* Aviso quando AI não está disponível */}
-      {!canUseStructuredAI && (
-        <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
-          <div className="text-sm text-gray-600">
-            💡 Preencha o <strong>Diagnóstico Principal</strong> primeiro para habilitar a AI de Dados Estruturados
-          </div>
-        </div>
-      )}
-
+      {/* NOTA: Botão AI removido daqui - está no CaseFormGamifiedLayout */}
+      
       {/* Diagnóstico Estruturado */}
       <div className="p-4 border border-blue-200 rounded-lg bg-blue-50">
         <h3 className="font-semibold text-blue-900 mb-4 flex items-center gap-2">

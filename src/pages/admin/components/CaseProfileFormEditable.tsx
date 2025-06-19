@@ -151,19 +151,19 @@ export function CaseProfileFormEditable({
     );
   }
 
-  // CORREÇÃO: Garantir que setForm seja uma função estável
+  // CORREÇÃO: Garantir que setForm seja uma função estável e correta
   const stableSetForm = React.useCallback((updater: any) => {
     console.log('🔧 stableSetForm chamada com:', typeof updater === 'function' ? 'function' : updater);
     
     if (typeof updater === 'function') {
       setForm((prevForm: any) => {
         const newForm = updater(prevForm);
-        console.log('🔧 stableSetForm - Estado anterior:', prevForm);
-        console.log('🔧 stableSetForm - Novo estado:', newForm);
+        console.log('🔧 stableSetForm - Estado anterior:', JSON.stringify(prevForm, null, 2));
+        console.log('🔧 stableSetForm - Novo estado:', JSON.stringify(newForm, null, 2));
         return newForm;
       });
     } else {
-      console.log('🔧 stableSetForm - Definindo estado diretamente:', updater);
+      console.log('🔧 stableSetForm - Definindo estado diretamente:', JSON.stringify(updater, null, 2));
       setForm(updater);
     }
   }, [setForm]);
@@ -363,17 +363,17 @@ export function CaseProfileFormEditable({
           title="Dados Estruturados"
           description="Configure os campos estruturados para filtros avançados e AI (PRIMEIRO PASSO)"
         >
-          {/* ADICIONANDO o botão AI para dados estruturados */}
+          {/* CORREÇÃO: Botão AI para dados estruturados com logs de debug */}
           <CaseStructuredDataAI 
             form={form}
             setForm={stableSetForm}
             onFieldsUpdated={(fields) => {
+              console.log('📢 CaseProfileFormEditable - Campos estruturados atualizados:', fields);
               setHighlightedFields(fields);
               setTimeout(() => setHighlightedFields([]), 2000);
             }}
             onSuggestionsGenerated={(suggestions) => {
-              // Integrar com o sistema de sugestões dinâmicas
-              console.log('✅ Sugestões estruturadas geradas:', suggestions);
+              console.log('✅ CaseProfileFormEditable - Sugestões estruturadas geradas:', suggestions);
             }}
           />
           
@@ -395,11 +395,12 @@ export function CaseProfileFormEditable({
             showPreview={showPreview}
           />
           
-          {/* Botão AI para seção básica com validação de dependência - USANDO stableSetForm */}
+          {/* CORREÇÃO: Botão AI para seção básica com validação melhorada */}
           <CaseBasicSectionAI 
             form={form}
             setForm={stableSetForm}
             onFieldsUpdated={(fields) => {
+              console.log('📢 CaseProfileFormEditable - Campos básicos atualizados:', fields);
               setHighlightedFields(fields);
               setTimeout(() => setHighlightedFields([]), 2000);
             }}

@@ -24,23 +24,33 @@ export function CaseStructuredDataAI({
 
   const handleAutofillStructuredComplete = async () => {
     try {
-      console.log('🤖 Iniciando AI: Dados Estruturados...');
+      console.log('🤖 CaseStructuredDataAI - Iniciando preenchimento de dados estruturados...');
+      console.log('🔍 CaseStructuredDataAI - Estado inicial do form:', {
+        primary_diagnosis: form.primary_diagnosis,
+        differential_diagnoses: form.differential_diagnoses,
+        anatomical_regions: form.anatomical_regions
+      });
       
       const suggestions = await autofillStructuredComplete(form);
       
       if (!suggestions) {
-        console.log('❌ Nenhuma sugestão estruturada recebida');
+        console.log('❌ CaseStructuredDataAI - Nenhuma sugestão recebida');
+        toast({ 
+          title: "Erro na AI de Dados Estruturados", 
+          description: "Não foi possível gerar sugestões estruturadas.",
+          variant: "destructive" 
+        });
         return;
       }
 
-      console.log('✅ Sugestões estruturadas recebidas:', suggestions);
+      console.log('✅ CaseStructuredDataAI - Sugestões recebidas:', suggestions);
 
-      // Aplicar sugestões ao formulário
+      // CORREÇÃO: Aplicar sugestões estruturadas de forma robusta
       const updatedFields: string[] = [];
       const updates: any = {};
 
-      // Mapeamento dos campos estruturados
-      const structuredFieldMappings = [
+      // Campos estruturados principais
+      const structuredFields = [
         'primary_diagnosis', 'secondary_diagnoses', 'case_classification', 'cid10_code',
         'anatomical_regions', 'finding_types', 'laterality', 'main_symptoms', 
         'vital_signs', 'medical_history', 'learning_objectives', 'pathology_types',
@@ -50,32 +60,66 @@ export function CaseStructuredDataAI({
         'exam_context', 'differential_diagnoses'
       ];
 
-      structuredFieldMappings.forEach(field => {
+      structuredFields.forEach(field => {
         if (suggestions[field] !== undefined && suggestions[field] !== null) {
-          updates[field] = suggestions[field];
-          updatedFields.push(field);
+          // Validação especial para arrays
+          if (Array.isArray(suggestions[field])) {
+            if (suggestions[field].length > 0) {
+              updates[field] = suggestions[field];
+              updatedFields.push(field);
+              console.log(`✅ CaseStructuredDataAI - Campo array ${field} atualizado:`, suggestions[field]);
+            }
+          } 
+          // Validação especial para objetos
+          else if (typeof suggestions[field] === 'object' && suggestions[field] !== null) {
+            if (Object.keys(suggestions[field]).length > 0) {
+              updates[field] = suggestions[field];
+              updatedFields.push(field);
+              console.log(`✅ CaseStructuredDataAI - Campo objeto ${field} atualizado:`, suggestions[field]);
+            }
+          }
+          // Validação para strings e números
+          else if (suggestions[field] !== '' && suggestions[field] !== 0) {
+            updates[field] = suggestions[field];
+            updatedFields.push(field);
+            console.log(`✅ CaseStructuredDataAI - Campo ${field} atualizado:`, suggestions[field]);
+          }
         }
       });
 
       if (Object.keys(updates).length > 0) {
-        console.log('🔄 Atualizando formulário com dados estruturados:', updates);
-        setForm((prev: any) => ({ ...prev, ...updates }));
-        onFieldsUpdated?.(updatedFields);
-        onSuggestionsGenerated?.(suggestions);
+        console.log('🔄 CaseStructuredDataAI - Aplicando updates:', updates);
+        
+        // CORREÇÃO: Garantir atualização imutável
+        setForm((prevForm: any) => {
+          const newForm = { ...prevForm, ...updates };
+          console.log('🔄 CaseStructuredDataAI - Form atualizado de:', prevForm);
+          console.log('🔄 CaseStructuredDataAI - Form atualizado para:', newForm);
+          return newForm;
+        });
+        
+        // Notificar callbacks
+        if (onFieldsUpdated) {
+          onFieldsUpdated(updatedFields);
+        }
+        if (onSuggestionsGenerated) {
+          onSuggestionsGenerated(suggestions);
+        }
         
         toast({ 
           title: `🤖 AI: Dados Estruturados Preenchidos!`,
           description: `${updatedFields.length} campos estruturados atualizados incluindo diagnóstico principal e diferenciais.` 
         });
       } else {
+        console.log('⚠️ CaseStructuredDataAI - Nenhum campo para atualizar');
         toast({ 
-          title: "Nenhum campo estruturado para atualizar",
+          title: "Dados já preenchidos",
           description: "Os dados estruturados já estão completos ou não puderam ser determinados."
         });
       }
 
     } catch (error) {
-      console.error('💥 Erro na AI de dados estruturados:', error);
+      console.error('💥 CaseStructuredDataAI - Erro:', error);
       toast({ 
         title: "Erro na AI de Dados Estruturados", 
         description: "Tente novamente ou verifique se há informações suficientes.",
@@ -83,6 +127,8 @@ export function CaseStructuredDataAI({
       });
     }
   };
+
+  console.log('🎨 CaseStructuredDataAI - Renderizando botão');
 
   return (
     <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
@@ -105,6 +151,9 @@ export function CaseStructuredDataAI({
       <div className="text-xs text-green-700">
         <div>Preenche campos estruturados automaticamente:</div>
         <div className="font-medium">Diagnóstico • Diferenciais • Regiões Anatômicas • Metadados</div>
+        <div className="text-green-600 font-semibold mt-1">
+          ✅ Use PRIMEIRO - Base para todos os outros botões AI
+        </div>
       </div>
     </div>
   );
