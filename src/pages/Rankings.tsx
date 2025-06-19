@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { HeaderNav } from "@/components/HeaderNav";
+import HeaderNav from "@/components/HeaderNav";
 import { PodiumDisplay } from "@/components/rankings/PodiumDisplay";
 import { PlayerRankingCard } from "@/components/rankings/PlayerRankingCard";
 import { RankingFilters } from "@/components/rankings/RankingFilters";

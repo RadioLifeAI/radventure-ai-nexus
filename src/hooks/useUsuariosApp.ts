@@ -38,8 +38,6 @@ export function useUsuariosApp() {
         headers: {
           'Authorization': `Bearer ${tokenToVerify}`
         }
-      }, {
-        method: 'POST'
       });
 
       if (error || !data?.success) {
@@ -66,8 +64,6 @@ export function useUsuariosApp() {
     try {
       const { data, error } = await supabase.functions.invoke('auth-usuarios', {
         body: { email, password }
-      }, {
-        method: 'POST'
       });
 
       if (error || !data?.success) {
@@ -103,8 +99,6 @@ export function useUsuariosApp() {
     try {
       const { data, error } = await supabase.functions.invoke('auth-usuarios', {
         body: { email, password, nome_completo }
-      }, {
-        method: 'POST'
       });
 
       if (error || !data?.success) {
@@ -138,8 +132,6 @@ export function useUsuariosApp() {
           headers: {
             'Authorization': `Bearer ${token}`
           }
-        }, {
-          method: 'POST'
         });
       }
     } catch (error) {

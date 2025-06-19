@@ -23,6 +23,24 @@ interface UsuarioAppProfile {
   updated_at: string;
 }
 
+// Interface para compatibilidade com componente existente
+interface UserProfile {
+  id: string;
+  email: string;
+  full_name: string;
+  username: string;
+  type: 'USER' | 'ADMIN' | 'SUPER_ADMIN';
+  avatar_url?: string;
+  total_points: number;
+  radcoin_balance: number;
+  medical_specialty?: string;
+  academic_stage?: string;
+  city?: string;
+  state?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export function UserManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<"all" | "USER" | "ADMIN">("all");
@@ -41,7 +59,11 @@ export function UserManagement() {
         .order("created_at", { ascending: false });
 
       if (filterType !== "all") {
-        query = query.eq("tipo", filterType);
+        if (filterType === "ADMIN") {
+          query = query.in("tipo", ["ADMIN", "SUPER_ADMIN"]);
+        } else {
+          query = query.eq("tipo", filterType);
+        }
       }
 
       if (searchTerm) {
@@ -61,9 +83,12 @@ export function UserManagement() {
     },
   });
 
-  const handleEditUser = (user: UsuarioAppProfile) => {
-    setSelectedUser(user);
-    setIsEditModalOpen(true);
+  const handleEditUser = (user: UserProfile) => {
+    const originalUser = users.find(u => u.id === user.id);
+    if (originalUser) {
+      setSelectedUser(originalUser);
+      setIsEditModalOpen(true);
+    }
   };
 
   const handleBanUser = async (userId: string) => {
@@ -101,7 +126,7 @@ export function UserManagement() {
   const adminUsers = users.filter(user => user.tipo === "ADMIN" || user.tipo === "SUPER_ADMIN").length;
 
   // Adaptar dados para compatibilidade com componente existente
-  const adaptedUsers = users.map(user => ({
+  const adaptedUsers: UserProfile[] = users.map(user => ({
     id: user.id,
     email: user.email,
     full_name: user.nome_completo,
@@ -111,6 +136,9 @@ export function UserManagement() {
     total_points: user.total_points,
     radcoin_balance: user.radcoin_balance,
     medical_specialty: user.especialidade_medica,
+    academic_stage: '', // Valor padrão para campos obrigatórios
+    city: '', // Valor padrão para campos obrigatórios
+    state: '', // Valor padrão para campos obrigatórios
     created_at: user.created_at,
     updated_at: user.updated_at
   }));
@@ -136,7 +164,7 @@ export function UserManagement() {
         setSearchTerm={setSearchTerm}
         filterType={filterType}
         setFilterType={setFilterType}
-        onEditUser={(user) => handleEditUser(users.find(u => u.id === user.id)!)}
+        onEditUser={handleEditUser}
         onBanUser={handleBanUser}
       />
 
@@ -152,6 +180,9 @@ export function UserManagement() {
             total_points: selectedUser.total_points,
             radcoin_balance: selectedUser.radcoin_balance,
             medical_specialty: selectedUser.especialidade_medica,
+            academic_stage: '',
+            city: '',
+            state: '',
             created_at: selectedUser.created_at,
             updated_at: selectedUser.updated_at
           }}
