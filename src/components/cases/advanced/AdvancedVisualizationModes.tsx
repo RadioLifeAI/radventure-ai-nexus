@@ -4,12 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Timeline,
+  Clock,
   Map,
   Grid3x3,
   Calendar,
   ArrowRight,
-  Clock,
   Brain,
   Star,
   Filter,
@@ -80,7 +79,7 @@ export function AdvancedVisualizationModes({ mode }: Props) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-xl font-bold text-white flex items-center gap-2">
-          <Timeline className="h-5 w-5 text-blue-400" />
+          <Clock className="h-5 w-5 text-blue-400" />
           Timeline de Aprendizado
         </h3>
         <div className="flex gap-2">

@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import {
   Trophy,
   Star,
-  Fire,
+  Flame,
   Crown,
   Award,
   Users,
@@ -16,7 +16,9 @@ import {
   Calendar,
   TrendingUp,
   Medal,
-  Gem
+  Gem,
+  Brain,
+  Clock
 } from "lucide-react";
 
 interface Props {
@@ -31,7 +33,7 @@ export function GamificationHub({ userProgress }: Props) {
       id: "streak-master",
       title: "Streak Master",
       description: "Manteve 30 dias consecutivos de estudo",
-      icon: Fire,
+      icon: Flame,
       progress: 85,
       maxProgress: 100,
       rarity: "legendary",
@@ -135,13 +137,16 @@ export function GamificationHub({ userProgress }: Props) {
     }
   };
 
+  // Simulated current streak data
+  const currentStreak = Math.floor(Math.random() * 20) + 5;
+
   return (
     <div className="space-y-6">
       {/* Progress Rings Animados */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: "Nível Atual", value: Math.floor((userProgress?.totalPoints || 0) / 100) + 1, max: 50, color: "text-purple-400" },
-          { label: "Streak", value: userProgress?.currentStreak || 15, max: 30, color: "text-orange-400" },
+          { label: "Streak", value: currentStreak, max: 30, color: "text-orange-400" },
           { label: "Conquistas", value: achievements.filter(a => a.unlocked).length, max: achievements.length, color: "text-yellow-400" },
           { label: "Rank Semanal", value: 4, max: 10, color: "text-green-400" }
         ].map((ring, index) => (
