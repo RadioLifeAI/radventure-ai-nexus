@@ -22,28 +22,28 @@ import { useCasesData } from "@/hooks/useCasesData";
 // Componente Card de Ações rápidas
 function ActionCard({ icon, title, description, link, color, onClick }: any) {
   return (
-    <div className="bg-[#161f38] rounded-2xl shadow-lg flex flex-col items-center p-6 min-h-[186px] hover:scale-105 transition-transform duration-200 hover:shadow-xl group">
+    <div className="bg-[#161f38] rounded-2xl shadow-lg flex flex-col items-center p-4 sm:p-6 min-h-[160px] sm:min-h-[186px] hover:scale-105 transition-transform duration-200 hover:shadow-xl group">
       <div className={`mb-2 group-hover:scale-110 transition-transform duration-200`}>
-        {React.cloneElement(icon, { size: 38, className: color })}
+        {React.cloneElement(icon, { size: 32, className: `sm:size-9 ${color}` })}
       </div>
-      <span className="mt-2 text-lg font-extrabold text-white drop-shadow-sm text-center">{title}</span>
-      <span className="mt-1 text-sm text-cyan-100 text-center leading-relaxed">{description}</span>
+      <span className="mt-2 text-base sm:text-lg font-extrabold text-white drop-shadow-sm text-center leading-tight">{title}</span>
+      <span className="mt-1 text-xs sm:text-sm text-cyan-100 text-center leading-relaxed px-1">{description}</span>
       {onClick ? (
         <Button
           onClick={onClick}
           size="sm"
           variant="outline"
-          className="mt-4 border-none text-[#11d3fc] bg-white hover:bg-[#d1f6fd] font-bold px-4 rounded-xl shadow hover:shadow-lg transition-all duration-200"
+          className="mt-3 sm:mt-4 border-none text-[#11d3fc] bg-white hover:bg-[#d1f6fd] font-bold px-3 sm:px-4 rounded-xl shadow hover:shadow-lg transition-all duration-200 text-xs sm:text-sm"
         >
-          <Activity size={15} className="mr-1" />
+          <Activity size={12} className="sm:size-4 mr-1" />
           {title === "Central de Casos" ? "Explorar" : title === "Crie sua Jornada" ? "Nova Jornada" : "Ver Eventos"}
         </Button>
       ) : (
         <Button asChild size="sm" variant="outline"
-          className="mt-4 border-none text-[#11d3fc] bg-white hover:bg-[#d1f6fd] font-bold px-4 rounded-xl shadow hover:shadow-lg transition-all duration-200"
+          className="mt-3 sm:mt-4 border-none text-[#11d3fc] bg-white hover:bg-[#d1f6fd] font-bold px-3 sm:px-4 rounded-xl shadow hover:shadow-lg transition-all duration-200 text-xs sm:text-sm"
         >
           <Link to={link || "#"}>
-            <Activity size={15} className="mr-1" />
+            <Activity size={12} className="sm:size-4 mr-1" />
             {title === "Central de Casos" ? "Explorar" : title === "Crie sua Jornada" ? "Nova Jornada" : "Ver Eventos"}
           </Link>
         </Button>
@@ -74,7 +74,7 @@ export default function Dashboard() {
     navigate(`/evento/${eventId}`);
   }
 
-  // Handlers para botões de ação
+  // Handlers para botões de ação - CORRIGIDO
   const handleCentralCasos = () => {
     navigate('/app/casos');
   };
@@ -119,8 +119,8 @@ export default function Dashboard() {
         {/* SEÇÃO DE EVENTOS GAMIFICADOS */}
         <EventsSectionPlayer onEnterEvent={handleEnterEvent} />
 
-        {/* Actions Cards - Agora com handlers funcionais */}
-        <section className="w-full grid grid-cols-1 sm:grid-cols-3 gap-6 mt-2 mb-4">
+        {/* Actions Cards - Agora com handlers funcionais e responsivos */}
+        <section className="w-full grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mt-2 mb-4">
           <ActionCard
             icon={<Activity />}
             title="Central de Casos"
