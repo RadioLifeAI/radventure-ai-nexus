@@ -25,8 +25,11 @@ export function useActiveEvents() {
 
   useEffect(() => {
     let ignore = false;
+    let channel: any = null;
     
     async function fetchEvents() {
+      if (ignore) return;
+      
       setLoading(true);
       try {
         // Buscar eventos
@@ -68,11 +71,15 @@ export function useActiveEvents() {
       }
     }
 
+    // Fetch initial data
     fetchEvents();
 
+    // Create a unique channel name to avoid conflicts
+    const channelName = `events-realtime-${Date.now()}`;
+    
     // Configurar subscription para updates em tempo real
-    const channel = supabase
-      .channel('events-realtime')
+    channel = supabase
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -81,7 +88,9 @@ export function useActiveEvents() {
           table: 'events'
         },
         () => {
-          fetchEvents();
+          if (!ignore) {
+            fetchEvents();
+          }
         }
       )
       .on(
@@ -92,16 +101,25 @@ export function useActiveEvents() {
           table: 'event_registrations'
         },
         () => {
-          fetchEvents();
+          if (!ignore) {
+            fetchEvents();
+          }
         }
-      )
-      .subscribe();
+      );
+
+    // Subscribe to the channel
+    channel.subscribe((status: string) => {
+      console.log('Events subscription status:', status);
+    });
 
     return () => {
       ignore = true;
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+        channel = null;
+      }
     };
-  }, []);
+  }, []); // Empty dependency array to ensure effect runs only once
 
   return { events, loading };
 }
