@@ -78,14 +78,25 @@ export function useJourneySearch(filters: JourneyFilters) {
       }
 
       if (filters.estimatedTime && filters.estimatedTime !== '') {
-        // Converter string para number para estimated_solve_time se necessário
-        // Assumindo que estimatedTime pode ser um número em string ou um valor direto
-        const timeNumber = parseInt(filters.estimatedTime);
-        if (!isNaN(timeNumber)) {
-          query = query.eq('estimated_solve_time', timeNumber);
+        // Mapear valores textuais para números ou usar números diretos
+        let timeValue: number | null = null;
+        
+        if (filters.estimatedTime === 'fast') {
+          timeValue = 10; // < 10 minutos
+        } else if (filters.estimatedTime === 'medium') {
+          timeValue = 15; // 10-20 minutos
+        } else if (filters.estimatedTime === 'long') {
+          timeValue = 25; // > 20 minutos
         } else {
-          // Se não for um número, usar como string (caso o campo aceite strings também)
-          query = query.eq('estimated_solve_time', filters.estimatedTime);
+          // Tentar converter string para número
+          const timeNumber = parseInt(filters.estimatedTime);
+          if (!isNaN(timeNumber)) {
+            timeValue = timeNumber;
+          }
+        }
+        
+        if (timeValue !== null) {
+          query = query.eq('estimated_solve_time', timeValue);
         }
       }
 
