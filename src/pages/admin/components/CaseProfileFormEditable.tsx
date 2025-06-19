@@ -21,6 +21,8 @@ import { CaseTemplateChooser } from "./CaseTemplateChooser";
 import { CaseFormGamifiedHelpers } from "./CaseFormGamifiedHelpers";
 import { CaseFormGamifiedLayout } from "./CaseFormGamifiedLayout";
 import { CaseAdvancedImageManagement } from "./CaseAdvancedImageManagement";
+import { TempImageUpload } from "./TempImageUpload";
+import { useTempCaseImages } from "@/hooks/useTempCaseImages";
 import { supabase } from "@/integrations/supabase/client";
 
 // Novos componentes AI por seção
@@ -40,6 +42,9 @@ export function CaseProfileFormEditable({
 }) {
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
   const [difficulties, setDifficulties] = useState<{ id: number; level: number; description: string | null }[]>([]);
+
+  // Hook para imagens temporárias (usado apenas na criação)
+  const { associateWithCase, clearTempImages } = useTempCaseImages();
 
   useEffect(() => {
     supabase.from("medical_specialties")
@@ -79,7 +84,7 @@ export function CaseProfileFormEditable({
     if (editingCase) {
       setForm({
         ...editingCase,
-        // Garantir arrays vazios para campos novos
+        // ... keep existing code (garantir arrays vazios para campos novos)
         secondary_diagnoses: editingCase.secondary_diagnoses || [],
         anatomical_regions: editingCase.anatomical_regions || [],
         finding_types: editingCase.finding_types || [],
@@ -155,7 +160,7 @@ export function CaseProfileFormEditable({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     
-    // Validação específica para casos Radiopaedia
+    // ... keep existing code (validação específica para casos Radiopaedia)
     if (form.is_radiopaedia_case) {
       if (!form.reference_citation?.trim()) {
         toast({ title: "Citação da referência é obrigatória para casos do Radiopaedia", variant: "destructive" });
@@ -191,6 +196,7 @@ export function CaseProfileFormEditable({
       }));
 
       const payload: any = {
+        // ... keep existing code (payload construction)
         specialty: selectedCategory ? selectedCategory.name : null,
         category_id: form.category_id ? Number(form.category_id) : null,
         case_number: form.case_number ?? null,
@@ -276,11 +282,29 @@ export function CaseProfileFormEditable({
           .select());
       }
 
-      if (!error) {
-        const resultTitle = data?.[0]?.title ?? form.title;
+      if (!error && data?.[0]) {
+        const caseId = data[0].id;
+        const resultTitle = data[0].title ?? form.title;
+        
+        // Se não estamos em modo edição, associar imagens temporárias ao caso
+        if (!isEditMode) {
+          try {
+            await associateWithCase(caseId);
+            console.log('✅ Imagens temporárias associadas ao caso:', caseId);
+          } catch (imageError) {
+            console.warn('⚠️ Erro ao associar imagens temporárias:', imageError);
+            // Não falhar o salvamento por causa das imagens
+          }
+        }
+        
         setFeedback(isEditMode ? "Caso atualizado com sucesso!" : "Caso cadastrado com sucesso!");
         toast({ title: `Caso ${isEditMode ? "atualizado" : "criado"}! Título: ${resultTitle}` });
-        if (!isEditMode) resetForm();
+        
+        if (!isEditMode) {
+          resetForm();
+          clearTempImages(); // Limpar imagens temporárias após sucesso
+        }
+        
         onCreated?.();
       } else {
         console.error("Database error:", error);
@@ -296,7 +320,7 @@ export function CaseProfileFormEditable({
     setTimeout(() => setFeedback(""), 2300);
   }
 
-  // Fix autoTitlePreview - Convert strings to numbers for generateTitle
+  // ... keep existing code (autoTitlePreview and handleAutoGenerateTitle)
   const autoTitlePreview =
     form.category_id && form.modality && form.difficulty_level
       ? generateTitle(Number(form.category_id), form.modality, Number(form.difficulty_level)).title
@@ -416,15 +440,23 @@ export function CaseProfileFormEditable({
 
         <CaseFormGamifiedLayout
           section="advanced"
-          title="Gestão Avançada de Imagens"
-          description="Sistema robusto para upload e gerenciamento de múltiplas imagens"
+          title="Gestão de Imagens"
+          description={isEditMode ? "Sistema robusto para upload e gerenciamento de múltiplas imagens" : "Upload de imagens para o novo caso médico"}
         >
-          <CaseAdvancedImageManagement 
-            caseId={editingCase?.id}
-            onImagesChange={(images) => {
-              console.log('Images updated:', images.length);
-            }}
-          />
+          {isEditMode ? (
+            <CaseAdvancedImageManagement 
+              caseId={editingCase?.id}
+              onImagesChange={(images) => {
+                console.log('Images updated:', images.length);
+              }}
+            />
+          ) : (
+            <TempImageUpload 
+              onChange={(images) => {
+                console.log('Temp images updated:', images.length);
+              }}
+            />
+          )}
         </CaseFormGamifiedLayout>
 
         <CaseFormGamifiedLayout
