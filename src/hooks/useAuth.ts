@@ -103,6 +103,33 @@ export function useAuth() {
     }
   };
 
+  const signInWithGoogle = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/app`
+        }
+      });
+
+      if (error) throw error;
+
+      // Note: The redirect will happen automatically, so we don't show a success toast here
+      return { data, error: null };
+    } catch (error: any) {
+      console.error('Google sign in error:', error);
+      toast({
+        title: 'Erro no login com Google',
+        description: error.message,
+        variant: 'destructive'
+      });
+      return { data: null, error };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const signOut = async () => {
     setLoading(true);
     try {
@@ -131,6 +158,7 @@ export function useAuth() {
     loading,
     signUp,
     signIn,
+    signInWithGoogle,
     signOut,
     isAuthenticated: !!user
   };
