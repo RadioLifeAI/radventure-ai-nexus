@@ -164,7 +164,7 @@ export function HeaderNav() {
 
       {/* Profile Settings Modal */}
       <ProfileSettingsModal 
-        open={showProfileSettings}
+        isOpen={showProfileSettings}
         onClose={() => setShowProfileSettings(false)}
       />
     </>

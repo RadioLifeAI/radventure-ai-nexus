@@ -26,7 +26,7 @@ export function useSystemStatus() {
       }
       
       console.log('System status fetched:', data);
-      return data as SystemStatus;
+      return data as unknown as SystemStatus;
     },
     refetchInterval: 30000,
     refetchOnWindowFocus: true,

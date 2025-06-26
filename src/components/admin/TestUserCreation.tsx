@@ -8,11 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { UserPlus, TestTubes, CheckCircle, XCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export function TestUserCreation() {
   const { signUp } = useAuth();
   const [testResults, setTestResults] = useState<Array<{type: string, status: 'success' | 'error', message: string}>>([]);
-  const [istesting, setIstesting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [userForm, setUserForm] = useState({
     email: '',
     password: '',

@@ -27,7 +27,7 @@ export function ProfileSettingsModal({ isOpen, onClose }: ProfileSettingsModalPr
     country_code: profile?.country_code || 'BR',
     medical_specialty: profile?.medical_specialty || '',
     academic_specialty: profile?.academic_specialty || '',
-    academic_stage: profile?.academic_stage || '',
+    academic_stage: (profile?.academic_stage as 'Student' | 'Intern' | 'Resident' | 'Specialist') || 'Student',
     college: profile?.college || ''
   });
 
