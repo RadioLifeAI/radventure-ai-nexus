@@ -13,23 +13,40 @@ export function useAuth() {
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Log específico para callback do Google OAuth
+        if (event === 'SIGNED_IN' && session?.user?.app_metadata?.provider === 'google') {
+          console.log('Google OAuth callback successful:', session.user.email);
+        }
+        
+        // Log para debug de erros
+        if (event === 'SIGNED_OUT') {
+          console.log('User signed out');
+        }
       }
     );
 
     // THEN check for existing session
     const getSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error('Error getting session:', error);
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Error getting session:', error);
+        } else {
+          console.log('Initial session check:', session?.user?.email || 'No session');
+        }
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error in getSession:', error);
+        setLoading(false);
       }
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
     };
 
     getSession();
@@ -40,7 +57,10 @@ export function useAuth() {
   const signUp = async (email: string, password: string, fullName?: string) => {
     setLoading(true);
     try {
-      const redirectUrl = `${window.location.origin}/`;
+      // Usar a URL atual como base para o redirect
+      const redirectUrl = `${window.location.origin}/app`;
+      
+      console.log('SignUp attempt with redirect URL:', redirectUrl);
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -106,16 +126,21 @@ export function useAuth() {
   const signInWithGoogle = async () => {
     setLoading(true);
     try {
+      // Usar a URL atual como base para o redirect
+      const redirectUrl = `${window.location.origin}/app`;
+      
+      console.log('Google SignIn attempt with redirect URL:', redirectUrl);
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/app`
+          redirectTo: redirectUrl
         }
       });
 
       if (error) throw error;
 
-      // Note: The redirect will happen automatically, so we don't show a success toast here
+      console.log('Google OAuth initiated successfully');
       return { data, error: null };
     } catch (error: any) {
       console.error('Google sign in error:', error);
