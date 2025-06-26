@@ -3,7 +3,7 @@ import React from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Ban } from "lucide-react";
+import { Edit, Ban, Crown } from "lucide-react";
 import type { UserProfile } from "@/types/admin";
 
 interface UsersTableProps {
@@ -11,9 +11,10 @@ interface UsersTableProps {
   isLoading: boolean;
   onEditUser: (user: UserProfile) => void;
   onBanUser: (userId: string) => void;
+  onPromoteUser: (userId: string) => void;
 }
 
-export function UsersTable({ users, isLoading, onEditUser, onBanUser }: UsersTableProps) {
+export function UsersTable({ users, isLoading, onEditUser, onBanUser, onPromoteUser }: UsersTableProps) {
   return (
     <div className="rounded-md border">
       <Table>
@@ -84,11 +85,25 @@ export function UsersTable({ users, isLoading, onEditUser, onBanUser }: UsersTab
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
+                    
+                    {user.type === 'USER' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onPromoteUser(user.id)}
+                        className="text-green-600 hover:text-green-700"
+                        title="Promover a ADMIN"
+                      >
+                        <Crown className="h-4 w-4" />
+                      </Button>
+                    )}
+                    
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => onBanUser(user.id)}
                       className="text-red-600 hover:text-red-700"
+                      title={user.type === 'ADMIN' ? 'Rebaixar para USER' : 'Banir usuário'}
                     >
                       <Ban className="h-4 w-4" />
                     </Button>
