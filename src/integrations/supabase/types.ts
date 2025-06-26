@@ -1356,7 +1356,19 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_system_status: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      get_user_type: {
+        Args: { user_id?: string }
+        Returns: Database["public"]["Enums"]["profile_type"]
+      }
       is_admin: {
+        Args: { user_id?: string }
+        Returns: boolean
+      }
+      is_admin_or_owner: {
         Args: { user_id?: string }
         Returns: boolean
       }
@@ -1401,6 +1413,10 @@ export type Database = {
       }
       sync_user_benefits: {
         Args: { p_user_id: string }
+        Returns: undefined
+      }
+      system_cleanup_maintenance: {
+        Args: Record<PropertyKey, never>
         Returns: undefined
       }
     }
