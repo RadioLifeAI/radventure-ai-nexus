@@ -18,8 +18,6 @@ import { SystemMonitoringIntegrated } from "@/components/admin/SystemMonitoringI
 import { RewardManagement } from "@/components/admin/RewardManagement";
 import { APIKeyManagement } from "@/components/admin/APIKeyManagement";
 import { StripeManagement } from "@/components/admin/StripeManagement";
-import { RealDataDashboard } from "@/components/admin/RealDataDashboard";
-import { MockDataCleanupStatus } from "@/components/admin/MockDataCleanupStatus";
 import { Crown, Sparkles, Shield, Zap } from "lucide-react";
 
 export default function AdminPanel() {
@@ -27,7 +25,7 @@ export default function AdminPanel() {
     <div className="flex min-h-screen w-full bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
       <AdminSidebar />
       <main className="flex-1 ml-[235px] min-h-screen">
-        {/* Header Gamificado Restaurado */}
+        {/* Header Gamificado Corrigido */}
         <header className="w-full bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 text-white shadow-2xl relative z-10">
           <div className="flex items-center justify-between px-8 py-6">
             <div className="flex items-center gap-4">
@@ -61,10 +59,7 @@ export default function AdminPanel() {
         {/* Conteúdo Principal com espaçamento correto */}
         <section className="p-8 relative z-0">
           <Routes>
-            {/* Dashboard Real como rota padrão */}
-            <Route path="/" element={<RealDataDashboard />} />
-            
-            {/* Rotas de Dados Reais Integradas */}
+            {/* Rotas integradas - todas funcionais */}
             <Route path="analytics" element={<DashboardAnalyticsIntegrated />} />
             <Route path="usuarios" element={<UserManagement />} />
             <Route path="usuarios-avancado" element={<UserManagementAdvanced />} />
@@ -74,16 +69,17 @@ export default function AdminPanel() {
             <Route path="tutor-ia" element={<AITutorManagement />} />
             <Route path="conquistas" element={<AchievementManagement />} />
             <Route path="monitoramento" element={<SystemMonitoringIntegrated />} />
-            <Route path="recompensas" element={<RewardManagement />} />
-            <Route path="chaves-api" element={<APIKeyManagement />} />
-            <Route path="config-stripe" element={<StripeManagement />} />
-            <Route path="cleanup-status" element={<MockDataCleanupStatus />} />
             
-            {/* Rotas de Casos e Eventos RESTAURADAS */}
+            {/* Rotas existentes mantidas */}
             <Route path="casos-medicos" element={<CasosMedicos />} />
             <Route path="gestao-casos" element={<GestaoCasos />} />
             <Route path="create-event" element={<CreateEvent />} />
             <Route path="events" element={<EventsManagement />} />
+            
+            {/* Rotas implementadas */}
+            <Route path="recompensas" element={<RewardManagement />} />
+            <Route path="chaves-api" element={<APIKeyManagement />} />
+            <Route path="config-stripe" element={<StripeManagement />} />
           </Routes>
         </section>
       </main>

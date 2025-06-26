@@ -1,72 +1,72 @@
 
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { 
-  Home, 
-  Users, 
-  Gift, 
-  CreditCard, 
-  Activity, 
-  Settings, 
-  Brain, 
-  Trophy, 
-  Building, 
-  Key,
-  Database,
-  BarChart3,
-  Trash2,
-  FileText,
-  Folder,
+import {
   Calendar,
-  Plus
+  Users,
+  FileText,
+  Settings,
+  Gift,
+  CreditCard,
+  KeyRound,
+  BarChart3,
+  Monitor,
+  BookOpen,
+  Trophy,
+  Brain,
 } from "lucide-react";
 
-const menuItems = [
-  { name: "Dashboard Real", href: "/admin", icon: Database },
-  { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
-  { name: "Usuários", href: "/admin/usuarios", icon: Users },
-  { name: "Casos Médicos", href: "/admin/casos-medicos", icon: FileText },
-  { name: "Gestão de Casos", href: "/admin/gestao-casos", icon: Folder },
-  { name: "Criar Evento", href: "/admin/create-event", icon: Plus },
-  { name: "Gestão de Eventos", href: "/admin/events", icon: Calendar },
-  { name: "Recompensas", href: "/admin/recompensas", icon: Gift },
-  { name: "Assinaturas", href: "/admin/assinaturas", icon: CreditCard },
-  { name: "Monitoramento", href: "/admin/monitoramento", icon: Activity },
-  { name: "IA Tutor", href: "/admin/tutor-ia", icon: Brain },
-  { name: "Conquistas", href: "/admin/conquistas", icon: Trophy },
-  { name: "Stripe", href: "/admin/config-stripe", icon: Building },
-  { name: "API Keys", href: "/admin/chaves-api", icon: Key },
-  { name: "Status Limpeza", href: "/admin/cleanup-status", icon: Trash2 },
+// Menu admin limpo - apenas funcionalidades implementadas
+const adminMenu = [
+  { label: "Analytics", icon: <BarChart3 size={20} />, to: "/admin/analytics" },
+  { label: "Criar Eventos", icon: <Calendar size={20} />, to: "/admin/create-event" },
+  { label: "Gestão de Eventos", icon: <BookOpen size={20} />, to: "/admin/events" },
+  { label: "Casos Médicos", icon: <FileText size={20} />, to: "/admin/casos-medicos" },
+  { label: "Gestão de Casos", icon: <Settings size={20} />, to: "/admin/gestao-casos" },
+  { label: "Usuários", icon: <Users size={20} />, to: "/admin/usuarios" },
+  { label: "Assinaturas", icon: <CreditCard size={20} />, to: "/admin/assinaturas" },
+  { label: "Tutor IA", icon: <Brain size={20} />, to: "/admin/tutor-ia" },
+  { label: "Conquistas", icon: <Trophy size={20} />, to: "/admin/conquistas" },
+  { label: "Monitoramento", icon: <Monitor size={20} />, to: "/admin/monitoramento" },
+  { label: "Recompensas", icon: <Gift size={20} />, to: "/admin/recompensas" },
+  { label: "Configurações", icon: <Settings size={20} />, to: "/admin/configuracoes" },
+  { label: "Chaves API", icon: <KeyRound size={20} />, to: "/admin/chaves-api" },
+  { label: "Config. Stripe", icon: <CreditCard size={20} />, to: "/admin/config-stripe" },
 ];
 
 export function AdminSidebar() {
   const location = useLocation();
-
   return (
-    <div className="w-64 bg-gradient-to-b from-gray-900 to-gray-800 text-white h-full">
-      <div className="p-4">
-        <h2 className="text-xl font-bold text-center mb-8">Admin Panel</h2>
-        <nav className="space-y-2">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.href;
-            return (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200 ${
-                  isActive
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                }`}
-              >
-                <Icon className="h-5 w-5" />
-                <span className="text-sm">{item.name}</span>
-              </Link>
-            );
-          })}
-        </nav>
+    <aside className="h-screen bg-white shadow border-r w-[235px] flex flex-col fixed top-0 left-0 z-30">
+      <div className="flex items-center px-6 py-4 border-b">
+        <ShieldIcon />
+        <span className="ml-2 font-bold text-lg text-[#191a26]">Painel de Administração</span>
       </div>
-    </div>
+      <nav className="flex-1 flex flex-col px-2 py-4 gap-1 overflow-y-auto">
+        {adminMenu.map((item) => (
+          <Link
+            to={item.to}
+            key={item.label}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-base font-semibold transition ${
+              location.pathname === item.to
+                ? "bg-cyan-600 text-white"
+                : "text-gray-700 hover:bg-cyan-100"
+            }`}
+          >
+            {item.icon}
+            {item.label}
+          </Link>
+        ))}
+      </nav>
+    </aside>
   );
+}
+
+// Shield Icon separada para fácil alteração
+function ShieldIcon() {
+  return (
+    <svg width="26" height="26" fill="none" viewBox="0 0 24 24">
+      <path fill="#039be5" d="M12 2l7 4v6c0 4.97-3.13 9.35-7 10-3.87-.65-7-5.03-7-10V6l7-4z"/>
+    </svg>
+  )
 }
