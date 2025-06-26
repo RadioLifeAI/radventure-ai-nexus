@@ -45,20 +45,20 @@ export function CasesCentralAdvanced() {
               Central de Casos Avançada
             </h1>
             <p className="text-cyan-100 text-sm sm:text-xl max-w-3xl mx-auto mb-4 sm:mb-6">
-              Experiência de aprendizado revolucionária com IA, gamificação e visualizações inteligentes
+              Experiência de aprendizado revolucionária com dados reais, IA e gamificação inteligente
             </p>
             <div className="flex flex-wrap justify-center gap-2 sm:gap-4">
               <div className="flex items-center gap-2 bg-white/10 rounded-full px-3 py-1 sm:px-4 sm:py-2">
                 <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-400" />
-                <span className="text-xs sm:text-sm">Powered by AI</span>
+                <span className="text-xs sm:text-sm">Dados Reais</span>
               </div>
               <div className="flex items-center gap-2 bg-white/10 rounded-full px-3 py-1 sm:px-4 sm:py-2">
                 <Zap className="h-3 w-3 sm:h-4 sm:w-4 text-orange-400" />
-                <span className="text-xs sm:text-sm">Real-time Analytics</span>
+                <span className="text-xs sm:text-sm">Integração Supabase</span>
               </div>
               <div className="flex items-center gap-2 bg-white/10 rounded-full px-3 py-1 sm:px-4 sm:py-2">
                 <Target className="h-3 w-3 sm:h-4 sm:w-4 text-green-400" />
-                <span className="text-xs sm:text-sm">Adaptive Learning</span>
+                <span className="text-xs sm:text-sm">Sistema Limpo</span>
               </div>
             </div>
           </div>
@@ -110,7 +110,7 @@ export function CasesCentralAdvanced() {
                       Trilhas Inteligentes de Aprendizado
                     </h3>
                     <p className="text-purple-100 mb-4 sm:mb-6 text-sm sm:text-base px-2">
-                      Nossa IA cria trilhas personalizadas baseadas no seu perfil, objetivos e performance
+                      Sistema baseado em dados reais do Supabase com IA para criar trilhas personalizadas
                     </p>
                     <Button 
                       className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 w-full sm:w-auto"

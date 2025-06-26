@@ -1,13 +1,11 @@
 
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { UserStatsCards } from "./users/UserStatsCards";
 import { UserManagementHeader } from "./users/UserManagementHeader";
 import { UserManagementTabs } from "./users/UserManagementTabs";
 import { UserEditModal } from "./users/UserEditModal";
+import { useRealUsers } from "@/hooks/useRealUsers";
 import type { UserProfile } from "@/types/admin";
-import { toast } from "sonner";
 
 export function UserManagement() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -15,35 +13,26 @@ export function UserManagement() {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  const { data: users = [], isLoading, refetch } = useQuery({
-    queryKey: ["admin-users", searchTerm, filterType],
-    queryFn: async () => {
-      console.log("Carregando usuários para gestão...");
-      
-      let query = supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
+  const { 
+    users, 
+    isLoading, 
+    refetch, 
+    updateUser, 
+    promoteUser, 
+    demoteUser, 
+    isUpdating 
+  } = useRealUsers();
 
-      if (filterType !== "all") {
-        query = query.eq("type", filterType);
-      }
-
-      if (searchTerm) {
-        query = query.or(
-          `full_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,username.ilike.%${searchTerm}%`
-        );
-      }
-
-      const { data, error } = await query;
-      if (error) {
-        console.error("Erro ao carregar usuários:", error);
-        throw error;
-      }
-      
-      console.log("Usuários carregados:", data?.length);
-      return data as UserProfile[];
-    },
+  // Filter users based on search and type
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = !searchTerm || 
+      user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.username?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesType = filterType === "all" || user.type === filterType;
+    
+    return matchesSearch && matchesType;
   });
 
   const handleEditUser = (user: UserProfile) => {
@@ -51,73 +40,12 @@ export function UserManagement() {
     setIsEditModalOpen(true);
   };
 
-  const handlePromoteUser = async (userId: string) => {
-    try {
-      console.log("Promovendo usuário a ADMIN:", userId);
-      
-      const { error } = await supabase
-        .from("profiles")
-        .update({ 
-          type: "ADMIN",
-          updated_at: new Date().toISOString() 
-        })
-        .eq("id", userId);
-
-      if (error) throw error;
-
-      // Adicionar role administrativa básica
-      const { error: roleError } = await supabase
-        .from("admin_user_roles")
-        .insert({
-          user_id: userId,
-          admin_role: "TechAdmin",
-          assigned_by: userId, // Pode ser melhorado para usar o admin atual
-          is_active: true
-        })
-        .select();
-
-      if (roleError) {
-        console.warn("Aviso: Não foi possível adicionar role administrativa:", roleError);
-      }
-
-      toast.success("Usuário promovido a ADMIN com sucesso!");
-      refetch();
-    } catch (error: any) {
-      console.error("Erro ao promover usuário:", error);
-      toast.error(`Erro ao promover usuário: ${error.message}`);
-    }
+  const handlePromoteUser = (userId: string) => {
+    promoteUser(userId);
   };
 
-  const handleDemoteUser = async (userId: string) => {
-    try {
-      console.log("Rebaixando usuário para USER:", userId);
-      
-      const { error } = await supabase
-        .from("profiles")
-        .update({ 
-          type: "USER",
-          updated_at: new Date().toISOString() 
-        })
-        .eq("id", userId);
-
-      if (error) throw error;
-
-      // Desativar roles administrativas
-      const { error: roleError } = await supabase
-        .from("admin_user_roles")
-        .update({ is_active: false })
-        .eq("user_id", userId);
-
-      if (roleError) {
-        console.warn("Aviso: Não foi possível desativar roles:", roleError);
-      }
-
-      toast.success("Usuário rebaixado para USER com sucesso!");
-      refetch();
-    } catch (error: any) {
-      console.error("Erro ao rebaixar usuário:", error);
-      toast.error(`Erro ao rebaixar usuário: ${error.message}`);
-    }
+  const handleDemoteUser = (userId: string) => {
+    demoteUser(userId);
   };
 
   const handleUserUpdated = () => {
@@ -147,8 +75,8 @@ export function UserManagement() {
       />
 
       <UserManagementTabs
-        users={users}
-        isLoading={isLoading}
+        users={filteredUsers}
+        isLoading={isLoading || isUpdating}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         filterType={filterType}

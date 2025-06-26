@@ -3,6 +3,7 @@ import React from "react";
 import { Routes, Route } from "react-router-dom";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { DashboardAnalyticsIntegrated } from "./DashboardAnalyticsIntegrated";
+import { RealDataDashboard } from "./RealDataDashboard";
 import { UserManagement } from "./UserManagement";
 import { RewardManagementIntegrated } from "./RewardManagementIntegrated";
 import { SubscriptionManagementIntegrated } from "./SubscriptionManagementIntegrated";
@@ -12,6 +13,7 @@ import { AITutorManagement } from "./AITutorManagement";
 import { AchievementManagement } from "./AchievementManagement";
 import { StripeManagement } from "./StripeManagement";
 import { APIKeyManagement } from "./APIKeyManagement";
+import { MockDataCleanupStatus } from "./MockDataCleanupStatus";
 
 export function AdminDashboardComplete() {
   return (
@@ -20,7 +22,8 @@ export function AdminDashboardComplete() {
       <main className="flex-1 overflow-auto">
         <div className="container mx-auto px-6 py-8">
           <Routes>
-            <Route path="/" element={<DashboardAnalyticsIntegrated />} />
+            <Route path="/" element={<RealDataDashboard />} />
+            <Route path="/analytics" element={<DashboardAnalyticsIntegrated />} />
             <Route path="/users" element={<UserManagement />} />
             <Route path="/rewards" element={<RewardManagementIntegrated />} />
             <Route path="/subscriptions" element={<SubscriptionManagementIntegrated />} />
@@ -30,6 +33,7 @@ export function AdminDashboardComplete() {
             <Route path="/achievements" element={<AchievementManagement />} />
             <Route path="/stripe" element={<StripeManagement />} />
             <Route path="/api-keys" element={<APIKeyManagement />} />
+            <Route path="/cleanup-status" element={<MockDataCleanupStatus />} />
           </Routes>
         </div>
       </main>
