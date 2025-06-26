@@ -13,6 +13,28 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader } from "@/components/Loader";
 
+// Interface para eventos com tipos corretos
+interface Event {
+  id: string;
+  name: string;
+  description?: string;
+  status: string;
+  scheduled_start: string;
+  scheduled_end: string;
+  event_type?: string;
+  max_participants?: number;
+  number_of_cases?: number;
+  prize_radcoins: number;
+  prize_distribution?: any;
+  banner_url?: string;
+  auto_start?: boolean;
+  duration_minutes?: number;
+  case_filters?: any;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export default function EventsManagement() {
   const navigate = useNavigate();
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
@@ -29,7 +51,7 @@ export default function EventsManagement() {
   const [sortField, setSortField] = useState("scheduled_start");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
-  // Fetch events using real Supabase data
+  // Fetch events using real Supabase data with proper type conversion
   const { data: events = [], isLoading, refetch } = useQuery({
     queryKey: ['events', filters, sortField, sortDirection],
     queryFn: async () => {
@@ -49,7 +71,21 @@ export default function EventsManagement() {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data || [];
+      
+      // Convert Supabase data to Event interface
+      return (data || []).map(event => ({
+        ...event,
+        prize_distribution: event.prize_distribution ? 
+          (typeof event.prize_distribution === 'string' ? 
+            JSON.parse(event.prize_distribution) : 
+            event.prize_distribution) : 
+          null,
+        case_filters: event.case_filters ? 
+          (typeof event.case_filters === 'string' ? 
+            JSON.parse(event.case_filters) : 
+            event.case_filters) : 
+          null
+      })) as Event[];
     }
   });
 
