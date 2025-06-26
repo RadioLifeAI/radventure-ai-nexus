@@ -51,9 +51,46 @@ export function UserManagement() {
     setIsEditModalOpen(true);
   };
 
-  const handleBanUser = async (userId: string) => {
+  const handlePromoteUser = async (userId: string) => {
     try {
-      console.log("Banindo usuário:", userId);
+      console.log("Promovendo usuário a ADMIN:", userId);
+      
+      const { error } = await supabase
+        .from("profiles")
+        .update({ 
+          type: "ADMIN",
+          updated_at: new Date().toISOString() 
+        })
+        .eq("id", userId);
+
+      if (error) throw error;
+
+      // Adicionar role administrativa básica
+      const { error: roleError } = await supabase
+        .from("admin_user_roles")
+        .insert({
+          user_id: userId,
+          admin_role: "TechAdmin",
+          assigned_by: userId, // Pode ser melhorado para usar o admin atual
+          is_active: true
+        })
+        .select();
+
+      if (roleError) {
+        console.warn("Aviso: Não foi possível adicionar role administrativa:", roleError);
+      }
+
+      toast.success("Usuário promovido a ADMIN com sucesso!");
+      refetch();
+    } catch (error: any) {
+      console.error("Erro ao promover usuário:", error);
+      toast.error(`Erro ao promover usuário: ${error.message}`);
+    }
+  };
+
+  const handleDemoteUser = async (userId: string) => {
+    try {
+      console.log("Rebaixando usuário para USER:", userId);
       
       const { error } = await supabase
         .from("profiles")
@@ -65,11 +102,21 @@ export function UserManagement() {
 
       if (error) throw error;
 
-      toast.success("Usuário foi restrito com sucesso!");
+      // Desativar roles administrativas
+      const { error: roleError } = await supabase
+        .from("admin_user_roles")
+        .update({ is_active: false })
+        .eq("user_id", userId);
+
+      if (roleError) {
+        console.warn("Aviso: Não foi possível desativar roles:", roleError);
+      }
+
+      toast.success("Usuário rebaixado para USER com sucesso!");
       refetch();
     } catch (error: any) {
-      console.error("Erro ao restringir usuário:", error);
-      toast.error(`Erro ao restringir usuário: ${error.message}`);
+      console.error("Erro ao rebaixar usuário:", error);
+      toast.error(`Erro ao rebaixar usuário: ${error.message}`);
     }
   };
 
@@ -107,7 +154,8 @@ export function UserManagement() {
         filterType={filterType}
         setFilterType={setFilterType}
         onEditUser={handleEditUser}
-        onBanUser={handleBanUser}
+        onBanUser={handleDemoteUser}
+        onPromoteUser={handlePromoteUser}
       />
 
       <UserEditModal

@@ -29,9 +29,6 @@ export interface UserProfile {
   updated_at: string;
 }
 
-// Flag de desenvolvimento - quando true, novos perfis são criados como ADMIN
-const IS_DEVELOPMENT = true;
-
 export function useUserProfile() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -65,8 +62,7 @@ export function useUserProfile() {
             email: user.email || '',
             username: user.email?.split('@')[0] || `user_${user.id.slice(0, 8)}`,
             full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
-            // Durante desenvolvimento, todos os novos perfis são ADMIN
-            type: IS_DEVELOPMENT ? 'ADMIN' as const : 'USER' as const,
+            type: 'USER' as const, // Sempre USER por padrão
             radcoin_balance: 0,
             total_points: 0,
             current_streak: 0,
@@ -85,25 +81,7 @@ export function useUserProfile() {
             throw createError;
           }
 
-          console.log(`Profile created successfully as ${IS_DEVELOPMENT ? 'ADMIN' : 'USER'}:`, newProfile);
-          
-          // Durante desenvolvimento, também adicionar role administrativa
-          if (IS_DEVELOPMENT) {
-            try {
-              await supabase
-                .from('admin_user_roles')
-                .insert({
-                  user_id: user.id,
-                  admin_role: 'TechAdmin',
-                  assigned_by: user.id,
-                  is_active: true
-                });
-              console.log('✅ Role TechAdmin adicionada automaticamente');
-            } catch (roleError) {
-              console.warn('⚠️ Aviso: Não foi possível adicionar role administrativa:', roleError);
-            }
-          }
-          
+          console.log('Profile created successfully:', newProfile);
           return newProfile as UserProfile;
         }
         throw error;

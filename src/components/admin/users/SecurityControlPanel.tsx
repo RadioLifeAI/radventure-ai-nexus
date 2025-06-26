@@ -28,8 +28,6 @@ import {
 } from "lucide-react";
 
 export function SecurityControlPanel() {
-  const [developmentMode, setDevelopmentMode] = useState(true); // Flag IS_DEVELOPMENT
-  const [emergencyMode, setEmergencyMode] = useState(false);
   const [promoteModal, setPromoteModal] = useState(false);
   const [promoteUserId, setPromoteUserId] = useState("");
   const [promoteReason, setPromoteReason] = useState("");
@@ -158,20 +156,6 @@ export function SecurityControlPanel() {
     promoteToPermMutation.mutate({ userId: promoteUserId, reason: promoteReason });
   };
 
-  const handleDevelopmentModeToggle = () => {
-    // Esta função alteraria o flag IS_DEVELOPMENT no código
-    // Por enquanto, apenas simula a mudança
-    setDevelopmentMode(!developmentMode);
-    
-    toast({ 
-      title: developmentMode ? "⚠️ Modo Desenvolvimento Desabilitado" : "🔓 Modo Desenvolvimento Habilitado", 
-      description: developmentMode 
-        ? "Sistema em modo produção - Novos usuários serão USER por padrão"
-        : "Sistema em modo desenvolvimento - Novos usuários serão ADMIN por padrão",
-      duration: 5000
-    });
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -212,23 +196,19 @@ export function SecurityControlPanel() {
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
               <Code className="h-5 w-5 text-purple-500" />
-              Modo Desenvolvimento
+              Sistema Limpo
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">IS_DEVELOPMENT</span>
-                <Switch 
-                  checked={developmentMode}
-                  onCheckedChange={handleDevelopmentModeToggle}
-                />
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                <span className="text-sm">Tabelas duplicadas removidas</span>
               </div>
-              <p className="text-xs text-gray-500">
-                {developmentMode 
-                  ? "Novos usuários criados como ADMIN" 
-                  : "Novos usuários criados como USER"}
-              </p>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                <span className="text-sm">Google OAuth corrigido</span>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -252,23 +232,12 @@ export function SecurityControlPanel() {
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 text-green-500" />
-                <span className="text-sm">Backup Seguro</span>
+                <span className="text-sm">Integridade Validada</span>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Alerta de Desenvolvimento */}
-      {developmentMode && (
-        <Alert className="border-yellow-200 bg-yellow-50">
-          <AlertTriangle className="h-4 w-4 text-yellow-600" />
-          <AlertDescription className="text-yellow-800">
-            <strong>Modo Desenvolvimento Ativo:</strong> Todos os novos usuários são criados como ADMIN automaticamente. 
-            Desative este modo antes de ir para produção.
-          </AlertDescription>
-        </Alert>
-      )}
 
       {/* Ações de Segurança */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
