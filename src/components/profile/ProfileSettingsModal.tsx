@@ -1,339 +1,271 @@
 
-import React, { useState, useRef } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Camera, User, Stethoscope, Settings, Loader2, AlertTriangle } from 'lucide-react';
-import { useUserProfile } from '@/hooks/useUserProfile';
-import { useAvatarUpload } from '@/hooks/useAvatarUpload';
-import { useAuth } from '@/hooks/useAuth';
+import React, { useState } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { User, Settings, Shield, MapPin, GraduationCap } from "lucide-react";
 
 interface ProfileSettingsModalProps {
-  open: boolean;
+  isOpen: boolean;
   onClose: () => void;
 }
 
-export function ProfileSettingsModal({ open, onClose }: ProfileSettingsModalProps) {
-  const { user, isAuthenticated } = useAuth();
+export function ProfileSettingsModal({ isOpen, onClose }: ProfileSettingsModalProps) {
   const { profile, updateProfile, isUpdating } = useUserProfile();
-  const { uploadAvatar, uploading } = useAvatarUpload();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const [formData, setFormData] = useState({
     full_name: profile?.full_name || '',
     username: profile?.username || '',
     bio: profile?.bio || '',
-    country_code: profile?.country_code || '',
     city: profile?.city || '',
     state: profile?.state || '',
+    country_code: profile?.country_code || 'BR',
     medical_specialty: profile?.medical_specialty || '',
     academic_specialty: profile?.academic_specialty || '',
     academic_stage: profile?.academic_stage || '',
     college: profile?.college || ''
   });
 
-  // Atualizar formData quando profile mudar
-  React.useEffect(() => {
-    if (profile) {
-      setFormData({
-        full_name: profile.full_name || '',
-        username: profile.username || '',
-        bio: profile.bio || '',
-        country_code: profile.country_code || '',
-        city: profile.city || '',
-        state: profile.state || '',
-        medical_specialty: profile.medical_specialty || '',
-        academic_specialty: profile.academic_specialty || '',
-        academic_stage: profile.academic_stage || '',
-        college: profile.college || ''
-      });
-    }
-  }, [profile]);
+  const handleSave = () => {
+    updateProfile(formData);
+    onClose();
+  };
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = async () => {
-    if (!user?.id || !isAuthenticated) {
-      console.error('Usuário não autenticado');
-      return;
-    }
-
-    try {
-      // Prepare the data with proper typing for academic_stage
-      const updateData = {
-        ...formData,
-        academic_stage: formData.academic_stage as 'Student' | 'Intern' | 'Resident' | 'Specialist' | undefined
-      };
-      
-      // If academic_stage is empty string, set it to undefined
-      if (!updateData.academic_stage) {
-        updateData.academic_stage = undefined;
-      }
-      
-      await updateProfile(updateData);
-      onClose();
-    } catch (error) {
-      console.error('Erro ao salvar perfil:', error);
-    }
-  };
-
-  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file && user?.id) {
-      try {
-        await uploadAvatar(file, user.id);
-      } catch (error) {
-        console.error('Erro no upload do avatar:', error);
-      }
-    }
-  };
-
-  const triggerFileInput = () => {
-    fileInputRef.current?.click();
-  };
-
-  // Verificação de autenticação
-  if (!isAuthenticated || !user) {
-    return (
-      <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
-              <AlertTriangle className="h-5 w-5" />
-              Erro de Autenticação
-            </DialogTitle>
-          </DialogHeader>
-          <div className="text-center py-4">
-            <p className="text-gray-600">Você precisa estar autenticado para acessar as configurações.</p>
-            <Button onClick={onClose} className="mt-4">
-              Fechar
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
             Configurações do Perfil
           </DialogTitle>
+          <DialogDescription>
+            Gerencie suas informações pessoais e preferências
+          </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="basic" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="basic" className="flex items-center gap-2">
+        <Tabs defaultValue="personal" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="personal" className="flex items-center gap-2">
               <User className="h-4 w-4" />
-              Básico
+              Pessoal
             </TabsTrigger>
-            <TabsTrigger value="medical" className="flex items-center gap-2">
-              <Stethoscope className="h-4 w-4" />
-              Médico
+            <TabsTrigger value="location" className="flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              Localização
             </TabsTrigger>
-            <TabsTrigger value="avatar" className="flex items-center gap-2">
-              <Camera className="h-4 w-4" />
-              Avatar
+            <TabsTrigger value="academic" className="flex items-center gap-2">
+              <GraduationCap className="h-4 w-4" />
+              Acadêmico
+            </TabsTrigger>
+            <TabsTrigger value="account" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Conta
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="basic" className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="full_name">Nome Completo</Label>
-                <Input
-                  id="full_name"
-                  value={formData.full_name}
-                  onChange={(e) => handleInputChange('full_name', e.target.value)}
-                  placeholder="Seu nome completo"
-                />
-              </div>
-              <div>
-                <Label htmlFor="username">Nome de Usuário</Label>
-                <Input
-                  id="username"
-                  value={formData.username}
-                  onChange={(e) => handleInputChange('username', e.target.value)}
-                  placeholder="seu_usuario"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="bio">Biografia</Label>
-              <Textarea
-                id="bio"
-                value={formData.bio}
-                onChange={(e) => handleInputChange('bio', e.target.value)}
-                placeholder="Conte um pouco sobre você..."
-                rows={3}
-              />
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="country_code">País</Label>
-                <Select value={formData.country_code} onValueChange={(value) => handleInputChange('country_code', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="BR">Brasil</SelectItem>
-                    <SelectItem value="US">Estados Unidos</SelectItem>
-                    <SelectItem value="PT">Portugal</SelectItem>
-                    <SelectItem value="AR">Argentina</SelectItem>
-                    <SelectItem value="CO">Colômbia</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="city">Cidade</Label>
-                <Input
-                  id="city"
-                  value={formData.city}
-                  onChange={(e) => handleInputChange('city', e.target.value)}
-                  placeholder="Sua cidade"
-                />
-              </div>
-              <div>
-                <Label htmlFor="state">Estado</Label>
-                <Input
-                  id="state"
-                  value={formData.state}
-                  onChange={(e) => handleInputChange('state', e.target.value)}
-                  placeholder="SP"
-                />
-              </div>
-            </div>
+          <TabsContent value="personal" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Informações Pessoais</CardTitle>
+                <CardDescription>Atualize seus dados básicos</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="full_name">Nome Completo</Label>
+                    <Input
+                      id="full_name"
+                      value={formData.full_name}
+                      onChange={(e) => handleInputChange('full_name', e.target.value)}
+                      placeholder="Seu nome completo"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="username">Nome de Usuário</Label>
+                    <Input
+                      id="username"
+                      value={formData.username}
+                      onChange={(e) => handleInputChange('username', e.target.value)}
+                      placeholder="Seu username"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="bio">Biografia</Label>
+                  <Textarea
+                    id="bio"
+                    value={formData.bio}
+                    onChange={(e) => handleInputChange('bio', e.target.value)}
+                    placeholder="Conte um pouco sobre você..."
+                    rows={3}
+                  />
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
-          <TabsContent value="medical" className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="medical_specialty">Especialidade Médica</Label>
-                <Select value={formData.medical_specialty} onValueChange={(value) => handleInputChange('medical_specialty', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Radiologia">Radiologia</SelectItem>
-                    <SelectItem value="Cardiologia">Cardiologia</SelectItem>
-                    <SelectItem value="Neurologia">Neurologia</SelectItem>
-                    <SelectItem value="Ortopedia">Ortopedia</SelectItem>
-                    <SelectItem value="Pediatria">Pediatria</SelectItem>
-                    <SelectItem value="Clínica Geral">Clínica Geral</SelectItem>
-                    <SelectItem value="Outro">Outro</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="academic_specialty">Especialidade Acadêmica</Label>
-                <Input
-                  id="academic_specialty"
-                  value={formData.academic_specialty}
-                  onChange={(e) => handleInputChange('academic_specialty', e.target.value)}
-                  placeholder="Sua área de estudo"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="academic_stage">Estágio Acadêmico</Label>
-                <Select value={formData.academic_stage} onValueChange={(value) => handleInputChange('academic_stage', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Student">Estudante</SelectItem>
-                    <SelectItem value="Intern">Interno</SelectItem>
-                    <SelectItem value="Resident">Residente</SelectItem>
-                    <SelectItem value="Specialist">Especialista</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="college">Instituição</Label>
-                <Input
-                  id="college"
-                  value={formData.college}
-                  onChange={(e) => handleInputChange('college', e.target.value)}
-                  placeholder="Sua universidade/hospital"
-                />
-              </div>
-            </div>
+          <TabsContent value="location" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Localização</CardTitle>
+                <CardDescription>Onde você está localizado</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="city">Cidade</Label>
+                    <Input
+                      id="city"
+                      value={formData.city}
+                      onChange={(e) => handleInputChange('city', e.target.value)}
+                      placeholder="Sua cidade"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="state">Estado</Label>
+                    <Input
+                      id="state"
+                      value={formData.state}
+                      onChange={(e) => handleInputChange('state', e.target.value)}
+                      placeholder="Seu estado"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="country">País</Label>
+                    <Select value={formData.country_code} onValueChange={(value) => handleInputChange('country_code', value)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="BR">Brasil</SelectItem>
+                        <SelectItem value="US">Estados Unidos</SelectItem>
+                        <SelectItem value="PT">Portugal</SelectItem>
+                        <SelectItem value="AR">Argentina</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
-          <TabsContent value="avatar" className="space-y-6">
-            <div className="flex flex-col items-center space-y-4">
-              <div className="relative">
-                <Avatar className="w-32 h-32 border-4 border-cyan-200">
-                  <AvatarImage src={profile?.avatar_url} />
-                  <AvatarFallback className="text-2xl bg-gradient-to-br from-cyan-100 to-blue-100 text-cyan-700">
-                    {profile?.full_name?.[0] || profile?.username?.[0] || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-                <Button
-                  onClick={triggerFileInput}
-                  size="sm"
-                  className="absolute -bottom-2 -right-2 rounded-full w-10 h-10 p-0 bg-cyan-500 hover:bg-cyan-600"
-                  disabled={uploading}
-                >
-                  {uploading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Camera className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
+          <TabsContent value="academic" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Informações Acadêmicas</CardTitle>
+                <CardDescription>Sua formação e especialização</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="medical_specialty">Especialidade Médica</Label>
+                    <Select value={formData.medical_specialty} onValueChange={(value) => handleInputChange('medical_specialty', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma especialidade" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Radiologia">Radiologia</SelectItem>
+                        <SelectItem value="Cardiologia">Cardiologia</SelectItem>
+                        <SelectItem value="Neurologia">Neurologia</SelectItem>
+                        <SelectItem value="Ortopedia">Ortopedia</SelectItem>
+                        <SelectItem value="Pediatria">Pediatria</SelectItem>
+                        <SelectItem value="Medicina Interna">Medicina Interna</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="academic_stage">Estágio Acadêmico</Label>
+                    <Select value={formData.academic_stage} onValueChange={(value) => handleInputChange('academic_stage', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione seu estágio" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Student">Estudante</SelectItem>
+                        <SelectItem value="Intern">Interno</SelectItem>
+                        <SelectItem value="Resident">Residente</SelectItem>
+                        <SelectItem value="Specialist">Especialista</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="college">Faculdade/Universidade</Label>
+                    <Input
+                      id="college"
+                      value={formData.college}
+                      onChange={(e) => handleInputChange('college', e.target.value)}
+                      placeholder="Sua instituição de ensino"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="academic_specialty">Especialização Acadêmica</Label>
+                    <Input
+                      id="academic_specialty"
+                      value={formData.academic_specialty}
+                      onChange={(e) => handleInputChange('academic_specialty', e.target.value)}
+                      placeholder="Sua área de especialização"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-              <div className="text-center">
-                <p className="text-sm text-gray-600 mb-2">
-                  Clique no ícone da câmera para alterar sua foto de perfil
-                </p>
-                <p className="text-xs text-gray-500">
-                  Formatos aceitos: JPG, PNG, GIF (máx. 2MB)
-                </p>
-              </div>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleAvatarUpload}
-                className="hidden"
-              />
-            </div>
+          <TabsContent value="account" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Informações da Conta</CardTitle>
+                <CardDescription>Dados básicos da sua conta</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Email</Label>
+                    <Input value={profile?.email || ''} disabled className="bg-gray-100" />
+                    <p className="text-xs text-gray-500 mt-1">Email não pode ser alterado</p>
+                  </div>
+                  <div>
+                    <Label>Tipo de Conta</Label>
+                    <Input value={profile?.type || 'USER'} disabled className="bg-gray-100" />
+                    <p className="text-xs text-gray-500 mt-1">Tipo de conta definido pelo sistema</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label>RadCoins</Label>
+                    <Input value={profile?.radcoin_balance?.toLocaleString() || '0'} disabled className="bg-gray-100" />
+                  </div>
+                  <div>
+                    <Label>Pontos Totais</Label>
+                    <Input value={profile?.total_points?.toLocaleString() || '0'} disabled className="bg-gray-100" />
+                  </div>
+                  <div>
+                    <Label>Sequência Atual</Label>
+                    <Input value={profile?.current_streak || '0'} disabled className="bg-gray-100" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-end gap-2 pt-4 border-t">
+        <div className="flex justify-end gap-3 pt-4 border-t">
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button 
-            onClick={handleSave}
-            disabled={isUpdating}
-            className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"
-          >
-            {isUpdating ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Salvando...
-              </>
-            ) : (
-              'Salvar Alterações'
-            )}
+          <Button onClick={handleSave} disabled={isUpdating}>
+            {isUpdating ? 'Salvando...' : 'Salvar Alterações'}
           </Button>
         </div>
       </DialogContent>

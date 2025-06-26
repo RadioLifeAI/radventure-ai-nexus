@@ -28,7 +28,7 @@ export function useSystemStatus() {
       console.log('System status fetched:', data);
       return data as SystemStatus;
     },
-    refetchInterval: 30000, // Atualizar a cada 30 segundos
+    refetchInterval: 30000,
     refetchOnWindowFocus: true,
   });
 
@@ -44,7 +44,7 @@ export function useSystemStatus() {
       }
       
       console.log('System cleanup completed successfully');
-      refetch(); // Atualizar status após limpeza
+      refetch();
       
       return { success: true };
     } catch (error: any) {
