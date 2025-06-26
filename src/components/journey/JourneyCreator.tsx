@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -59,10 +58,13 @@ export function JourneyCreator() {
   const [currentJourney, setCurrentJourney] = useState<any>(null);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
-  // Hooks
-  const { data: searchResults, isLoading: searchLoading } = useJourneySearch(filters);
+  // Hooks - corrigindo o useJourneySearch
+  const { searchTerm, setSearchTerm, filteredJourneys, loading: searchLoading } = useJourneySearch();
   const { createJourney } = useJourneyManagement();
   const { getAutoFill, loading: aiLoading } = useJourneyAISuggestions();
+
+  // Usar filteredJourneys como searchResults
+  const searchResults = filteredJourneys;
 
   // Adicionar objetivo
   const addObjective = () => {
