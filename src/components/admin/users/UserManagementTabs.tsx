@@ -19,6 +19,7 @@ interface UserManagementTabsProps {
   setFilterType: (type: "all" | "USER" | "ADMIN") => void;
   onEditUser: (user: UserProfile) => void;
   onBanUser: (userId: string) => void;
+  onPromoteUser: (userId: string) => void;
 }
 
 export function UserManagementTabs({
@@ -29,7 +30,8 @@ export function UserManagementTabs({
   filterType,
   setFilterType,
   onEditUser,
-  onBanUser
+  onBanUser,
+  onPromoteUser
 }: UserManagementTabsProps) {
   return (
     <Tabs defaultValue="users" className="space-y-6">
@@ -76,6 +78,7 @@ export function UserManagementTabs({
               isLoading={isLoading}
               onEditUser={onEditUser}
               onBanUser={onBanUser}
+              onPromoteUser={onPromoteUser}
             />
           </CardContent>
         </Card>

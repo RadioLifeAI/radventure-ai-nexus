@@ -4,7 +4,7 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Trophy, Zap, Target } from "lucide-react";
+import { MapPin, Trophy, Zap, Target, Settings } from "lucide-react";
 
 export function UserProfile() {
   const { profile, isLoading } = useUserProfile();
@@ -99,13 +99,26 @@ export function UserProfile() {
         </div>
       </div>
       
-      <Button 
-        onClick={() => navigate('/app/casos')}
-        className="bg-gradient-to-r from-cyan-400 to-blue-500 shadow-lg px-8 py-3 text-lg font-extrabold rounded-xl text-white hover:scale-105 transition-all duration-300 hover:shadow-xl group"
-      >
-        <span className="group-hover:animate-pulse">🚀</span>
-        <span className="ml-2">Começar Novo Desafio</span>
-      </Button>
+      <div className="flex gap-3">
+        <Button 
+          onClick={() => navigate('/app/casos')}
+          className="bg-gradient-to-r from-cyan-400 to-blue-500 shadow-lg px-8 py-3 text-lg font-extrabold rounded-xl text-white hover:scale-105 transition-all duration-300 hover:shadow-xl group"
+        >
+          <span className="group-hover:animate-pulse">🚀</span>
+          <span className="ml-2">Começar Novo Desafio</span>
+        </Button>
+        
+        <Button 
+          variant="outline"
+          onClick={() => {
+            // Implementar modal de configurações do perfil
+            console.log('Abrir configurações do perfil');
+          }}
+          className="bg-white/10 border-white/30 text-white hover:bg-white/20 px-4 py-3 rounded-xl transition-all duration-300"
+        >
+          <Settings className="h-5 w-5" />
+        </Button>
+      </div>
     </section>
   );
 }
