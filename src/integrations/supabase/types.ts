@@ -784,6 +784,33 @@ export type Database = {
         }
         Relationships: []
       }
+      permanent_admins: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          email: string
+          id: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          email: string
+          id?: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          email?: string
+          id?: string
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           academic_specialty: string | null
@@ -886,6 +913,39 @@ export type Database = {
           metadata?: Json | null
           tx_type?: Database["public"]["Enums"]["radcoin_tx_type"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      security_audit_log: {
+        Row: {
+          action: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          ip_address: unknown | null
+          target_user_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          target_user_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          target_user_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1514,6 +1574,10 @@ export type Database = {
         Args: { p_user_id: string; p_aid_type: string; p_amount?: number }
         Returns: boolean
       }
+      count_total_admins: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       create_admin_direct: {
         Args: { p_email: string; p_full_name: string; p_type?: string }
         Returns: string
@@ -1540,7 +1604,15 @@ export type Database = {
         }
         Returns: Json
       }
+      emergency_admin_recovery: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       is_admin: {
+        Args: { user_id?: string }
+        Returns: boolean
+      }
+      is_permanent_admin: {
         Args: { user_id?: string }
         Returns: boolean
       }
@@ -1562,6 +1634,14 @@ export type Database = {
           | { p_case_id: string; p_points?: number; p_is_correct?: boolean }
           | { p_user_id: string; p_case_id: string; p_points?: number }
         Returns: undefined
+      }
+      promote_to_permanent_admin: {
+        Args: {
+          target_user_id: string
+          target_email: string
+          promotion_reason?: string
+        }
+        Returns: boolean
       }
       refill_daily_help_aids: {
         Args: Record<PropertyKey, never>

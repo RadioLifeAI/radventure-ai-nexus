@@ -8,6 +8,9 @@ import CreateEvent from "./admin/CreateEvent";
 import EventsManagement from "./admin/EventsManagement";
 import { DashboardAnalyticsIntegrated } from "@/components/admin/DashboardAnalyticsIntegrated";
 import { UserManagement } from "@/components/admin/UserManagement";
+import { UserManagementAdvanced } from "@/components/admin/users/UserManagementAdvanced";
+import { SecurityControlPanel } from "@/components/admin/users/SecurityControlPanel";
+import { AdminRoleAuditLog } from "@/components/admin/users/AdminRoleAuditLog";
 import { SubscriptionManagementIntegrated } from "@/components/admin/SubscriptionManagementIntegrated";
 import { AITutorManagement } from "@/components/admin/AITutorManagement";
 import { AchievementManagement } from "@/components/admin/AchievementManagement";
@@ -59,6 +62,9 @@ export default function AdminPanel() {
             {/* Rotas integradas - todas funcionais */}
             <Route path="analytics" element={<DashboardAnalyticsIntegrated />} />
             <Route path="usuarios" element={<UserManagement />} />
+            <Route path="usuarios-avancado" element={<UserManagementAdvanced />} />
+            <Route path="seguranca" element={<SecurityControlPanel />} />
+            <Route path="auditoria" element={<AdminRoleAuditLog />} />
             <Route path="assinaturas" element={<SubscriptionManagementIntegrated />} />
             <Route path="tutor-ia" element={<AITutorManagement />} />
             <Route path="conquistas" element={<AchievementManagement />} />
