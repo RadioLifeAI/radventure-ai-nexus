@@ -1540,6 +1540,10 @@ export type Database = {
         }
         Returns: Json
       }
+      is_admin: {
+        Args: { user_id?: string }
+        Returns: boolean
+      }
       limpar_sessoes_expiradas: {
         Args: Record<PropertyKey, never>
         Returns: number
