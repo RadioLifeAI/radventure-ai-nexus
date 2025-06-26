@@ -14,21 +14,28 @@ import {
   Key,
   Database,
   BarChart3,
-  Trash2
+  Trash2,
+  FileText,
+  Folder,
+  Calendar,
+  Plus
 } from "lucide-react";
 
 const menuItems = [
   { name: "Dashboard Real", href: "/admin", icon: Database },
   { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
-  { name: "Usuários", href: "/admin/users", icon: Users },
-  { name: "Recompensas", href: "/admin/rewards", icon: Gift },
-  { name: "Assinaturas", href: "/admin/subscriptions", icon: CreditCard },
-  { name: "Monitoramento", href: "/admin/monitoring", icon: Activity },
-  { name: "Monitoramento Avançado", href: "/admin/monitoring-advanced", icon: Settings },
-  { name: "IA Tutor", href: "/admin/ai-tutor", icon: Brain },
-  { name: "Conquistas", href: "/admin/achievements", icon: Trophy },
-  { name: "Stripe", href: "/admin/stripe", icon: Building },
-  { name: "API Keys", href: "/admin/api-keys", icon: Key },
+  { name: "Usuários", href: "/admin/usuarios", icon: Users },
+  { name: "Casos Médicos", href: "/admin/casos-medicos", icon: FileText },
+  { name: "Gestão de Casos", href: "/admin/gestao-casos", icon: Folder },
+  { name: "Criar Evento", href: "/admin/create-event", icon: Plus },
+  { name: "Gestão de Eventos", href: "/admin/events", icon: Calendar },
+  { name: "Recompensas", href: "/admin/recompensas", icon: Gift },
+  { name: "Assinaturas", href: "/admin/assinaturas", icon: CreditCard },
+  { name: "Monitoramento", href: "/admin/monitoramento", icon: Activity },
+  { name: "IA Tutor", href: "/admin/tutor-ia", icon: Brain },
+  { name: "Conquistas", href: "/admin/conquistas", icon: Trophy },
+  { name: "Stripe", href: "/admin/config-stripe", icon: Building },
+  { name: "API Keys", href: "/admin/chaves-api", icon: Key },
   { name: "Status Limpeza", href: "/admin/cleanup-status", icon: Trash2 },
 ];
 

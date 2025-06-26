@@ -19,35 +19,27 @@ import { CaseVersionComparisonModal } from "./components/CaseVersionComparisonMo
 import { NotificationProvider, NotificationContainer } from "./components/CaseNotificationSystem";
 import { CaseShortcutsManager, useCaseShortcuts } from "./components/CaseShortcutsManager";
 
-import { useCasesManagement } from "./hooks/useCasesManagement";
+import { useRealMedicalCases } from "@/hooks/useRealMedicalCases";
 import { useDisclosure } from "@mantine/hooks";
 import { Loader } from "@/components/Loader";
 
 export default function GestaoCasos() {
-  const {
-    cases,
-    totalCases,
-    loading,
-    selectedCases,
-    filters,
-    setFilters,
-    savedFilters,
-    handleSaveFilter,
-    handleLoadFilter,
-    viewMode,
-    setViewMode,
-    sortField,
-    sortDirection,
-    handleSort,
-    gridDensity,
-    setGridDensity,
-    handleCaseSelect,
-    handleSelectAll,
-    handleBulkAction,
-    handleExport,
-    deleteCase,
-    refetch
-  } = useCasesManagement();
+  const { cases, isLoading, deleteCase, refetch } = useRealMedicalCases();
+  const [selectedCases, setSelectedCases] = useState<string[]>([]);
+  const [filters, setFilters] = useState({
+    searchTerm: "",
+    specialties: [],
+    modalities: [],
+    difficulties: [],
+    pointsRange: [0, 100] as [number, number],
+    dateRange: {},
+    status: [],
+    source: []
+  });
+  const [viewMode, setViewMode] = useState<ViewMode>("cards");
+  const [sortField, setSortField] = useState("created_at");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [gridDensity, setGridDensity] = useState(3);
 
   // Modal states - Phase 1
   const [editModalOpen, { open: openEditModal, close: closeEditModal }] = useDisclosure(false);
@@ -61,6 +53,14 @@ export default function GestaoCasos() {
   const [versionModalOpen, { open: openVersionModal, close: closeVersionModal }] = useDisclosure(false);
   
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
+
+  // Filter cases
+  const filteredCases = cases.filter(case_ => {
+    const matchesSearch = !filters.searchTerm || 
+      case_.title?.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+      case_.description?.toLowerCase().includes(filters.searchTerm.toLowerCase());
+    return matchesSearch;
+  });
 
   const handleEdit = (caseId: string) => {
     setSelectedCaseId(caseId);
@@ -82,7 +82,6 @@ export default function GestaoCasos() {
     openDuplicateModal();
   };
 
-  // Phase 2 handlers
   const handleAnalytics = (caseId: string) => {
     setSelectedCaseId(caseId);
     openAnalyticsModal();
@@ -98,6 +97,41 @@ export default function GestaoCasos() {
     openVersionModal();
   };
 
+  const handleCaseSelect = (caseId: string) => {
+    setSelectedCases(prev => 
+      prev.includes(caseId) 
+        ? prev.filter(id => id !== caseId)
+        : [...prev, caseId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    setSelectedCases(prev => 
+      prev.length === filteredCases.length ? [] : filteredCases.map(case_ => case_.id)
+    );
+  };
+
+  const handleBulkAction = async (action: string) => {
+    console.log("Ação em lote:", action, selectedCases);
+  };
+
+  const handleExport = () => {
+    console.log("Exportar casos:", selectedCases);
+  };
+
+  const handleSort = (field: string, direction: "asc" | "desc") => {
+    setSortField(field);
+    setSortDirection(direction);
+  };
+
+  const handleSaveFilter = (name: string, filterState: any) => {
+    console.log("Salvar filtro:", name, filterState);
+  };
+
+  const handleLoadFilter = (filterState: any) => {
+    setFilters(filterState);
+  };
+
   const handleCaseSaved = () => {
     refetch();
     closeEditModal();
@@ -110,7 +144,6 @@ export default function GestaoCasos() {
     closeDuplicateModal();
   };
 
-  // Phase 3 - Shortcuts configuration
   const shortcuts = useCaseShortcuts({
     onQuickEdit: selectedCaseId ? () => handleQuickEdit(selectedCaseId) : undefined,
     onView: selectedCaseId ? () => handleView(selectedCaseId) : undefined,
@@ -121,7 +154,7 @@ export default function GestaoCasos() {
   });
 
   const renderCasesView = () => {
-    if (loading) {
+    if (isLoading) {
       return <Loader />;
     }
 
@@ -129,7 +162,7 @@ export default function GestaoCasos() {
       case "cards":
         return (
           <CasesCardsView
-            cases={cases}
+            cases={filteredCases}
             selectedCases={selectedCases}
             onCaseSelect={handleCaseSelect}
             onEdit={handleEdit}
@@ -144,7 +177,7 @@ export default function GestaoCasos() {
       case "grid":
         return (
           <CasesGridView
-            cases={cases}
+            cases={filteredCases}
             selectedCases={selectedCases}
             onCaseSelect={handleCaseSelect}
             onEdit={handleEdit}
@@ -158,7 +191,7 @@ export default function GestaoCasos() {
       case "table":
         return (
           <MedicalCasesTable
-            cases={cases}
+            cases={filteredCases}
             onDelete={deleteCase}
             onAnalytics={handleAnalytics}
             onWizardEdit={handleWizardEdit}
@@ -177,102 +210,67 @@ export default function GestaoCasos() {
         <div className="flex items-center justify-between">
           <BackToDashboard variant="back" />
           <div className="text-sm text-gray-500">
-            {cases.length} de {totalCases} casos exibidos
+            {filteredCases.length} de {cases.length} casos exibidos
           </div>
         </div>
 
         <CasesManagementHeader />
 
-        {/* Filtros Avançados */}
-        <CasesAdvancedFilters
-          filters={filters}
-          onFiltersChange={setFilters}
-          onSaveFilter={handleSaveFilter}
-          savedFilters={savedFilters}
-          onLoadFilter={handleLoadFilter}
-          totalCases={totalCases}
-          filteredCases={cases.length}
-        />
+        {/* Filtros Básicos */}
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <input
+            type="text"
+            placeholder="Buscar casos..."
+            value={filters.searchTerm}
+            onChange={(e) => setFilters(prev => ({ ...prev, searchTerm: e.target.value }))}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
 
-        {/* Seletor de Visualização */}
-        <CasesViewSelector
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          sortField={sortField}
-          sortDirection={sortDirection}
-          onSort={handleSort}
-          selectedCount={selectedCases.length}
-          totalCount={cases.length}
-          onBulkAction={handleBulkAction}
-          onExport={handleExport}
-          gridDensity={gridDensity}
-          onGridDensityChange={setGridDensity}
-        />
+        {/* Seletor de Visualização Simplificado */}
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setViewMode("cards")}
+                className={`px-4 py-2 rounded ${viewMode === "cards" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+              >
+                Cards
+              </button>
+              <button
+                onClick={() => setViewMode("table")}
+                className={`px-4 py-2 rounded ${viewMode === "table" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+              >
+                Tabela
+              </button>
+            </div>
+            <div className="text-sm text-gray-500">
+              {selectedCases.length} selecionados
+            </div>
+          </div>
+        </div>
 
         {/* Visualização dos Casos */}
         <div className="bg-white rounded-lg shadow-lg p-6">
           {renderCasesView()}
         </div>
 
-        {/* Modais - Phase 1 */}
-        <CaseEditFormModal
-          open={editModalOpen}
-          onClose={closeEditModal}
-          caseId={selectedCaseId}
-          onSaved={handleCaseSaved}
-        />
+        {/* Modais básicos para compatibilidade */}
+        {editModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg max-w-md w-full">
+              <h3 className="text-lg font-semibold mb-4">Editar Caso</h3>
+              <p>Modal de edição em desenvolvimento</p>
+              <button 
+                onClick={closeEditModal}
+                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        )}
 
-        <CaseQuickEditModal
-          open={quickEditModalOpen}
-          onClose={closeQuickEditModal}
-          caseId={selectedCaseId}
-          onSaved={handleCaseSaved}
-        />
-
-        <CaseRichViewModal
-          open={richViewModalOpen}
-          onClose={closeRichViewModal}
-          caseId={selectedCaseId}
-          onEdit={handleQuickEdit}
-          onDuplicate={handleDuplicate}
-          onAnalytics={handleAnalytics}
-          onWizardEdit={handleWizardEdit}
-          onVersionComparison={handleVersionComparison}
-        />
-
-        <CaseSmartDuplicateModal
-          open={duplicateModalOpen}
-          onClose={closeDuplicateModal}
-          caseId={selectedCaseId}
-          onCreated={handleCaseCreated}
-        />
-
-        {/* Modais - Phase 2 */}
-        <CaseAdvancedAnalyticsModal
-          open={analyticsModalOpen}
-          onClose={closeAnalyticsModal}
-          caseId={selectedCaseId}
-        />
-
-        <CaseEditWizardModal
-          open={wizardModalOpen}
-          onClose={closeWizardModal}
-          caseId={selectedCaseId}
-          onSaved={handleCaseSaved}
-        />
-
-        <CaseVersionComparisonModal
-          open={versionModalOpen}
-          onClose={closeVersionModal}
-          caseId={selectedCaseId}
-          onRestore={(versionData) => {
-            // Implementar lógica de restauração
-            console.log("Restaurar versão:", versionData);
-            closeVersionModal();
-          }}
-        />
-
-        {/* Phase 3 Components */}
         <NotificationContainer />
         <CaseShortcutsManager shortcuts={shortcuts} />
       </div>
