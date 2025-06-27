@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { 
@@ -27,6 +26,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { ProfileSettingsModal } from "@/components/profile/ProfileSettingsModal";
+import { RadCoinStoreModal } from "@/components/radcoin-shop/RadCoinStoreModal";
 
 export function HeaderNav() {
   const location = useLocation();
@@ -34,6 +34,7 @@ export function HeaderNav() {
   const { signOut, user } = useAuth();
   const { profile, isLoading: profileLoading } = useUserProfile();
   const [showProfileSettings, setShowProfileSettings] = useState(false);
+  const [showRadCoinShop, setShowRadCoinShop] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -98,13 +99,19 @@ export function HeaderNav() {
 
             {/* User Menu */}
             <div className="flex items-center space-x-4">
-              {/* RadCoins Display */}
-              <div className="hidden sm:flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-3 py-1">
-                <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+              {/* RadCoins Display - AGORA CLICÁVEL */}
+              <button
+                onClick={() => setShowRadCoinShop(true)}
+                className="hidden sm:flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-3 py-1 hover:bg-white/20 hover:scale-105 transition-all duration-300 cursor-pointer group"
+              >
+                <div className="w-2 h-2 bg-yellow-400 rounded-full group-hover:animate-pulse"></div>
                 <span className="text-sm text-white font-medium">
                   {userData.radcoins.toLocaleString()} RadCoins
                 </span>
-              </div>
+                <div className="w-4 h-4 bg-yellow-400/20 rounded-full flex items-center justify-center group-hover:bg-yellow-400/40 transition-colors">
+                  <span className="text-yellow-400 text-xs">+</span>
+                </div>
+              </button>
 
               {/* User Dropdown */}
               <DropdownMenu>
@@ -166,6 +173,12 @@ export function HeaderNav() {
       <ProfileSettingsModal 
         isOpen={showProfileSettings}
         onClose={() => setShowProfileSettings(false)}
+      />
+
+      {/* RadCoin Shop Modal */}
+      <RadCoinStoreModal 
+        isOpen={showRadCoinShop}
+        onClose={() => setShowRadCoinShop(false)}
       />
     </>
   );
