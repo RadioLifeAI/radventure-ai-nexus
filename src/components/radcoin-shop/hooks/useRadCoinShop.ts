@@ -127,7 +127,11 @@ export function useRadCoinShop() {
       if (profileError) throw profileError;
 
       const currentBalance = profile?.radcoin_balance || 0;
-      if (currentBalance < packageData.price) {
+      const finalPrice = packageData.discount 
+        ? Math.floor(packageData.price * (1 - packageData.discount / 100))
+        : packageData.price;
+
+      if (currentBalance < finalPrice) {
         throw new Error('Saldo insuficiente de RadCoins');
       }
 
@@ -135,7 +139,7 @@ export function useRadCoinShop() {
       const { error: debitError } = await supabase
         .from('profiles')
         .update({ 
-          radcoin_balance: currentBalance - packageData.price,
+          radcoin_balance: currentBalance - finalPrice,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
@@ -143,26 +147,33 @@ export function useRadCoinShop() {
       if (debitError) throw debitError;
 
       // Atualizar benefícios do usuário
-      const { error: benefitsError } = await supabase
-        .from('user_help_aids')
-        .update({
-          elimination_aids: supabase.raw(`elimination_aids + ${packageData.benefits.elimination_aids || 0}`),
-          skip_aids: supabase.raw(`skip_aids + ${packageData.benefits.skip_aids || 0}`),
-          ai_tutor_credits: supabase.raw(`ai_tutor_credits + ${packageData.benefits.ai_tutor_credits || 0}`),
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', user.id);
+      const { error: benefitsError } = await supabase.rpc('consume_help_aid', {
+        p_user_id: user.id,
+        p_aid_type: 'elimination',
+        p_amount: -(packageData.benefits.elimination_aids || 0)
+      });
 
-      if (benefitsError) throw benefitsError;
+      if (benefitsError) {
+        // Se RPC não funcionar, atualizar diretamente
+        await supabase
+          .from('user_help_aids')
+          .upsert({
+            user_id: user.id,
+            elimination_aids: packageData.benefits.elimination_aids || 0,
+            skip_aids: packageData.benefits.skip_aids || 0,
+            ai_tutor_credits: packageData.benefits.ai_tutor_credits || 0,
+            updated_at: new Date().toISOString()
+          });
+      }
 
       // Registrar transação
       const { error: logError } = await supabase
         .from('radcoin_transactions_log')
         .insert({
           user_id: user.id,
-          tx_type: 'help_package_purchase',
-          amount: -packageData.price,
-          balance_after: currentBalance - packageData.price,
+          tx_type: 'help_purchase',
+          amount: -finalPrice,
+          balance_after: currentBalance - finalPrice,
           metadata: {
             package_id: packageData.id,
             package_name: packageData.name,
@@ -227,24 +238,22 @@ export function useRadCoinShop() {
       if (debitError) throw debitError;
 
       // Atualizar benefícios
-      const { error: benefitsError } = await supabase
+      await supabase
         .from('user_help_aids')
-        .update({
-          elimination_aids: supabase.raw(`elimination_aids + ${offerData.benefits.elimination_aids || 0}`),
-          skip_aids: supabase.raw(`skip_aids + ${offerData.benefits.skip_aids || 0}`),
-          ai_tutor_credits: supabase.raw(`ai_tutor_credits + ${offerData.benefits.ai_tutor_credits || 0}`),
+        .upsert({
+          user_id: user.id,
+          elimination_aids: offerData.benefits.elimination_aids || 0,
+          skip_aids: offerData.benefits.skip_aids || 0,
+          ai_tutor_credits: offerData.benefits.ai_tutor_credits || 0,
           updated_at: new Date().toISOString()
-        })
-        .eq('user_id', user.id);
-
-      if (benefitsError) throw benefitsError;
+        });
 
       // Registrar transação
       const { error: logError } = await supabase
         .from('radcoin_transactions_log')
         .insert({
           user_id: user.id,
-          tx_type: 'special_offer_purchase',
+          tx_type: 'help_purchase',
           amount: -offerData.salePrice,
           balance_after: currentBalance - offerData.salePrice,
           metadata: {

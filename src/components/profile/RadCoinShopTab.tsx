@@ -21,6 +21,13 @@ import {
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+interface TransactionMetadata {
+  package_name?: string;
+  offer_name?: string;
+  discount?: number;
+  [key: string]: any;
+}
+
 export function RadCoinShopTab() {
   const { user } = useAuth();
 
@@ -33,7 +40,7 @@ export function RadCoinShopTab() {
         .from('radcoin_transactions_log')
         .select('*')
         .eq('user_id', user.id)
-        .in('tx_type', ['help_package_purchase', 'special_offer_purchase', 'subscription_purchase'])
+        .in('tx_type', ['help_purchase', 'subscription_purchase'])
         .order('created_at', { ascending: false })
         .limit(10);
         
@@ -78,10 +85,21 @@ export function RadCoinShopTab() {
   });
 
   const getTransactionIcon = (txType: string) => {
-    if (txType.includes('package')) return Gift;
+    if (txType.includes('package') || txType.includes('help')) return Gift;
     if (txType.includes('offer')) return Flame;
     if (txType.includes('subscription')) return Crown;
     return ShoppingBag;
+  };
+
+  const getMetadata = (metadata: any): TransactionMetadata => {
+    if (typeof metadata === 'string') {
+      try {
+        return JSON.parse(metadata);
+      } catch {
+        return {};
+      }
+    }
+    return metadata || {};
   };
 
   if (isLoading) {
@@ -193,6 +211,7 @@ export function RadCoinShopTab() {
             ) : (
               recentPurchases.map((purchase) => {
                 const Icon = getTransactionIcon(purchase.tx_type);
+                const metadata = getMetadata(purchase.metadata);
                 
                 return (
                   <div 
@@ -205,8 +224,8 @@ export function RadCoinShopTab() {
                       </div>
                       <div>
                         <h4 className="font-semibold text-gray-900">
-                          {purchase.metadata?.package_name || 
-                           purchase.metadata?.offer_name || 
+                          {metadata.package_name || 
+                           metadata.offer_name || 
                            purchase.tx_type.replace('_', ' ').toUpperCase()}
                         </h4>
                         <p className="text-gray-500 text-sm">
@@ -218,9 +237,9 @@ export function RadCoinShopTab() {
                       <div className="text-lg font-bold text-red-600">
                         {purchase.amount.toLocaleString()} RadCoins
                       </div>
-                      {purchase.metadata?.discount && (
+                      {metadata.discount && (
                         <Badge className="bg-green-100 text-green-700 text-xs">
-                          {purchase.metadata.discount}% OFF
+                          {metadata.discount}% OFF
                         </Badge>
                       )}
                     </div>

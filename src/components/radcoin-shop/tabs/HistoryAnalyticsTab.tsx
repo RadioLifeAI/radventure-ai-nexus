@@ -20,6 +20,19 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+interface StatsData {
+  totalTransactions: number;
+  totalSpent: number;
+  totalEarned: number;
+  netBalance: number;
+}
+
+interface TransactionMetadata {
+  package_name?: string;
+  offer_name?: string;
+  [key: string]: any;
+}
+
 export function HistoryAnalyticsTab() {
   const { user } = useAuth();
 
@@ -42,7 +55,11 @@ export function HistoryAnalyticsTab() {
 
   // Processar dados para gráficos
   const processedData = React.useMemo(() => {
-    if (!transactions.length) return { chartData: [], pieData: [], stats: {} };
+    if (!transactions.length) return { 
+      chartData: [], 
+      pieData: [], 
+      stats: { totalTransactions: 0, totalSpent: 0, totalEarned: 0, netBalance: 0 } as StatsData
+    };
 
     // Dados para gráfico de linha (últimos 30 dias)
     const chartData = transactions
@@ -76,7 +93,7 @@ export function HistoryAnalyticsTab() {
       .filter(tx => tx.amount > 0)
       .reduce((sum, tx) => sum + tx.amount, 0);
 
-    const stats = {
+    const stats: StatsData = {
       totalTransactions: transactions.length,
       totalSpent,
       totalEarned,
@@ -87,7 +104,7 @@ export function HistoryAnalyticsTab() {
   }, [transactions]);
 
   const getTransactionIcon = (txType: string) => {
-    if (txType.includes('purchase')) return Gift;
+    if (txType.includes('purchase') || txType.includes('help')) return Gift;
     if (txType.includes('case')) return Target;
     if (txType.includes('event')) return Crown;
     if (txType.includes('offer')) return Flame;
@@ -96,6 +113,17 @@ export function HistoryAnalyticsTab() {
 
   const getTransactionColor = (amount: number) => {
     return amount > 0 ? 'text-green-400' : 'text-red-400';
+  };
+
+  const getMetadata = (metadata: any): TransactionMetadata => {
+    if (typeof metadata === 'string') {
+      try {
+        return JSON.parse(metadata);
+      } catch {
+        return {};
+      }
+    }
+    return metadata || {};
   };
 
   const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#00ff00'];
@@ -126,7 +154,7 @@ export function HistoryAnalyticsTab() {
           <CardContent className="p-4 text-center">
             <DollarSign className="h-8 w-8 text-blue-400 mx-auto mb-2" />
             <h3 className="text-2xl font-bold text-white">
-              {processedData.stats.totalTransactions || 0}
+              {processedData.stats.totalTransactions}
             </h3>
             <p className="text-blue-200">Transações Totais</p>
           </CardContent>
@@ -136,7 +164,7 @@ export function HistoryAnalyticsTab() {
           <CardContent className="p-4 text-center">
             <ArrowUp className="h-8 w-8 text-green-400 mx-auto mb-2" />
             <h3 className="text-2xl font-bold text-white">
-              +{(processedData.stats.totalEarned || 0).toLocaleString()}
+              +{processedData.stats.totalEarned.toLocaleString()}
             </h3>
             <p className="text-green-200">RadCoins Ganhos</p>
           </CardContent>
@@ -146,7 +174,7 @@ export function HistoryAnalyticsTab() {
           <CardContent className="p-4 text-center">
             <ArrowDown className="h-8 w-8 text-red-400 mx-auto mb-2" />
             <h3 className="text-2xl font-bold text-white">
-              -{(processedData.stats.totalSpent || 0).toLocaleString()}
+              -{processedData.stats.totalSpent.toLocaleString()}
             </h3>
             <p className="text-red-200">RadCoins Gastos</p>
           </CardContent>
@@ -156,8 +184,8 @@ export function HistoryAnalyticsTab() {
           <CardContent className="p-4 text-center">
             <TrendingUp className="h-8 w-8 text-purple-400 mx-auto mb-2" />
             <h3 className="text-2xl font-bold text-white">
-              {(processedData.stats.netBalance || 0) >= 0 ? '+' : ''}
-              {(processedData.stats.netBalance || 0).toLocaleString()}
+              {processedData.stats.netBalance >= 0 ? '+' : ''}
+              {processedData.stats.netBalance.toLocaleString()}
             </h3>
             <p className="text-purple-200">Saldo Líquido</p>
           </CardContent>
@@ -260,6 +288,7 @@ export function HistoryAnalyticsTab() {
               transactions.slice(0, 10).map((tx) => {
                 const Icon = getTransactionIcon(tx.tx_type);
                 const isPositive = tx.amount > 0;
+                const metadata = getMetadata(tx.metadata);
                 
                 return (
                   <div 
@@ -276,7 +305,7 @@ export function HistoryAnalyticsTab() {
                       </div>
                       <div>
                         <h4 className="text-white font-semibold">
-                          {tx.metadata?.package_name || tx.metadata?.offer_name || 
+                          {metadata.package_name || metadata.offer_name || 
                            tx.tx_type.replace('_', ' ').toUpperCase()}
                         </h4>
                         <p className="text-gray-400 text-sm">

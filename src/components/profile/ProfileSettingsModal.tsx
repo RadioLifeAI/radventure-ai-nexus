@@ -40,7 +40,7 @@ export function ProfileSettingsModal({ isOpen, onClose }: ProfileSettingsModalPr
     state: '',
     medical_specialty: '',
     academic_specialty: '',
-    academic_stage: 'Student' as const,
+    academic_stage: 'Student' as 'Student' | 'Intern' | 'Resident' | 'Specialist',
     college: '',
     birthdate: ''
   });
@@ -55,7 +55,7 @@ export function ProfileSettingsModal({ isOpen, onClose }: ProfileSettingsModalPr
         state: profile.state || '',
         medical_specialty: profile.medical_specialty || '',
         academic_specialty: profile.academic_specialty || '',
-        academic_stage: profile.academic_stage || 'Student',
+        academic_stage: (profile.academic_stage as 'Student' | 'Intern' | 'Resident' | 'Specialist') || 'Student',
         college: profile.college || '',
         birthdate: profile.birthdate || ''
       });
