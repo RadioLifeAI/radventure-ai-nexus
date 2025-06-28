@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
-import { Brain, Target, TrendingUp, Award } from "lucide-react";
+import { Brain, Target, TrendingUp, Award, Rocket, ArrowLeft } from "lucide-react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -47,8 +47,21 @@ export default function Login() {
     }
   };
 
+  const goBackToLanding = () => {
+    navigate('/');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white flex">
+      {/* Botão Foguete - Voltar para Landing */}
+      <button
+        onClick={goBackToLanding}
+        className="fixed top-4 left-4 z-50 bg-white/10 hover:bg-white/20 backdrop-blur-sm p-3 rounded-full transition-all duration-300 hover:scale-110 group"
+        title="Voltar para a página inicial"
+      >
+        <Rocket className="text-white group-hover:text-cyan-300 transition-colors" size={24} />
+      </button>
+
       {/* Lado Esquerdo - Formulário de Login */}
       <div className="w-full lg:w-2/5 flex items-center justify-center p-8">
         <div className="w-full max-w-sm space-y-8">
@@ -153,6 +166,17 @@ export default function Login() {
                 {isSignUp
                   ? "Já tem conta? Fazer login"
                   : "Não tem conta? Criar uma nova"}
+              </button>
+            </div>
+
+            {/* Link para voltar */}
+            <div className="text-center pt-2">
+              <button
+                onClick={goBackToLanding}
+                className="text-cyan-200/80 hover:text-cyan-100 text-sm transition-colors flex items-center gap-1 mx-auto"
+              >
+                <ArrowLeft size={14} />
+                Voltar para página inicial
               </button>
             </div>
           </div>

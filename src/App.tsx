@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
@@ -23,12 +22,13 @@ import FakeCasesPreview from "@/pages/admin/FakeCasesPreview";
 import NotFound from "@/pages/NotFound";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
-// Novas páginas legais
+// Páginas legais e institucionais
 import TermosDeUso from "@/pages/TermosDeUso";
 import PoliticaPrivacidade from "@/pages/PoliticaPrivacidade";
 import PoliticaCookies from "@/pages/PoliticaCookies";
 import Sobre from "@/pages/Sobre";
 import Contato from "@/pages/Contato";
+import Funcionalidades from "@/pages/Funcionalidades";
 
 import "./App.css";
 
@@ -56,6 +56,7 @@ function App() {
           <Route path="/cookies" element={<PoliticaCookies />} />
           <Route path="/sobre" element={<Sobre />} />
           <Route path="/contato" element={<Contato />} />
+          <Route path="/funcionalidades" element={<Funcionalidades />} />
 
           {/* Páginas protegidas da aplicação */}
           <Route

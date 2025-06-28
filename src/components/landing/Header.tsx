@@ -2,27 +2,45 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Rocket, Menu, X, Sun, Moon } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDarkMode } from '@/hooks/useDarkMode';
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { isDark, toggleDarkMode } = useDarkMode();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+    // Se estamos na página inicial, faz scroll para a seção
+    if (location.pathname === '/') {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+        setIsMenuOpen(false);
+      }
+    } else {
+      // Se não estamos na página inicial, navega para lá e depois faz scroll
+      navigate('/');
+      setTimeout(() => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
       setIsMenuOpen(false);
     }
   };
 
   const scrollToTop = () => {
-    window.scrollTo({ 
-      top: 0, 
-      behavior: 'smooth' 
-    });
+    if (location.pathname === '/') {
+      window.scrollTo({ 
+        top: 0, 
+        behavior: 'smooth' 
+      });
+    } else {
+      navigate('/');
+    }
   };
 
   return (
@@ -44,12 +62,12 @@ export function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <button
-              onClick={() => scrollToSection('funcionalidades')}
-              className="text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
+            <Link
+              to="/funcionalidades"
+              className="text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors font-medium"
             >
               Funcionalidades
-            </button>
+            </Link>
             <button
               onClick={() => scrollToSection('sobre')}
               className="text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
@@ -103,12 +121,13 @@ export function Header() {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex flex-col space-y-4">
-              <button
-                onClick={() => scrollToSection('funcionalidades')}
-                className="text-left text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
+              <Link
+                to="/funcionalidades"
+                className="text-left text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors font-medium"
+                onClick={() => setIsMenuOpen(false)}
               >
                 Funcionalidades
-              </button>
+              </Link>
               <button
                 onClick={() => scrollToSection('sobre')}
                 className="text-left text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
