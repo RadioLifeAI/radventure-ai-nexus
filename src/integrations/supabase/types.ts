@@ -1399,6 +1399,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_help_aids: {
+        Args: {
+          p_user_id: string
+          p_elimination_aids?: number
+          p_skip_aids?: number
+          p_ai_tutor_credits?: number
+        }
+        Returns: boolean
+      }
       award_daily_login_bonus: {
         Args: { p_user_id: string }
         Returns: Json

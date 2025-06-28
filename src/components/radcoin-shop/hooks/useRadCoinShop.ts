@@ -146,24 +146,17 @@ export function useRadCoinShop() {
 
       if (debitError) throw debitError;
 
-      // Atualizar benefícios do usuário
-      const { error: benefitsError } = await supabase.rpc('consume_help_aid', {
+      // CORREÇÃO: Usar função add_help_aids em vez de consume_help_aid
+      const { data: addResult, error: benefitsError } = await supabase.rpc('add_help_aids', {
         p_user_id: user.id,
-        p_aid_type: 'elimination',
-        p_amount: -(packageData.benefits.elimination_aids || 0)
+        p_elimination_aids: packageData.benefits.elimination_aids || 0,
+        p_skip_aids: packageData.benefits.skip_aids || 0,
+        p_ai_tutor_credits: packageData.benefits.ai_tutor_credits || 0
       });
 
       if (benefitsError) {
-        // Se RPC não funcionar, atualizar diretamente
-        await supabase
-          .from('user_help_aids')
-          .upsert({
-            user_id: user.id,
-            elimination_aids: packageData.benefits.elimination_aids || 0,
-            skip_aids: packageData.benefits.skip_aids || 0,
-            ai_tutor_credits: packageData.benefits.ai_tutor_credits || 0,
-            updated_at: new Date().toISOString()
-          });
+        console.error('Erro ao adicionar benefícios:', benefitsError);
+        throw new Error('Erro ao creditar benefícios. Contate o suporte.');
       }
 
       // Registrar transação
@@ -212,7 +205,7 @@ export function useRadCoinShop() {
 
       console.log('Comprando oferta especial:', offerData);
       
-      // Similar ao purchaseHelpPackage mas com preço de oferta
+      // Verificar saldo atual
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('radcoin_balance')
@@ -237,16 +230,18 @@ export function useRadCoinShop() {
 
       if (debitError) throw debitError;
 
-      // Atualizar benefícios
-      await supabase
-        .from('user_help_aids')
-        .upsert({
-          user_id: user.id,
-          elimination_aids: offerData.benefits.elimination_aids || 0,
-          skip_aids: offerData.benefits.skip_aids || 0,
-          ai_tutor_credits: offerData.benefits.ai_tutor_credits || 0,
-          updated_at: new Date().toISOString()
-        });
+      // CORREÇÃO: Usar função add_help_aids em vez de UPSERT incorreto
+      const { data: addResult, error: benefitsError } = await supabase.rpc('add_help_aids', {
+        p_user_id: user.id,
+        p_elimination_aids: offerData.benefits.elimination_aids || 0,
+        p_skip_aids: offerData.benefits.skip_aids || 0,
+        p_ai_tutor_credits: offerData.benefits.ai_tutor_credits || 0
+      });
+
+      if (benefitsError) {
+        console.error('Erro ao adicionar benefícios da oferta:', benefitsError);
+        throw new Error('Erro ao creditar benefícios. Contate o suporte.');
+      }
 
       // Registrar transação
       const { error: logError } = await supabase
