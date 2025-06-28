@@ -49,7 +49,7 @@ export function AdminSidebar() {
         <ShieldIcon />
         <span className="ml-2 font-bold text-lg text-gray-800">Admin Panel</span>
       </div>
-      <nav className="flex-1 flex flex-col px-3 py-4 gap-1 overflow-y-auto bg-gradient-to-b from-white to-gray-50">
+      <nav className="flex-1 flex flex-col px-3 py-4 gap-1 overflow-y-auto bg-white">
         {adminMenu.map((item) => (
           <Link
             to={item.to}

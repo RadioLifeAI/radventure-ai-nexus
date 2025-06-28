@@ -24,7 +24,7 @@ export default function AdminPanel() {
   return (
     <div className="flex min-h-screen w-full bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
       <AdminSidebar />
-      <main className="flex-1 ml-[235px] min-h-screen">
+      <main className="flex-1 ml-[235px] min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
         {/* Header Gamificado com cores consistentes */}
         <header className="w-full bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 text-white shadow-xl border-b border-white/20 relative z-10">
           <div className="flex items-center justify-between px-6 py-4">
@@ -56,7 +56,7 @@ export default function AdminPanel() {
           </div>
         </header>
 
-        {/* Conteúdo Principal com padding otimizado */}
+        {/* Conteúdo Principal com background consistente */}
         <section className="p-6 bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 min-h-[calc(100vh-80px)] relative z-0">
           <Routes>
             {/* Rota padrão do admin - redireciona para analytics */}
@@ -76,7 +76,7 @@ export default function AdminPanel() {
             <Route path="chaves-api" element={<APIKeyManagement />} />
             <Route path="config-stripe" element={<StripeManagement />} />
             
-            {/* Rotas existentes mantidas */}
+            {/* Rotas principais de casos - CORRIGIDAS */}
             <Route path="casos-medicos" element={<CasosMedicos />} />
             <Route path="gestao-casos" element={<GestaoCasos />} />
             <Route path="create-event" element={<CreateEvent />} />
