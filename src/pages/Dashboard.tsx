@@ -1,251 +1,238 @@
 
-import React, { useState, Suspense } from "react";
-import { HeaderNav } from "@/components/HeaderNav";
-import { SpecialtyCard } from "@/components/dashboard/SpecialtyCard";
-import { RankingWidget } from "@/components/dashboard/RankingWidget";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Loader } from "@/components/Loader";
-import { useDashboardData } from "@/hooks/useDashboardData";
-import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
 import {
-  Brain,
-  Calendar,
-  Trophy,
-  Zap,
-  Target,
+  Activity,
   BookOpen,
+  Calendar,
+  Stethoscope,
+  Brain,
   Users,
-  TrendingUp,
-  Award,
-  Sparkles
+  Loader2,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link, useNavigate } from "react-router-dom";
+import { HeaderNav } from "@/components/HeaderNav";
+import { UserProfile } from "@/components/UserProfile";
+import { EventsSectionPlayer } from "@/components/EventsSectionPlayer";
+import { SpecialtyCard } from "@/components/dashboard/SpecialtyCard";
+import { DashboardSkeleton } from "@/components/ui/skeleton-loader";
+import { useDashboardData } from "@/hooks/useDashboardData";
+import { useCasesData } from "@/hooks/useCasesData";
 
-// Lazy load do RadCoin Shop para performance
-const RadCoinStoreModal = React.lazy(() => 
-  import("@/components/radcoin-shop/RadCoinStoreModal").then(module => ({
-    default: module.RadCoinStoreModal
-  }))
-);
+// Componente Card de Ações rápidas
+function ActionCard({ icon, title, description, link, color, onClick }: any) {
+  return (
+    <div className="bg-[#161f38] rounded-2xl shadow-lg flex flex-col items-center p-4 sm:p-6 min-h-[160px] sm:min-h-[186px] hover:scale-105 transition-transform duration-200 hover:shadow-xl group">
+      <div className={`mb-2 group-hover:scale-110 transition-transform duration-200`}>
+        {React.cloneElement(icon, { size: 32, className: `sm:size-9 ${color}` })}
+      </div>
+      <span className="mt-2 text-base sm:text-lg font-extrabold text-white drop-shadow-sm text-center leading-tight">{title}</span>
+      <span className="mt-1 text-xs sm:text-sm text-cyan-100 text-center leading-relaxed px-1">{description}</span>
+      {onClick ? (
+        <Button
+          onClick={onClick}
+          size="sm"
+          variant="outline"
+          className="mt-3 sm:mt-4 border-none text-[#11d3fc] bg-white hover:bg-[#d1f6fd] font-bold px-3 sm:px-4 rounded-xl shadow hover:shadow-lg transition-all duration-200 text-xs sm:text-sm"
+        >
+          <Activity size={12} className="sm:size-4 mr-1" />
+          {title === "Central de Casos" ? "Explorar" : title === "Crie sua Jornada" ? "Nova Jornada" : "Ver Eventos"}
+        </Button>
+      ) : (
+        <Button asChild size="sm" variant="outline"
+          className="mt-3 sm:mt-4 border-none text-[#11d3fc] bg-white hover:bg-[#d1f6fd] font-bold px-3 sm:px-4 rounded-xl shadow hover:shadow-lg transition-all duration-200 text-xs sm:text-sm"
+        >
+          <Link to={link || "#"}>
+            <Activity size={12} className="sm:size-4 mr-1" />
+            {title === "Central de Casos" ? "Explorar" : title === "Crie sua Jornada" ? "Nova Jornada" : "Ver Eventos"}
+          </Link>
+        </Button>
+      )}
+    </div>
+  );
+}
 
 export default function Dashboard() {
-  const { specialties, events, profile, isLoading } = useDashboardData();
-  const { user } = useAuth();
+  const { specialties, events, profile, isLoading: dashboardLoading } = useDashboardData();
+  const { userProgress, isLoading: progressLoading } = useCasesData();
   const navigate = useNavigate();
-  const [showRadCoinShop, setShowRadCoinShop] = useState(false);
+
+  const isLoading = dashboardLoading || progressLoading;
+
+  // Combinar dados de especialidades com progresso do usuário
+  const specialtiesWithProgress = specialties.map(specialty => ({
+    ...specialty,
+    userProgress: userProgress?.bySpecialty?.[specialty.name] ? {
+      total: userProgress.bySpecialty[specialty.name].total,
+      correct: userProgress.bySpecialty[specialty.name].correct,
+      accuracy: Math.round((userProgress.bySpecialty[specialty.name].correct / userProgress.bySpecialty[specialty.name].total) * 100)
+    } : undefined
+  }));
+
+  // Handler para eventos
+  function handleEnterEvent(eventId: string) {
+    navigate(`/evento/${eventId}`);
+  }
+
+  // Handlers para botões de ação - CORRIGIDO
+  const handleCentralCasos = () => {
+    navigate('/app/casos');
+  };
+
+  const handleCriarJornada = () => {
+    navigate('/app/criar-jornada');
+  };
+
+  const handleEventos = () => {
+    navigate('/app/eventos');
+  };
+
+  // Separar especialidades por tipo
+  const imagingSpecialties = specialties.filter(spec => 
+    spec.name.includes('Radiologia') || 
+    spec.name.includes('Neurorradiologia') ||
+    spec.name.includes('Imagem')
+  );
+
+  const medicalSpecialties = specialties.filter(spec => 
+    !imagingSpecialties.some(img => img.name === spec.name)
+  );
 
   if (isLoading) {
-    return <Loader />;
+    return (
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white w-full">
+        <HeaderNav />
+        <main className="flex-1 px-2 md:px-16 pt-4 pb-10">
+          <DashboardSkeleton />
+        </main>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6]">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white w-full">
       <HeaderNav />
-      
-      <main className="container mx-auto px-4 py-8">
-        {/* Header Principal - SEM ANIMAÇÕES */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4">
-            RadVenture Dashboard
-          </h1>
-          <p className="text-cyan-100 text-lg">
-            Sua jornada médica começa aqui
-          </p>
-        </div>
+      <main className="flex-1 flex flex-col gap-4 px-2 md:px-16 pt-4 pb-10">
+        {/* Perfil principal - Agora usando dados reais */}
+        <UserProfile />
 
-        {/* Stats Cards - Otimizados sem hover effects */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-cyan-200 text-sm">Seus RadCoins</p>
-                  <p className="text-2xl font-bold text-white">
-                    {profile?.radcoin_balance || 0}
-                  </p>
-                </div>
-                <Trophy className="h-8 w-8 text-yellow-400" />
+        {/* SEÇÃO DE EVENTOS GAMIFICADOS */}
+        <EventsSectionPlayer onEnterEvent={handleEnterEvent} />
+
+        {/* Actions Cards - Agora com handlers funcionais e responsivos */}
+        <section className="w-full grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mt-2 mb-4">
+          <ActionCard
+            icon={<Activity />}
+            title="Central de Casos"
+            description="Resolva desafios reais, aprenda e suba de nível!"
+            onClick={handleCentralCasos}
+            color="text-[#11d3fc]"
+          />
+          <ActionCard
+            icon={<BookOpen />}
+            title="Crie sua Jornada"
+            description="Personalize seu aprendizado com módulos e trilhas temáticas."
+            onClick={handleCriarJornada}
+            color="text-[#a189fa]"
+          />
+          <ActionCard
+            icon={<Calendar />}
+            title="Eventos"
+            description="Participe de eventos exclusivos e concorra no ranking."
+            onClick={handleEventos}
+            color="text-[#11d3fc]"
+          />
+        </section>
+
+        {/* Diagnóstico por Imagem */}
+        {imagingSpecialties.length > 0 && (
+          <section className="w-full mt-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-extrabold text-2xl text-white flex items-center gap-2">
+                <Brain className="h-6 w-6 text-cyan-300" />
+                Diagnóstico por Imagem
+              </h2>
+              <div className="text-sm text-cyan-200 flex items-center gap-2">
+                <span className="bg-cyan-500/20 px-3 py-1 rounded-full">
+                  {imagingSpecialties.reduce((sum, spec) => sum + spec.cases, 0)} casos disponíveis
+                </span>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              {imagingSpecialties.map((specialty) => (
+                <SpecialtyCard 
+                  key={specialty.id || specialty.name} 
+                  specialty={specialtiesWithProgress.find(s => s.name === specialty.name) || specialty} 
+                />
+              ))}
+            </div>
+          </section>
+        )}
 
-          <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-cyan-200 text-sm">Pontos Totais</p>
-                  <p className="text-2xl font-bold text-white">
-                    {profile?.total_points || 0}
-                  </p>
-                </div>
-                <Target className="h-8 w-8 text-green-400" />
+        {/* Especialidades Médicas */}
+        {medicalSpecialties.length > 0 && (
+          <section className="w-full mt-8 mb-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-extrabold text-2xl text-white flex items-center gap-2">
+                <Stethoscope className="h-6 w-6 text-cyan-300" />
+                Especialidades Médicas
+              </h2>
+              <div className="text-sm text-cyan-200 flex items-center gap-2">
+                <span className="bg-cyan-500/20 px-3 py-1 rounded-full">
+                  {medicalSpecialties.reduce((sum, spec) => sum + spec.cases, 0)} casos disponíveis
+                </span>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              {medicalSpecialties.map((specialty) => (
+                <SpecialtyCard 
+                  key={specialty.id || specialty.name} 
+                  specialty={specialtiesWithProgress.find(s => s.name === specialty.name) || specialty} 
+                />
+              ))}
+            </div>
+          </section>
+        )}
 
-          <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-cyan-200 text-sm">Especialidades</p>
-                  <p className="text-2xl font-bold text-white">
-                    {specialties.length}
-                  </p>
-                </div>
-                <BookOpen className="h-8 w-8 text-blue-400" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-cyan-200 text-sm">Eventos Ativos</p>
-                  <p className="text-2xl font-bold text-white">
-                    {events.length}
-                  </p>
-                </div>
-                <Calendar className="h-8 w-8 text-purple-400" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Especialidades - Grid Otimizado */}
-          <div className="lg:col-span-2">
-            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Brain className="h-5 w-5" />
-                  Especialidades Médicas
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {specialties.map((specialty) => (
-                    <SpecialtyCard
-                      key={specialty.id}
-                      specialty={specialty}
-                      onClick={() => navigate('/app/casos')}
-                    />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* RadCoin Shop - Botão otimizado */}
-            <Card className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-yellow-300/30">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Sparkles className="h-5 w-5" />
-                  RadCoin Shop
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-yellow-100 text-sm mb-4">
-                  Use seus RadCoins para desbloquear recursos premium
-                </p>
-                <Button 
-                  onClick={() => setShowRadCoinShop(true)}
-                  className="w-full bg-gradient-to-r from-yellow-600 to-orange-600"
-                >
-                  Abrir Loja
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Ranking Widget */}
-            <RankingWidget />
-
-            {/* Eventos Recentes */}
-            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Eventos Recentes
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {events.slice(0, 3).map((event) => (
-                    <div key={event.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                      <div>
-                        <p className="text-white font-medium text-sm">{event.name}</p>
-                        <p className="text-cyan-200 text-xs">
-                          {event.status === 'ACTIVE' ? 'Ativo' : 'Agendado'}
-                        </p>
-                      </div>
-                      <Badge variant="secondary" className="bg-blue-500/20 text-blue-300">
-                        {event.status}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-                <Button 
-                  variant="ghost" 
-                  className="w-full mt-4 text-cyan-300"
-                  onClick={() => navigate('/app/eventos')}
-                >
-                  Ver Todos os Eventos
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Quick Actions - Sem animações */}
-            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Zap className="h-5 w-5" />
-                  Ações Rápidas
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Button 
-                  variant="ghost" 
-                  className="w-full justify-start text-cyan-300"
-                  onClick={() => navigate('/app/casos')}
-                >
-                  <BookOpen className="h-4 w-4 mr-2" />
-                  Resolver Casos
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  className="w-full justify-start text-cyan-300"
-                  onClick={() => navigate('/app/rankings')}
-                >
-                  <Trophy className="h-4 w-4 mr-2" />
-                  Ver Rankings
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  className="w-full justify-start text-cyan-300"
-                  onClick={() => navigate('/app/estatisticas')}
-                >
-                  <TrendingUp className="h-4 w-4 mr-2" />
-                  Estatísticas
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+        {/* Mensagem quando não há dados */}
+        {specialties.length === 0 && (
+          <section className="w-full mt-8 mb-4 text-center">
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 hover:bg-white/15 transition-colors duration-300">
+              <Brain className="h-16 w-16 text-cyan-300 mx-auto mb-4 animate-pulse" />
+              <h3 className="text-xl font-bold text-white mb-2">
+                Especialidades em Preparação
+              </h3>
+              <p className="text-cyan-200 mb-4">
+                Estamos organizando os casos médicos por especialidade.
+              </p>
+              <Button 
+                onClick={() => navigate('/admin/casos-medicos')} 
+                className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"
+              >
+                Adicionar Casos
+              </Button>
+            </div>
+          </section>
+        )}
       </main>
 
-      {/* RadCoin Shop Modal - Lazy loaded */}
-      {showRadCoinShop && (
-        <Suspense fallback={<Loader />}>
-          <RadCoinStoreModal 
-            open={showRadCoinShop}
-            onClose={() => setShowRadCoinShop(false)}
-          />
-        </Suspense>
-      )}
+      {/* Footer aprimorado */}
+      <footer className="bg-gradient-to-t from-[#131f3a] to-transparent px-4 py-10 text-center mt-auto border-t border-white/10">
+        <div className="max-w-4xl mx-auto">
+          <span className="text-cyan-100 text-sm flex items-center justify-center gap-2">
+            Powered by RadVenture · Experiência para médicos do futuro 
+            <span className="text-lg animate-bounce">🚀</span>
+          </span>
+          <div className="mt-2 text-xs text-cyan-300">
+            {specialties.length} especialidades • {specialties.reduce((sum, spec) => sum + spec.cases, 0)} casos • {events.length} eventos
+          </div>
+          {profile && (
+            <div className="mt-1 text-xs text-cyan-400">
+              Bem-vindo, {profile.full_name || profile.username || 'Usuário'}!
+            </div>
+          )}
+        </div>
+      </footer>
     </div>
   );
 }

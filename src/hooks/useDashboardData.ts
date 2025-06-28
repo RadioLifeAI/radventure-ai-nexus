@@ -37,10 +37,7 @@ export function useDashboardData() {
 
       return specialtiesWithCounts;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutos - dados ficam frescos por mais tempo
-    cacheTime: 10 * 60 * 1000, // 10 minutos - mantém no cache por mais tempo
-    refetchInterval: false, // Remove refetch automático para performance
-    refetchOnWindowFocus: false // Remove refetch ao focar janela
+    refetchInterval: 30000 // Atualiza a cada 30 segundos
   });
 
   // Buscar dados de eventos
@@ -56,10 +53,7 @@ export function useDashboardData() {
       if (error) throw error;
       return events || [];
     },
-    staleTime: 2 * 60 * 1000, // 2 minutos
-    cacheTime: 5 * 60 * 1000, // 5 minutos
-    refetchInterval: false,
-    refetchOnWindowFocus: false
+    refetchInterval: 30000
   });
 
   // Buscar dados do perfil do usuário
@@ -77,11 +71,7 @@ export function useDashboardData() {
 
       if (error) throw error;
       return profile;
-    },
-    staleTime: 1 * 60 * 1000, // 1 minuto
-    cacheTime: 3 * 60 * 1000, // 3 minutos
-    refetchInterval: false,
-    refetchOnWindowFocus: false
+    }
   });
 
   return {

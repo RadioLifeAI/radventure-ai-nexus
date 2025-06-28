@@ -53,7 +53,6 @@
   }
 }
 
-/* Skeleton animation otimizada - apenas para loading */
 @keyframes skeleton-shimmer {
   0% {
     background-position: -200% 0;
@@ -69,22 +68,4 @@
     background-size: 200% 100%;
     animation: skeleton-shimmer 2s infinite;
   }
-  
-  /* Otimização: transições apenas para cores (mais rápidas) */
-  .transition-fast {
-    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
-  }
-  
-  /* Remove will-change desnecessário para melhor performance */
-  .no-animations {
-    animation: none !important;
-    transition: none !important;
-    transform: none !important;
-  }
-}
-
-/* Performance: reduz repaints desnecessários */
-.performance-optimized {
-  backface-visibility: hidden;
-  transform: translateZ(0);
 }
