@@ -51,7 +51,10 @@ export function CasesGrid({ filters }: Props) {
       const { data, error } = await query;
       if (error) throw error;
       return data || [];
-    }
+    },
+    // Cache mais agressivo para melhor performance
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    cacheTime: 10 * 60 * 1000 // 10 minutos
   });
 
   if (isLoading) {
@@ -71,19 +74,41 @@ export function CasesGrid({ filters }: Props) {
         <h3 className="text-xl font-semibold text-white mb-2">Nenhum caso encontrado</h3>
         <p className="text-cyan-100">
           {Object.values(filters).some(f => f) 
-            ? "Tente ajustar os filtros ou explore outras especialidades" 
+            ? `Nenhum caso encontrado para ${filters.specialty || 'os filtros selecionados'}. Tente ajustar os filtros.`
             : "Os casos estão sendo preparados para esta especialidade"
           }
         </p>
+        {filters.specialty && (
+          <p className="text-cyan-200 text-sm mt-2">
+            Casos para <strong>{filters.specialty}</strong> em desenvolvimento
+          </p>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-      {cases.map((case_) => (
-        <CaseCard key={case_.id} case={case_} />
-      ))}
+    <div className="space-y-4">
+      {/* Contador de resultados */}
+      {cases.length > 0 && (
+        <div className="flex items-center justify-between mb-4">
+          <div className="text-cyan-100 text-sm">
+            {cases.length} caso{cases.length !== 1 ? 's' : ''} encontrado{cases.length !== 1 ? 's' : ''}
+            {filters.specialty && (
+              <span className="ml-2 text-cyan-200">
+                em <strong>{filters.specialty}</strong>
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* Grid de casos */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {cases.map((case_) => (
+          <CaseCard key={case_.id} case={case_} />
+        ))}
+      </div>
     </div>
   );
 }

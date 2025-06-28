@@ -1,5 +1,6 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { HeaderNav } from "@/components/HeaderNav";
 import { AdvancedCasesDashboard } from "./advanced/AdvancedCasesDashboard";
 import { CaseFilters } from "./CaseFilters";
@@ -14,24 +15,60 @@ import {
   Brain, 
   Sparkles,
   Zap,
-  Target
+  Target,
+  ArrowLeft
 } from "lucide-react";
 import { useCasesData } from "@/hooks/useCasesData";
 
 export function CasesCentralAdvanced() {
   const { casesStats, userProgress, isLoading } = useCasesData();
   const navigate = useNavigate();
-  const [filters, setFilters] = useState({
-    specialty: "",
-    modality: "",
-    difficulty: "",
-    searchTerm: ""
+  const [searchParams] = useSearchParams();
+  
+  // Ler parâmetros da URL e definir filtros iniciais
+  const [filters, setFilters] = useState(() => {
+    const specialtyFromUrl = searchParams.get('specialty') || '';
+    return {
+      specialty: specialtyFromUrl,
+      modality: "",
+      difficulty: "",
+      searchTerm: ""
+    };
   });
+
+  // Controlar aba ativa baseado em parâmetros URL
+  const [activeTab, setActiveTab] = useState(() => {
+    return searchParams.get('specialty') ? 'explorer' : 'advanced-dashboard';
+  });
+
+  // Atualizar filtros quando URL mudar
+  useEffect(() => {
+    const specialtyFromUrl = searchParams.get('specialty') || '';
+    if (specialtyFromUrl && specialtyFromUrl !== filters.specialty) {
+      setFilters(prev => ({
+        ...prev,
+        specialty: specialtyFromUrl
+      }));
+      setActiveTab('explorer');
+    }
+  }, [searchParams, filters.specialty]);
 
   const filtersStats = casesStats ? {
     total: casesStats.totalCases,
     bySpecialty: casesStats.bySpecialty
   } : { total: 0, bySpecialty: {} };
+
+  // Função para limpar filtros e voltar ao dashboard
+  const handleBackToDashboard = () => {
+    setFilters({
+      specialty: "",
+      modality: "",
+      difficulty: "",
+      searchTerm: ""
+    });
+    setActiveTab('advanced-dashboard');
+    navigate('/app/casos', { replace: true });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white">
@@ -39,8 +76,27 @@ export function CasesCentralAdvanced() {
       
       <main className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
         <div className="space-y-4 sm:space-y-8">
-          {/* Header Revolucionário - Otimizado para Mobile */}
+          {/* Header com indicador de filtro ativo */}
           <div className="text-center px-2">
+            {filters.specialty && (
+              <div className="mb-4 flex items-center justify-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleBackToDashboard}
+                  className="text-cyan-200 hover:text-white hover:bg-white/10"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-1" />
+                  Voltar ao Dashboard
+                </Button>
+                <div className="bg-cyan-500/20 backdrop-blur-sm rounded-full px-4 py-2 border border-cyan-300/30">
+                  <span className="text-cyan-100 text-sm">
+                    Filtrado por: <strong className="text-cyan-200">{filters.specialty}</strong>
+                  </span>
+                </div>
+              </div>
+            )}
+            
             <h1 className="text-3xl sm:text-5xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-2 sm:mb-4">
               Central de Casos Avançada
             </h1>
@@ -63,7 +119,7 @@ export function CasesCentralAdvanced() {
             </div>
           </div>
 
-          <Tabs defaultValue="advanced-dashboard" className="space-y-4 sm:space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
             <TabsList className="grid w-full grid-cols-3 bg-white/10 backdrop-blur-sm border border-white/20 h-auto">
               <TabsTrigger value="advanced-dashboard" className="data-[state=active]:bg-white/20 text-xs sm:text-sm p-2 sm:p-3">
                 <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
@@ -74,6 +130,9 @@ export function CasesCentralAdvanced() {
                 <Filter className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                 <span className="hidden sm:inline">Explorar Casos</span>
                 <span className="sm:hidden">Explorar</span>
+                {filters.specialty && (
+                  <div className="ml-1 w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
+                )}
               </TabsTrigger>
               <TabsTrigger value="ai-journey" className="data-[state=active]:bg-white/20 text-xs sm:text-sm p-2 sm:p-3">
                 <Brain className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
