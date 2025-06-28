@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
+import { CaseFormWithAdvancedUpload } from "./CaseFormWithAdvancedUpload";
 import { CaseProfileForm } from "./CaseProfileForm";
 
 type CaseEditFormModalProps = {
@@ -84,7 +85,7 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-white border border-gray-200 shadow-xl z-50">
         <DialogHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 -m-6 mb-6 border-b border-gray-200">
           <DialogTitle className="text-xl font-bold text-gray-800">
-            Editar Caso Médico
+            Editar Caso Médico - Sistema Avançado
           </DialogTitle>
         </DialogHeader>
         {loading ? (
@@ -96,10 +97,17 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
           </div>
         ) : editingCase ? (
           <div className="bg-white">
-            <CaseProfileForm 
-              editingCase={editingCase}
-              onCreated={handleCaseUpdated}
-            />
+            <CaseFormWithAdvancedUpload 
+              caseId={editingCase.id}
+              onImagesChange={(images) => {
+                console.log('Imagens do caso atualizadas:', images);
+              }}
+            >
+              <CaseProfileForm 
+                editingCase={editingCase}
+                onCreated={handleCaseUpdated}
+              />
+            </CaseFormWithAdvancedUpload>
           </div>
         ) : null}
       </DialogContent>
