@@ -9,11 +9,6 @@ export function useCaseProgress(caseId: string) {
   const [helpUsed, setHelpUsed] = useState<string[]>([]);
   const [eliminatedOptions, setEliminatedOptions] = useState<number[]>([]);
   const [isAnswered, setIsAnswered] = useState(false);
-  const [helpCredits, setHelpCredits] = useState({
-    elimination: 3,
-    skip: 1,
-    aiHint: 2
-  });
 
   const { toast } = useToast();
   const { user } = useAuth();
@@ -22,20 +17,34 @@ export function useCaseProgress(caseId: string) {
     setHelpUsed(prev => [...prev, helpType]);
   };
 
-  const eliminateOption = (optionIndex: number) => {
-    setEliminatedOptions(prev => [...prev, optionIndex]);
+  const eliminateOption = (correctAnswerIndex: number) => {
+    // CORREÇÃO CRÍTICA: Nunca eliminar a alternativa correta
+    const availableOptions = [0, 1, 2, 3].filter(i => 
+      i !== correctAnswerIndex && !eliminatedOptions.includes(i)
+    );
+
+    if (availableOptions.length === 0) {
+      toast({
+        title: "Não há alternativas para eliminar",
+        description: "Todas as alternativas incorretas já foram eliminadas.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Selecionar uma alternativa INCORRETA aleatória
+    const randomIndex = availableOptions[Math.floor(Math.random() * availableOptions.length)];
+    setEliminatedOptions(prev => [...prev, randomIndex]);
     addHelpUsed("Eliminação");
-    setHelpCredits(prev => ({ ...prev, elimination: prev.elimination - 1 }));
     
     toast({
       title: "Alternativa eliminada",
-      description: "Uma alternativa foi removida das opções.",
+      description: "Uma alternativa incorreta foi removida das opções.",
     });
   };
 
   const skipCase = () => {
     addHelpUsed("Pular");
-    setHelpCredits(prev => ({ ...prev, skip: prev.skip - 1 }));
     
     toast({
       title: "Caso pulado",
@@ -45,7 +54,6 @@ export function useCaseProgress(caseId: string) {
 
   const useAIHint = async () => {
     addHelpUsed("Dica IA");
-    setHelpCredits(prev => ({ ...prev, aiHint: prev.aiHint - 1 }));
     
     toast({
       title: "Dica IA ativada",
@@ -65,7 +73,7 @@ export function useCaseProgress(caseId: string) {
     return (skipCount * skipPenalty) + (eliminationCount * eliminationPenalty);
   };
 
-  // Função para normalizar texto para comparação
+  // Função para normalizar texto para comparação melhorada
   const normalizeText = (text: string) => {
     return text
       .toLowerCase()
@@ -82,7 +90,7 @@ export function useCaseProgress(caseId: string) {
     const endTime = Date.now();
     const timeSpent = Math.floor((endTime - startTime) / 1000);
     
-    // Verificação corrigida: comparar tanto por índice quanto por texto
+    // Verificação de correção melhorada
     let isCorrect = false;
     
     if (selectedIndex === case_.correct_answer_index) {
@@ -108,19 +116,23 @@ export function useCaseProgress(caseId: string) {
 
     setIsAnswered(true);
 
-    // Debug log para verificar os dados que estão sendo passados
+    // Log detalhado para debug
     console.log('Debug submitAnswer:', {
       selectedIndex,
       answer_options: case_.answer_options,
       answer_feedbacks: case_.answer_feedbacks,
       correct_answer_index: case_.correct_answer_index,
-      isCorrect
+      isCorrect,
+      points,
+      penalties,
+      helpUsed
     });
 
-    // Save to database using real authentication
+    // CORREÇÃO: Salvar TODAS as tentativas no banco, não apenas as corretas
     try {
+      // Salvar histórico da resposta
       await supabase.from('user_case_history').insert({
-        user_id: user.id, // Adicionar user_id obrigatório
+        user_id: user.id,
         case_id: caseId,
         is_correct: isCorrect,
         points: points,
@@ -131,20 +143,35 @@ export function useCaseProgress(caseId: string) {
           selected_index: selectedIndex,
           selected_text: case_.answer_options?.[selectedIndex],
           correct_text: case_.answer_options?.[case_.correct_answer_index],
-          answer_feedbacks: case_.answer_feedbacks
+          answer_feedbacks: case_.answer_feedbacks,
+          eliminated_options: eliminatedOptions
         }
       });
 
-      // Update user profile points using the updated function
+      // CORREÇÃO: Atualizar pontos e RadCoins se correto E com pontos > 0
       if (isCorrect && points > 0) {
         await supabase.rpc('process_case_completion', {
           p_case_id: caseId,
           p_points: points,
           p_is_correct: isCorrect
         });
+      } else if (isCorrect && points === 0) {
+        // Caso correto mas sem pontos (por penalidades)
+        await supabase.rpc('process_case_completion', {
+          p_case_id: caseId,
+          p_points: 0,
+          p_is_correct: isCorrect
+        });
       }
+
+      console.log('✅ Resposta salva com sucesso:', { isCorrect, points });
     } catch (error) {
-      console.error('Error saving case completion:', error);
+      console.error('❌ Erro ao salvar conclusão do caso:', error);
+      toast({
+        title: "Erro ao salvar resposta",
+        description: "Sua resposta pode não ter sido registrada. Tente novamente.",
+        variant: "destructive"
+      });
     }
 
     return {
@@ -154,7 +181,8 @@ export function useCaseProgress(caseId: string) {
       helpUsed,
       penalties,
       selectedIndex,
-      answerFeedbacks: case_.answer_feedbacks
+      answerFeedbacks: case_.answer_feedbacks,
+      eliminatedOptions
     };
   };
 
@@ -162,7 +190,6 @@ export function useCaseProgress(caseId: string) {
     helpUsed,
     eliminatedOptions,
     isAnswered,
-    helpCredits,
     eliminateOption,
     skipCase,
     useAIHint,

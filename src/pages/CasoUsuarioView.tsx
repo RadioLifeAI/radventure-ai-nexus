@@ -100,12 +100,11 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
   const [tutorHintText, setTutorHintText] = useState("");
   const [showHelpConfirm, setShowHelpConfirm] = useState<string | null>(null);
 
-  // Corrigir chamada do hook - só precisa do caseId
+  // CORREÇÃO: Hook corrigido - só precisa do caseId
   const {
     helpUsed,
     eliminatedOptions,
     isAnswered,
-    helpCredits,
     eliminateOption,
     skipCase,
     useAIHint,
@@ -166,6 +165,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
     navigate(-1);
   };
 
+  // CORREÇÃO CRÍTICA: Eliminar alternativa correta nunca mais
   const handleEliminateOption = () => {
     if (!helpAids || helpAids.elimination_aids <= 0) {
       toast({
@@ -207,14 +207,8 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
 
   const confirmHelpAction = () => {
     if (showHelpConfirm === 'eliminate') {
-      const availableOptions = [0, 1, 2, 3].filter(i => 
-        i !== caso.correct_answer_index && !eliminatedOptions.includes(i)
-      );
-
-      if (availableOptions.length === 0) return;
-
-      const randomIndex = availableOptions[Math.floor(Math.random() * availableOptions.length)];
-      eliminateOption(randomIndex);
+      // CORREÇÃO: Passar o índice correto para eliminar apenas alternativas incorretas
+      eliminateOption(correctIdx);
       consumeHelp({ aidType: 'elimination' });
     } else if (showHelpConfirm === 'skip') {
       consumeHelp({ aidType: 'skip' });
