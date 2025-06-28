@@ -153,7 +153,7 @@ export function CaseAdvancedImageManagement({
               <ul className="space-y-1 text-gray-600">
                 <li>• Classificação por especialidade médica</li>
                 <li>• Organização por modalidade de exame</li>
-                <li>• Estrutura: /medical-cases/{specialty}/{modality}/</li>
+                <li>• Estrutura: /medical-cases/[categoria]/[modalidade]/</li>
                 <li>• Metadata especializada automática</li>
               </ul>
             </div>
