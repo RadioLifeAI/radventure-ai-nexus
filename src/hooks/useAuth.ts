@@ -33,7 +33,7 @@ export function useAuth() {
               p_user_id: session.user.id
             });
             
-            const typedResult = bonusResult as DailyLoginBonusResult;
+            const typedResult = bonusResult as unknown as DailyLoginBonusResult;
             
             if (typedResult?.awarded) {
               // Toast não-intrusivo para bonus
