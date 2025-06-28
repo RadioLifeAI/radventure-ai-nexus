@@ -21,158 +21,138 @@ export default function TermosDeUso() {
             </h1>
             
             <p className="text-gray-600 dark:text-gray-300 mb-8">
-              <strong>Última atualização:</strong> Janeiro de 2025
+              <strong>Última atualização:</strong> 28/06/2025
             </p>
+
+            <div className="bg-cyan-50 dark:bg-cyan-900/20 p-6 rounded-lg mb-8">
+              <p className="text-lg font-semibold text-cyan-800 dark:text-cyan-200 mb-2">
+                Seja bem-vindo ao RadVenture!
+              </p>
+              <p className="text-cyan-700 dark:text-cyan-300">
+                Ao acessar este site ou aplicativo, você concorda com os presentes Termos de Uso. 
+                Caso não concorde, recomendamos que interrompa o uso imediatamente.
+              </p>
+            </div>
 
             <div className="space-y-8">
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  1. Aceitação dos Termos
+                  1. Finalidade
                 </h2>
                 <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                  Ao acessar e utilizar a plataforma RadVenture, você concorda integralmente com estes 
-                  Termos de Uso. Se você não concorda com qualquer parte destes termos, não deve 
-                  utilizar nossos serviços.
+                  O RadVenture é uma plataforma educacional interativa, <strong>sem fins comerciais</strong>, 
+                  voltada ao ensino de radiologia por meio de quizzes, gamificação e inteligência artificial. 
+                  O objetivo é facilitar o aprendizado médico, especialmente para estudantes, residentes e 
+                  jovens profissionais de saúde.
                 </p>
               </section>
 
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  2. Descrição do Serviço
+                  2. Público-alvo
                 </h2>
                 <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
-                  O RadVenture é uma plataforma educacional médica gamificada que oferece:
+                  A plataforma é recomendada para:
                 </p>
                 <ul className="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-300">
-                  <li>Casos clínicos interativos de radiologia</li>
-                  <li>Sistema de gamificação com pontos e rankings</li>
-                  <li>Assistente de inteligência artificial educacional</li>
-                  <li>Comunidade colaborativa de estudantes e profissionais</li>
-                  <li>Ferramentas de acompanhamento de progresso</li>
+                  <li>Estudantes de medicina</li>
+                  <li>Residentes e médicos em formação</li>
+                  <li>Profissionais da saúde com interesse em radiologia</li>
                 </ul>
-              </section>
-
-              <section>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  3. Elegibilidade e Cadastro
-                </h2>
-                <div className="space-y-4 text-gray-600 dark:text-gray-300">
-                  <p>
-                    Para utilizar o RadVenture, você deve:
-                  </p>
-                  <ul className="list-disc list-inside space-y-2">
-                    <li>Ter pelo menos 16 anos de idade</li>
-                    <li>Fornecer informações verdadeiras e atualizadas</li>
-                    <li>Manter a confidencialidade de suas credenciais de acesso</li>
-                    <li>Ser responsável por todas as atividades em sua conta</li>
-                  </ul>
-                </div>
-              </section>
-
-              <section>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  4. Planos e Pagamentos
-                </h2>
-                <div className="space-y-4 text-gray-600 dark:text-gray-300">
-                  <p>
-                    <strong>Plano Gratuito:</strong> Acesso limitado a funcionalidades básicas, 
-                    incluindo casos clínicos selecionados e sistema de pontuação.
-                  </p>
-                  <p>
-                    <strong>Planos Pagos:</strong> Acesso completo a todos os recursos, incluindo 
-                    IA avançada, casos ilimitados e funcionalidades premium.
-                  </p>
-                  <p>
-                    Os pagamentos são processados de forma segura e os planos podem ser 
-                    cancelados a qualquer momento através do painel do usuário.
-                  </p>
-                </div>
-              </section>
-
-              <section>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  5. Propriedade Intelectual
-                </h2>
-                <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
-                  Todo o conteúdo da plataforma, incluindo textos, imagens, casos clínicos, 
-                  algoritmos de IA e design, são protegidos por direitos autorais e pertencem 
-                  ao RadVenture ou seus licenciadores.
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed mt-4">
+                  A idade mínima recomendada para uso é 18 anos. Menores de idade só poderão utilizar 
+                  a plataforma com consentimento formal de um responsável.
                 </p>
+              </section>
+
+              <section>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                  3. Cadastro e Acesso
+                </h2>
                 <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                  É proibida a reprodução, distribuição ou modificação do conteúdo sem 
-                  autorização expressa por escrito.
+                  Para acessar funcionalidades como rankings e progresso pessoal, é necessário criar 
+                  uma conta com e-mail válido. Os dados são tratados conforme nossa 
+                  <a href="/privacidade" className="text-cyan-600 dark:text-cyan-400 hover:underline"> Política de Privacidade</a>.
                 </p>
               </section>
 
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  6. Uso Adequado
+                  4. Propriedade Intelectual
                 </h2>
                 <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
-                  Você concorda em utilizar a plataforma apenas para fins educacionais e se compromete a:
+                  Todo conteúdo gerado ou compartilhado na plataforma — incluindo textos, quizzes, 
+                  imagens e ícones — é protegido por direitos autorais e/ou licenciado sob Creative Commons. 
+                  São utilizados apenas:
                 </p>
                 <ul className="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-300">
-                  <li>Não compartilhar suas credenciais com terceiros</li>
-                  <li>Não tentar burlar sistemas de segurança</li>
-                  <li>Não usar a plataforma para fins comerciais não autorizados</li>
-                  <li>Respeitar outros usuários da comunidade</li>
-                  <li>Não publicar conteúdo ofensivo ou inadequado</li>
+                  <li>Casos próprios e imagens geradas artificialmente</li>
+                  <li>Casos com autorização expressa de colegas radiologistas</li>
+                  <li>Casos sob <strong>licença CC BY-NC-SA</strong>, com a devida atribuição</li>
                 </ul>
-              </section>
-
-              <section>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  7. Limitação de Responsabilidade
-                </h2>
-                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                  O RadVenture é uma ferramenta educacional complementar e não substitui 
-                  a educação médica formal, supervisão profissional ou julgamento clínico. 
-                  Não nos responsabilizamos por decisões tomadas com base exclusivamente 
-                  no conteúdo da plataforma.
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed mt-4">
+                  O uso do conteúdo é estritamente educacional. É proibida a reprodução, 
+                  redistribuição ou comercialização.
                 </p>
               </section>
 
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  8. Modificações dos Termos
+                  5. Limitações de Responsabilidade
                 </h2>
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
+                  O conteúdo do RadVenture tem caráter didático e não substitui avaliação clínica, 
+                  diagnóstico por imagem ou parecer profissional.
+                </p>
                 <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                  Reservamos o direito de modificar estes termos a qualquer momento. 
-                  Alterações significativas serão comunicadas por e-mail ou através da plataforma. 
-                  O uso continuado após as modificações constitui aceitação dos novos termos.
+                  Não nos responsabilizamos por decisões clínicas tomadas com base em conteúdo 
+                  exibido na plataforma.
                 </p>
               </section>
 
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  9. Rescisão
+                  6. Monetização e Publicidade
                 </h2>
                 <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                  Você pode encerrar sua conta a qualquer momento. Podemos suspender ou 
-                  encerrar sua conta em caso de violação destes termos. Após o encerramento, 
-                  seu acesso ao conteúdo será interrompido.
+                  O projeto é mantido com recursos próprios. Eventuais anúncios não invasivos ou 
+                  recursos extras pagos poderão ser implementados apenas para cobrir custos operacionais 
+                  (ex: hospedagem, API de IA).
                 </p>
               </section>
 
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  10. Lei Aplicável
+                  7. Cancelamento
                 </h2>
                 <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                  Estes termos são regidos pela legislação brasileira. Disputas serão 
-                  resolvidas preferencialmente por mediação, ou, se necessário, 
-                  pelos tribunais competentes do Brasil.
+                  Você pode solicitar a exclusão de sua conta a qualquer momento, com remoção total 
+                  de seus dados da plataforma Supabase, conforme nossa 
+                  <a href="/privacidade" className="text-cyan-600 dark:text-cyan-400 hover:underline"> Política de Privacidade</a>.
                 </p>
               </section>
 
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  11. Contato
+                  8. Alterações
                 </h2>
                 <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                  Para dúvidas sobre estes termos, entre em contato conosco através 
-                  da página de contato ou pelo e-mail: <strong>legal@radventure.com.br</strong>
+                  Estes Termos poderão ser atualizados a qualquer momento. A data de revisão será 
+                  informada no topo desta página.
                 </p>
+              </section>
+
+              <section className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                  Contato
+                </h2>
+                <div className="space-y-2 text-gray-600 dark:text-gray-300">
+                  <p><strong>📧 E-mail:</strong> contato@radventure.com.br</p>
+                  <p><strong>📞 WhatsApp:</strong> +55 77 98864-0691</p>
+                  <p className="text-sm mt-4">
+                    Para dúvidas sobre casos autorizados ou sugestões educacionais
+                  </p>
+                </div>
               </section>
             </div>
           </div>

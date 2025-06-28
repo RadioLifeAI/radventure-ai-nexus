@@ -21,194 +21,144 @@ export default function PoliticaPrivacidade() {
             </h1>
             
             <p className="text-gray-600 dark:text-gray-300 mb-8">
-              <strong>Última atualização:</strong> Janeiro de 2025<br/>
-              <strong>Vigência:</strong> Esta política está em conformidade com a Lei Geral de Proteção de Dados (LGPD - Lei 13.709/2018)
+              <strong>Última atualização:</strong> 28/06/2025
             </p>
+
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg mb-8">
+              <p className="text-blue-800 dark:text-blue-200 leading-relaxed">
+                Esta política descreve como o RadVenture coleta, armazena e utiliza suas informações pessoais, 
+                em conformidade com a <strong>Lei Geral de Proteção de Dados (LGPD – Lei nº 13.709/2018)</strong> 
+                e alinhada às diretrizes do <strong>Conselho Federal de Medicina (CFM)</strong> e do 
+                <strong> Colégio Brasileiro de Radiologia (CBR)</strong>.
+              </p>
+            </div>
 
             <div className="space-y-8">
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  1. Informações Gerais
+                  1. Dados Coletados
+                </h2>
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
+                  Durante o uso da plataforma, podemos coletar:
+                </p>
+                <ul className="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-300">
+                  <li><strong>Dados pessoais:</strong> Nome, e-mail, senha criptografada, país de origem</li>
+                  <li><strong>Dados de navegação:</strong> Pontuação em quizzes, tempo de uso, ranking</li>
+                  <li><strong>Dados voluntários:</strong> Mensagens via formulário, feedbacks e sugestões</li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                  2. Finalidade do Uso
+                </h2>
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
+                  Esses dados são usados para:
+                </p>
+                <ul className="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-300">
+                  <li>Personalizar sua experiência educacional</li>
+                  <li>Melhorar o conteúdo e funcionalidades da plataforma</li>
+                  <li>Garantir segurança e integridade das contas</li>
+                  <li>Comunicar novidades educacionais, se autorizado</li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                  3. Armazenamento e Segurança
                 </h2>
                 <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                  Esta Política de Privacidade descreve como o RadVenture coleta, usa, armazena 
-                  e protege suas informações pessoais. Respeitamos sua privacidade e estamos 
-                  comprometidos com a proteção de seus dados pessoais.
+                  Seus dados são armazenados com criptografia e segurança reforçada no serviço 
+                  <strong> Supabase</strong>, respeitando práticas de segurança modernas 
+                  (TLS, controle de acesso, backup automático).
                 </p>
               </section>
 
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  2. Dados Pessoais Coletados
+                  4. Compartilhamento de Dados
                 </h2>
-                <div className="space-y-4 text-gray-600 dark:text-gray-300">
-                  <p><strong>Dados de Identificação:</strong></p>
-                  <ul className="list-disc list-inside space-y-1 ml-4">
-                    <li>Nome completo</li>
-                    <li>Endereço de e-mail</li>
-                    <li>Cidade e estado</li>
-                    <li>Instituição de ensino</li>
-                    <li>Especialidade médica e estágio acadêmico</li>
-                  </ul>
-                  
-                  <p><strong>Dados de Navegação e Uso:</strong></p>
-                  <ul className="list-disc list-inside space-y-1 ml-4">
-                    <li>Endereço IP</li>
-                    <li>Informações do dispositivo e navegador</li>
-                    <li>Páginas visitadas e tempo de permanência</li>
-                    <li>Interações com o conteúdo educacional</li>
-                    <li>Progresso nos casos clínicos</li>
-                    <li>Pontuações e conquistas</li>
-                  </ul>
-
-                  <p><strong>Dados de Pagamento:</strong></p>
-                  <ul className="list-disc list-inside space-y-1 ml-4">
-                    <li>Informações de cobrança (processadas por terceiros seguros)</li>
-                    <li>Histórico de transações</li>
-                  </ul>
+                <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                  <p className="text-green-800 dark:text-green-200 font-semibold">
+                    O RadVenture <strong>NÃO vende, aluga ou compartilha seus dados com terceiros</strong>. 
+                    O acesso é restrito aos administradores do projeto e apenas para os fins aqui descritos.
+                  </p>
                 </div>
               </section>
 
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  3. Finalidades do Tratamento
+                  5. Direitos do Usuário (LGPD)
                 </h2>
-                <div className="space-y-3 text-gray-600 dark:text-gray-300">
-                  <p><strong>Prestação do Serviço:</strong> Fornecer acesso à plataforma educacional, 
-                  personalizar conteúdo e acompanhar progresso acadêmico.</p>
-                  
-                  <p><strong>Comunicação:</strong> Enviar notificações importantes, atualizações 
-                  do serviço e newsletter educacional (mediante consentimento).</p>
-                  
-                  <p><strong>Melhoria da Plataforma:</strong> Analisar uso para melhorar 
-                  funcionalidades, desenvolver novos recursos e otimizar a experiência educacional.</p>
-                  
-                  <p><strong>Segurança:</strong> Prevenir fraudes, proteger a plataforma 
-                  e garantir a segurança dos usuários.</p>
-                  
-                  <p><strong>Conformidade Legal:</strong> Cumprir obrigações legais e 
-                  regulamentares aplicáveis ao setor educacional.</p>
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
+                  Você pode, a qualquer momento:
+                </p>
+                <ul className="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-300">
+                  <li>Acessar seus dados pessoais</li>
+                  <li>Corrigir dados incorretos ou desatualizados</li>
+                  <li>Solicitar exclusão completa da conta</li>
+                  <li>Revogar consentimento para processamento</li>
+                </ul>
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed mt-4">
+                  Para exercer esses direitos, entre em contato:
+                </p>
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg mt-4">
+                  <p className="text-gray-700 dark:text-gray-300">
+                    📧 <strong>contato@radventure.com.br</strong>
+                  </p>
                 </div>
               </section>
 
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  4. Base Legal para o Tratamento
+                  6. Uso de Imagens Médicas
                 </h2>
-                <div className="space-y-3 text-gray-600 dark:text-gray-300">
-                  <p><strong>Execução de Contrato:</strong> Para prestação dos serviços educacionais contratados.</p>
-                  <p><strong>Interesse Legítimo:</strong> Para melhoria da plataforma e segurança dos usuários.</p>
-                  <p><strong>Consentimento:</strong> Para envio de comunicações de marketing e newsletter.</p>
-                  <p><strong>Cumprimento de Obrigação Legal:</strong> Para atender requisitos legais e regulatórios.</p>
-                </div>
-              </section>
-
-              <section>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  5. Compartilhamento de Dados
-                </h2>
-                <div className="space-y-3 text-gray-600 dark:text-gray-300">
-                  <p>Seus dados pessoais podem ser compartilhados apenas nas seguintes situações:</p>
-                  <ul className="list-disc list-inside space-y-2 ml-4">
-                    <li><strong>Prestadores de Serviço:</strong> Empresas que fornecem infraestrutura, 
-                    pagamentos e analytics (com contratos de proteção de dados)</li>
-                    <li><strong>Obrigação Legal:</strong> Quando exigido por lei ou autoridades competentes</li>
-                    <li><strong>Proteção de Direitos:</strong> Para proteger nossos direitos legais 
-                    ou dos usuários</li>
-                    <li><strong>Consentimento Expresso:</strong> Quando você autorizar expressamente</li>
-                  </ul>
-                  <p><strong>Nunca vendemos seus dados pessoais para terceiros.</strong></p>
-                </div>
-              </section>
-
-              <section>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  6. Armazenamento e Segurança
-                </h2>
-                <div className="space-y-3 text-gray-600 dark:text-gray-300">
-                  <p><strong>Localização:</strong> Dados armazenados em servidores seguros 
-                  no Brasil e Estados Unidos (Supabase/AWS).</p>
-                  
-                  <p><strong>Segurança:</strong> Utilizamos criptografia, controle de acesso 
-                  rigoroso, monitoramento contínuo e backups seguros.</p>
-                  
-                  <p><strong>Retenção:</strong> Dados são mantidos apenas pelo tempo necessário 
-                  para as finalidades descritas ou conforme exigido por lei.</p>
-                </div>
-              </section>
-
-              <section>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  7. Seus Direitos (LGPD)
-                </h2>
-                <div className="space-y-2 text-gray-600 dark:text-gray-300">
-                  <p>Você tem os seguintes direitos em relação aos seus dados pessoais:</p>
-                  <ul className="list-disc list-inside space-y-1 ml-4">
-                    <li><strong>Acesso:</strong> Confirmar a existência e obter cópia dos seus dados</li>
-                    <li><strong>Correção:</strong> Corrigir dados incompletos, inexatos ou desatualizados</li>
-                    <li><strong>Exclusão:</strong> Solicitar eliminação dos dados desnecessários</li>
-                    <li><strong>Portabilidade:</strong> Obter seus dados em formato estruturado</li>
-                    <li><strong>Oposição:</strong> Opor-se ao tratamento baseado em interesse legítimo</li>
-                    <li><strong>Revogação:</strong> Retirar consentimento a qualquer momento</li>
-                    <li><strong>Informação:</strong> Obter informações sobre compartilhamento</li>
-                  </ul>
-                </div>
-              </section>
-
-              <section>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  8. Cookies e Tecnologias Similares
-                </h2>
-                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                  Utilizamos cookies para melhorar sua experiência, lembrar preferências 
-                  e analisar o uso da plataforma. Você pode gerenciar cookies através 
-                  das configurações do seu navegador ou da nossa Central de Preferências.
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
+                  A plataforma utiliza apenas:
+                </p>
+                <ul className="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-300">
+                  <li>Imagens de arquivo próprio (totalmente anônimas)</li>
+                  <li>Casos com consentimento expresso e autorização</li>
+                  <li>Casos licenciados sob <strong>Creative Commons (CC BY-NC-SA)</strong></li>
+                </ul>
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed mt-4">
+                  Todo conteúdo segue rigorosamente as diretrizes da LGPD, CFM e CBR.
                 </p>
               </section>
 
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  9. Menores de Idade
+                  7. Tempo de Retenção
                 </h2>
                 <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                  Para usuários entre 16 e 18 anos, solicitamos autorização dos responsáveis legais. 
-                  Não coletamos intencionalmente dados de menores de 16 anos.
+                  Os dados serão armazenados apenas enquanto o usuário mantiver sua conta ativa. 
+                  Ao solicitar exclusão, todos os registros pessoais serão permanentemente apagados 
+                  da base de dados Supabase.
                 </p>
               </section>
 
               <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  10. Alterações nesta Política
+                  8. Atualizações
                 </h2>
                 <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                  Podemos atualizar esta política periodicamente. Alterações significativas 
-                  serão comunicadas por e-mail e através da plataforma com 30 dias de antecedência.
+                  Esta Política pode ser alterada a qualquer momento para manter conformidade legal. 
+                  Alterações significativas serão comunicadas via e-mail ou diretamente na plataforma.
                 </p>
               </section>
 
-              <section>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  11. Encarregado de Dados e Contato
+              <section className="bg-cyan-50 dark:bg-cyan-900/20 p-6 rounded-lg">
+                <h2 className="text-2xl font-bold text-cyan-800 dark:text-cyan-200 mb-4">
+                  Contato - Encarregado de Dados (DPO)
                 </h2>
-                <div className="space-y-3 text-gray-600 dark:text-gray-300">
-                  <p><strong>Encarregado de Proteção de Dados (DPO):</strong> dpo@radventure.com.br</p>
-                  <p><strong>Para exercer seus direitos ou esclarecer dúvidas:</strong></p>
-                  <ul className="list-disc list-inside space-y-1 ml-4">
-                    <li>E-mail: privacidade@radventure.com.br</li>
-                    <li>Formulário: Página de Contato da plataforma</li>
-                    <li>Resposta em até 15 dias úteis</li>
-                  </ul>
+                <div className="space-y-2 text-cyan-700 dark:text-cyan-300">
+                  <p><strong>📧 E-mail:</strong> contato@radventure.com.br</p>
+                  <p><strong>📞 WhatsApp:</strong> +55 77 98864-0691</p>
+                  <p><strong>Responsável:</strong> Dr. Nailson Costa</p>
+                  <p className="text-sm mt-4">
+                    Para questões sobre privacidade, proteção de dados ou exercício de direitos LGPD
+                  </p>
                 </div>
-              </section>
-
-              <section>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  12. Autoridade Nacional de Proteção de Dados
-                </h2>
-                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                  Se não conseguirmos resolver sua questão de privacidade, você pode 
-                  contactar a ANPD através do site: <strong>gov.br/anpd</strong>
-                </p>
               </section>
             </div>
           </div>

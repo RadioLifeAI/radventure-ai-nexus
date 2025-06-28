@@ -1,6 +1,6 @@
 
 import { Link } from 'react-router-dom';
-import { Rocket, Instagram, Youtube, Linkedin, Twitter } from 'lucide-react';
+import { Rocket, Instagram, Youtube, Linkedin, Twitter, Mail, Phone } from 'lucide-react';
 import { NewsletterForm } from './NewsletterForm';
 
 export function Footer() {
@@ -17,44 +17,20 @@ export function Footer() {
               <span className="text-xl font-bold">RadVenture</span>
             </div>
             <p className="text-gray-300 text-sm leading-relaxed">
-              A plataforma educacional médica mais inovadora do Brasil. 
-              Aprenda radiologia jogando e se prepare para o futuro da medicina.
+              Plataforma educacional gratuita para ensino de radiologia. 
+              Projeto independente e sem fins comerciais do Dr. Nailson Costa.
             </p>
             
-            {/* Redes Sociais */}
-            <div className="flex gap-4 pt-2">
-              <a 
-                href="https://instagram.com/radventure" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
-              >
-                <Instagram size={20} />
-              </a>
-              <a 
-                href="https://youtube.com/@radventure" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
-              >
-                <Youtube size={20} />
-              </a>
-              <a 
-                href="https://linkedin.com/company/radventure" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
-              >
-                <Linkedin size={20} />
-              </a>
-              <a 
-                href="https://twitter.com/radventure" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
-              >
-                <Twitter size={20} />
-              </a>
+            {/* Contatos Diretos */}
+            <div className="space-y-2 pt-2">
+              <div className="flex items-center gap-2 text-sm text-gray-300">
+                <Mail size={16} />
+                <span>contato@radventure.com.br</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-300">
+                <Phone size={16} />
+                <span>+55 77 98864-0691</span>
+              </div>
             </div>
           </div>
 
@@ -75,7 +51,7 @@ export function Footer() {
                   onClick={() => document.getElementById('sobre')?.scrollIntoView({ behavior: 'smooth' })}
                   className="text-gray-300 hover:text-cyan-400 transition-colors text-sm"
                 >
-                  Sobre Nós
+                  Sobre o Projeto
                 </button>
               </li>
               <li>
@@ -83,7 +59,7 @@ export function Footer() {
                   to="/contato" 
                   className="text-gray-300 hover:text-cyan-400 transition-colors text-sm"
                 >
-                  Contato
+                  Fale Conosco
                 </Link>
               </li>
             </ul>
@@ -91,7 +67,7 @@ export function Footer() {
 
           {/* Links Legais */}
           <div>
-            <h3 className="font-semibold text-lg mb-4">Legal</h3>
+            <h3 className="font-semibold text-lg mb-4">Informações Legais</h3>
             <ul className="space-y-2">
               <li>
                 <Link 
@@ -124,7 +100,7 @@ export function Footer() {
           <div>
             <h3 className="font-semibold text-lg mb-4">Newsletter</h3>
             <p className="text-gray-300 text-sm mb-4">
-              Receba dicas exclusivas e novidades sobre educação médica
+              Receba atualizações sobre novos casos e funcionalidades
             </p>
             <NewsletterForm />
           </div>
@@ -133,7 +109,10 @@ export function Footer() {
         {/* Copyright */}
         <div className="border-t border-white/10 mt-12 pt-8 text-center">
           <p className="text-gray-400 text-sm">
-            © 2025 RadVenture – Todos os direitos reservados
+            © 2025 RadVenture – Projeto educacional sem fins comerciais | Dr. Nailson Costa
+          </p>
+          <p className="text-gray-500 text-xs mt-2">
+            Conformidade: LGPD • CFM • CBR
           </p>
         </div>
       </div>
