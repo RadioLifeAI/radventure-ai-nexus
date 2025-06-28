@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,7 +14,7 @@ import {
   Scissors, 
   Archive, 
   Layers, 
-  Settings,
+  Template,
   FolderTree,
   CheckCircle,
   AlertTriangle,
@@ -441,7 +442,7 @@ export function UnifiedImageSystemTabs({
     </div>
   );
 
-  // Templates Tab with Settings icon
+  // Templates Tab
   const TemplatesTab = () => {
     const modalityTemplates = {
       'Radiografia (RX)': { icon: '🦴', settings: { brightness: 10, contrast: 20 } },
@@ -456,7 +457,7 @@ export function UnifiedImageSystemTabs({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5" />
+              <Template className="h-5 w-5" />
               Templates por Modalidade
             </CardTitle>
           </CardHeader>
@@ -596,7 +597,7 @@ export function UnifiedImageSystemTabs({
             Stack
           </TabsTrigger>
           <TabsTrigger value="templates" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
+            <Template className="h-4 w-4" />
             Templates
           </TabsTrigger>
         </TabsList>
