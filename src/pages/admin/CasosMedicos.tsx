@@ -3,6 +3,7 @@ import React from "react";
 import { CaseProfileForm } from "./components/CaseProfileForm";
 import { CasesManagementHeader } from "@/components/admin/cases/CasesManagementHeader";
 import { BackToDashboard } from "@/components/navigation/BackToDashboard";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export default function CasosMedicos() {
   console.log('🏥 CasosMedicos: Componente iniciando renderização');
@@ -27,7 +28,9 @@ export default function CasosMedicos() {
             <p className="text-gray-600">Preencha todos os campos para criar um novo caso médico</p>
           </div>
           <div className="p-6 bg-white">
-            <CaseProfileForm />
+            <TooltipProvider delayDuration={0}>
+              <CaseProfileForm />
+            </TooltipProvider>
           </div>
         </div>
       </div>
