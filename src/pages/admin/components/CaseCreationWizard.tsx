@@ -26,7 +26,7 @@ import {
 import { CaseStructuredDataAI } from "./CaseStructuredDataAI";
 import { CaseStructuredFieldsSection } from "./CaseStructuredFieldsSection";
 import { CaseBasicSectionAI } from "./CaseBasicSectionAI";
-import { CaseProfileBasicSectionUnified } from "./CaseProfileBasicSectionUnified";
+import { CaseProfileBasicSectionWizard } from "./CaseProfileBasicSectionWizard";
 import { CaseQuizCompleteAI } from "./CaseQuizCompleteAI";
 import { CaseProfileAlternativesSection } from "./CaseProfileAlternativesSection";
 import { CaseExplanationCompleteAI } from "./CaseExplanationCompleteAI";
@@ -188,7 +188,7 @@ export function CaseCreationWizard({
         isValid = true; // Sempre válido, é opcional
         break;
       case "basic":
-        isValid = !!(form.category_id && form.difficulty_level && form.modality);
+        isValid = !!(form.category_id && form.difficulty_level && form.modality && form.findings && form.patient_clinical_info);
         break;
       case "patient":
         isValid = !!(form.patient_age && form.patient_gender);
@@ -276,19 +276,11 @@ export function CaseCreationWizard({
               }}
               categories={categories}
             />
-            <CaseProfileBasicSectionUnified
+            <CaseProfileBasicSectionWizard
               form={form}
-              highlightedFields={highlightedFields}
-              handleFormChange={handlers.handleFormChange}
-              handleModalityChange={handlers.handleModalityChange}
-              renderTooltipTip={renderTooltipTip}
-              handleSuggestFindings={handlers.handleSuggestFindings}
-              handleSuggestClinicalInfo={handlers.handleSuggestClinicalInfo}
-              undoFindings={{ canUndo: false, undo: () => {} }}
-              undoClinical={{ canUndo: false, undo: () => {} }}
               setForm={setForm}
-              autoTitlePreview=""
-              onGenerateAutoTitle={() => {}}
+              highlightedFields={highlightedFields}
+              renderTooltipTip={renderTooltipTip}
             />
           </div>
         );
@@ -301,7 +293,7 @@ export function CaseCreationWizard({
                 <label className="text-sm font-medium">Idade do Paciente *</label>
                 <Input
                   name="patient_age"
-                  value={form.patient_age}
+                  value={form.patient_age || ""}
                   onChange={handlers.handleFormChange}
                   placeholder="Ex: 45 anos, 2 meses"
                   required
@@ -309,7 +301,7 @@ export function CaseCreationWizard({
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Gênero *</label>
-                <Select value={form.patient_gender} onValueChange={(value) => setForm((prev: any) => ({ ...prev, patient_gender: value }))}>
+                <Select value={form.patient_gender || ""} onValueChange={(value) => setForm((prev: any) => ({ ...prev, patient_gender: value }))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o gênero" />
                   </SelectTrigger>
@@ -325,7 +317,7 @@ export function CaseCreationWizard({
               <label className="text-sm font-medium">Duração dos Sintomas</label>
               <Input
                 name="symptoms_duration"
-                value={form.symptoms_duration}
+                value={form.symptoms_duration || ""}
                 onChange={handlers.handleFormChange}
                 placeholder="Ex: 3 dias, 2 semanas"
               />
@@ -352,7 +344,7 @@ export function CaseCreationWizard({
                 </label>
                 <Input 
                   name="main_question" 
-                  value={form.main_question} 
+                  value={form.main_question || ""} 
                   onChange={handlers.handleFormChange} 
                   placeholder="Ex: Qual é o diagnóstico mais provável?" 
                   required 
