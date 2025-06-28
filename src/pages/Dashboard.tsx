@@ -100,9 +100,9 @@ export default function Dashboard() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white w-full">
+      <div className="min-h-screen w-full overflow-x-hidden flex flex-col bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white">
         <HeaderNav />
-        <main className="flex-1 px-2 md:px-16 pt-4 pb-10">
+        <main className="flex-1 w-full px-2 md:px-4 lg:px-8 xl:px-16 pt-4 pb-10 overflow-x-hidden">
           <DashboardSkeleton />
         </main>
       </div>
@@ -110,9 +110,9 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white w-full">
+    <div className="min-h-screen w-full overflow-x-hidden flex flex-col bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white">
       <HeaderNav />
-      <main className="flex-1 flex flex-col gap-4 px-2 md:px-16 pt-4 pb-10">
+      <main className="flex-1 w-full flex flex-col gap-4 px-2 md:px-4 lg:px-8 xl:px-16 pt-4 pb-10 overflow-x-hidden">
         {/* Perfil principal - Agora usando dados reais */}
         <UserProfile />
 
@@ -148,12 +148,12 @@ export default function Dashboard() {
         {imagingSpecialties.length > 0 && (
           <section className="w-full mt-4">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-extrabold text-2xl text-white flex items-center gap-2">
-                <Brain className="h-6 w-6 text-cyan-300" />
+              <h2 className="font-extrabold text-xl sm:text-2xl text-white flex items-center gap-2">
+                <Brain className="h-5 w-5 sm:h-6 sm:w-6 text-cyan-300" />
                 Diagnóstico por Imagem
               </h2>
               <div className="text-sm text-cyan-200 flex items-center gap-2">
-                <span className="bg-cyan-500/20 px-3 py-1 rounded-full">
+                <span className="bg-cyan-500/20 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
                   {imagingSpecialties.reduce((sum, spec) => sum + spec.cases, 0)} casos disponíveis
                 </span>
               </div>
@@ -173,12 +173,12 @@ export default function Dashboard() {
         {medicalSpecialties.length > 0 && (
           <section className="w-full mt-8 mb-4">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-extrabold text-2xl text-white flex items-center gap-2">
-                <Stethoscope className="h-6 w-6 text-cyan-300" />
+              <h2 className="font-extrabold text-xl sm:text-2xl text-white flex items-center gap-2">
+                <Stethoscope className="h-5 w-5 sm:h-6 sm:w-6 text-cyan-300" />
                 Especialidades Médicas
               </h2>
               <div className="text-sm text-cyan-200 flex items-center gap-2">
-                <span className="bg-cyan-500/20 px-3 py-1 rounded-full">
+                <span className="bg-cyan-500/20 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
                   {medicalSpecialties.reduce((sum, spec) => sum + spec.cases, 0)} casos disponíveis
                 </span>
               </div>
@@ -217,7 +217,7 @@ export default function Dashboard() {
       </main>
 
       {/* Footer aprimorado */}
-      <footer className="bg-gradient-to-t from-[#131f3a] to-transparent px-4 py-10 text-center mt-auto border-t border-white/10">
+      <footer className="w-full bg-gradient-to-t from-[#131f3a] to-transparent px-4 py-10 text-center mt-auto border-t border-white/10 flex-shrink-0">
         <div className="max-w-4xl mx-auto">
           <span className="text-cyan-100 text-sm flex items-center justify-center gap-2">
             Powered by RadVenture · Experiência para médicos do futuro 

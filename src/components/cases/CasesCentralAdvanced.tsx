@@ -71,15 +71,15 @@ export function CasesCentralAdvanced() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white">
+    <div className="min-h-screen w-full overflow-x-hidden flex flex-col bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white">
       <HeaderNav />
       
-      <main className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
-        <div className="space-y-4 sm:space-y-8">
+      <main className="flex-1 w-full px-2 sm:px-4 lg:px-8 xl:px-16 py-4 sm:py-8 overflow-x-hidden">
+        <div className="w-full space-y-4 sm:space-y-8">
           {/* Header com indicador de filtro ativo */}
           <div className="text-center px-2">
             {filters.specialty && (
-              <div className="mb-4 flex items-center justify-center gap-2">
+              <div className="mb-4 flex flex-col sm:flex-row items-center justify-center gap-2">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -97,7 +97,7 @@ export function CasesCentralAdvanced() {
               </div>
             )}
             
-            <h1 className="text-3xl sm:text-5xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-2 sm:mb-4">
+            <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-2 sm:mb-4">
               Central de Casos Avançada
             </h1>
             <p className="text-cyan-100 text-sm sm:text-xl max-w-3xl mx-auto mb-4 sm:mb-6">
@@ -119,7 +119,7 @@ export function CasesCentralAdvanced() {
             </div>
           </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-4 sm:space-y-6">
             <TabsList className="grid w-full grid-cols-3 bg-white/10 backdrop-blur-sm border border-white/20 h-auto">
               <TabsTrigger value="advanced-dashboard" className="data-[state=active]:bg-white/20 text-xs sm:text-sm p-2 sm:p-3">
                 <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
@@ -141,11 +141,11 @@ export function CasesCentralAdvanced() {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="advanced-dashboard" className="space-y-4 sm:space-y-6">
+            <TabsContent value="advanced-dashboard" className="w-full space-y-4 sm:space-y-6">
               <AdvancedCasesDashboard />
             </TabsContent>
 
-            <TabsContent value="explorer" className="space-y-4 sm:space-y-6">
+            <TabsContent value="explorer" className="w-full space-y-4 sm:space-y-6">
               <CaseFilters 
                 filters={filters} 
                 onFiltersChange={setFilters}
@@ -154,7 +154,7 @@ export function CasesCentralAdvanced() {
               <CasesGrid filters={filters} />
             </TabsContent>
 
-            <TabsContent value="ai-journey" className="space-y-4 sm:space-y-6">
+            <TabsContent value="ai-journey" className="w-full space-y-4 sm:space-y-6">
               <Card className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-sm border-purple-300/30">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2 text-lg sm:text-xl">
