@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from '@/components/ui/use-toast';
+import { useProfileRewards } from './useProfileRewards';
 
 export interface UserProfile {
   id: string;
@@ -33,6 +34,7 @@ export function useUserProfile() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { checkAndAwardProfileRewards } = useProfileRewards();
 
   const { data: profile, isLoading, error } = useQuery({
     queryKey: ['user-profile', user?.id],
@@ -118,6 +120,13 @@ export function useUserProfile() {
     },
   });
 
+  // Verificar recompensas quando o perfil for carregado ou atualizado
+  useEffect(() => {
+    if (profile && user) {
+      checkAndAwardProfileRewards(profile);
+    }
+  }, [profile, user, checkAndAwardProfileRewards]);
+
   const updateProfileMutation = useMutation({
     mutationFn: async (updates: Partial<UserProfile>) => {
       if (!user?.id) {
@@ -149,6 +158,9 @@ export function useUserProfile() {
       if (updatedProfile.avatar_url) {
         queryClient.invalidateQueries({ queryKey: ['user-profile', user?.id] });
       }
+      
+      // Verificar recompensas após atualização
+      checkAndAwardProfileRewards(updatedProfile);
       
       toast({
         title: 'Perfil atualizado',
