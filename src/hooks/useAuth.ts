@@ -1,8 +1,15 @@
-
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+
+// Interface para o retorno da função award_daily_login_bonus
+interface DailyLoginBonusResult {
+  awarded: boolean;
+  radcoins?: number;
+  streak?: number;
+  message: string;
+}
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -26,12 +33,14 @@ export function useAuth() {
               p_user_id: session.user.id
             });
             
-            if (bonusResult?.awarded) {
+            const typedResult = bonusResult as DailyLoginBonusResult;
+            
+            if (typedResult?.awarded) {
               // Toast não-intrusivo para bonus
               setTimeout(() => {
                 toast({
                   title: '🎉 Bonus de Login!',
-                  description: bonusResult.message,
+                  description: typedResult.message,
                   duration: 3000,
                 });
               }, 1000);
