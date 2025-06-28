@@ -18,20 +18,20 @@ import {
 
 // Menu admin - links relativos para rotas aninhadas
 const adminMenu = [
-  { label: "Analytics", icon: <BarChart3 size={20} />, to: "analytics" },
-  { label: "Criar Eventos", icon: <Calendar size={20} />, to: "create-event" },
-  { label: "Gestão de Eventos", icon: <BookOpen size={20} />, to: "events" },
-  { label: "Casos Médicos", icon: <FileText size={20} />, to: "casos-medicos" },
-  { label: "Gestão de Casos", icon: <Settings size={20} />, to: "gestao-casos" },
-  { label: "Usuários", icon: <Users size={20} />, to: "usuarios" },
-  { label: "Assinaturas", icon: <CreditCard size={20} />, to: "assinaturas" },
-  { label: "Tutor IA", icon: <Brain size={20} />, to: "tutor-ia" },
-  { label: "Conquistas", icon: <Trophy size={20} />, to: "conquistas" },
-  { label: "Monitoramento", icon: <Monitor size={20} />, to: "monitoramento" },
-  { label: "Recompensas", icon: <Gift size={20} />, to: "recompensas" },
-  { label: "Configurações", icon: <Settings size={20} />, to: "configuracoes" },
-  { label: "Chaves API", icon: <KeyRound size={20} />, to: "chaves-api" },
-  { label: "Config. Stripe", icon: <CreditCard size={20} />, to: "config-stripe" },
+  { label: "Analytics", icon: <BarChart3 size={20} />, to: "/admin/analytics" },
+  { label: "Criar Eventos", icon: <Calendar size={20} />, to: "/admin/create-event" },
+  { label: "Gestão de Eventos", icon: <BookOpen size={20} />, to: "/admin/events" },
+  { label: "Casos Médicos", icon: <FileText size={20} />, to: "/admin/casos-medicos" },
+  { label: "Gestão de Casos", icon: <Settings size={20} />, to: "/admin/gestao-casos" },
+  { label: "Usuários", icon: <Users size={20} />, to: "/admin/usuarios" },
+  { label: "Assinaturas", icon: <CreditCard size={20} />, to: "/admin/assinaturas" },
+  { label: "Tutor IA", icon: <Brain size={20} />, to: "/admin/tutor-ia" },
+  { label: "Conquistas", icon: <Trophy size={20} />, to: "/admin/conquistas" },
+  { label: "Monitoramento", icon: <Monitor size={20} />, to: "/admin/monitoramento" },
+  { label: "Recompensas", icon: <Gift size={20} />, to: "/admin/recompensas" },
+  { label: "Configurações", icon: <Settings size={20} />, to: "/admin/configuracoes" },
+  { label: "Chaves API", icon: <KeyRound size={20} />, to: "/admin/chaves-api" },
+  { label: "Config. Stripe", icon: <CreditCard size={20} />, to: "/admin/config-stripe" },
 ];
 
 export function AdminSidebar() {
@@ -39,8 +39,7 @@ export function AdminSidebar() {
   
   // Função para verificar se a rota está ativa considerando rotas aninhadas
   const isActiveRoute = (to: string) => {
-    const fullPath = `/admin/${to}`;
-    return location.pathname === fullPath || location.pathname.startsWith(`${fullPath}/`);
+    return location.pathname === to || location.pathname.startsWith(`${to}/`);
   };
 
   return (

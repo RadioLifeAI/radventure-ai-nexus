@@ -19,11 +19,6 @@ import RankingEventos from "./pages/RankingEventos";
 import Rankings from "./pages/Rankings";
 import Estatisticas from "./pages/Estatisticas";
 import AdminPanel from "./pages/AdminPanel";
-import AdminDashboardAdvanced from "./pages/admin/AdminDashboardAdvanced";
-import GestaoCasos from "./pages/admin/GestaoCasos";
-import EventsManagement from "./pages/admin/EventsManagement";
-import CreateEvent from "./pages/admin/CreateEvent";
-import CasosMedicos from "./pages/admin/CasosMedicos";
 import CreateJourney from "./pages/CreateJourney";
 import Sobre from "./pages/Sobre";
 import Funcionalidades from "./pages/Funcionalidades";
@@ -142,52 +137,12 @@ function App() {
               } 
             />
 
-            {/* Rotas de Admin */}
+            {/* Rota Admin - Usar wildcard para capturar todas as sub-rotas */}
             <Route 
-              path="/admin" 
+              path="/admin/*" 
               element={
                 <ProtectedRouteRedirect>
                   <AdminPanel />
-                </ProtectedRouteRedirect>
-              } 
-            />
-            <Route 
-              path="/admin/dashboard" 
-              element={
-                <ProtectedRouteRedirect>
-                  <AdminDashboardAdvanced />
-                </ProtectedRouteRedirect>
-              } 
-            />
-            <Route 
-              path="/admin/casos" 
-              element={
-                <ProtectedRouteRedirect>
-                  <GestaoCasos />
-                </ProtectedRouteRedirect>
-              } 
-            />
-            <Route 
-              path="/admin/eventos" 
-              element={
-                <ProtectedRouteRedirect>
-                  <EventsManagement />
-                </ProtectedRouteRedirect>
-              } 
-            />
-            <Route 
-              path="/admin/eventos/criar" 
-              element={
-                <ProtectedRouteRedirect>
-                  <CreateEvent />
-                </ProtectedRouteRedirect>
-              } 
-            />
-            <Route 
-              path="/admin/casos-medicos" 
-              element={
-                <ProtectedRouteRedirect>
-                  <CasosMedicos />
                 </ProtectedRouteRedirect>
               } 
             />
