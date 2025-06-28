@@ -87,22 +87,7 @@ export function EnhancedImageUpload({ caseId, onChange }: EnhancedImageUploadPro
         });
       }, 200);
 
-      try {
-        console.log('📤 Iniciando upload:', file.name);
-        await uploadImage(file, '', images.length + i);
-        
-        toast({
-          title: "✅ Upload concluído!",
-          description: `${file.name} foi enviado com sucesso.`,
-        });
-      } catch (error) {
-        console.error('❌ Erro no upload:', error);
-        toast({
-          title: "Erro no upload",
-          description: `Falha ao enviar ${file.name}`,
-          variant: "destructive",
-        });
-      }
+      await uploadImage(file, '', images.length + i);
       
       setUploadProgress(100);
       setTimeout(() => {
@@ -183,10 +168,7 @@ export function EnhancedImageUpload({ caseId, onChange }: EnhancedImageUploadPro
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5" />
-            Sistema de Upload Integrado
-            <Badge variant="secondary" className="bg-green-100 text-green-800">
-              ✅ Ativo
-            </Badge>
+            Upload de Imagens Avançado
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -204,13 +186,13 @@ export function EnhancedImageUpload({ caseId, onChange }: EnhancedImageUploadPro
             <Upload className="h-10 w-10 mx-auto mb-4 text-gray-400" />
             <div className="space-y-2">
               <p className="text-lg font-medium">
-                ✨ Sistema Integrado - Arraste imagens aqui ou clique para selecionar
+                Arraste imagens aqui ou clique para selecionar
               </p>
               <p className="text-sm text-gray-500">
                 Suporte para JPEG, PNG, WebP • Máximo 10MB por arquivo
               </p>
-              <p className="text-xs text-green-600">
-                ✅ Processamento automático em múltiplos tamanhos e formatos
+              <p className="text-xs text-blue-600">
+                ✨ Processamento automático em múltiplos tamanhos e formatos
               </p>
             </div>
             
@@ -227,7 +209,7 @@ export function EnhancedImageUpload({ caseId, onChange }: EnhancedImageUploadPro
           {uploadProgress > 0 && (
             <div className="mt-4">
               <div className="flex justify-between text-sm mb-1">
-                <span>🚀 Enviando e processando...</span>
+                <span>Enviando...</span>
                 <span>{uploadProgress}%</span>
               </div>
               <Progress value={uploadProgress} className="h-2" />
