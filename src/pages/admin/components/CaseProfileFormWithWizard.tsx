@@ -1,3 +1,4 @@
+
 import React from "react";
 import { CaseCreationWizard } from "./CaseCreationWizard";
 import { useCaseProfileFormHandlers } from "../hooks/useCaseProfileFormHandlers";
@@ -58,6 +59,11 @@ export function CaseProfileFormWithWizard({
     if (editingCase) {
       setForm({
         ...editingCase,
+        image_url: Array.isArray(editingCase.image_url) ? editingCase.image_url : [],
+        answer_options: editingCase.answer_options || ["", "", "", ""],
+        answer_feedbacks: editingCase.answer_feedbacks || ["", "", "", ""],
+        answer_short_tips: editingCase.answer_short_tips || ["", "", "", ""],
+        correct_answer_index: editingCase.correct_answer_index || 0,
         secondary_diagnoses: editingCase.secondary_diagnoses || [],
         anatomical_regions: editingCase.anatomical_regions || [],
         finding_types: editingCase.finding_types || [],
@@ -78,33 +84,14 @@ export function CaseProfileFormWithWizard({
         structured_metadata: editingCase.structured_metadata || {},
         achievement_triggers: editingCase.achievement_triggers || {},
         primary_diagnosis: editingCase.primary_diagnosis || null,
-        secondary_diagnoses: editingCase.secondary_diagnoses || [],
         case_classification: editingCase.case_classification || "diagnostico",
         cid10_code: editingCase.cid10_code || null,
-        anatomical_regions: editingCase.anatomical_regions || [],
-        finding_types: editingCase.finding_types || [],
         laterality: editingCase.laterality || null,
-        main_symptoms: editingCase.main_symptoms || [],
-        vital_signs: editingCase.vital_signs || {},
-        medical_history: editingCase.medical_history || [],
-        learning_objectives: learning_objectives || [],
-        pathology_types: pathology_types || [],
-        clinical_presentation_tags: clinical_presentation_tags || [],
-        case_complexity_factors: case_complexity_factors || [],
-        search_keywords: search_keywords || [],
-        structured_metadata: structured_metadata || {},
-        case_rarity: case_rarity || "comum",
-        educational_value: educational_value || 5,
-        clinical_relevance: clinical_relevance || 5,
-        estimated_solve_time: estimated_solve_time || 5,
-        prerequisite_cases: prerequisite_cases || [],
-        unlocks_cases: unlocks_cases || [],
-        achievement_triggers: achievement_triggers || {},
-        target_audience: target_audience || [],
-        medical_subspecialty: medical_subspecialty || [],
-        exam_context: exam_context || "rotina",
-        differential_diagnoses: differential_diagnoses || [],
-        similar_cases_ids: similar_cases_ids || []
+        case_rarity: editingCase.case_rarity || "comum",
+        educational_value: editingCase.educational_value || 5,
+        clinical_relevance: editingCase.clinical_relevance || 5,
+        estimated_solve_time: editingCase.estimated_solve_time || 5,
+        exam_context: editingCase.exam_context || "rotina"
       });
     }
   }, [editingCase, setForm]);
