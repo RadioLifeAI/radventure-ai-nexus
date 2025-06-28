@@ -1,98 +1,115 @@
-import React, { useEffect, useState } from "react";
-import { useCaseProfileFormHandlers } from "../hooks/useCaseProfileFormHandlers";
-import { Button } from "@/components/ui/button";
+
+import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { toast } from "@/components/ui/use-toast";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CaseProfileBasicSectionUnified } from "./CaseProfileBasicSectionUnified";
-import { CaseSmartAutofillAdvanced } from "./CaseSmartAutofillAdvanced";
-import { CaseProfileAlternativesSection } from "./CaseProfileAlternativesSection";
-import { CaseProfileExplanationSectionContainer } from "./CaseProfileExplanationSectionContainer";
-import { CaseProfileAdvancedConfigContainer } from "./CaseProfileAdvancedConfigContainer";
-import { CaseStructuredFieldsSection } from "./CaseStructuredFieldsSection";
-import { CaseReferenceSection } from "./CaseReferenceSection";
-import { useFieldUndo } from "../hooks/useFieldUndo";
-import { useCaseTitleGenerator } from "../hooks/useCaseTitleGenerator";
-import { CaseProfileFormTitleSection } from "./CaseProfileFormTitleSection";
-import { CaseFormPreviewModal } from "./CaseFormPreviewModal";
-import { CaseProgressDashboard } from "./CaseProgressDashboard";
-import { CaseQualityRadar } from "./CaseQualityRadar";
-import { CaseTemplateChooser } from "./CaseTemplateChooser";
-import { CaseFormGamifiedHelpers } from "./CaseFormGamifiedHelpers";
-import { CaseFormGamifiedLayout } from "./CaseFormGamifiedLayout";
-import { CaseAdvancedImageManagement } from "./CaseAdvancedImageManagement";
-import { TempImageUpload } from "./TempImageUpload";
-import { AdvancedImageManagerModal } from "./AdvancedImageManagerModal";
-import { useTempCaseImages } from "@/hooks/useTempCaseImages";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/use-toast";
+import { CaseModalityFieldsUnified } from "./CaseModalityFieldsUnified";
+import { useUnifiedFormDataSource } from "@/hooks/useUnifiedFormDataSource";
+import { useSpecializedCaseImages } from "@/hooks/useSpecializedCaseImages";
+import { AdvancedImageManagerModal } from "./AdvancedImageManagerModal";
 import { 
-  Sparkles, 
-  Image as ImageIcon, 
-  Settings, 
-  Zap,
-  TestTube 
+  Save, 
+  FolderTree,
+  TestTube,
+  ImageIcon,
+  Sparkles
 } from "lucide-react";
 
-// Novos componentes AI por seção
-import { CaseBasicSectionAI } from "./CaseBasicSectionAI";
-import { CaseStructuredDataAI } from "./CaseStructuredDataAI";
-import { CaseQuizCompleteAI } from "./CaseQuizCompleteAI";
-import { CaseExplanationCompleteAI } from "./CaseExplanationCompleteAI";
-import { CaseAdvancedConfigAI } from "./CaseAdvancedConfigAI";
-import { CaseMasterAI } from "./CaseMasterAI";
+interface CaseProfileFormEditableProps {
+  editingCase?: any;
+  onCreated?: () => void;
+}
 
 export function CaseProfileFormEditable({ 
   editingCase, 
   onCreated 
-}: { 
-  editingCase?: any; 
-  onCreated?: () => void; 
-}) {
-  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
-  const [difficulties, setDifficulties] = useState<{ id: number; level: number; description: string | null }[]>([]);
+}: CaseProfileFormEditableProps) {
+  const { specialties, difficulties, isLoading } = useUnifiedFormDataSource();
+  const [form, setForm] = useState<any>({
+    category_id: "",
+    difficulty_level: "",
+    modality: "",
+    subtype: "",
+    title: "",
+    findings: "",
+    patient_clinical_info: "",
+    main_question: "",
+    explanation: "",
+    answer_options: ["", "", "", ""],
+    answer_feedbacks: ["", "", "", ""],
+    answer_short_tips: ["", "", "", ""],
+    correct_answer_index: 0,
+    patient_age: "",
+    patient_gender: "",
+    symptoms_duration: "",
+    points: 10,
+    can_skip: true,
+    max_elimination: 0,
+    ai_hint_enabled: false,
+    manual_hint: "",
+    skip_penalty_points: 0,
+    elimination_penalty_points: 0,
+    ai_tutor_level: "desligado",
+    is_radiopaedia_case: false,
+    reference_citation: "",
+    reference_url: "",
+    access_date: "",
+    primary_diagnosis: "",
+    secondary_diagnoses: [],
+    case_classification: "diagnostico",
+    cid10_code: "",
+    anatomical_regions: [],
+    finding_types: [],
+    laterality: "",
+    main_symptoms: [],
+    vital_signs: {},
+    medical_history: [],
+    learning_objectives: [],
+    pathology_types: [],
+    clinical_presentation_tags: [],
+    case_complexity_factors: [],
+    search_keywords: [],
+    structured_metadata: {},
+    case_rarity: "comum",
+    educational_value: 5,
+    clinical_relevance: 5,
+    estimated_solve_time: 5,
+    prerequisite_cases: [],
+    unlocks_cases: [],
+    achievement_triggers: {},
+    target_audience: [],
+    medical_subspecialty: [],
+    exam_context: "rotina",
+    differential_diagnoses: [],
+    similar_cases_ids: []
+  });
+
+  const [submitting, setSubmitting] = useState(false);
   const [showAdvancedImageModal, setShowAdvancedImageModal] = useState(false);
 
-  // Hook para imagens temporárias (usado apenas na criação)
-  const { associateWithCase, clearTempImages } = useTempCaseImages();
+  // Hook especializado para imagens
+  const { 
+    images: specializedImages, 
+    uploading, 
+    processing, 
+    uploadSpecializedImage 
+  } = useSpecializedCaseImages(editingCase?.id);
 
-  useEffect(() => {
-    supabase.from("medical_specialties")
-      .select("id, name")
-      .then(({ data, error }) => {
-        if (error) {
-          console.error("Erro carregando especialidades:", error);
-        } else {
-          setCategories(data || []);
-        }
-      });
-    supabase.from("difficulties")
-      .select("id, level, description")
-      .order("level", { ascending: true })
-      .then(({ data, error }) => {
-        if (error) {
-          console.error("Erro carregando dificuldades:", error);
-        } else {
-          setDifficulties(data || []);
-        }
-      });
-  }, []);
+  const isEditMode = !!editingCase;
 
-  const handlers = useCaseProfileFormHandlers({ categories, difficulties });
-  const {
-    form, setForm, resetForm, submitting, setSubmitting, feedback, setFeedback,
-    showAdvanced, setShowAdvanced, showPreview, setShowPreview, highlightedFields, setHighlightedFields,
-    handleFormChange, handleModalityChange, handleOptionChange, handleOptionFeedbackChange,
-    handleShortTipChange, handleCorrectChange, handleImageChange,
-    handleSuggestDiagnosis, handleSuggestAlternatives, handleSuggestHint, handleSuggestExplanation,
-    handleSuggestFindings, handleSuggestClinicalInfo,
-    handleRandomizeOptions
-  } = handlers;
-
+  // Preencher form com dados existentes
   useEffect(() => {
     if (editingCase) {
       setForm({
         ...editingCase,
+        answer_options: editingCase.answer_options || ["", "", "", ""],
+        answer_feedbacks: editingCase.answer_feedbacks || ["", "", "", ""],
+        answer_short_tips: editingCase.answer_short_tips || ["", "", "", ""],
+        correct_answer_index: editingCase.correct_answer_index || 0,
         secondary_diagnoses: editingCase.secondary_diagnoses || [],
         anatomical_regions: editingCase.anatomical_regions || [],
         finding_types: editingCase.finding_types || [],
@@ -107,62 +124,33 @@ export function CaseProfileFormEditable({
         medical_subspecialty: editingCase.medical_subspecialty || [],
         differential_diagnoses: editingCase.differential_diagnoses || [],
         similar_cases_ids: editingCase.similar_cases_ids || [],
-        prerequisite_cases: editingCase.prerequisite_cases || [],
-        unlocks_cases: editingCase.unlocks_cases || [],
         vital_signs: editingCase.vital_signs || {},
         structured_metadata: editingCase.structured_metadata || {},
         achievement_triggers: editingCase.achievement_triggers || {},
-        primary_diagnosis: editingCase.primary_diagnosis || "",
-        case_classification: editingCase.case_classification || "diagnostico",
-        cid10_code: editingCase.cid10_code || "",
-        laterality: editingCase.laterality || "",
-        case_rarity: editingCase.case_rarity || "comum",
-        educational_value: editingCase.educational_value || 5,
-        clinical_relevance: editingCase.clinical_relevance || 5,
-        estimated_solve_time: editingCase.estimated_solve_time || 5,
-        exam_context: editingCase.exam_context || "rotina",
-        is_radiopaedia_case: editingCase.is_radiopaedia_case ?? false,
-        reference_citation: editingCase.reference_citation ?? "",
-        reference_url: editingCase.reference_url ?? "",
-        access_date: editingCase.access_date ?? ""
+        prerequisite_cases: editingCase.prerequisite_cases || [],
+        unlocks_cases: editingCase.unlocks_cases || []
       });
     }
-  }, [editingCase, setForm]);
+  }, [editingCase]);
 
-  const isEditMode = !!editingCase;
-  const { generateTitle, abbreviateCategory, generateRandomCaseNumber } = useCaseTitleGenerator(categories);
-
-  const undoFindings = useFieldUndo(handlers.form.findings);
-  const undoClinical = useFieldUndo(handlers.form.patient_clinical_info);
-  const undoDiagnosis = useFieldUndo(handlers.form.primary_diagnosis);
-
-  const onSuggestFindings = async () => {
-    undoFindings.handleBeforeChange(handlers.form.findings);
-    await handlers.handleSuggestFindings();
-  };
-  const onSuggestClinical = async () => {
-    undoClinical.handleBeforeChange(handlers.form.patient_clinical_info);
-    await handlers.handleSuggestClinicalInfo();
-  };
-  const onSuggestDiagnosis = async () => {
-    undoDiagnosis.handleBeforeChange(handlers.form.primary_diagnosis);
-    await handlers.handleSuggestDiagnosis();
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setForm((prev: any) => ({ ...prev, [name]: value }));
   };
 
-  function renderTooltipTip(id: string, text: string) {
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="ml-1 text-cyan-700 cursor-help align-middle">ⓘ</span>
-        </TooltipTrigger>
-        <TooltipContent side="top">
-          <span className="text-xs">{text}</span>
-        </TooltipContent>
-      </Tooltip>
-    );
-  }
+  const handleModalityChange = (val: { modality: string; subtype: string }) => {
+    setForm((prev: any) => ({ ...prev, modality: val.modality, subtype: val.subtype }));
+  };
 
-  async function handleSubmit(e: React.FormEvent) {
+  const handleOptionChange = (index: number, value: string) => {
+    setForm((prev: any) => {
+      const newOptions = [...prev.answer_options];
+      newOptions[index] = value;
+      return { ...prev, answer_options: newOptions };
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (form.is_radiopaedia_case) {
@@ -178,31 +166,17 @@ export function CaseProfileFormEditable({
 
     setSubmitting(true);
     try {
-      const selectedCategory = categories.find(c => String(c.id) === String(form.category_id));
-      const primary_diagnosis = form.primary_diagnosis ?? "";
+      const selectedCategory = specialties.find(c => String(c.id) === String(form.category_id));
 
-      let image_url_arr: any[] = [];
-      if (Array.isArray(form.image_url)) {
-        image_url_arr = form.image_url;
-      } else if (typeof form.image_url === "string" && (form.image_url as string).trim() !== "") {
-        try {
-          const parsed = JSON.parse(form.image_url as string);
-          image_url_arr = Array.isArray(parsed) ? parsed : [];
-        } catch {
-          image_url_arr = [];
-        }
-      } else {
-        image_url_arr = [];
-      }
-      const image_url = image_url_arr.slice(0, 6).map((img: any) => ({
-        url: img?.url ?? "",
-        legend: img?.legend ?? ""
+      // Converter imagens especializadas para formato correto
+      const image_url = specializedImages.slice(0, 6).map((img) => ({
+        url: img.original_url,
+        legend: img.legend || ""
       }));
 
       const payload: any = {
         specialty: selectedCategory ? selectedCategory.name : null,
         category_id: form.category_id ? Number(form.category_id) : null,
-        case_number: form.case_number ?? null,
         difficulty_level: form.difficulty_level ? Number(form.difficulty_level) : null,
         points: form.points ? Number(form.points) : null,
         modality: form.modality || null,
@@ -262,6 +236,7 @@ export function CaseProfileFormEditable({
         similar_cases_ids: form.similar_cases_ids || []
       };
 
+      // Limpar valores vazios
       Object.keys(payload).forEach(k => {
         if (typeof payload[k] === "string" && payload[k] === "") payload[k] = null;
       });
@@ -282,381 +257,329 @@ export function CaseProfileFormEditable({
       }
 
       if (!error && data?.[0]) {
-        const caseId = data[0].id;
         const resultTitle = data[0].title ?? form.title;
-        
-        if (!isEditMode) {
-          try {
-            await associateWithCase(caseId);
-            console.log('✅ Imagens temporárias associadas ao caso:', caseId);
-          } catch (imageError) {
-            console.warn('⚠️ Erro ao associar imagens temporárias:', imageError);
-          }
-        }
-        
-        setFeedback(isEditMode ? "Caso atualizado com sucesso!" : "Caso cadastrado com sucesso!");
         toast({ title: `Caso ${isEditMode ? "atualizado" : "criado"}! Título: ${resultTitle}` });
-        
-        if (!isEditMode) {
-          resetForm();
-          clearTempImages();
-        }
-        
         onCreated?.();
       } else {
         console.error("Database error:", error);
-        setFeedback(`Erro ao ${isEditMode ? "atualizar" : "cadastrar"} caso.`);
         toast({ title: `Erro ao ${isEditMode ? "atualizar" : "cadastrar"} caso!`, variant: "destructive" });
       }
     } catch (err: any) {
       console.error("Submit error:", err);
-      setFeedback(`Erro ao ${isEditMode ? "atualizar" : "cadastrar"} caso.`);
       toast({ title: `Erro ao ${isEditMode ? "atualizar" : "cadastrar"} caso!`, variant: "destructive" });
     }
     setSubmitting(false);
-    setTimeout(() => setFeedback(""), 2300);
-  }
+  };
 
-  const autoTitlePreview =
-    form.category_id && form.modality && form.difficulty_level
-      ? generateTitle(Number(form.category_id), form.modality, Number(form.difficulty_level)).title
-      : "(Será definido automaticamente: Caso [Especialidade] [Dificuldade] [Modalidade] #[NUM])";
+  // Obter informações da organização especializada
+  const getSpecializedOrganizationInfo = () => {
+    if (!form.category_id || !form.modality) return null;
+    
+    const specialty = specialties.find(s => s.id === parseInt(form.category_id));
+    return {
+      specialty: specialty?.name || 'Não definida',
+      modality: form.modality,
+      specialized: true,
+      bucketPath: `medical-cases/${specialty?.specialty_code?.toLowerCase() || 'geral'}/${form.modality?.toLowerCase() || 'img'}`
+    };
+  };
 
-  React.useEffect(() => {
-    if (!isEditMode && form.category_id && form.modality && form.difficulty_level && (!form.case_number || !form.title)) {
-      const { title, case_number } = generateTitle(Number(form.category_id), form.modality, Number(form.difficulty_level));
-      setForm((prev: any) => ({ ...prev, title, case_number }));
-    }
-  }, [form.category_id, form.modality, form.difficulty_level, isEditMode]);
+  const organizationInfo = getSpecializedOrganizationInfo();
 
-  function handleAutoGenerateTitle() {
-    if (form.category_id && form.modality && form.difficulty_level) {
-      const { title, case_number } = generateTitle(Number(form.category_id), form.modality, Number(form.difficulty_level));
-      setForm((prev: any) => ({ ...prev, title, case_number }));
-      setHighlightedFields(["title", "case_number"]);
-      setTimeout(() => setHighlightedFields([]), 1200);
-    }
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando sistema especializado...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="w-full space-y-6">
-      <CaseFormPreviewModal open={showPreview} onClose={()=>setShowPreview(false)} form={form} categories={categories} difficulties={difficulties} />
-
-      {!isEditMode && (
-        <div className="grid gap-6">
-          <CaseProgressDashboard form={form} />
-          <CaseQualityRadar form={form} />
-          <CaseFormGamifiedHelpers form={form} />
-          
-          {/* BOTÃO MASTER AI: Preencher TUDO - Substitui "Auto-preenchimento por Seção" */}
-          <CaseMasterAI 
-            form={form}
-            setForm={setForm}
-            onFieldsUpdated={(fields) => {
-              setHighlightedFields(fields);
-              setTimeout(() => setHighlightedFields([]), 3000);
-            }}
-            categories={categories}
-          />
-        </div>
-      )}
-
-      <form className="w-full space-y-6" onSubmit={handleSubmit}>
-        <CaseFormGamifiedLayout
-          section="basic"
-          title={isEditMode ? "Editar Caso Médico" : "Criar Novo Caso Médico"}
-          description="Configure as informações básicas do caso médico (Dados Unificados)"
-        >
-          <CaseProfileFormTitleSection
-            autoTitlePreview={autoTitlePreview}
-            showPreview={showPreview}
-          />
-          
-          <CaseBasicSectionAI 
-            form={form}
-            setForm={setForm}
-            onFieldsUpdated={(fields) => {
-              setHighlightedFields(fields);
-              setTimeout(() => setHighlightedFields([]), 2000);
-            }}
-            categories={categories}
-          />
-          
-          <CaseProfileBasicSectionUnified
-            form={form}
-            highlightedFields={highlightedFields}
-            handleFormChange={handleFormChange}
-            handleModalityChange={handleModalityChange}
-            renderTooltipTip={renderTooltipTip}
-            handleSuggestFindings={onSuggestFindings}
-            handleSuggestClinicalInfo={onSuggestClinical}
-            undoFindings={undoFindings}
-            undoClinical={undoClinical}
-            setForm={setForm}
-            autoTitlePreview={autoTitlePreview}
-            onGenerateAutoTitle={handleAutoGenerateTitle}
-          />
-        </CaseFormGamifiedLayout>
-
-        <CaseFormGamifiedLayout
-          section="structured"
-          title="Dados Estruturados"
-          description="Configure os campos estruturados para filtros avançados e AI"
-        >
-          <CaseStructuredDataAI 
-            form={form}
-            setForm={setForm}
-            onFieldsUpdated={(fields) => {
-              setHighlightedFields(fields);
-              setTimeout(() => setHighlightedFields([]), 2000);
-            }}
-          />
-          
-          <CaseStructuredFieldsSection 
-            form={form}
-            setForm={setForm}
-            handleFormChange={handleFormChange}
-            renderTooltipTip={renderTooltipTip}
-          />
-        </CaseFormGamifiedLayout>
-
-        <CaseFormGamifiedLayout
-          section="reference"
-          title="Referência e Fonte"
-          description="Configure informações sobre a fonte do caso"
-        >
-          <CaseReferenceSection 
-            form={form}
-            handleFormChange={handleFormChange}
-            renderTooltipTip={renderTooltipTip}
-          />
-        </CaseFormGamifiedLayout>
-
-        {/* SEÇÃO DE IMAGENS - SISTEMA PROFISSIONAL COMPLETO */}
-        <CaseFormGamifiedLayout
-          section="images"
-          title="Gestão Profissional de Imagens"
-          description="Sistema avançado para upload, edição e processamento de imagens médicas"
-        >
-          <div className="space-y-6">
-            {/* Header com Ferramentas Avançadas - SEMPRE VISÍVEL */}
-            <div className="bg-gradient-to-r from-blue-50 via-purple-50 to-indigo-50 p-6 rounded-xl border-2 border-purple-200">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl shadow-lg">
-                    <TestTube className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-purple-800">Sistema Profissional de Imagens</h3>
-                    <p className="text-purple-600 text-sm">
-                      Upload avançado, editor profissional, processador ZIP e visualizador stack
-                    </p>
-                  </div>
-                </div>
+    <div className="space-y-6">
+      {/* Header com Sistema Especializado */}
+      <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <FolderTree className="h-6 w-6 text-green-600" />
+              <span className="text-green-800">
+                {isEditMode ? "Editar" : "Criar"} Caso - Sistema Especializado Único
+              </span>
+            </div>
+            
+            {/* Ferramentas Especializadas */}
+            {editingCase && (
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  onClick={() => setShowAdvancedImageModal(true)}
+                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                >
+                  <TestTube className="h-4 w-4 mr-2" />
+                  Ferramentas Especializadas
+                </Button>
                 
-                {/* BOTÃO PRINCIPAL - DESTAQUE MÁXIMO */}
-                <Button
-                  type="button"
-                  size="lg"
-                  onClick={() => setShowAdvancedImageModal(true)}
-                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold px-8 py-3 shadow-xl transform hover:scale-105 transition-all duration-200"
-                >
-                  <Sparkles className="h-5 w-5 mr-3" />
-                  🔬 Ferramentas Avançadas
-                  <Badge variant="secondary" className="ml-2 bg-yellow-300 text-purple-800 font-bold">
-                    PRO
-                  </Badge>
-                </Button>
+                <Badge variant="outline" className="bg-green-50 border-green-300 text-green-700">
+                  <ImageIcon className="h-3 w-3 mr-1" />
+                  {specializedImages.length} imagem(ns)
+                </Badge>
               </div>
-
-              {/* Indicadores de Status */}
-              <div className="flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-2 bg-white/70 px-3 py-1 rounded-full">
-                  <ImageIcon className="h-4 w-4 text-purple-600" />
-                  <span className="text-purple-700 font-medium">
-                    {Array.isArray(form.image_url) ? form.image_url.length : 0} imagem(ns)
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 bg-white/70 px-3 py-1 rounded-full">
-                  <Settings className="h-4 w-4 text-blue-600" />
-                  <span className="text-blue-700 font-medium">Editor Ativo</span>
-                </div>
-                <div className="flex items-center gap-2 bg-white/70 px-3 py-1 rounded-full">
-                  <Zap className="h-4 w-4 text-green-600" />
-                  <span className="text-green-700 font-medium">ZIP Processor</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Sistema de Upload Padrão - Mantido para compatibilidade */}
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                <ImageIcon className="h-4 w-4" />
-                Upload Básico de Imagens
-              </h4>
-              {isEditMode ? (
-                <CaseAdvancedImageManagement 
-                  caseId={editingCase?.id}
-                  onImagesChange={(images) => {
-                    console.log('Images updated:', images.length);
-                  }}
-                />
-              ) : (
-                <TempImageUpload 
-                  onChange={(images) => {
-                    console.log('Temp images updated:', images.length);
-                  }}
-                />
-              )}
-            </div>
-
-            {/* Call-to-Action para Ferramentas Avançadas */}
-            <div className="bg-gradient-to-r from-purple-100 to-blue-100 border-2 border-dashed border-purple-300 rounded-lg p-6 text-center">
-              <div className="flex flex-col items-center gap-3">
-                <div className="p-4 bg-purple-500 rounded-full">
-                  <TestTube className="h-8 w-8 text-white" />
-                </div>
-                <h4 className="text-lg font-bold text-purple-800">
-                  Precisa de Mais Poder?
-                </h4>
-                <p className="text-purple-600 max-w-md">
-                  Use as Ferramentas Avançadas para edição profissional, processamento ZIP automático e visualização médica especializada.
-                </p>
-                <Button
-                  type="button"
-                  size="lg"
-                  onClick={() => setShowAdvancedImageModal(true)}
-                  className="bg-purple-600 hover:bg-purple-700 text-white font-bold"
-                >
-                  <Sparkles className="h-5 w-5 mr-2" />
-                  Abrir Ferramentas PRO
-                </Button>
-              </div>
-            </div>
-          </div>
-        </CaseFormGamifiedLayout>
-
-        <CaseFormGamifiedLayout
-          section="quiz"
-          title="Pergunta e Alternativas"
-          description="Configure a pergunta principal e as opções de resposta"
-        >
-          <CaseQuizCompleteAI 
-            form={form}
-            setForm={setForm}
-            onFieldsUpdated={(fields) => {
-              setHighlightedFields(fields);
-              setTimeout(() => setHighlightedFields([]), 2000);
-            }}
-          />
+            )}
+          </CardTitle>
           
-          <div className="space-y-4">
+          {/* Banner Organizacional */}
+          {organizationInfo && (
+            <div className="mt-3 p-3 bg-green-100 border border-green-200 rounded-lg">
+              <div className="flex items-center gap-2 text-sm text-green-800">
+                <Sparkles className="h-4 w-4" />
+                <span className="font-medium">Organização Especializada:</span>
+                <span>{organizationInfo.specialty} → {organizationInfo.modality}</span>
+              </div>
+              <p className="text-xs text-green-600 mt-1">
+                📁 Estrutura: {organizationInfo.bucketPath}
+              </p>
+            </div>
+          )}
+        </CardHeader>
+      </Card>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Informações Básicas */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Informações Básicas</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Especialidade *</label>
+                <select
+                  name="category_id"
+                  value={form.category_id || ""}
+                  onChange={handleFormChange}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  required
+                >
+                  <option value="">Selecione a especialidade</option>
+                  {specialties.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Dificuldade *</label>
+                <select
+                  name="difficulty_level"
+                  value={form.difficulty_level || ""}
+                  onChange={handleFormChange}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  required
+                >
+                  <option value="">Selecione a dificuldade</option>
+                  {difficulties.map(d => (
+                    <option key={d.id} value={d.level}>
+                      {d.description ? `${d.level} - ${d.description}` : `Nível ${d.level}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Pontos *</label>
+                <Input
+                  name="points"
+                  type="number"
+                  value={form.points || ""}
+                  onChange={handleFormChange}
+                  min={1}
+                  required
+                />
+              </div>
+            </div>
+
             <div>
-              <label className="font-semibold block">
-                Pergunta Principal *
-                {renderTooltipTip("tip-main-question", "Esta pergunta será apresentada ao usuário e guiará o raciocínio clínico.")}
-              </label>
-              <Input 
-                name="main_question" 
-                value={form.main_question} 
-                onChange={handleFormChange} 
-                placeholder="Ex: Qual é o diagnóstico mais provável?" 
-                required 
-                className="mt-2"
+              <label className="block text-sm font-medium mb-2">Modalidade e Subtipo *</label>
+              <CaseModalityFieldsUnified 
+                value={{ modality: form.modality || "", subtype: form.subtype || "" }} 
+                onChange={handleModalityChange} 
               />
             </div>
-            <CaseProfileAlternativesSection
-              form={form}
-              highlightedFields={highlightedFields}
-              handleOptionChange={handleOptionChange}
-              handleOptionFeedbackChange={handleOptionFeedbackChange}
-              handleShortTipChange={handleShortTipChange}
-              handleCorrectChange={handleCorrectChange}
-              handleSuggestAlternatives={handleSuggestAlternatives}
-              handleRandomizeOptions={handleRandomizeOptions}
-              renderTooltipTip={renderTooltipTip}
-            />
-          </div>
-        </CaseFormGamifiedLayout>
 
-        <CaseFormGamifiedLayout
-          section="clinical"
-          title="Explicação e Feedback"
-          description="Configure as explicações e dicas para o usuário"
-        >
-          <CaseExplanationCompleteAI 
-            form={form}
-            setForm={setForm}
-            onFieldsUpdated={(fields) => {
-              setHighlightedFields(fields);
-              setTimeout(() => setHighlightedFields([]), 2000);
-            }}
-          />
-          
-          <CaseProfileExplanationSectionContainer
-            form={form}
-            highlightedFields={highlightedFields}
-            handleFormChange={handleFormChange}
-            handleSuggestExplanation={handleSuggestExplanation}
-            renderTooltipTip={renderTooltipTip}
-            handleSuggestHint={handleSuggestHint}
-          />
-        </CaseFormGamifiedLayout>
+            <div>
+              <label className="block text-sm font-medium mb-2">Título do Caso</label>
+              <Input
+                name="title"
+                value={form.title || ""}
+                onChange={handleFormChange}
+                placeholder="Será gerado automaticamente"
+                className="bg-gray-50"
+              />
+            </div>
+          </CardContent>
+        </Card>
 
-        <CaseFormGamifiedLayout
-          section="advanced"
-          title="Configurações Avançadas"
-          description="Configurações de gamificação e regras especiais"
-        >
-          <CaseAdvancedConfigAI 
-            form={form}
-            setForm={setForm}
-            onFieldsUpdated={(fields) => {
-              setHighlightedFields(fields);
-              setTimeout(() => setHighlightedFields([]), 2000);
-            }}
-          />
-          
-          <div className="space-y-4">
-            <button
-              type="button"
-              className="text-cyan-700 font-semibold hover:underline"
-              onClick={() => setShowAdvanced((v: boolean) => !v)}
-            >
-              {showAdvanced ? "Ocultar" : "Mostrar"} Configurações Avançadas
-            </button>
-            <CaseProfileAdvancedConfigContainer
-              form={form}
-              handleFormChange={handleFormChange}
-              handleSuggestHint={handleSuggestHint}
-              showAdvanced={showAdvanced}
-            />
-          </div>
-        </CaseFormGamifiedLayout>
+        {/* Dados do Paciente */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Dados do Paciente</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Idade *</label>
+                <Input
+                  name="patient_age"
+                  value={form.patient_age || ""}
+                  onChange={handleFormChange}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Gênero *</label>
+                <select
+                  name="patient_gender"
+                  value={form.patient_gender || ""}
+                  onChange={handleFormChange}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  required
+                >
+                  <option value="">Selecione o gênero</option>
+                  <option value="masculino">Masculino</option>
+                  <option value="feminino">Feminino</option>
+                  <option value="nao_informado">Não informado</option>
+                </select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="flex justify-between items-center pt-6 border-t border-gray-200">
-          <div className="flex items-center gap-4">
-            <Button type="submit" disabled={submitting} size="lg">
-              {isEditMode ? "Atualizar Caso" : "Salvar Caso"}
-            </Button>
-            {feedback && (
-              <span className="text-sm font-medium text-cyan-700">{feedback}</span>
+        {/* Conteúdo Clínico */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Conteúdo Clínico</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Achados Radiológicos *</label>
+              <Textarea
+                name="findings"
+                value={form.findings || ""}
+                onChange={handleFormChange}
+                rows={4}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Resumo Clínico *</label>
+              <Textarea
+                name="patient_clinical_info"
+                value={form.patient_clinical_info || ""}
+                onChange={handleFormChange}
+                rows={4}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Pergunta Principal *</label>
+              <Input
+                name="main_question"
+                value={form.main_question || ""}
+                onChange={handleFormChange}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Explicação *</label>
+              <Textarea
+                name="explanation"
+                value={form.explanation || ""}
+                onChange={handleFormChange}
+                rows={4}
+                required
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Alternativas */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Alternativas de Resposta</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {form.answer_options.map((option: string, index: number) => (
+              <div key={index}>
+                <label className="block text-sm font-medium mb-2">
+                  Alternativa {String.fromCharCode(65 + index)} 
+                  {index === form.correct_answer_index && (
+                    <Badge variant="default" className="ml-2">Correta</Badge>
+                  )}
+                </label>
+                <Input
+                  value={option}
+                  onChange={(e) => handleOptionChange(index, e.target.value)}
+                  placeholder={`Digite a alternativa ${String.fromCharCode(65 + index)}`}
+                />
+              </div>
+            ))}
+            
+            <div>
+              <label className="block text-sm font-medium mb-2">Resposta Correta</label>
+              <select
+                value={form.correct_answer_index}
+                onChange={(e) => setForm((prev: any) => ({ ...prev, correct_answer_index: parseInt(e.target.value) }))}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2"
+              >
+                {form.answer_options.map((_: any, index: number) => (
+                  <option key={index} value={index}>
+                    Alternativa {String.fromCharCode(65 + index)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Botão de Envio */}
+        <div className="flex justify-end">
+          <Button 
+            type="submit" 
+            disabled={submitting || uploading || processing}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            {submitting ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Salvando...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                {isEditMode ? "Atualizar Caso" : "Criar Caso"}
+              </>
             )}
-          </div>
+          </Button>
         </div>
       </form>
 
-      {/* Modal de Ferramentas Avançadas - COM TODAS AS FUNCIONALIDADES */}
+      {/* Modal de Ferramentas Especializadas */}
       <AdvancedImageManagerModal
         open={showAdvancedImageModal}
         onClose={() => setShowAdvancedImageModal(false)}
-        caseId={isEditMode ? editingCase?.id : undefined}
-        currentImages={Array.isArray(form.image_url) ? form.image_url : []}
+        caseId={editingCase?.id}
+        currentImages={specializedImages.map(img => img.original_url)}
         onImagesUpdated={(images) => {
-          setForm(prev => ({ ...prev, image_url: images }));
+          console.log('🎉 Imagens especializadas atualizadas:', images.length);
           toast({ 
-            title: "🎉 Imagens Processadas!", 
-            description: `${images.length} imagem(ns) processada(s) com ferramentas avançadas.` 
+            title: "🗂️ Sistema Especializado Atualizado!", 
+            description: `${images.length} imagem(ns) organizadas automaticamente.` 
           });
         }}
       />
