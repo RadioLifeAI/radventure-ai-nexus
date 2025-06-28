@@ -18,11 +18,14 @@ type CaseEditFormModalProps = {
 };
 
 export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFormModalProps) {
+  console.log('🔧 CaseEditFormModal: Modal status', { open, caseId });
+
   const [editingCase, setEditingCase] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (open && caseId) {
+      console.log('📥 CaseEditFormModal: Carregando dados do caso:', caseId);
       loadCaseData();
     } else {
       setEditingCase(null);
@@ -34,13 +37,20 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
     
     setLoading(true);
     try {
+      console.log('🔍 CaseEditFormModal: Buscando caso no banco de dados...');
+      
       const { data, error } = await supabase
         .from("medical_cases")
         .select("*")
         .eq("id", caseId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ CaseEditFormModal: Erro ao carregar caso:', error);
+        throw error;
+      }
+
+      console.log('✅ CaseEditFormModal: Caso carregado com sucesso:', data?.title);
 
       // Transform data to match form structure
       const transformedData = {
@@ -54,7 +64,7 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
 
       setEditingCase(transformedData);
     } catch (error: any) {
-      console.error("Erro ao carregar caso:", error);
+      console.error("❌ CaseEditFormModal: Erro ao carregar caso:", error);
       toast({ title: "Erro ao carregar caso", variant: "destructive" });
     } finally {
       setLoading(false);
@@ -62,25 +72,35 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
   };
 
   const handleCaseUpdated = () => {
+    console.log('💾 CaseEditFormModal: Caso atualizado, fechando modal...');
     onSaved();
     onClose();
   };
 
+  console.log('🎨 CaseEditFormModal: Renderizando modal', { loading, hasEditingCase: !!editingCase });
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Editar Caso Médico</DialogTitle>
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-white border border-gray-200 shadow-xl z-50">
+        <DialogHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 -m-6 mb-6 border-b border-gray-200">
+          <DialogTitle className="text-xl font-bold text-gray-800">
+            Editar Caso Médico
+          </DialogTitle>
         </DialogHeader>
         {loading ? (
-          <div className="flex items-center justify-center min-h-[200px]">
-            <div className="text-center">Carregando dados do caso...</div>
+          <div className="flex items-center justify-center min-h-[200px] bg-white">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <div className="text-gray-600">Carregando dados do caso...</div>
+            </div>
           </div>
         ) : editingCase ? (
-          <CaseProfileForm 
-            editingCase={editingCase}
-            onCreated={handleCaseUpdated}
-          />
+          <div className="bg-white">
+            <CaseProfileForm 
+              editingCase={editingCase}
+              onCreated={handleCaseUpdated}
+            />
+          </div>
         ) : null}
       </DialogContent>
     </Dialog>

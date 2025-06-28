@@ -24,6 +24,8 @@ import { useDisclosure } from "@mantine/hooks";
 import { Loader } from "@/components/Loader";
 
 export default function GestaoCasos() {
+  console.log('🏥 GestaoCasos: Componente iniciando renderização');
+
   const {
     cases,
     totalCases,
@@ -49,6 +51,13 @@ export default function GestaoCasos() {
     refetch
   } = useCasesManagement();
 
+  console.log('📊 GestaoCasos: Dados carregados', { 
+    totalCases, 
+    casesCount: cases?.length, 
+    loading,
+    viewMode 
+  });
+
   // Modal states - Phase 1
   const [editModalOpen, { open: openEditModal, close: closeEditModal }] = useDisclosure(false);
   const [quickEditModalOpen, { open: openQuickEditModal, close: closeQuickEditModal }] = useDisclosure(false);
@@ -63,42 +72,50 @@ export default function GestaoCasos() {
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
 
   const handleEdit = (caseId: string) => {
+    console.log('✏️ GestaoCasos: Abrindo modal de edição para caso:', caseId);
     setSelectedCaseId(caseId);
     openEditModal();
   };
 
   const handleQuickEdit = (caseId: string) => {
+    console.log('⚡ GestaoCasos: Abrindo edição rápida para caso:', caseId);
     setSelectedCaseId(caseId);
     openQuickEditModal();
   };
 
   const handleView = (caseId: string) => {
+    console.log('👁️ GestaoCasos: Abrindo visualização para caso:', caseId);
     setSelectedCaseId(caseId);
     openRichViewModal();
   };
 
   const handleDuplicate = (caseId: string) => {
+    console.log('📋 GestaoCasos: Abrindo duplicação para caso:', caseId);
     setSelectedCaseId(caseId);
     openDuplicateModal();
   };
 
   // Phase 2 handlers
   const handleAnalytics = (caseId: string) => {
+    console.log('📈 GestaoCasos: Abrindo analytics para caso:', caseId);
     setSelectedCaseId(caseId);
     openAnalyticsModal();
   };
 
   const handleWizardEdit = (caseId: string) => {
+    console.log('🧙 GestaoCasos: Abrindo wizard para caso:', caseId);
     setSelectedCaseId(caseId);
     openWizardModal();
   };
 
   const handleVersionComparison = (caseId: string) => {
+    console.log('🔄 GestaoCasos: Abrindo comparação de versões para caso:', caseId);
     setSelectedCaseId(caseId);
     openVersionModal();
   };
 
   const handleCaseSaved = () => {
+    console.log('💾 GestaoCasos: Caso salvo, refazendo consulta...');
     refetch();
     closeEditModal();
     closeQuickEditModal();
@@ -106,6 +123,7 @@ export default function GestaoCasos() {
   };
 
   const handleCaseCreated = () => {
+    console.log('✨ GestaoCasos: Novo caso criado, refazendo consulta...');
     refetch();
     closeDuplicateModal();
   };
@@ -122,8 +140,11 @@ export default function GestaoCasos() {
 
   const renderCasesView = () => {
     if (loading) {
+      console.log('⏳ GestaoCasos: Exibindo loader...');
       return <Loader />;
     }
+
+    console.log('🎯 GestaoCasos: Renderizando visualização:', viewMode);
 
     switch (viewMode) {
       case "cards":
@@ -170,111 +191,120 @@ export default function GestaoCasos() {
     }
   };
 
+  console.log('🎨 GestaoCasos: Renderizando interface principal');
+
   return (
     <NotificationProvider>
-      <div className="space-y-6">
-        {/* Navegação */}
-        <div className="flex items-center justify-between">
-          <BackToDashboard variant="back" />
-          <div className="text-sm text-gray-500">
-            {cases.length} de {totalCases} casos exibidos
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+        <div className="space-y-6 p-6">
+          {/* Navegação com fundo garantido */}
+          <div className="flex items-center justify-between bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+            <BackToDashboard variant="back" />
+            <div className="text-sm text-gray-600 font-medium">
+              {cases.length} de {totalCases} casos exibidos
+            </div>
           </div>
+
+          <CasesManagementHeader />
+
+          {/* Filtros Avançados com fundo claro forçado */}
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+            <CasesAdvancedFilters
+              filters={filters}
+              onFiltersChange={setFilters}
+              onSaveFilter={handleSaveFilter}
+              savedFilters={savedFilters}
+              onLoadFilter={handleLoadFilter}
+              totalCases={totalCases}
+              filteredCases={cases.length}
+            />
+          </div>
+
+          {/* Seletor de Visualização com fundo claro */}
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+            <CasesViewSelector
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+              sortField={sortField}
+              sortDirection={sortDirection}
+              onSort={handleSort}
+              selectedCount={selectedCases.length}
+              totalCount={cases.length}
+              onBulkAction={handleBulkAction}
+              onExport={handleExport}
+              gridDensity={gridDensity}
+              onGridDensityChange={setGridDensity}
+            />
+          </div>
+
+          {/* Visualização dos Casos com fundo garantido */}
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+            <div className="p-6 bg-white">
+              {renderCasesView()}
+            </div>
+          </div>
+
+          {/* Modais - Phase 1 com z-index otimizado */}
+          <CaseEditFormModal
+            open={editModalOpen}
+            onClose={closeEditModal}
+            caseId={selectedCaseId}
+            onSaved={handleCaseSaved}
+          />
+
+          <CaseQuickEditModal
+            open={quickEditModalOpen}
+            onClose={closeQuickEditModal}
+            caseId={selectedCaseId}
+            onSaved={handleCaseSaved}
+          />
+
+          <CaseRichViewModal
+            open={richViewModalOpen}
+            onClose={closeRichViewModal}
+            caseId={selectedCaseId}
+            onEdit={handleQuickEdit}
+            onDuplicate={handleDuplicate}
+            onAnalytics={handleAnalytics}
+            onWizardEdit={handleWizardEdit}
+            onVersionComparison={handleVersionComparison}
+          />
+
+          <CaseSmartDuplicateModal
+            open={duplicateModalOpen}
+            onClose={closeDuplicateModal}
+            caseId={selectedCaseId}
+            onCreated={handleCaseCreated}
+          />
+
+          {/* Modais - Phase 2 com z-index otimizado */}
+          <CaseAdvancedAnalyticsModal
+            open={analyticsModalOpen}
+            onClose={closeAnalyticsModal}
+            caseId={selectedCaseId}
+          />
+
+          <CaseEditWizardModal
+            open={wizardModalOpen}
+            onClose={closeWizardModal}
+            caseId={selectedCaseId}
+            onSaved={handleCaseSaved}
+          />
+
+          <CaseVersionComparisonModal
+            open={versionModalOpen}
+            onClose={closeVersionModal}
+            caseId={selectedCaseId}
+            onRestore={(versionData) => {
+              console.log("🔄 GestaoCasos: Restaurar versão:", versionData);
+              closeVersionModal();
+            }}
+          />
+
+          {/* Phase 3 Components */}
+          <NotificationContainer />
+          <CaseShortcutsManager shortcuts={shortcuts} />
         </div>
-
-        <CasesManagementHeader />
-
-        {/* Filtros Avançados */}
-        <CasesAdvancedFilters
-          filters={filters}
-          onFiltersChange={setFilters}
-          onSaveFilter={handleSaveFilter}
-          savedFilters={savedFilters}
-          onLoadFilter={handleLoadFilter}
-          totalCases={totalCases}
-          filteredCases={cases.length}
-        />
-
-        {/* Seletor de Visualização */}
-        <CasesViewSelector
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          sortField={sortField}
-          sortDirection={sortDirection}
-          onSort={handleSort}
-          selectedCount={selectedCases.length}
-          totalCount={cases.length}
-          onBulkAction={handleBulkAction}
-          onExport={handleExport}
-          gridDensity={gridDensity}
-          onGridDensityChange={setGridDensity}
-        />
-
-        {/* Visualização dos Casos */}
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          {renderCasesView()}
-        </div>
-
-        {/* Modais - Phase 1 */}
-        <CaseEditFormModal
-          open={editModalOpen}
-          onClose={closeEditModal}
-          caseId={selectedCaseId}
-          onSaved={handleCaseSaved}
-        />
-
-        <CaseQuickEditModal
-          open={quickEditModalOpen}
-          onClose={closeQuickEditModal}
-          caseId={selectedCaseId}
-          onSaved={handleCaseSaved}
-        />
-
-        <CaseRichViewModal
-          open={richViewModalOpen}
-          onClose={closeRichViewModal}
-          caseId={selectedCaseId}
-          onEdit={handleQuickEdit}
-          onDuplicate={handleDuplicate}
-          onAnalytics={handleAnalytics}
-          onWizardEdit={handleWizardEdit}
-          onVersionComparison={handleVersionComparison}
-        />
-
-        <CaseSmartDuplicateModal
-          open={duplicateModalOpen}
-          onClose={closeDuplicateModal}
-          caseId={selectedCaseId}
-          onCreated={handleCaseCreated}
-        />
-
-        {/* Modais - Phase 2 */}
-        <CaseAdvancedAnalyticsModal
-          open={analyticsModalOpen}
-          onClose={closeAnalyticsModal}
-          caseId={selectedCaseId}
-        />
-
-        <CaseEditWizardModal
-          open={wizardModalOpen}
-          onClose={closeWizardModal}
-          caseId={selectedCaseId}
-          onSaved={handleCaseSaved}
-        />
-
-        <CaseVersionComparisonModal
-          open={versionModalOpen}
-          onClose={closeVersionModal}
-          caseId={selectedCaseId}
-          onRestore={(versionData) => {
-            // Implementar lógica de restauração
-            console.log("Restaurar versão:", versionData);
-            closeVersionModal();
-          }}
-        />
-
-        {/* Phase 3 Components */}
-        <NotificationContainer />
-        <CaseShortcutsManager shortcuts={shortcuts} />
       </div>
     </NotificationProvider>
   );
