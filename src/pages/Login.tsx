@@ -1,6 +1,6 @@
 
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,7 +12,17 @@ export default function Login() {
   const [fullName, setFullName] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const navigate = useNavigate();
-  const { signIn, signUp, signInWithGoogle, loading } = useAuth();
+  const location = useLocation();
+  const { signIn, signUp, signInWithGoogle, loading, isAuthenticated } = useAuth();
+
+  // CORREÇÃO: Redirecionamento automático se já estiver logado
+  useEffect(() => {
+    if (isAuthenticated && !loading) {
+      console.log('✅ Usuário já autenticado, redirecionando...');
+      const from = (location.state as any)?.from?.pathname || '/dashboard';
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, loading, navigate, location]);
 
   const handleSignIn = async () => {
     if (!email || !password) {
@@ -20,10 +30,13 @@ export default function Login() {
       return;
     }
 
+    console.log('🔑 Tentando fazer login...');
     const { error } = await signIn(email, password);
 
     if (!error) {
-      navigate("/dashboard"); // FASE 1: Correção do redirecionamento
+      console.log('✅ Login bem-sucedido, redirecionando...');
+      const from = (location.state as any)?.from?.pathname || '/dashboard';
+      navigate(from, { replace: true });
     }
   };
 
@@ -33,23 +46,45 @@ export default function Login() {
       return;
     }
 
+    console.log('📝 Tentando criar conta...');
     const { error } = await signUp(email, password, fullName);
 
     if (!error) {
-      navigate("/dashboard"); // FASE 1: Correção do redirecionamento
+      console.log('✅ Cadastro bem-sucedido, redirecionando...');
+      // Aguardar um pouco para garantir que o perfil seja criado
+      setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, 1000);
     }
   };
 
   const handleGoogleAuth = async () => {
+    console.log('🌐 Iniciando autenticação Google...');
     const { error } = await signInWithGoogle();
+    
     if (!error) {
-      // Redirect happens automatically to /dashboard
+      console.log('🚀 Redirecionamento Google iniciado');
+      // O redirecionamento será automático
     }
   };
 
   const goBackToLanding = () => {
     navigate('/');
   };
+
+  // Mostrar loader se estiver carregando ou já autenticado
+  if (loading || isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-xl">
+            {isAuthenticated ? 'Redirecionando...' : 'Carregando...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white flex">

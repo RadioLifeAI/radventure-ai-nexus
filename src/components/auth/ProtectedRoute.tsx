@@ -13,18 +13,30 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
   const { isAdmin, isLoading, isAuthenticated } = useAdminCheck();
   const location = useLocation();
 
+  console.log('🛡️ ProtectedRoute check:', {
+    isAuthenticated,
+    isAdmin,
+    isLoading,
+    requireAdmin,
+    currentPath: location.pathname
+  });
+
   if (isLoading) {
+    console.log('⏳ Auth loading...');
     return <Loader />;
   }
 
   if (!isAuthenticated) {
+    console.log('❌ Não autenticado, redirecionando para login');
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // FASE 1: Proteção administrativa implementada
+  // Proteção administrativa implementada
   if (requireAdmin && !isAdmin) {
+    console.log('❌ Acesso admin negado, redirecionando para dashboard');
     return <Navigate to="/dashboard" replace />;
   }
 
+  console.log('✅ Acesso permitido');
   return <>{children}</>;
 }

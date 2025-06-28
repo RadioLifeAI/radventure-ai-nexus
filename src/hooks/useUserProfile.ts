@@ -37,10 +37,10 @@ export function useUserProfile() {
   const { data: profile, isLoading, error } = useQuery({
     queryKey: ['user-profile', user?.id],
     queryFn: async () => {
-      console.log('Fetching profile for user:', user?.id);
+      console.log('👤 Buscando perfil para usuário:', user?.id?.slice(0, 8) + '...');
       
       if (!user?.id) {
-        console.log('No user ID available');
+        console.log('❌ No user ID available');
         throw new Error('No user ID');
       }
       
@@ -51,49 +51,69 @@ export function useUserProfile() {
         .single();
 
       if (error) {
-        console.log('Profile fetch error:', error);
+        console.log('⚠️ Profile fetch error:', error);
         
-        // Se o perfil não existir, criar um básico
+        // Se o perfil não existir, aguardar um pouco e tentar criar
         if (error.code === 'PGRST116') {
-          console.log('Profile not found, creating basic profile...');
+          console.log('🔧 Perfil não encontrado, aguardando criação automática...');
           
-          const newProfileData = {
-            id: user.id,
-            email: user.email || '',
-            username: user.email?.split('@')[0] || `user_${user.id.slice(0, 8)}`,
-            full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
-            type: 'USER' as const,
-            radcoin_balance: 0,
-            total_points: 0,
-            current_streak: 0,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          };
-
-          const { data: newProfile, error: createError } = await supabase
+          // Aguardar o trigger funcionar
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          
+          // Tentar buscar novamente
+          const { data: retryData, error: retryError } = await supabase
             .from('profiles')
-            .insert(newProfileData)
-            .select()
+            .select('*')
+            .eq('id', user.id)
             .single();
+            
+          if (retryError && retryError.code === 'PGRST116') {
+            console.log('🛠️ Criando perfil manualmente...');
+            
+            const newProfileData = {
+              id: user.id,
+              email: user.email || '',
+              username: user.email?.split('@')[0] || `user_${user.id.slice(0, 8)}`,
+              full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
+              type: 'USER' as const,
+              radcoin_balance: 0,
+              total_points: 0,
+              current_streak: 0,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            };
 
-          if (createError) {
-            console.error('Error creating profile:', createError);
-            throw createError;
+            const { data: newProfile, error: createError } = await supabase
+              .from('profiles')
+              .insert(newProfileData)
+              .select()
+              .single();
+
+            if (createError) {
+              console.error('❌ Error creating profile:', createError);
+              throw createError;
+            }
+
+            console.log('✅ Perfil criado manualmente:', newProfile.email);
+            return newProfile as UserProfile;
+          } else if (retryData) {
+            console.log('✅ Perfil encontrado na segunda tentativa:', retryData.email);
+            return retryData as UserProfile;
+          } else {
+            throw retryError;
           }
-
-          console.log('Profile created successfully:', newProfile);
-          return newProfile as UserProfile;
         }
         throw error;
       }
       
-      console.log('Profile fetched successfully:', data);
+      console.log('✅ Perfil carregado:', data.email);
       return data as UserProfile;
     },
     enabled: !!user?.id && isAuthenticated,
     refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 5, // FASE 2: Cache de 5 minutos para performance
+    staleTime: 1000 * 60 * 5, // Cache de 5 minutos para performance
     retry: (failureCount, error: any) => {
+      // Retry apenas para erros de rede, não para perfil não encontrado
       return failureCount < 2 && error?.code !== 'PGRST116';
     },
   });
@@ -101,11 +121,11 @@ export function useUserProfile() {
   const updateProfileMutation = useMutation({
     mutationFn: async (updates: Partial<UserProfile>) => {
       if (!user?.id) {
-        console.error('No user ID for profile update');
+        console.error('❌ No user ID for profile update');
         throw new Error('No user ID');
       }
       
-      console.log('Updating profile with data:', updates);
+      console.log('📝 Atualizando perfil:', Object.keys(updates));
       
       const { data, error } = await supabase
         .from('profiles')
@@ -115,15 +135,15 @@ export function useUserProfile() {
         .single();
 
       if (error) {
-        console.error('Profile update error:', error);
+        console.error('❌ Profile update error:', error);
         throw error;
       }
       
-      console.log('Profile updated successfully:', data);
+      console.log('✅ Perfil atualizado:', data.email);
       return data;
     },
     onSuccess: (updatedProfile) => {
-      // FASE 2: Cache otimizado
+      // Cache otimizado
       queryClient.setQueryData(['user-profile', user?.id], updatedProfile);
       
       if (updatedProfile.avatar_url) {
@@ -136,7 +156,7 @@ export function useUserProfile() {
       });
     },
     onError: (error: any) => {
-      console.error('Erro ao atualizar perfil:', error);
+      console.error('❌ Erro ao atualizar perfil:', error);
       toast({
         title: 'Erro ao atualizar perfil',
         description: error.message || 'Tente novamente em alguns instantes.',
@@ -146,6 +166,7 @@ export function useUserProfile() {
   });
 
   const refreshProfile = () => {
+    console.log('🔄 Atualizando perfil...');
     queryClient.invalidateQueries({ queryKey: ['user-profile', user?.id] });
   };
 
