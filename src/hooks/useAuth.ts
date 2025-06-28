@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,7 +34,8 @@ export function useAuth() {
         setLoading(false);
 
         // Gamificação: Bonus de login diário otimizado (FASE 3)
-        if (event === 'SIGNED_IN' && session?.user && event !== 'TOKEN_REFRESHED') {
+        // CORREÇÃO: Usar lógica correta para verificar se é login e não refresh
+        if (event === 'SIGNED_IN' && session?.user) {
           console.log('✅ Usuário logado, verificando bonus de login...');
           
           // Aguardar um pouco menos para melhor performance
