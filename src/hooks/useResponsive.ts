@@ -17,9 +17,20 @@ export function useResponsive() {
     };
 
     updateScreenSize();
-    window.addEventListener('resize', updateScreenSize);
     
-    return () => window.removeEventListener('resize', updateScreenSize);
+    // Otimizar performance com throttling
+    let timeoutId: NodeJS.Timeout;
+    const handleResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(updateScreenSize, 150);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   return {
