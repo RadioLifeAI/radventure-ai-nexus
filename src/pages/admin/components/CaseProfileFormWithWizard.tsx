@@ -1,3 +1,4 @@
+
 import React from "react";
 import { CaseCreationWizard } from "./CaseCreationWizard";
 import { useCaseProfileFormHandlers } from "../hooks/useCaseProfileFormHandlers";
@@ -8,9 +9,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import { useSpecializedCaseImages } from "@/hooks/useSpecializedCaseImages";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { UnifiedImageSystemTabs } from "./UnifiedImageSystemTabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FolderTree, Sparkles } from "lucide-react";
 
 interface CaseProfileFormWithWizardProps {
   editingCase?: any;
@@ -24,10 +22,6 @@ export function CaseProfileFormWithWizard({
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
   const [difficulties, setDifficulties] = useState<{ id: number; level: number; description: string | null }[]>([]);
   const { images: specializedImages, refetch: refetchImages } = useSpecializedCaseImages(editingCase?.id);
-
-  // Estados para integração do sistema de imagens
-  const [currentCategoryId, setCurrentCategoryId] = useState<number | undefined>(undefined);
-  const [currentModality, setCurrentModality] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     supabase.from("medical_specialties")
@@ -59,17 +53,6 @@ export function CaseProfileFormWithWizard({
 
   const isEditMode = !!editingCase;
   const { generateTitle } = useCaseTitleGenerator(categories);
-
-  // Sincronização com formulário
-  useEffect(() => {
-    const newCategoryId = form.category_id ? Number(form.category_id) : undefined;
-    const newModality = form.modality || undefined;
-    
-    if (newCategoryId !== currentCategoryId || newModality !== currentModality) {
-      setCurrentCategoryId(newCategoryId);
-      setCurrentModality(newModality);
-    }
-  }, [form.category_id, form.modality]);
 
   // Preencher form com dados existentes se editando
   useEffect(() => {
@@ -133,16 +116,6 @@ export function CaseProfileFormWithWizard({
       </Tooltip>
     );
   }
-
-  // Callback para atualização de imagens
-  const handleImagesChange = (images: any[]) => {
-    console.log('📸 Imagens atualizadas pelo sistema unificado:', images.length);
-    refetchImages();
-    toast({ 
-      title: "🎯 Sistema Integrado!", 
-      description: `${images.length} imagem(ns) organizadas conforme formulário.` 
-    });
-  };
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -298,48 +271,20 @@ export function CaseProfileFormWithWizard({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Sistema Unificado de Imagens - SEMPRE VISÍVEL */}
-      <Card className={`border-2 ${currentCategoryId && currentModality 
-        ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200'
-        : 'bg-gradient-to-r from-orange-50 to-yellow-50 border-orange-200'
-      }`}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FolderTree className="h-6 w-6" />
-            Sistema Especializado de Imagens
-            <div className="flex items-center gap-2 ml-auto">
-              <Sparkles className="h-4 w-4 text-blue-500" />
-              <span className="text-sm font-medium">Integração Completa</span>
-            </div>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <UnifiedImageSystemTabs
-            caseId={isEditMode ? editingCase?.id : undefined}
-            categoryId={currentCategoryId}
-            modality={currentModality}
-            onImagesChange={handleImagesChange}
-          />
-        </CardContent>
-      </Card>
-
-      {/* Wizard Principal */}
-      <CaseCreationWizard
-        form={form}
-        setForm={setForm}
-        highlightedFields={highlightedFields}
-        setHighlightedFields={setHighlightedFields}
-        handlers={handlers}
-        categories={categories}
-        difficulties={difficulties}
-        isEditMode={isEditMode}
-        editingCase={editingCase}
-        onSubmit={handleSubmit}
-        submitting={submitting}
-        feedback={feedback}
-        renderTooltipTip={renderTooltipTip}
-      />
-    </div>
+    <CaseCreationWizard
+      form={form}
+      setForm={setForm}
+      highlightedFields={highlightedFields}
+      setHighlightedFields={setHighlightedFields}
+      handlers={handlers}
+      categories={categories}
+      difficulties={difficulties}
+      isEditMode={isEditMode}
+      editingCase={editingCase}
+      onSubmit={handleSubmit}
+      submitting={submitting}
+      feedback={feedback}
+      renderTooltipTip={renderTooltipTip}
+    />
   );
 }

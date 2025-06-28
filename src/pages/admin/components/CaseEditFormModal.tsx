@@ -12,8 +12,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import { CaseProfileForm } from "./CaseProfileForm";
 import { AdvancedImageManagerModal } from "./AdvancedImageManagerModal";
-import { UnifiedImageSystemTabs } from "./UnifiedImageSystemTabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Sparkles, 
   Image as ImageIcon,
@@ -34,22 +32,6 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
   const [editingCase, setEditingCase] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [showAdvancedImageModal, setShowAdvancedImageModal] = useState(false);
-  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
-
-  // Estados para integração do sistema de imagens
-  const [currentCategoryId, setCurrentCategoryId] = useState<number | undefined>(undefined);
-  const [currentModality, setCurrentModality] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    // Carregar categorias
-    supabase.from("medical_specialties")
-      .select("id, name")
-      .then(({ data, error }) => {
-        if (!error) {
-          setCategories(data || []);
-        }
-      });
-  }, []);
 
   useEffect(() => {
     if (open && caseId) {
@@ -59,19 +41,6 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
       setEditingCase(null);
     }
   }, [open, caseId]);
-
-  // Sincronização com dados do caso
-  useEffect(() => {
-    if (editingCase) {
-      const newCategoryId = editingCase.category_id ? Number(editingCase.category_id) : undefined;
-      const newModality = editingCase.modality || undefined;
-      
-      if (newCategoryId !== currentCategoryId || newModality !== currentModality) {
-        setCurrentCategoryId(newCategoryId);
-        setCurrentModality(newModality);
-      }
-    }
-  }, [editingCase]);
 
   const loadCaseData = async () => {
     if (!caseId) return;
@@ -128,20 +97,12 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
     }
   };
 
-  const handleImagesChange = (images: any[]) => {
-    console.log('📸 Imagens atualizadas pelo sistema unificado:', images.length);
-    toast({ 
-      title: "🎯 Sistema Integrado!", 
-      description: `${images.length} imagem(ns) organizadas conforme caso.` 
-    });
-  };
-
   console.log('🎨 CaseEditFormModal: Renderizando modal', { loading, hasEditingCase: !!editingCase });
 
   return (
     <>
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="max-w-7xl max-h-[95vh] overflow-y-auto bg-white border border-gray-200 shadow-xl z-50">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-white border border-gray-200 shadow-xl z-50">
           <DialogHeader className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 -m-6 mb-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <DialogTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -149,7 +110,7 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
                 Editar Caso Médico - Sistema Especializado
               </DialogTitle>
               
-              {/* Botão de Ferramentas Especializadas */}
+              {/* Botão de Ferramentas Especializadas - ATUALIZADO */}
               {editingCase && (
                 <div className="flex items-center gap-3">
                   <Button
@@ -177,7 +138,7 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
             <div className="mt-4 p-3 bg-green-100 border border-green-200 rounded-lg">
               <div className="flex items-center gap-2 text-sm text-green-800">
                 <Sparkles className="h-4 w-4" />
-                <span className="font-medium">Sistema Especializado Integrado:</span>
+                <span className="font-medium">Sistema Especializado Ativo:</span>
                 <span>Organização avançada de imagens por especialidade e modalidade</span>
               </div>
             </div>
@@ -191,33 +152,7 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
               </div>
             </div>
           ) : editingCase ? (
-            <div className="space-y-6 bg-white">
-              {/* Sistema Unificado de Imagens - SEMPRE VISÍVEL */}
-              <Card className={`border-2 ${currentCategoryId && currentModality 
-                ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200'
-                : 'bg-gradient-to-r from-orange-50 to-yellow-50 border-orange-200'
-              }`}>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FolderTree className="h-5 w-5" />
-                    Sistema Especializado de Imagens
-                    <div className="flex items-center gap-2 ml-auto">
-                      <Sparkles className="h-4 w-4 text-blue-500" />
-                      <span className="text-sm font-medium">Integração Completa</span>
-                    </div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <UnifiedImageSystemTabs
-                    caseId={caseId || undefined}
-                    categoryId={currentCategoryId}
-                    modality={currentModality}
-                    onImagesChange={handleImagesChange}
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Formulário Principal */}
+            <div className="bg-white">
               <CaseProfileForm 
                 editingCase={editingCase}
                 onCreated={handleCaseUpdated}
