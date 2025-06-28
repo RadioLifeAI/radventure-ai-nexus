@@ -318,30 +318,48 @@ export function CasePreviewModalEnhanced({
     onClose();
   };
 
-  const handleRequestTutorHint = () => {
+  // CORREÇÃO: Chamada automática do Tutor AI sem userQuestion
+  const handleRequestTutorHint = async () => {
     if (!helpAids || helpAids.ai_tutor_credits <= 0) {
       toast({
         title: "Sem créditos",
-        description: "Você não possui créditos de tutor AI disponíveis.",
+        description: "Você não possui ajudas de eliminação disponíveis.",
         variant: "destructive"
       });
       return;
     }
 
-    getTutorHint(
-      { caseData: actualCaseData, userQuestion: tutorQuestion },
-      {
-        onSuccess: (data) => {
-          setTutorHintText(data.hint);
-          setShowTutorHint(false);
-          setTutorQuestion("");
-          toast({
-            title: "Dica recebida!",
-            description: `Créditos restantes: ${data.creditsRemaining}`
-          });
-        }
+    try {
+      console.log('🤖 Solicitando dica automática do Tutor AI...');
+      
+      // Consumir crédito primeiro
+      consumeHelp({ aidType: 'ai_tutor' });
+      
+      // CORREÇÃO: Remover userQuestion da chamada
+      const response = await getTutorHint({
+        caseData: actualCaseData
+      });
+
+      console.log('✅ Resposta recebida:', response);
+
+      if (response?.hint) {
+        setTutorHintText(response.hint);
+        
+        toast({
+          title: "Dica recebida!",
+          description: `Veja a dica abaixo. Créditos restantes: ${response.creditsRemaining || 'N/A'}`,
+        });
+      } else {
+        throw new Error('Resposta inválida do tutor AI');
       }
-    );
+    } catch (error) {
+      console.error('❌ Erro ao solicitar dica:', error);
+      toast({
+        title: "Erro no Tutor AI",
+        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        variant: "destructive"
+      });
+    }
   };
 
   if (isLoading) {
@@ -649,7 +667,7 @@ export function CasePreviewModalEnhanced({
                   <p className="text-xs text-orange-600 mt-2">Avança sem perder pontos</p>
                 </div>
 
-                {/* Tutor AI */}
+                {/* Tutor AI - CORREÇÃO: Automático sem modal */}
                 <div className="bg-gradient-to-r from-purple-100 to-blue-100 rounded-lg p-4 border border-purple-200">
                   <div className="flex items-center gap-2 mb-3">
                     <Brain className="h-5 w-5 text-purple-600" />
@@ -665,11 +683,20 @@ export function CasePreviewModalEnhanced({
                     variant="outline"
                     size="sm"
                     className="w-full border-purple-300 hover:bg-purple-50"
-                    disabled={hasAnswered || !helpAids || helpAids.ai_tutor_credits <= 0}
-                    onClick={() => setShowTutorHint(true)}
+                    disabled={hasAnswered || !helpAids || helpAids.ai_tutor_credits <= 0 || isGettingHint}
+                    onClick={handleRequestTutorHint}
                   >
-                    <Brain className="h-4 w-4 mr-2" />
-                    Pedir Dica
+                    {isGettingHint ? (
+                      <>
+                        <Brain className="h-4 w-4 mr-2 animate-spin" />
+                        Gerando...
+                      </>
+                    ) : (
+                      <>
+                        <Brain className="h-4 w-4 mr-2" />
+                        Obter Dica
+                      </>
+                    )}
                   </Button>
                 </div>
 
@@ -690,46 +717,6 @@ export function CasePreviewModalEnhanced({
             </div>
           )}
         </div>
-
-        {/* Modal para Pergunta do Tutor AI */}
-        <Dialog open={showTutorHint} onOpenChange={setShowTutorHint}>
-          <DialogContent className="max-w-md">
-            <div className="p-4">
-              <div className="flex items-center gap-3 mb-4">
-                <Brain className="h-6 w-6 text-purple-600" />
-                <h3 className="text-lg font-bold text-purple-800">Tutor AI</h3>
-              </div>
-              
-              <div className="mb-4">
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Qual sua dúvida sobre este caso? (opcional)
-                </label>
-                <Textarea
-                  value={tutorQuestion}
-                  onChange={(e) => setTutorQuestion(e.target.value)}
-                  placeholder="Ex: Que achados devo observar na imagem? Qual a fisiopatologia envolvida?"
-                  className="min-h-20"
-                />
-              </div>
-              
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleRequestTutorHint}
-                  disabled={isGettingHint}
-                  className="flex-1"
-                >
-                  {isGettingHint ? "Gerando..." : "Obter Dica"}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowTutorHint(false)}
-                >
-                  Cancelar
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
       </DialogContent>
     </Dialog>
   );
