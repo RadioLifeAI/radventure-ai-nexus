@@ -15,7 +15,9 @@ import {
   CloudUpload,
   Cpu,
   FolderTree,
-  Sparkles
+  Sparkles,
+  CheckCircle,
+  AlertTriangle
 } from 'lucide-react';
 
 interface CaseAdvancedImageManagementProps {
@@ -32,26 +34,50 @@ export function CaseAdvancedImageManagement({
   onImagesChange 
 }: CaseAdvancedImageManagementProps) {
   
+  // Status da integração
+  const isIntegrated = !!(categoryId && modality);
+  const organizationPath = isIntegrated 
+    ? `/medical-cases/cat${categoryId}/${modality.toLowerCase()}/`
+    : 'Aguardando seleção no formulário';
+
   return (
     <div className="space-y-6">
-      {/* Header da Seção Especializada */}
-      <Card className="bg-gradient-to-r from-purple-50 via-blue-50 to-green-50 border-2 border-purple-200">
+      {/* Header da Seção Especializada Integrada */}
+      <Card className={`border-2 ${isIntegrated 
+        ? 'bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50 border-green-200' 
+        : 'bg-gradient-to-r from-orange-50 via-yellow-50 to-amber-50 border-orange-200'
+      }`}>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-purple-500 to-green-600 rounded-xl shadow-lg">
+              <div className={`p-2 rounded-xl shadow-lg ${isIntegrated 
+                ? 'bg-gradient-to-br from-green-500 to-emerald-600' 
+                : 'bg-gradient-to-br from-orange-500 to-amber-600'
+              }`}>
                 <FolderTree className="h-6 w-6 text-white" />
               </div>
               <div>
-                <CardTitle className="text-xl text-purple-900 flex items-center gap-2">
-                  Gestão Avançada Especializada
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">
-                    <Sparkles className="h-3 w-3 mr-1" />
-                    Organização Automática
+                <CardTitle className={`text-xl flex items-center gap-2 ${isIntegrated 
+                  ? 'text-green-900' 
+                  : 'text-orange-900'
+                }`}>
+                  Sistema Especializado {isIntegrated ? 'Integrado' : 'Aguardando'}
+                  <Badge variant="secondary" className={isIntegrated 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-orange-100 text-orange-800'
+                  }>
+                    {isIntegrated ? <CheckCircle className="h-3 w-3 mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
+                    {isIntegrated ? 'INTEGRADO' : 'CONFIGURAR'}
                   </Badge>
                 </CardTitle>
-                <p className="text-sm text-purple-700 mt-1">
-                  Sistema unificado com organização automática por especialidade médica
+                <p className={`text-sm mt-1 ${isIntegrated 
+                  ? 'text-green-700' 
+                  : 'text-orange-700'
+                }`}>
+                  {isIntegrated 
+                    ? 'Upload conectado com formulário - organização automática ativa'
+                    : 'Selecione categoria e modalidade no formulário para ativar'
+                  }
                 </p>
               </div>
             </div>
@@ -65,11 +91,11 @@ export function CaseAdvancedImageManagement({
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="flex items-center gap-2 text-sm">
               <CloudUpload className="h-4 w-4 text-blue-600" />
-              <span>Upload Especializado</span>
+              <span>Upload Integrado</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <FolderTree className="h-4 w-4 text-green-600" />
-              <span>Organização Automática</span>
+              <span>Organização Formulário</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <FileImage className="h-4 w-4 text-orange-600" />
@@ -78,6 +104,35 @@ export function CaseAdvancedImageManagement({
             <div className="flex items-center gap-2 text-sm">
               <TrendingUp className="h-4 w-4 text-purple-600" />
               <span>CDN Otimizado</span>
+            </div>
+          </div>
+          
+          {/* Status da Integração */}
+          <div className={`mt-4 p-3 rounded-lg border ${isIntegrated 
+            ? 'bg-green-100 border-green-300' 
+            : 'bg-orange-100 border-orange-300'
+          }`}>
+            <div className="flex items-start gap-2">
+              {isIntegrated ? <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" /> : <AlertTriangle className="h-4 w-4 text-orange-600 mt-0.5" />}
+              <div>
+                <p className={`font-medium text-sm ${isIntegrated 
+                  ? 'text-green-800' 
+                  : 'text-orange-800'
+                }`}>
+                  {isIntegrated ? 'Sistema Totalmente Integrado' : 'Integração Pendente'}
+                </p>
+                <p className={`text-xs ${isIntegrated 
+                  ? 'text-green-700' 
+                  : 'text-orange-700'
+                }`}>
+                  <strong>Estrutura:</strong> {organizationPath}
+                </p>
+                {!isIntegrated && (
+                  <p className="text-xs text-orange-700 mt-1">
+                    👉 Vá para "Informações Básicas" e selecione categoria + modalidade
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </CardContent>
@@ -91,9 +146,9 @@ export function CaseAdvancedImageManagement({
               <div className="p-3 bg-green-100 rounded-full w-fit mx-auto mb-3">
                 <FolderTree className="h-6 w-6 text-green-600" />
               </div>
-              <h3 className="font-semibold text-green-900 mb-2">Organização Especializada</h3>
+              <h3 className="font-semibold text-green-900 mb-2">Integração Formulário</h3>
               <p className="text-sm text-green-700">
-                Classificação automática por especialidade e modalidade
+                Upload baseado nas seleções do formulário em tempo real
               </p>
             </div>
           </CardContent>
@@ -121,7 +176,7 @@ export function CaseAdvancedImageManagement({
               </div>
               <h3 className="font-semibold text-orange-900 mb-2">Metadata Rica</h3>
               <p className="text-sm text-orange-700">
-                Dimensões, formatos, qualidade, organização especializada
+                Dimensões, formatos, organização integrada com formulário
               </p>
             </div>
           </CardContent>
@@ -130,7 +185,7 @@ export function CaseAdvancedImageManagement({
 
       <Separator />
 
-      {/* Sistema de Upload Especializado */}
+      {/* Sistema de Upload Especializado Integrado */}
       <EnhancedImageUploadSpecialized 
         caseId={caseId}
         categoryId={categoryId}
@@ -138,23 +193,23 @@ export function CaseAdvancedImageManagement({
         onChange={onImagesChange}
       />
 
-      {/* Informações Técnicas */}
+      {/* Informações Técnicas da Integração */}
       <Card className="border-gray-200">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-sm">
             <Settings className="h-4 w-4" />
-            Especificações Técnicas Especializadas
+            Especificações Técnicas Integradas
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
             <div>
-              <h4 className="font-semibold mb-2">Organização Especializada</h4>
+              <h4 className="font-semibold mb-2">Integração com Formulário</h4>
               <ul className="space-y-1 text-gray-600">
-                <li>• Classificação por especialidade médica</li>
-                <li>• Organização por modalidade de exame</li>
-                <li>• Estrutura: /medical-cases/[categoria]/[modalidade]/</li>
-                <li>• Metadata especializada automática</li>
+                <li>• Sincronização automática com seleções</li>
+                <li>• Organização baseada em categoria + modalidade</li>
+                <li>• Estrutura: /medical-cases/[cat]/[mod]/</li>
+                <li>• Metadata integrada em tempo real</li>
               </ul>
             </div>
             <div>
@@ -167,21 +222,21 @@ export function CaseAdvancedImageManagement({
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">Performance Especializada</h4>
+              <h4 className="font-semibold mb-2">Performance Integrada</h4>
               <ul className="space-y-1 text-gray-600">
-                <li>• CDN global com estrutura organizada</li>
-                <li>• Cache inteligente por especialidade</li>
+                <li>• CDN global com estrutura formulário</li>
+                <li>• Cache inteligente por seleção</li>
                 <li>• Lazy loading especializado</li>
                 <li>• Compressão otimizada por modalidade</li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">Segurança e Organização</h4>
+              <h4 className="font-semibold mb-2">Validações e Segurança</h4>
               <ul className="space-y-1 text-gray-600">
-                <li>• Máximo 10MB por arquivo</li>
+                <li>• Anti-duplicação por caso</li>
                 <li>• Validação especializada de tipo</li>
                 <li>• Scan automático de malware</li>
-                <li>• Backup em estrutura organizada</li>
+                <li>• Backup em estrutura integrada</li>
               </ul>
             </div>
           </div>
