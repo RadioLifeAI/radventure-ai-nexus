@@ -28,7 +28,9 @@ export function useCaseReviewStatus(caseId: string | null) {
       });
 
       if (error) throw error;
-      return data as CaseReviewStatus;
+      
+      // Converter explicitamente o tipo Json para CaseReviewStatus
+      return data as unknown as CaseReviewStatus;
     },
     enabled: !!user?.id && !!caseId,
   });
