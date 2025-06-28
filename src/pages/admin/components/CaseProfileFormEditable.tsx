@@ -30,7 +30,8 @@ import {
   Sparkles, 
   Image as ImageIcon, 
   Settings, 
-  Zap 
+  Zap,
+  TestTube 
 } from "lucide-react";
 
 // Novos componentes AI por seção
@@ -51,7 +52,6 @@ export function CaseProfileFormEditable({
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
   const [difficulties, setDifficulties] = useState<{ id: number; level: number; description: string | null }[]>([]);
   const [showAdvancedImageModal, setShowAdvancedImageModal] = useState(false);
-  const [useAdvancedMode, setUseAdvancedMode] = useState(false);
 
   // Hook para imagens temporárias (usado apenas na criação)
   const { associateWithCase, clearTempImages } = useTempCaseImages();
@@ -432,80 +432,107 @@ export function CaseProfileFormEditable({
           />
         </CaseFormGamifiedLayout>
 
-        {/* SEÇÃO DE IMAGENS - ATUALIZADA COM MODO AVANÇADO */}
+        {/* SEÇÃO DE IMAGENS - SISTEMA PROFISSIONAL COMPLETO */}
         <CaseFormGamifiedLayout
-          section="advanced"
-          title="Gestão de Imagens"
-          description={isEditMode ? "Sistema robusto para upload e gerenciamento de múltiplas imagens" : "Upload de imagens para o novo caso médico"}
+          section="images"
+          title="Gestão Profissional de Imagens"
+          description="Sistema avançado para upload, edição e processamento de imagens médicas"
         >
-          <div className="space-y-4">
-            {/* Botões de Modo */}
-            <div className="flex items-center justify-between bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-lg border border-purple-200">
-              <div className="flex items-center gap-3">
-                <ImageIcon className="h-5 w-5 text-purple-600" />
-                <div>
-                  <h4 className="font-semibold text-purple-800">Sistema de Upload de Imagens</h4>
-                  <p className="text-sm text-purple-600">
-                    {useAdvancedMode ? "Modo avançado ativo com ferramentas profissionais" : "Modo padrão - sistema simples e eficaz"}
-                  </p>
+          <div className="space-y-6">
+            {/* Header com Ferramentas Avançadas - SEMPRE VISÍVEL */}
+            <div className="bg-gradient-to-r from-blue-50 via-purple-50 to-indigo-50 p-6 rounded-xl border-2 border-purple-200">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl shadow-lg">
+                    <TestTube className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-purple-800">Sistema Profissional de Imagens</h3>
+                    <p className="text-purple-600 text-sm">
+                      Upload avançado, editor profissional, processador ZIP e visualizador stack
+                    </p>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                {/* Botão Ferramentas Avançadas */}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowAdvancedImageModal(true)}
-                  className="border-purple-300 text-purple-700 hover:bg-purple-50"
-                >
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Ferramentas Avançadas
-                </Button>
                 
-                {/* Toggle Modo Avançado */}
+                {/* BOTÃO PRINCIPAL - DESTAQUE MÁXIMO */}
                 <Button
                   type="button"
-                  variant={useAdvancedMode ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setUseAdvancedMode(!useAdvancedMode)}
-                  className={useAdvancedMode ? "bg-purple-600 hover:bg-purple-700" : "border-purple-300 hover:bg-purple-50"}
+                  size="lg"
+                  onClick={() => setShowAdvancedImageModal(true)}
+                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold px-8 py-3 shadow-xl transform hover:scale-105 transition-all duration-200"
                 >
-                  <Zap className="h-4 w-4 mr-2" />
-                  {useAdvancedMode ? "Modo Avançado" : "Modo Padrão"}
+                  <Sparkles className="h-5 w-5 mr-3" />
+                  🔬 Ferramentas Avançadas
+                  <Badge variant="secondary" className="ml-2 bg-yellow-300 text-purple-800 font-bold">
+                    PRO
+                  </Badge>
                 </Button>
+              </div>
+
+              {/* Indicadores de Status */}
+              <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-2 bg-white/70 px-3 py-1 rounded-full">
+                  <ImageIcon className="h-4 w-4 text-purple-600" />
+                  <span className="text-purple-700 font-medium">
+                    {Array.isArray(form.image_url) ? form.image_url.length : 0} imagem(ns)
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 bg-white/70 px-3 py-1 rounded-full">
+                  <Settings className="h-4 w-4 text-blue-600" />
+                  <span className="text-blue-700 font-medium">Editor Ativo</span>
+                </div>
+                <div className="flex items-center gap-2 bg-white/70 px-3 py-1 rounded-full">
+                  <Zap className="h-4 w-4 text-green-600" />
+                  <span className="text-green-700 font-medium">ZIP Processor</span>
+                </div>
               </div>
             </div>
 
-            {/* Sistema de Upload - Mantém o sistema atual */}
-            {isEditMode ? (
-              <CaseAdvancedImageManagement 
-                caseId={editingCase?.id}
-                onImagesChange={(images) => {
-                  console.log('Images updated:', images.length);
-                }}
-              />
-            ) : (
-              <TempImageUpload 
-                onChange={(images) => {
-                  console.log('Temp images updated:', images.length);
-                }}
-              />
-            )}
+            {/* Sistema de Upload Padrão - Mantido para compatibilidade */}
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <ImageIcon className="h-4 w-4" />
+                Upload Básico de Imagens
+              </h4>
+              {isEditMode ? (
+                <CaseAdvancedImageManagement 
+                  caseId={editingCase?.id}
+                  onImagesChange={(images) => {
+                    console.log('Images updated:', images.length);
+                  }}
+                />
+              ) : (
+                <TempImageUpload 
+                  onChange={(images) => {
+                    console.log('Temp images updated:', images.length);
+                  }}
+                />
+              )}
+            </div>
 
-            {/* Indicador de Modo Avançado */}
-            {useAdvancedMode && (
-              <div className="bg-purple-100 border border-purple-300 rounded-lg p-3">
-                <div className="flex items-center gap-2 text-purple-700">
-                  <Settings className="h-4 w-4" />
-                  <span className="font-medium">Modo Avançado Ativado</span>
+            {/* Call-to-Action para Ferramentas Avançadas */}
+            <div className="bg-gradient-to-r from-purple-100 to-blue-100 border-2 border-dashed border-purple-300 rounded-lg p-6 text-center">
+              <div className="flex flex-col items-center gap-3">
+                <div className="p-4 bg-purple-500 rounded-full">
+                  <TestTube className="h-8 w-8 text-white" />
                 </div>
-                <p className="text-sm text-purple-600 mt-1">
-                  Use o botão "Ferramentas Avançadas" para acessar editor de imagem, processador ZIP e visualizador stack.
+                <h4 className="text-lg font-bold text-purple-800">
+                  Precisa de Mais Poder?
+                </h4>
+                <p className="text-purple-600 max-w-md">
+                  Use as Ferramentas Avançadas para edição profissional, processamento ZIP automático e visualização médica especializada.
                 </p>
+                <Button
+                  type="button"
+                  size="lg"
+                  onClick={() => setShowAdvancedImageModal(true)}
+                  className="bg-purple-600 hover:bg-purple-700 text-white font-bold"
+                >
+                  <Sparkles className="h-5 w-5 mr-2" />
+                  Abrir Ferramentas PRO
+                </Button>
               </div>
-            )}
+            </div>
           </div>
         </CaseFormGamifiedLayout>
 
@@ -619,7 +646,7 @@ export function CaseProfileFormEditable({
         </div>
       </form>
 
-      {/* Modal de Ferramentas Avançadas */}
+      {/* Modal de Ferramentas Avançadas - COM TODAS AS FUNCIONALIDADES */}
       <AdvancedImageManagerModal
         open={showAdvancedImageModal}
         onClose={() => setShowAdvancedImageModal(false)}
@@ -627,7 +654,10 @@ export function CaseProfileFormEditable({
         currentImages={Array.isArray(form.image_url) ? form.image_url : []}
         onImagesUpdated={(images) => {
           setForm(prev => ({ ...prev, image_url: images }));
-          toast({ title: "Imagens atualizadas com ferramentas avançadas!" });
+          toast({ 
+            title: "🎉 Imagens Processadas!", 
+            description: `${images.length} imagem(ns) processada(s) com ferramentas avançadas.` 
+          });
         }}
       />
     </div>

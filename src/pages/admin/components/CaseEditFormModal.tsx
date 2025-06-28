@@ -14,7 +14,8 @@ import { CaseProfileForm } from "./CaseProfileForm";
 import { AdvancedImageManagerModal } from "./AdvancedImageManagerModal";
 import { 
   Sparkles, 
-  Image as ImageIcon 
+  Image as ImageIcon,
+  TestTube
 } from "lucide-react";
 
 type CaseEditFormModalProps = {
@@ -88,7 +89,10 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
   const handleAdvancedImagesUpdated = (images: any[]) => {
     if (editingCase) {
       setEditingCase(prev => ({ ...prev, image_url: images }));
-      toast({ title: "Imagens atualizadas com ferramentas avançadas!" });
+      toast({ 
+        title: "🎉 Imagens Atualizadas!", 
+        description: `${images.length} imagem(ns) processada(s) com ferramentas avançadas.` 
+      });
     }
   };
 
@@ -104,20 +108,22 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
                 Editar Caso Médico
               </DialogTitle>
               
-              {/* Botão de Ferramentas Avançadas de Imagem */}
+              {/* Botão de Ferramentas Avançadas - MELHORADO */}
               {editingCase && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <Button
                     type="button"
-                    variant="outline"
-                    size="sm"
+                    size="lg"
                     onClick={() => setShowAdvancedImageModal(true)}
-                    className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold px-6 py-2 shadow-lg"
                   >
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Edição Avançada de Imagens
+                    <TestTube className="h-5 w-5 mr-2" />
+                    Ferramentas PRO
+                    <Badge variant="secondary" className="ml-2 bg-yellow-300 text-purple-800 font-bold text-xs">
+                      AVANÇADO
+                    </Badge>
                   </Button>
-                  <Badge variant="secondary" className="bg-purple-100 text-purple-700">
+                  <Badge variant="outline" className="bg-purple-50 border-purple-300 text-purple-700">
                     <ImageIcon className="h-3 w-3 mr-1" />
                     {Array.isArray(editingCase.image_url) ? editingCase.image_url.length : 0} imagem(ns)
                   </Badge>
@@ -144,7 +150,7 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Ferramentas Avançadas de Imagem */}
+      {/* Modal de Ferramentas Avançadas */}
       <AdvancedImageManagerModal
         open={showAdvancedImageModal}
         onClose={() => setShowAdvancedImageModal(false)}
