@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { ImageEditorModal } from '@/components/image-editor/ImageEditorModal';
 import { AdvancedUploadTab } from '@/components/admin/AdvancedUploadTab';
-import { ZipProcessor } from '@/components/image-processing/ZipProcessor';
+import { ZipProcessor } from '@/components/upload/ZipProcessor';
 import { MedicalStackViewer } from '@/components/image-viewer/MedicalStackViewer';
 
 interface AdvancedImageManagerModalProps {
@@ -39,7 +39,7 @@ export function AdvancedImageManagerModal({
 }: AdvancedImageManagerModalProps) {
   const [activeTab, setActiveTab] = useState('upload');
   const [showImageEditor, setShowImageEditor] = useState(false);
-  const [selectedImageForEdit, setSelectedImageForEdit] = useState<string | null>(null);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [processedImages, setProcessedImages] = useState<any[]>(currentImages);
 
   const handleImagesProcessed = (newImages: any[]) => {
@@ -48,21 +48,48 @@ export function AdvancedImageManagerModal({
     onImagesUpdated?.(updatedImages);
   };
 
-  const handleImageEdited = (editedImageUrl: string) => {
+  const handleImageEdited = (editedFile: File) => {
+    // Convert file to URL for display
+    const editedImageUrl = URL.createObjectURL(editedFile);
     const updatedImages = processedImages.map(img => 
-      img.url === selectedImageForEdit 
+      img.url === selectedImageFile?.name 
         ? { ...img, url: editedImageUrl, edited: true }
         : img
     );
     setProcessedImages(updatedImages);
     onImagesUpdated?.(updatedImages);
     setShowImageEditor(false);
-    setSelectedImageForEdit(null);
+    setSelectedImageFile(null);
   };
 
   const openImageEditor = (imageUrl: string) => {
-    setSelectedImageForEdit(imageUrl);
-    setShowImageEditor(true);
+    // Convert URL back to File for editor
+    // For now, we'll create a mock file - in real implementation, you'd fetch the actual file
+    fetch(imageUrl)
+      .then(res => res.blob())
+      .then(blob => {
+        const file = new File([blob], 'image.jpg', { type: blob.type });
+        setSelectedImageFile(file);
+        setShowImageEditor(true);
+      })
+      .catch(() => {
+        console.warn('Could not convert image to file for editing');
+      });
+  };
+
+  const handleZipImagesExtracted = (extractedImages: any[]) => {
+    // Convert extracted images to the format expected by our system
+    const formattedImages = extractedImages.map((img, index) => ({
+      url: URL.createObjectURL(img.file),
+      legend: img.name,
+      order: img.order,
+      file: img.file
+    }));
+    handleImagesProcessed(formattedImages);
+  };
+
+  const handleZipError = (error: string) => {
+    console.error('ZIP processing error:', error);
   };
 
   return (
@@ -109,7 +136,7 @@ export function AdvancedImageManagerModal({
                 </p>
                 <AdvancedUploadTab 
                   caseId={caseId}
-                  onImagesUploaded={handleImagesProcessed}
+                  onImagesChange={handleImagesProcessed}
                 />
               </div>
             </TabsContent>
@@ -165,7 +192,8 @@ export function AdvancedImageManagerModal({
                   Envie arquivos ZIP com múltiplas imagens e processe automaticamente
                 </p>
                 <ZipProcessor 
-                  onImagesProcessed={handleImagesProcessed}
+                  onImagesExtracted={handleZipImagesExtracted}
+                  onError={handleZipError}
                 />
               </div>
             </TabsContent>
@@ -215,15 +243,17 @@ export function AdvancedImageManagerModal({
       </Dialog>
 
       {/* Modal do Editor de Imagem */}
-      <ImageEditorModal
-        open={showImageEditor}
-        onClose={() => {
-          setShowImageEditor(false);
-          setSelectedImageForEdit(null);
-        }}
-        imageUrl={selectedImageForEdit || ''}
-        onImageEdited={handleImageEdited}
-      />
+      {selectedImageFile && (
+        <ImageEditorModal
+          open={showImageEditor}
+          onClose={() => {
+            setShowImageEditor(false);
+            setSelectedImageFile(null);
+          }}
+          file={selectedImageFile}
+          onSave={handleImageEdited}
+        />
+      )}
     </>
   );
 }
