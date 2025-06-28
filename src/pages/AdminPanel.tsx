@@ -24,8 +24,8 @@ export default function AdminPanel() {
   return (
     <div className="flex min-h-screen w-full bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
       <AdminSidebar />
-      <main className="flex-1 ml-[235px] min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
-        {/* Header com background claro forçado */}
+      <main className="flex-1 ml-[235px] min-h-screen">
+        {/* Header Gamificado Corrigido */}
         <header className="w-full bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 text-white shadow-2xl relative z-10">
           <div className="flex items-center justify-between px-8 py-6">
             <div className="flex items-center gap-4">
@@ -56,12 +56,13 @@ export default function AdminPanel() {
           </div>
         </header>
 
-        {/* Conteúdo Principal com background claro garantido */}
-        <section className="p-8 relative z-0 bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 min-h-[calc(100vh-120px)]">
+        {/* Conteúdo Principal com espaçamento correto */}
+        <section className="p-8 relative z-0">
           <Routes>
+            {/* Rota padrão do admin - redireciona para analytics */}
             <Route index element={<Navigate to="analytics" replace />} />
             
-            {/* Rotas funcionais */}
+            {/* Rotas implementadas - todas funcionais */}
             <Route path="analytics" element={<DashboardAnalyticsIntegrated />} />
             <Route path="usuarios" element={<UserManagement />} />
             <Route path="usuarios-avancado" element={<UserManagementAdvanced />} />
@@ -75,15 +76,15 @@ export default function AdminPanel() {
             <Route path="chaves-api" element={<APIKeyManagement />} />
             <Route path="config-stripe" element={<StripeManagement />} />
             
-            {/* Rotas principais de casos */}
+            {/* Rotas existentes mantidas */}
             <Route path="casos-medicos" element={<CasosMedicos />} />
             <Route path="gestao-casos" element={<GestaoCasos />} />
             <Route path="create-event" element={<CreateEvent />} />
             <Route path="events" element={<EventsManagement />} />
             
-            {/* Configurações */}
+            {/* Rotas temporárias para funcionalidades em desenvolvimento */}
             <Route path="configuracoes" element={
-              <div className="text-center p-8 bg-white rounded-lg shadow-lg">
+              <div className="text-center p-8">
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">Configurações</h2>
                 <p className="text-gray-600">Esta seção está em desenvolvimento.</p>
               </div>

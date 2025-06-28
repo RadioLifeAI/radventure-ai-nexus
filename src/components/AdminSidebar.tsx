@@ -16,6 +16,7 @@ import {
   Brain,
 } from "lucide-react";
 
+// Menu admin corrigido - links relativos para rotas aninhadas
 const adminMenu = [
   { label: "Analytics", icon: <BarChart3 size={20} />, to: "analytics" },
   { label: "Criar Eventos", icon: <Calendar size={20} />, to: "create-event" },
@@ -36,34 +37,30 @@ const adminMenu = [
 export function AdminSidebar() {
   const location = useLocation();
   
+  // Função para verificar se a rota está ativa considerando rotas aninhadas
   const isActiveRoute = (to: string) => {
     const fullPath = `/admin/${to}`;
     return location.pathname === fullPath || location.pathname.startsWith(`${fullPath}/`);
   };
 
   return (
-    <aside className="h-screen bg-white shadow-xl border-r border-gray-200 w-[235px] flex flex-col fixed top-0 left-0 z-30">
-      {/* Header com fundo claro forçado */}
-      <div className="flex items-center px-6 py-4 border-b border-gray-200 bg-white">
+    <aside className="h-screen bg-white shadow border-r w-[235px] flex flex-col fixed top-0 left-0 z-30">
+      <div className="flex items-center px-6 py-4 border-b">
         <ShieldIcon />
-        <span className="ml-2 font-bold text-lg text-gray-800">Painel Admin</span>
+        <span className="ml-2 font-bold text-lg text-[#191a26]">Painel de Administração</span>
       </div>
-      
-      {/* Menu com scrolling otimizado */}
-      <nav className="flex-1 flex flex-col px-2 py-4 gap-1 overflow-y-auto bg-white">
+      <nav className="flex-1 flex flex-col px-2 py-4 gap-1 overflow-y-auto">
         {adminMenu.map((item) => (
           <Link
             to={item.to}
             key={item.label}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-base font-semibold transition ${
               isActiveRoute(item.to)
-                ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md"
-                : "text-gray-700 hover:bg-gradient-to-r hover:from-cyan-50 hover:to-blue-50 hover:text-cyan-700"
+                ? "bg-cyan-600 text-white"
+                : "text-gray-700 hover:bg-cyan-100"
             }`}
           >
-            <div className={`transition-colors ${isActiveRoute(item.to) ? "text-white" : "text-gray-500"}`}>
-              {item.icon}
-            </div>
+            {item.icon}
             {item.label}
           </Link>
         ))}
@@ -72,10 +69,11 @@ export function AdminSidebar() {
   );
 }
 
+// Shield Icon separada para fácil alteração
 function ShieldIcon() {
   return (
     <svg width="26" height="26" fill="none" viewBox="0 0 24 24">
       <path fill="#039be5" d="M12 2l7 4v6c0 4.97-3.13 9.35-7 10-3.87-.65-7-5.03-7-10V6l7-4z"/>
     </svg>
-  );
+  )
 }

@@ -6,19 +6,18 @@ import { BackToDashboard } from "@/components/navigation/BackToDashboard";
 
 export default function CasosMedicos() {
   return (
-    <div className="space-y-6 bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 min-h-screen">
+    <div className="space-y-6">
       {/* Navegação */}
-      <div className="flex items-center justify-between p-4 bg-white rounded-lg shadow-sm">
+      <div className="flex items-center justify-between">
         <BackToDashboard variant="back" />
-        <div className="text-sm text-gray-600 font-medium">
+        <div className="text-sm text-gray-500">
           Criar novo caso médico
         </div>
       </div>
 
       <CasesManagementHeader />
       
-      {/* Container principal com fundo claro garantido */}
-      <div className="bg-white rounded-lg shadow-lg p-6 mx-auto max-w-7xl">
+      <div className="bg-white rounded-lg shadow-lg">
         <CaseProfileForm />
       </div>
     </div>
