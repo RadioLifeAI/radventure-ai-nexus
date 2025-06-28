@@ -55,14 +55,11 @@ export function useUserProfile() {
       if (error) {
         console.log('⚠️ Profile fetch error:', error);
         
-        // Se o perfil não existir, aguardar um pouco e tentar criar
         if (error.code === 'PGRST116') {
           console.log('🔧 Perfil não encontrado, aguardando criação automática...');
           
-          // Aguardar o trigger funcionar
-          await new Promise(resolve => setTimeout(resolve, 3000));
+          await new Promise(resolve => setTimeout(resolve, 2000));
           
-          // Tentar buscar novamente
           const { data: retryData, error: retryError } = await supabase
             .from('profiles')
             .select('*')
@@ -113,16 +110,16 @@ export function useUserProfile() {
     },
     enabled: !!user?.id && isAuthenticated,
     refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 5, // Cache de 5 minutos para performance
+    staleTime: 1000 * 60 * 2,
     retry: (failureCount, error: any) => {
-      // Retry apenas para erros de rede, não para perfil não encontrado
       return failureCount < 2 && error?.code !== 'PGRST116';
     },
   });
 
-  // Verificar recompensas quando o perfil for carregado ou atualizado
+  // Verificar recompensas quando o perfil for carregado
   useEffect(() => {
     if (profile && user) {
+      console.log('🎯 Verificando recompensas de perfil...');
       checkAndAwardProfileRewards(profile);
     }
   }, [profile, user, checkAndAwardProfileRewards]);
@@ -152,20 +149,21 @@ export function useUserProfile() {
       return data;
     },
     onSuccess: (updatedProfile) => {
-      // Cache otimizado
       queryClient.setQueryData(['user-profile', user?.id], updatedProfile);
       
-      if (updatedProfile.avatar_url) {
-        queryClient.invalidateQueries({ queryKey: ['user-profile', user?.id] });
-      }
-      
-      // Verificar recompensas após atualização
+      // Verificar recompensas imediatamente após atualização
+      console.log('🏆 Perfil atualizado, verificando recompensas...');
       checkAndAwardProfileRewards(updatedProfile);
       
       toast({
         title: 'Perfil atualizado',
         description: 'Suas informações foram salvas com sucesso.',
       });
+      
+      // Atualizar cache após pequeno delay para capturar mudanças de RadCoins
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['user-profile', user?.id] });
+      }, 1500);
     },
     onError: (error: any) => {
       console.error('❌ Erro ao atualizar perfil:', error);

@@ -1528,6 +1528,9 @@ export type Database = {
         | "help_purchase"
         | "admin_grant"
         | "admin_revoke"
+        | "profile_completion"
+        | "profile_completion_bonus"
+        | "daily_login"
       subscription_tier: "Free" | "Pro" | "Plus"
     }
     CompositeTypes: {
@@ -1653,6 +1656,9 @@ export const Constants = {
         "help_purchase",
         "admin_grant",
         "admin_revoke",
+        "profile_completion",
+        "profile_completion_bonus",
+        "daily_login",
       ],
       subscription_tier: ["Free", "Pro", "Plus"],
     },
