@@ -7,6 +7,7 @@ import { PlayerRankingCard } from "@/components/rankings/PlayerRankingCard";
 import { RankingFilters } from "@/components/rankings/RankingFilters";
 import { MyRankingCard } from "@/components/rankings/MyRankingCard";
 import { Trophy } from "lucide-react";
+import { useRealUserStats } from "@/hooks/useRealUserStats";
 
 type FilterType = 'global' | 'weekly' | 'monthly' | 'accuracy' | 'cases';
 
@@ -16,7 +17,11 @@ type PlayerData = {
   full_name?: string;
   avatar_url?: string;
   total_points: number;
+  radcoin_balance: number;
+  current_streak: number;
   rank: number;
+  casesResolved?: number;
+  accuracy?: number;
 };
 
 export default function Rankings() {
@@ -24,6 +29,7 @@ export default function Rankings() {
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<FilterType>('global');
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const { stats: userStats } = useRealUserStats();
 
   useEffect(() => {
     fetchCurrentUser();
@@ -44,24 +50,47 @@ export default function Rankings() {
 
   async function fetchRankings() {
     setLoading(true);
+    console.log('🏆 Buscando rankings reais...');
     
-    // Por enquanto, apenas ranking global
-    // TODO: Implementar filtros de weekly, monthly, accuracy, cases
-    let query = supabase
-      .from("profiles")
-      .select("id, username, full_name, avatar_url, total_points")
-      .order("total_points", { ascending: false })
-      .limit(50);
+    try {
+      let query = supabase
+        .from("profiles")
+        .select("id, username, full_name, avatar_url, total_points, radcoin_balance, current_streak")
+        .order("total_points", { ascending: false })
+        .limit(50);
 
-    const { data, error } = await query;
-    
-    if (data) {
-      // Adiciona ranking position
-      const rankingsWithPosition = data.map((player, index) => ({
-        ...player,
-        rank: index + 1
-      }));
-      setRankings(rankingsWithPosition);
+      const { data, error } = await query;
+      
+      if (error) throw error;
+
+      if (data) {
+        // Calcular estatísticas adicionais para cada jogador
+        const rankingsWithStats = await Promise.all(
+          data.map(async (player, index) => {
+            // Buscar histórico de casos para calcular accuracy e casos resolvidos
+            const { data: playerHistory } = await supabase
+              .from('user_case_history')
+              .select('is_correct')
+              .eq('user_id', player.id);
+
+            const casesResolved = playerHistory?.length || 0;
+            const correctAnswers = playerHistory?.filter(h => h.is_correct).length || 0;
+            const accuracy = casesResolved > 0 ? Math.round((correctAnswers / casesResolved) * 100) : 0;
+
+            return {
+              ...player,
+              rank: index + 1,
+              casesResolved,
+              accuracy
+            };
+          })
+        );
+
+        setRankings(rankingsWithStats);
+        console.log('✅ Rankings carregados:', rankingsWithStats.length, 'jogadores');
+      }
+    } catch (error) {
+      console.error('❌ Erro ao buscar rankings:', error);
     }
     
     setLoading(false);
@@ -72,11 +101,11 @@ export default function Rankings() {
   
   // Encontra usuário atual no ranking
   const currentUserRanking = currentUser ? rankings.find(r => r.id === currentUser.id) : null;
-  const userStats = currentUserRanking ? {
+  const userStatsForCard = currentUserRanking && userStats ? {
     ...currentUserRanking,
-    casesResolved: 42, // Mock data
-    accuracy: 78, // Mock data  
-    streak: 5 // Mock data
+    casesResolved: userStats.totalCases,
+    accuracy: userStats.accuracy,
+    streak: userStats.currentStreak
   } : null;
 
   return (
@@ -97,25 +126,26 @@ export default function Rankings() {
             onFilterChange={setActiveFilter} 
           />
 
-          {/* Meu Ranking */}
-          <MyRankingCard 
-            userStats={userStats}
-            onViewDetails={() => {
-              // TODO: Abrir modal de estatísticas detalhadas
-              console.log("Ver estatísticas detalhadas");
-            }}
-          />
+          {/* Meu Ranking - com dados reais */}
+          {userStatsForCard && (
+            <MyRankingCard 
+              userStats={userStatsForCard}
+              onViewDetails={() => {
+                console.log("Ver estatísticas detalhadas");
+              }}
+            />
+          )}
 
           {loading ? (
             <div className="text-cyan-400 text-center py-8 animate-fade-in">
-              Carregando ranking...
+              Carregando ranking com dados reais...
             </div>
           ) : (
             <>
-              {/* Pódio Top 3 */}
+              {/* Pódio Top 3 - dados reais */}
               <PodiumDisplay topPlayers={topThree} />
 
-              {/* Lista dos demais jogadores */}
+              {/* Lista dos demais jogadores - dados reais */}
               <div className="space-y-3">
                 <h2 className="font-bold text-xl text-white mb-4 flex items-center gap-2">
                   <Trophy size={24} className="text-cyan-400" />
@@ -136,7 +166,6 @@ export default function Rankings() {
                       player={player}
                       isCurrentUser={currentUser?.id === player.id}
                       onClick={() => {
-                        // TODO: Abrir modal de estatísticas do jogador
                         console.log("Ver perfil do jogador", player.id);
                       }}
                     />

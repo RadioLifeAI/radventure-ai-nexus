@@ -1,7 +1,7 @@
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "./useAuth";
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from './useAuth';
 
 export interface UserAnalytics {
   totalCases: number;
@@ -34,25 +34,17 @@ export interface UserAnalytics {
 
 export function useUserAnalytics() {
   const { user } = useAuth();
-  const [analytics, setAnalytics] = useState<UserAnalytics | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      fetchAnalytics();
-    }
-  }, [user]);
+  const { data: analytics, isLoading, error, refetch } = useQuery({
+    queryKey: ['user-analytics', user?.id],
+    queryFn: async (): Promise<UserAnalytics> => {
+      if (!user?.id) throw new Error('User not authenticated');
 
-  const fetchAnalytics = async () => {
-    if (!user) return;
-
-    try {
-      setLoading(true);
-      console.log("📊 Buscando analytics reais para usuário:", user.id);
+      console.log('📊 Buscando analytics reais para usuário:', user.id);
 
       // Buscar histórico de casos (dados reais)
       const { data: caseHistory, error: caseError } = await supabase
-        .from("user_case_history")
+        .from('user_case_history')
         .select(`
           *,
           medical_cases (
@@ -61,32 +53,32 @@ export function useUserAnalytics() {
             category_id
           )
         `)
-        .eq("user_id", user.id);
+        .eq('user_id', user.id);
 
       if (caseError) throw caseError;
 
       // Buscar participação em eventos (dados reais)
       const { data: eventData, error: eventError } = await supabase
-        .from("event_registrations")
+        .from('event_registrations')
         .select(`
           *,
           events (name, status)
         `)
-        .eq("user_id", user.id);
+        .eq('user_id', user.id);
 
       if (eventError) throw eventError;
 
       // Buscar rankings do usuário em eventos (dados reais)
       const { data: rankingsData } = await supabase
-        .from("event_rankings")
-        .select("rank, score")
-        .eq("user_id", user.id);
+        .from('event_rankings')
+        .select('rank, score')
+        .eq('user_id', user.id);
 
       // Buscar dados do perfil do usuário (dados reais)
       const { data: profileData } = await supabase
-        .from("profiles")
-        .select("current_streak")
-        .eq("id", user.id)
+        .from('profiles')
+        .select('current_streak')
+        .eq('id', user.id)
         .single();
 
       // Calcular estatísticas baseadas em dados reais
@@ -175,19 +167,18 @@ export function useUserAnalytics() {
         eventParticipation
       };
 
-      console.log("📊 Analytics calculados com dados reais:", analyticsData);
-      setAnalytics(analyticsData);
+      console.log('📊 Analytics calculados com dados reais:', analyticsData);
+      return analyticsData;
 
-    } catch (error) {
-      console.error("❌ Erro ao buscar analytics:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000, // 2 minutos
+    refetchInterval: 5 * 60 * 1000 // 5 minutos
+  });
 
   return {
     analytics,
-    loading,
-    refetch: fetchAnalytics
+    loading: isLoading,
+    refetch
   };
 }

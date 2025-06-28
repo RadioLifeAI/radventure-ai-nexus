@@ -9,6 +9,8 @@ export function UserAnalyticsDetailed() {
   const { data: userGrowthData } = useQuery({
     queryKey: ['user-growth-detailed'],
     queryFn: async () => {
+      console.log('📈 Buscando dados reais de crescimento de usuários...');
+      
       const { data: profiles, error } = await supabase
         .from('profiles')
         .select('created_at, academic_stage, type')
@@ -38,6 +40,7 @@ export function UserAnalyticsDetailed() {
         };
       });
       
+      console.log('✅ Dados de crescimento calculados:', growthData.length, 'semanas');
       return growthData;
     },
     refetchInterval: 60000
@@ -46,6 +49,8 @@ export function UserAnalyticsDetailed() {
   const { data: academicStageData } = useQuery({
     queryKey: ['academic-stage-distribution'],
     queryFn: async () => {
+      console.log('🎓 Buscando distribuição real por estágio acadêmico...');
+      
       const { data: profiles, error } = await supabase
         .from('profiles')
         .select('academic_stage');
@@ -58,10 +63,13 @@ export function UserAnalyticsDetailed() {
         return acc;
       }, {}) || {};
       
-      return Object.entries(distribution).map(([name, value]) => ({
+      const result = Object.entries(distribution).map(([name, value]) => ({
         name,
         value: value as number
       }));
+      
+      console.log('✅ Distribuição calculada:', result.length, 'categorias');
+      return result;
     },
     refetchInterval: 60000
   });
@@ -69,6 +77,8 @@ export function UserAnalyticsDetailed() {
   const { data: userActivityData } = useQuery({
     queryKey: ['user-activity-detailed'],
     queryFn: async () => {
+      console.log('📊 Buscando atividade real de usuários...');
+      
       const { data: history, error } = await supabase
         .from('user_case_history')
         .select('user_id, answered_at, is_correct')
@@ -97,6 +107,7 @@ export function UserAnalyticsDetailed() {
         };
       });
       
+      console.log('✅ Atividade calculada:', activityData.length, 'dias');
       return activityData;
     },
     refetchInterval: 60000
@@ -106,11 +117,11 @@ export function UserAnalyticsDetailed() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Crescimento Semanal */}
+      {/* Crescimento Semanal - Dados Reais */}
       <Card>
         <CardHeader>
-          <CardTitle>Crescimento de Usuários (12 semanas)</CardTitle>
-          <CardDescription>Novos registros por semana</CardDescription>
+          <CardTitle>Crescimento de Usuários (12 semanas) - Dados Reais</CardTitle>
+          <CardDescription>Novos registros por semana baseado em dados do Supabase</CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
@@ -125,11 +136,11 @@ export function UserAnalyticsDetailed() {
         </CardContent>
       </Card>
 
-      {/* Distribuição por Estágio Acadêmico */}
+      {/* Distribuição por Estágio Acadêmico - Dados Reais */}
       <Card>
         <CardHeader>
-          <CardTitle>Distribuição por Estágio Acadêmico</CardTitle>
-          <CardDescription>Perfil dos usuários registrados</CardDescription>
+          <CardTitle>Distribuição por Estágio Acadêmico - Dados Reais</CardTitle>
+          <CardDescription>Perfil dos usuários registrados no banco</CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
@@ -153,11 +164,11 @@ export function UserAnalyticsDetailed() {
         </CardContent>
       </Card>
 
-      {/* Atividade Diária de Usuários */}
+      {/* Atividade Diária de Usuários - Dados Reais */}
       <Card className="lg:col-span-2">
         <CardHeader>
-          <CardTitle>Atividade de Usuários (14 dias)</CardTitle>
-          <CardDescription>Usuários ativos e tentativas de casos diárias</CardDescription>
+          <CardTitle>Atividade de Usuários (14 dias) - Dados Reais</CardTitle>
+          <CardDescription>Usuários ativos e tentativas de casos diárias do banco de dados</CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>

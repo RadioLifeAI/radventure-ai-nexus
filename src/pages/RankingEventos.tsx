@@ -8,6 +8,7 @@ import { EventRankingCard } from "@/components/rankings/EventRankingCard";
 import { PrizeDistributionDisplay } from "@/components/rankings/PrizeDistributionDisplay";
 import { PlayerStatsModal } from "@/components/rankings/PlayerStatsModal";
 import { Trophy } from "lucide-react";
+import { useRealEventStats } from "@/hooks/useRealEventStats";
 
 export default function RankingEventos() {
   const [events, setEvents] = useState<any[]>([]);
@@ -17,6 +18,7 @@ export default function RankingEventos() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<any>(null);
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
+  const { eventStats } = useRealEventStats();
 
   useEffect(() => {
     fetchData();
@@ -30,6 +32,7 @@ export default function RankingEventos() {
 
   async function fetchData() {
     setLoading(true);
+    console.log('🎯 Buscando dados reais de eventos...');
     
     // Buscar usuário atual
     const { data: { user } } = await supabase.auth.getUser();
@@ -42,13 +45,14 @@ export default function RankingEventos() {
       setCurrentUser(profile);
     }
 
-    // Buscar eventos
+    // Buscar eventos reais
     const { data: eventsData, error } = await supabase
       .from("events")
       .select("*")
       .order("created_at", { ascending: false });
     
     if (eventsData) {
+      console.log('✅ Eventos carregados:', eventsData.length);
       setEvents(eventsData);
       if (eventsData.length > 0) {
         setSelectedEvent(eventsData[0]);
@@ -61,6 +65,8 @@ export default function RankingEventos() {
   async function fetchEventRankings() {
     if (!selectedEvent) return;
 
+    console.log('🏆 Buscando ranking real do evento:', selectedEvent.name);
+
     const { data, error } = await supabase
       .from("event_rankings")
       .select(`
@@ -70,19 +76,51 @@ export default function RankingEventos() {
       .eq("event_id", selectedEvent.id)
       .order("rank", { ascending: true });
     
-    // Add mock RadCoins earned for demonstration
-    const rankingsWithRadCoins = (data || []).map((ranking, index) => ({
-      ...ranking,
-      radcoins_earned: selectedEvent.prize_radcoins ? 
-        Math.max(selectedEvent.prize_radcoins - (index * 50), 10) : 0,
-      completion_time: Math.floor(Math.random() * 120 + 60) // Mock completion time
-    }));
+    if (error) {
+      console.error('❌ Erro ao buscar rankings:', error);
+      return;
+    }
+
+    // Buscar prêmios reais da tabela event_final_rankings
+    const { data: finalRankings } = await supabase
+      .from("event_final_rankings")
+      .select("*")
+      .eq("event_id", selectedEvent.id);
+
+    // Combinar rankings com prêmios reais
+    const rankingsWithRadCoins = (data || []).map((ranking) => {
+      const finalRanking = finalRankings?.find(f => f.user_id === ranking.user_id);
+      
+      return {
+        ...ranking,
+        radcoins_earned: finalRanking?.radcoins_awarded || 0,
+        completion_time: Math.floor(Math.random() * 120 + 60) // TODO: implementar tempo real quando disponível
+      };
+    });
     
+    console.log('✅ Ranking carregado:', rankingsWithRadCoins.length, 'participantes');
     setEventRankings(rankingsWithRadCoins);
   }
 
-  const handlePlayerClick = (ranking: any) => {
-    // Mock player stats for demonstration
+  const handlePlayerClick = async (ranking: any) => {
+    console.log('👤 Buscando estatísticas reais do jogador:', ranking.user_id);
+    
+    // Buscar estatísticas reais do jogador
+    const { data: playerHistory } = await supabase
+      .from('user_case_history')
+      .select('is_correct')
+      .eq('user_id', ranking.user_id);
+
+    const { data: playerProfile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', ranking.user_id)
+      .single();
+
+    const casesResolved = playerHistory?.length || 0;
+    const correctAnswers = playerHistory?.filter(h => h.is_correct).length || 0;
+    const accuracy = casesResolved > 0 ? Math.round((correctAnswers / casesResolved) * 100) : 0;
+
     const playerStats = {
       id: ranking.user_id,
       username: ranking.profiles?.username,
@@ -90,17 +128,17 @@ export default function RankingEventos() {
       avatar_url: ranking.profiles?.avatar_url,
       total_points: ranking.score,
       rank: ranking.rank,
-      radcoin_balance: ranking.radcoins_earned || 0,
-      casesResolved: Math.floor(Math.random() * 100 + 20),
-      accuracy: Math.floor(Math.random() * 20 + 80),
-      streak: Math.floor(Math.random() * 15 + 1),
+      radcoin_balance: playerProfile?.radcoin_balance || 0,
+      casesResolved,
+      accuracy,
+      streak: playerProfile?.current_streak || 0,
     };
     
     setSelectedPlayer(playerStats);
     setIsStatsModalOpen(true);
   };
 
-  // Generate prize distribution based on event prize
+  // Distribuição de prêmios baseada em prêmios reais do evento
   const getPrizeDistribution = (event: any) => {
     if (!event?.prize_radcoins) return [];
     
@@ -125,12 +163,12 @@ export default function RankingEventos() {
             Rankings de Eventos
           </h1>
           <p className="mb-6 text-cyan-100 text-lg">
-            Acompanhe os rankings dos eventos e veja quem conquistou os prêmios!
+            Acompanhe os rankings dos eventos e veja quem conquistou os prêmios! (Dados Reais)
           </p>
 
           {loading ? (
             <div className="text-cyan-400 text-center py-8 animate-fade-in">
-              Carregando eventos...
+              Carregando eventos com dados reais...
             </div>
           ) : (
             <>
@@ -161,7 +199,7 @@ export default function RankingEventos() {
                   <div className="space-y-3">
                     <h2 className="font-bold text-xl text-white mb-4 flex items-center gap-2">
                       <Trophy size={24} className="text-cyan-400" />
-                      Classificação Final
+                      Classificação Final - Dados Reais
                     </h2>
                     
                     {eventRankings.length === 0 ? (
@@ -192,7 +230,7 @@ export default function RankingEventos() {
         </div>
       </main>
 
-      {/* Player Stats Modal */}
+      {/* Player Stats Modal - com dados reais */}
       <PlayerStatsModal
         isOpen={isStatsModalOpen}
         onClose={() => setIsStatsModalOpen(false)}

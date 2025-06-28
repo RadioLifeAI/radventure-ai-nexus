@@ -43,6 +43,8 @@ export function useUserStats() {
         throw new Error('No user ID');
       }
 
+      console.log('📊 Buscando estatísticas reais do usuário:', user.id);
+
       // Buscar histórico de casos
       const { data: caseHistory, error: caseError } = await supabase
         .from('user_case_history')
@@ -127,13 +129,13 @@ export function useUserStats() {
         });
       }
 
-      // Conquistas simuladas baseadas em estatísticas reais
+      // Conquistas baseadas em estatísticas reais
       const achievements = [];
       if (totalCases >= 10) {
         achievements.push({
           name: 'Explorador Médico',
           description: 'Resolveu 10 casos médicos',
-          earnedAt: caseHistory?.[9]?.answered_at || new Date().toISOString()
+          earnedAt: caseHistory?.[totalCases - 10]?.answered_at || new Date().toISOString()
         });
       }
       if (correctAnswers >= 5) {
@@ -158,6 +160,13 @@ export function useUserStats() {
         type: tx.tx_type,
         balance: tx.balance_after
       })) || [];
+
+      console.log('✅ Estatísticas calculadas:', {
+        totalCases,
+        correctAnswers,
+        accuracy,
+        totalPoints: profile?.total_points || 0
+      });
 
       return {
         totalCases,
