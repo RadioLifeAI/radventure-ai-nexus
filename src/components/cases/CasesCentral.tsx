@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -120,7 +121,7 @@ export function CasesCentral() {
         <StatCard
           icon={TrendingUp}
           title="Casos Resolvidos"
-          value={userProgress?.totalAnswered || 0}
+          value={userProgress?.totalAttempts || 0}
           subtitle={`${userProgress?.accuracy || 0}% de precisão`}
           color="green"
         />

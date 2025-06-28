@@ -17,7 +17,8 @@ import {
   BookOpen
 } from "lucide-react";
 import { useJourneyManagement } from "@/hooks/useJourneyManagement";
-import { useCasesData } from "@/hooks/useCasesData";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 
 interface JourneyExecutionModalProps {
@@ -32,15 +33,26 @@ export function JourneyExecutionModal({ journey, isOpen, onClose }: JourneyExecu
   const [showCaseDetails, setShowCaseDetails] = useState(false);
   
   const { updateJourneyProgress } = useJourneyManagement();
-  const { casesStats, isLoading: casesLoading } = useCasesData();
 
-  // Buscar casos da jornada
-  const journeyCases = casesStats?.cases?.filter(case_item => 
-    journey.case_ids && journey.case_ids.includes(case_item.id)
-  ) || [];
+  // Buscar casos da jornada diretamente do banco
+  const { data: journeyCases, isLoading: casesLoading } = useQuery({
+    queryKey: ['journey-cases', journey.case_ids],
+    queryFn: async () => {
+      if (!journey.case_ids || journey.case_ids.length === 0) return [];
+      
+      const { data, error } = await supabase
+        .from('medical_cases')
+        .select('*')
+        .in('id', journey.case_ids);
 
-  const currentCase = journeyCases[currentCaseIndex];
-  const progress = ((currentCaseIndex + 1) / journeyCases.length) * 100;
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!journey.case_ids && journey.case_ids.length > 0
+  });
+
+  const currentCase = journeyCases?.[currentCaseIndex];
+  const progress = journeyCases ? ((currentCaseIndex + 1) / journeyCases.length) * 100 : 0;
 
   // Iniciar sessão
   const startSession = () => {
@@ -57,7 +69,7 @@ export function JourneyExecutionModal({ journey, isOpen, onClose }: JourneyExecu
 
   // Próximo caso
   const nextCase = () => {
-    if (currentCaseIndex < journeyCases.length - 1) {
+    if (journeyCases && currentCaseIndex < journeyCases.length - 1) {
       const newIndex = currentCaseIndex + 1;
       setCurrentCaseIndex(newIndex);
       
@@ -142,14 +154,14 @@ export function JourneyExecutionModal({ journey, isOpen, onClose }: JourneyExecu
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-lg font-semibold text-purple-900">
-                    Caso {currentCaseIndex + 1} de {journeyCases.length}
+                    Caso {currentCaseIndex + 1} de {journeyCases?.length || 0}
                   </h3>
                   <p className="text-purple-700">{journey.description}</p>
                 </div>
                 <div className="text-right">
                   <div className="flex items-center gap-2 text-sm text-purple-700">
                     <Clock className="h-4 w-4" />
-                    ~{journeyCases.length * 5} minutos
+                    ~{(journeyCases?.length || 0) * 5} minutos
                   </div>
                   <div className="flex items-center gap-2 text-sm text-purple-700">
                     <Target className="h-4 w-4" />
@@ -200,7 +212,7 @@ export function JourneyExecutionModal({ journey, isOpen, onClose }: JourneyExecu
                   Pronto para começar?
                 </h3>
                 <p className="text-gray-600 mb-6">
-                  Esta jornada contém {journeyCases.length} casos médicos selecionados
+                  Esta jornada contém {journeyCases?.length || 0} casos médicos selecionados
                   {journey.id === 'preview' && " (modo preview)"}
                 </p>
                 <Button
@@ -300,14 +312,14 @@ export function JourneyExecutionModal({ journey, isOpen, onClose }: JourneyExecu
 
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Trophy className="h-4 w-4" />
-                    Caso {currentCaseIndex + 1} de {journeyCases.length}
+                    Caso {currentCaseIndex + 1} de {journeyCases?.length || 0}
                   </div>
 
                   <Button
                     onClick={nextCase}
                     className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
                   >
-                    {currentCaseIndex === journeyCases.length - 1 ? 'Finalizar' : 'Próximo'}
+                    {currentCaseIndex === (journeyCases?.length || 1) - 1 ? 'Finalizar' : 'Próximo'}
                     <SkipForward className="h-4 w-4 ml-2" />
                   </Button>
                 </div>
