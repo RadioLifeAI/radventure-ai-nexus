@@ -34,11 +34,11 @@ export function useAuth() {
         setUser(session?.user ?? null);
         setLoading(false);
 
-        // Gamificação: Bonus de login diário (FASE 3)
-        if (event === 'SIGNED_IN' && session?.user) {
+        // Gamificação: Bonus de login diário otimizado (FASE 3)
+        if (event === 'SIGNED_IN' && session?.user && event !== 'TOKEN_REFRESHED') {
           console.log('✅ Usuário logado, verificando bonus de login...');
           
-          // Aguardar um pouco para garantir que o perfil foi criado
+          // Aguardar um pouco menos para melhor performance
           setTimeout(async () => {
             try {
               const { data: bonusResult } = await supabase.rpc('award_daily_login_bonus', {
@@ -53,23 +53,33 @@ export function useAuth() {
                   toast({
                     title: '🎉 Bonus de Login!',
                     description: typedResult.message,
-                    duration: 3000,
+                    duration: 2000, // Reduzir duração
                   });
-                }, 1000);
+                }, 500); // Reduzir delay
               }
             } catch (error) {
               console.log('⚠️ Erro no bonus de login:', error);
             }
-          }, 2000);
+          }, 1000); // Reduzir delay de 2000 para 1000
         }
       }
     );
 
-    // THEN check for existing session
+    // THEN check for existing session com timeout otimizado
     const getSession = async () => {
       console.log('🔍 Verificando sessão existente...');
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Session timeout')), 5000)
+        );
+        
+        const sessionPromise = supabase.auth.getSession();
+        
+        const { data: { session }, error } = await Promise.race([
+          sessionPromise,
+          timeoutPromise
+        ]) as any;
+        
         if (error) {
           console.error('❌ Error getting session:', error);
           setLoading(false);
@@ -130,11 +140,13 @@ export function useAuth() {
         toast({
           title: 'Bem-vindo!',
           description: 'Conta criada e login realizado com sucesso.',
+          duration: 2000,
         });
       } else {
         toast({
           title: 'Conta criada!',
           description: 'Verifique seu email para confirmar a conta.',
+          duration: 3000,
         });
       }
 
@@ -144,7 +156,8 @@ export function useAuth() {
       toast({
         title: 'Erro ao criar conta',
         description: error.message || 'Erro desconhecido',
-        variant: 'destructive'
+        variant: 'destructive',
+        duration: 3000,
       });
       return { data: null, error };
     } finally {
@@ -172,6 +185,7 @@ export function useAuth() {
       toast({
         title: 'Bem-vindo!',
         description: 'Login realizado com sucesso.',
+        duration: 2000,
       });
 
       return { data, error: null };
@@ -190,7 +204,8 @@ export function useAuth() {
       toast({
         title: 'Erro no login',
         description: errorMessage,
-        variant: 'destructive'
+        variant: 'destructive',
+        duration: 3000,
       });
       return { data: null, error };
     } finally {
@@ -213,7 +228,7 @@ export function useAuth() {
           redirectTo: redirectUrl,
           queryParams: {
             access_type: 'offline',
-            prompt: 'consent',
+            prompt: 'select_account', // Otimizar para seleção mais rápida
           }
         }
       });
@@ -240,7 +255,8 @@ export function useAuth() {
       toast({
         title: 'Erro no login com Google',
         description: errorMessage,
-        variant: 'destructive'
+        variant: 'destructive',
+        duration: 3000,
       });
       return { data: null, error };
     } finally {
@@ -263,13 +279,15 @@ export function useAuth() {
       toast({
         title: 'Logout realizado',
         description: 'Você foi desconectado com sucesso.',
+        duration: 2000,
       });
     } catch (error: any) {
       console.error('❌ Sign out error:', error);
       toast({
         title: 'Erro no logout',
         description: error.message || 'Erro desconhecido',
-        variant: 'destructive'
+        variant: 'destructive',
+        duration: 3000,
       });
     } finally {
       setLoading(false);

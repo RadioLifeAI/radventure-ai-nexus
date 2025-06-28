@@ -17,9 +17,20 @@ export function useResponsive() {
     };
 
     updateScreenSize();
-    window.addEventListener('resize', updateScreenSize);
     
-    return () => window.removeEventListener('resize', updateScreenSize);
+    // Debounce para melhor performance
+    let timeoutId: NodeJS.Timeout;
+    const debouncedResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(updateScreenSize, 150);
+    };
+
+    window.addEventListener('resize', debouncedResize);
+    
+    return () => {
+      window.removeEventListener('resize', debouncedResize);
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   return {
