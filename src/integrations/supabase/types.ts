@@ -216,6 +216,7 @@ export type Database = {
       }
       case_images: {
         Row: {
+          bucket_path: string | null
           case_id: string | null
           created_at: string | null
           dimensions: Json | null
@@ -226,15 +227,19 @@ export type Database = {
           legend: string | null
           medium_url: string | null
           metadata: Json | null
+          modality_prefix: string | null
+          organization_metadata: Json | null
           original_filename: string
           original_url: string
           processed_at: string | null
           processing_status: string | null
           sequence_order: number | null
+          specialty_code: string | null
           thumbnail_url: string | null
           updated_at: string | null
         }
         Insert: {
+          bucket_path?: string | null
           case_id?: string | null
           created_at?: string | null
           dimensions?: Json | null
@@ -245,15 +250,19 @@ export type Database = {
           legend?: string | null
           medium_url?: string | null
           metadata?: Json | null
+          modality_prefix?: string | null
+          organization_metadata?: Json | null
           original_filename: string
           original_url: string
           processed_at?: string | null
           processing_status?: string | null
           sequence_order?: number | null
+          specialty_code?: string | null
           thumbnail_url?: string | null
           updated_at?: string | null
         }
         Update: {
+          bucket_path?: string | null
           case_id?: string | null
           created_at?: string | null
           dimensions?: Json | null
@@ -264,11 +273,14 @@ export type Database = {
           legend?: string | null
           medium_url?: string | null
           metadata?: Json | null
+          modality_prefix?: string | null
+          organization_metadata?: Json | null
           original_filename?: string
           original_url?: string
           processed_at?: string | null
           processing_status?: string | null
           sequence_order?: number | null
+          specialty_code?: string | null
           thumbnail_url?: string | null
           updated_at?: string | null
         }
@@ -804,16 +816,46 @@ export type Database = {
       }
       medical_specialties: {
         Row: {
+          bucket_prefix: string | null
           id: number
           name: string
+          specialty_code: string | null
         }
         Insert: {
+          bucket_prefix?: string | null
           id?: number
           name: string
+          specialty_code?: string | null
         }
         Update: {
+          bucket_prefix?: string | null
           id?: number
           name?: string
+          specialty_code?: string | null
+        }
+        Relationships: []
+      }
+      modality_mappings: {
+        Row: {
+          bucket_folder: string
+          created_at: string | null
+          id: number
+          modality_name: string
+          modality_prefix: string
+        }
+        Insert: {
+          bucket_folder: string
+          created_at?: string | null
+          id?: number
+          modality_name: string
+          modality_prefix: string
+        }
+        Update: {
+          bucket_folder?: string
+          created_at?: string | null
+          id?: number
+          modality_name?: string
+          modality_prefix?: string
         }
         Relationships: []
       }
