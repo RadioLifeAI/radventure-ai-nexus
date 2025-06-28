@@ -1239,6 +1239,7 @@ export type Database = {
           id: string
           is_correct: boolean | null
           points: number | null
+          review_count: number | null
           user_id: string
         }
         Insert: {
@@ -1249,6 +1250,7 @@ export type Database = {
           id?: string
           is_correct?: boolean | null
           points?: number | null
+          review_count?: number | null
           user_id: string
         }
         Update: {
@@ -1259,6 +1261,7 @@ export type Database = {
           id?: string
           is_correct?: boolean | null
           points?: number | null
+          review_count?: number | null
           user_id?: string
         }
         Relationships: [
@@ -1421,6 +1424,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      check_case_review_status: {
+        Args: { p_user_id: string; p_case_id: string }
+        Returns: Json
+      }
       consume_help_aid: {
         Args: { p_user_id: string; p_aid_type: string; p_amount?: number }
         Returns: boolean
@@ -1492,6 +1499,12 @@ export type Database = {
         Args:
           | { p_case_id: string; p_points?: number; p_is_correct?: boolean }
           | { p_user_id: string; p_case_id: string; p_points?: number }
+          | {
+              p_user_id: string
+              p_case_id: string
+              p_points?: number
+              p_is_correct?: boolean
+            }
         Returns: undefined
       }
       promote_to_permanent_admin: {

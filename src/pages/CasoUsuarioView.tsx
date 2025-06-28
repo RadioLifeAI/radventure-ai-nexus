@@ -31,7 +31,8 @@ import {
   XCircle,
   MessageSquare,
   AlertTriangle,
-  Info
+  Info,
+  Eye
 } from "lucide-react";
 import clsx from "clsx";
 import { cn } from "@/lib/utils";
@@ -43,6 +44,7 @@ import { FeedbackModal } from "@/components/cases/FeedbackModal";
 import { useCaseProgress } from "@/hooks/useCaseProgress";
 import { useUserHelpAids } from "@/hooks/useUserHelpAids";
 import { useToast } from "@/components/ui/use-toast";
+import { ReviewModeBadge } from "@/components/cases/ReviewModeBadge";
 import {
   Dialog,
   DialogContent,
@@ -98,7 +100,6 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
   const [tutorHintText, setTutorHintText] = useState("");
   const [showHelpConfirm, setShowHelpConfirm] = useState<string | null>(null);
 
-  // CORREÇÃO: Hook corrigido com contador de eliminações
   const {
     helpUsed,
     eliminatedOptions,
@@ -108,7 +109,11 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
     eliminateOption,
     skipCase,
     useAIHint,
-    submitAnswer
+    submitAnswer,
+    isReview,
+    reviewStatus,
+    previousAnswer,
+    previousCorrect
   } = useCaseProgress(id || '');
 
   const { toast } = useToast();
@@ -167,6 +172,12 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
 
   // CORREÇÃO: Eliminar alternativa com limite de 2 usos
   const handleEliminateOption = () => {
+    if (isReview) {
+      // Em modo revisão, permitir eliminação gratuita para fins educativos
+      setShowHelpConfirm('eliminate_free');
+      return;
+    }
+
     if (!helpAids || helpAids.elimination_aids <= 0) {
       toast({
         title: "Sem créditos",
@@ -189,6 +200,15 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
   };
 
   const handleSkipCase = () => {
+    if (isReview) {
+      toast({
+        title: "Modo Revisão",
+        description: "Pular não está disponível em modo revisão.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (!helpAids || helpAids.skip_aids <= 0) {
       toast({
         title: "Sem créditos",
@@ -203,6 +223,15 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
 
   // CORREÇÃO: Tutor AI automático - sem modal de pergunta
   const handleRequestTutorHint = async () => {
+    if (isReview) {
+      toast({
+        title: "Modo Revisão",
+        description: "Tutor AI pago não está disponível em revisão.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (!helpAids || helpAids.ai_tutor_credits <= 0) {
       toast({
         title: "Sem créditos",
@@ -249,6 +278,9 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
       // CORREÇÃO: Passar o índice correto para eliminar apenas alternativas incorretas
       eliminateOption(correctIdx);
       consumeHelp({ aidType: 'elimination' });
+    } else if (showHelpConfirm === 'eliminate_free') {
+      // Eliminação gratuita em modo revisão
+      eliminateOption(correctIdx, true);
     } else if (showHelpConfirm === 'skip') {
       consumeHelp({ aidType: 'skip' });
       skipCase();
@@ -320,14 +352,16 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Header Gamificado com Navegação */}
+      {/* Header Gamificado com Navegação - Atualizado com badge de revisão */}
       <div className={cn(
         "relative text-white p-6",
         isAnswered 
           ? performance?.isCorrect 
             ? "bg-gradient-to-r from-green-600 via-green-700 to-emerald-600"
             : "bg-gradient-to-r from-red-600 via-red-700 to-pink-600"
-          : "bg-gradient-to-r from-blue-600 via-blue-700 to-cyan-600"
+          : isReview
+            ? "bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600"
+            : "bg-gradient-to-r from-blue-600 via-blue-700 to-cyan-600"
       )}>
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div className="flex items-center gap-4">
@@ -340,7 +374,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
               <ChevronLeft className="h-6 w-6" />
             </Button>
             <div className="p-3 bg-white/20 rounded-full backdrop-blur-sm">
-              <Stethoscope className="h-8 w-8 text-blue-100" />
+              {isReview ? <Eye className="h-8 w-8 text-blue-100" /> : <Stethoscope className="h-8 w-8 text-blue-100" />}
             </div>
             <div>
               <div className="flex items-center gap-3 mb-2">
@@ -354,13 +388,24 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
                   <Award className="h-4 w-4" />
                   {caso.points || 100} pts
                 </Badge>
+                {/* Badge de Revisão */}
+                {isReview && (
+                  <ReviewModeBadge
+                    isReview={isReview}
+                    reviewCount={reviewStatus?.review_count || 0}
+                    previousPoints={reviewStatus?.previous_points}
+                    size="sm"
+                  />
+                )}
                 {isAnswered && performance && (
                   <Badge className={cn(
                     "text-white font-bold px-3 py-1 flex items-center gap-1",
                     performance.isCorrect ? "bg-green-600" : "bg-red-600"
                   )}>
                     {performance.isCorrect ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
-                    {performance.isCorrect ? `+${performance.points} pts` : "Incorreto"}
+                    {performance.isCorrect ? 
+                      (isReview ? "Correto (Revisão)" : `+${performance.points} pts`) : 
+                      "Incorreto"}
                   </Badge>
                 )}
               </div>
@@ -369,7 +414,8 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
               </h1>
               <p className="text-blue-100 flex items-center gap-2">
                 <Activity className="h-4 w-4" />
-                {isAnswered ? "Caso Respondido" : "Caso Interativo"}
+                {isReview ? "Modo Revisão - Para Estudo" : 
+                 isAnswered ? "Caso Respondido" : "Caso Interativo"}
               </p>
             </div>
           </div>
@@ -386,7 +432,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
 
       {/* Layout Principal - 3 Colunas */}
       <div className="flex max-w-7xl mx-auto">
-        {/* Coluna 1: Imagem Médica */}
+        {/* Coluna 1: Imagem Médica - sem alterações */}
         <div className="w-80 bg-white border-r border-gray-200 p-4 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-gray-800 flex items-center gap-2">
@@ -473,7 +519,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
           )}
         </div>
 
-        {/* Coluna 2: Caso Clínico Principal */}
+        {/* Coluna 2: Caso Clínico Principal - sem alterações significativas */}
         <div className="flex-1 p-6 overflow-y-auto max-h-screen">
           {/* História Clínica */}
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-5 mb-6 border border-green-200">
@@ -651,72 +697,104 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
           )}
         </div>
 
-        {/* Coluna 3: Sistema de Ajudas - CORRIGIDO */}
+        {/* Coluna 3: Sistema de Ajudas - Atualizado para modo revisão */}
         <div className="w-64 bg-gradient-to-b from-yellow-50 to-orange-50 border-l border-gray-200 p-4">
           <div className="flex items-center gap-2 mb-4">
             <div className="p-2 bg-yellow-500 rounded-lg">
               <Lightbulb className="h-4 w-4 text-white" />
             </div>
-            <h3 className="font-bold text-yellow-800">Ajudas</h3>
+            <h3 className="font-bold text-yellow-800">
+              {isReview ? "Estudo" : "Ajudas"}
+            </h3>
           </div>
 
+          {/* Aviso de modo revisão */}
+          {isReview && (
+            <div className="bg-blue-50 rounded-lg p-3 border border-blue-200 mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Eye className="h-4 w-4 text-blue-600" />
+                <span className="font-semibold text-blue-800 text-sm">Modo Revisão</span>
+              </div>
+              <p className="text-xs text-blue-700">
+                Ajudas educativas disponíveis. Sem consumo de créditos ou pontuação.
+              </p>
+            </div>
+          )}
+
           <div className="space-y-3">
-            {/* Eliminar Opção - CORRIGIDO com limite de 2 usos */}
+            {/* Eliminar Opção - Adaptado para revisão */}
             <div className="bg-white rounded-lg p-3 border border-yellow-200 hover:shadow-md transition-shadow">
               <Button
                 variant="outline"
                 size="sm"
                 className="w-full justify-start gap-2 border-yellow-300 hover:bg-yellow-50"
-                disabled={isAnswered || !helpAids || helpAids.elimination_aids <= 0 || !canEliminate}
+                disabled={isAnswered || (!isReview && (!helpAids || helpAids.elimination_aids <= 0)) || !canEliminate}
                 onClick={handleEliminateOption}
               >
                 <Zap className="h-4 w-4 text-yellow-600" />
                 <span className="flex-1 text-left">Eliminar Opção</span>
-                <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
-                  {helpAids?.elimination_aids || 0}
-                </Badge>
+                {!isReview && (
+                  <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
+                    {helpAids?.elimination_aids || 0}
+                  </Badge>
+                )}
+                {isReview && (
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                    Grátis
+                  </Badge>
+                )}
               </Button>
               <p className="text-xs text-yellow-600 mt-2">
-                Remove uma alternativa incorreta<br/>
-                Usos: {eliminationCount}/2 (-20% pontos)
+                {isReview ? 
+                  "Remove uma alternativa incorreta (educativo)" :
+                  `Remove uma alternativa incorreta\nUsos: ${eliminationCount}/2 (-20% pontos)`
+                }
               </p>
             </div>
 
-            {/* Pular Questão - CORRIGIDO com penalidade */}
+            {/* Pular Questão - Desabilitado em revisão */}
             <div className="bg-white rounded-lg p-3 border border-orange-200 hover:shadow-md transition-shadow">
               <Button
                 variant="outline"
                 size="sm"
                 className="w-full justify-start gap-2 border-orange-300 hover:bg-orange-50"
-                disabled={isAnswered || !helpAids || helpAids.skip_aids <= 0}
+                disabled={isAnswered || isReview || !helpAids || helpAids.skip_aids <= 0}
                 onClick={handleSkipCase}
               >
                 <SkipForward className="h-4 w-4 text-orange-600" />
                 <span className="flex-1 text-left">Pular Questão</span>
                 <Badge variant="secondary" className="bg-orange-100 text-orange-700">
-                  {helpAids?.skip_aids || 0}
+                  {isReview ? "N/A" : helpAids?.skip_aids || 0}
                 </Badge>
               </Button>
-              <p className="text-xs text-orange-600 mt-2">Avança sem perder pontos (-50% penalidade)</p>
+              <p className="text-xs text-orange-600 mt-2">
+                {isReview ? 
+                  "Não disponível em revisão" :
+                  "Avança sem perder pontos (-50% penalidade)"
+                }
+              </p>
             </div>
 
-            {/* Tutor AI - CORRIGIDO automático */}
+            {/* Tutor AI - Desabilitado em revisão */}
             <div className="bg-gradient-to-r from-purple-100 to-blue-100 rounded-lg p-4 border border-purple-200">
               <div className="flex items-center gap-2 mb-3">
                 <Brain className="h-5 w-5 text-purple-600" />
                 <span className="font-semibold text-purple-800">Tutor AI</span>
                 <Badge variant="secondary" className="bg-purple-100 text-purple-700">
-                  {helpAids?.ai_tutor_credits || 0}
+                  {isReview ? "N/A" : helpAids?.ai_tutor_credits || 0}
                 </Badge>
               </div>
               <p className="text-xs text-purple-700 mb-3">
-                IA especializada disponível (-10% pontos)
+                {isReview ? 
+                  "Não disponível em revisão" :
+                  "IA especializada disponível (-10% pontos)"
+                }
               </p>
               <Button
                 variant="outline"
                 size="sm"
                 className="w-full border-purple-300 hover:bg-purple-50"
-                disabled={isAnswered || !helpAids || helpAids.ai_tutor_credits <= 0 || isGettingHint}
+                disabled={isAnswered || isReview || !helpAids || helpAids.ai_tutor_credits <= 0 || isGettingHint}
                 onClick={handleRequestTutorHint}
               >
                 {isGettingHint ? (
@@ -727,22 +805,32 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
                 ) : (
                   <>
                     <Brain className="h-4 w-4 mr-2" />
-                    Obter Dica
+                    {isReview ? "Indisponível" : "Obter Dica"}
                   </>
                 )}
               </Button>
             </div>
 
-            {/* Status */}
+            {/* Status - Atualizado para revisão */}
             <div className="bg-gray-100 rounded-lg p-3 border border-gray-200 mt-6">
               <div className="text-xs text-gray-600 text-center">
                 <div className="font-semibold mb-1">
-                  {isAnswered ? "✅ RESPONDIDO" : "🎯 ATIVO"}
+                  {isAnswered ? "✅ RESPONDIDO" : isReview ? "👁️ REVISÃO" : "🎯 ATIVO"}
                 </div>
                 {isAnswered && performance ? (
-                  <div>Pontos ganhos: {performance.points}</div>
+                  <div>
+                    {isReview ? 
+                      "Modo estudo - sem pontuação" : 
+                      `Pontos ganhos: ${performance.points}`
+                    }
+                  </div>
                 ) : (
-                  <div>Resolva para ganhar pontos</div>
+                  <div>
+                    {isReview ? 
+                      "Revisar para estudar" : 
+                      "Resolva para ganhar pontos"
+                    }
+                  </div>
                 )}
               </div>
             </div>
@@ -771,11 +859,13 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-orange-500" />
-              Confirmar uso de ajuda
+              {showHelpConfirm === 'eliminate_free' ? 'Eliminar alternativa (Gratuito)' : 'Confirmar uso de ajuda'}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {showHelpConfirm === 'eliminate' && 
                 `Você deseja eliminar uma alternativa incorreta? Isso consumirá 1 crédito de eliminação. Créditos restantes: ${(helpAids?.elimination_aids || 0) - 1}`}
+              {showHelpConfirm === 'eliminate_free' && 
+                `Você deseja eliminar uma alternativa incorreta? Esta ação é gratuita em modo revisão para fins educativos.`}
               {showHelpConfirm === 'skip' && 
                 `Você deseja pular este caso? Isso consumirá 1 crédito de pular e você não ganhará pontos. Créditos restantes: ${(helpAids?.skip_aids || 0) - 1}`}
             </AlertDialogDescription>
