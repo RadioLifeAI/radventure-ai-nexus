@@ -6,9 +6,16 @@ import {
   DialogTitle,
   DialogHeader,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";  
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import { CaseProfileForm } from "./CaseProfileForm";
+import { AdvancedImageManagerModal } from "./AdvancedImageManagerModal";
+import { 
+  Sparkles, 
+  Image as ImageIcon 
+} from "lucide-react";
 
 type CaseEditFormModalProps = {
   open: boolean;
@@ -22,6 +29,7 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
 
   const [editingCase, setEditingCase] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [showAdvancedImageModal, setShowAdvancedImageModal] = useState(false);
 
   useEffect(() => {
     if (open && caseId) {
@@ -77,32 +85,73 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
     onClose();
   };
 
+  const handleAdvancedImagesUpdated = (images: any[]) => {
+    if (editingCase) {
+      setEditingCase(prev => ({ ...prev, image_url: images }));
+      toast({ title: "Imagens atualizadas com ferramentas avançadas!" });
+    }
+  };
+
   console.log('🎨 CaseEditFormModal: Renderizando modal', { loading, hasEditingCase: !!editingCase });
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-white border border-gray-200 shadow-xl z-50">
-        <DialogHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 -m-6 mb-6 border-b border-gray-200">
-          <DialogTitle className="text-xl font-bold text-gray-800">
-            Editar Caso Médico
-          </DialogTitle>
-        </DialogHeader>
-        {loading ? (
-          <div className="flex items-center justify-center min-h-[200px] bg-white">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <div className="text-gray-600">Carregando dados do caso...</div>
+    <>
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-white border border-gray-200 shadow-xl z-50">
+          <DialogHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 -m-6 mb-6 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-xl font-bold text-gray-800">
+                Editar Caso Médico
+              </DialogTitle>
+              
+              {/* Botão de Ferramentas Avançadas de Imagem */}
+              {editingCase && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAdvancedImageModal(true)}
+                    className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                  >
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Edição Avançada de Imagens
+                  </Button>
+                  <Badge variant="secondary" className="bg-purple-100 text-purple-700">
+                    <ImageIcon className="h-3 w-3 mr-1" />
+                    {Array.isArray(editingCase.image_url) ? editingCase.image_url.length : 0} imagem(ns)
+                  </Badge>
+                </div>
+              )}
             </div>
-          </div>
-        ) : editingCase ? (
-          <div className="bg-white">
-            <CaseProfileForm 
-              editingCase={editingCase}
-              onCreated={handleCaseUpdated}
-            />
-          </div>
-        ) : null}
-      </DialogContent>
-    </Dialog>
+          </DialogHeader>
+          
+          {loading ? (
+            <div className="flex items-center justify-center min-h-[200px] bg-white">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <div className="text-gray-600">Carregando dados do caso...</div>
+              </div>
+            </div>
+          ) : editingCase ? (
+            <div className="bg-white">
+              <CaseProfileForm 
+                editingCase={editingCase}
+                onCreated={handleCaseUpdated}
+              />
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Ferramentas Avançadas de Imagem */}
+      <AdvancedImageManagerModal
+        open={showAdvancedImageModal}
+        onClose={() => setShowAdvancedImageModal(false)}
+        caseId={caseId || undefined}
+        currentImages={editingCase?.image_url || []}
+        onImagesUpdated={handleAdvancedImagesUpdated}
+      />
+    </>
   );
 }

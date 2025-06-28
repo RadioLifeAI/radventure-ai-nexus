@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 import { CaseProfileBasicSectionUnified } from "./CaseProfileBasicSectionUnified";
 import { CaseSmartAutofillAdvanced } from "./CaseSmartAutofillAdvanced";
 import { CaseProfileAlternativesSection } from "./CaseProfileAlternativesSection";
@@ -22,8 +23,15 @@ import { CaseFormGamifiedHelpers } from "./CaseFormGamifiedHelpers";
 import { CaseFormGamifiedLayout } from "./CaseFormGamifiedLayout";
 import { CaseAdvancedImageManagement } from "./CaseAdvancedImageManagement";
 import { TempImageUpload } from "./TempImageUpload";
+import { AdvancedImageManagerModal } from "./AdvancedImageManagerModal";
 import { useTempCaseImages } from "@/hooks/useTempCaseImages";
 import { supabase } from "@/integrations/supabase/client";
+import { 
+  Sparkles, 
+  Image as ImageIcon, 
+  Settings, 
+  Zap 
+} from "lucide-react";
 
 // Novos componentes AI por seção
 import { CaseBasicSectionAI } from "./CaseBasicSectionAI";
@@ -42,6 +50,8 @@ export function CaseProfileFormEditable({
 }) {
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
   const [difficulties, setDifficulties] = useState<{ id: number; level: number; description: string | null }[]>([]);
+  const [showAdvancedImageModal, setShowAdvancedImageModal] = useState(false);
+  const [useAdvancedMode, setUseAdvancedMode] = useState(false);
 
   // Hook para imagens temporárias (usado apenas na criação)
   const { associateWithCase, clearTempImages } = useTempCaseImages();
@@ -79,12 +89,10 @@ export function CaseProfileFormEditable({
     handleRandomizeOptions
   } = handlers;
 
-  // Load editing case data into form
   useEffect(() => {
     if (editingCase) {
       setForm({
         ...editingCase,
-        // ... keep existing code (garantir arrays vazios para campos novos)
         secondary_diagnoses: editingCase.secondary_diagnoses || [],
         anatomical_regions: editingCase.anatomical_regions || [],
         finding_types: editingCase.finding_types || [],
@@ -101,11 +109,9 @@ export function CaseProfileFormEditable({
         similar_cases_ids: editingCase.similar_cases_ids || [],
         prerequisite_cases: editingCase.prerequisite_cases || [],
         unlocks_cases: editingCase.unlocks_cases || [],
-        // Garantir objetos vazios para campos JSON
         vital_signs: editingCase.vital_signs || {},
         structured_metadata: editingCase.structured_metadata || {},
         achievement_triggers: editingCase.achievement_triggers || {},
-        // Garantir valores padrão
         primary_diagnosis: editingCase.primary_diagnosis || "",
         case_classification: editingCase.case_classification || "diagnostico",
         cid10_code: editingCase.cid10_code || "",
@@ -115,7 +121,6 @@ export function CaseProfileFormEditable({
         clinical_relevance: editingCase.clinical_relevance || 5,
         estimated_solve_time: editingCase.estimated_solve_time || 5,
         exam_context: editingCase.exam_context || "rotina",
-        // Campos de referência
         is_radiopaedia_case: editingCase.is_radiopaedia_case ?? false,
         reference_citation: editingCase.reference_citation ?? "",
         reference_url: editingCase.reference_url ?? "",
@@ -160,7 +165,6 @@ export function CaseProfileFormEditable({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     
-    // ... keep existing code (validação específica para casos Radiopaedia)
     if (form.is_radiopaedia_case) {
       if (!form.reference_citation?.trim()) {
         toast({ title: "Citação da referência é obrigatória para casos do Radiopaedia", variant: "destructive" });
@@ -196,7 +200,6 @@ export function CaseProfileFormEditable({
       }));
 
       const payload: any = {
-        // ... keep existing code (payload construction)
         specialty: selectedCategory ? selectedCategory.name : null,
         category_id: form.category_id ? Number(form.category_id) : null,
         case_number: form.case_number ?? null,
@@ -225,14 +228,10 @@ export function CaseProfileFormEditable({
         elimination_penalty_points: form.elimination_penalty_points,
         ai_tutor_level: form.ai_tutor_level,
         updated_at: new Date().toISOString(),
-        
-        // Campos de referência Radiopaedia
         is_radiopaedia_case: form.is_radiopaedia_case,
         reference_citation: form.is_radiopaedia_case ? form.reference_citation : null,
         reference_url: form.is_radiopaedia_case ? form.reference_url : null,
         access_date: form.is_radiopaedia_case && form.access_date ? form.access_date : null,
-        
-        // Novos campos estruturados
         primary_diagnosis: form.primary_diagnosis || null,
         secondary_diagnoses: form.secondary_diagnoses || [],
         case_classification: form.case_classification || "diagnostico",
@@ -286,14 +285,12 @@ export function CaseProfileFormEditable({
         const caseId = data[0].id;
         const resultTitle = data[0].title ?? form.title;
         
-        // Se não estamos em modo edição, associar imagens temporárias ao caso
         if (!isEditMode) {
           try {
             await associateWithCase(caseId);
             console.log('✅ Imagens temporárias associadas ao caso:', caseId);
           } catch (imageError) {
             console.warn('⚠️ Erro ao associar imagens temporárias:', imageError);
-            // Não falhar o salvamento por causa das imagens
           }
         }
         
@@ -302,7 +299,7 @@ export function CaseProfileFormEditable({
         
         if (!isEditMode) {
           resetForm();
-          clearTempImages(); // Limpar imagens temporárias após sucesso
+          clearTempImages();
         }
         
         onCreated?.();
@@ -320,7 +317,6 @@ export function CaseProfileFormEditable({
     setTimeout(() => setFeedback(""), 2300);
   }
 
-  // ... keep existing code (autoTitlePreview and handleAutoGenerateTitle)
   const autoTitlePreview =
     form.category_id && form.modality && form.difficulty_level
       ? generateTitle(Number(form.category_id), form.modality, Number(form.difficulty_level)).title
@@ -376,7 +372,6 @@ export function CaseProfileFormEditable({
             showPreview={showPreview}
           />
           
-          {/* NOVO: Botão AI para seção básica */}
           <CaseBasicSectionAI 
             form={form}
             setForm={setForm}
@@ -408,7 +403,6 @@ export function CaseProfileFormEditable({
           title="Dados Estruturados"
           description="Configure os campos estruturados para filtros avançados e AI"
         >
-          {/* NOVO: Botão AI para dados estruturados */}
           <CaseStructuredDataAI 
             form={form}
             setForm={setForm}
@@ -438,25 +432,81 @@ export function CaseProfileFormEditable({
           />
         </CaseFormGamifiedLayout>
 
+        {/* SEÇÃO DE IMAGENS - ATUALIZADA COM MODO AVANÇADO */}
         <CaseFormGamifiedLayout
           section="advanced"
           title="Gestão de Imagens"
           description={isEditMode ? "Sistema robusto para upload e gerenciamento de múltiplas imagens" : "Upload de imagens para o novo caso médico"}
         >
-          {isEditMode ? (
-            <CaseAdvancedImageManagement 
-              caseId={editingCase?.id}
-              onImagesChange={(images) => {
-                console.log('Images updated:', images.length);
-              }}
-            />
-          ) : (
-            <TempImageUpload 
-              onChange={(images) => {
-                console.log('Temp images updated:', images.length);
-              }}
-            />
-          )}
+          <div className="space-y-4">
+            {/* Botões de Modo */}
+            <div className="flex items-center justify-between bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-lg border border-purple-200">
+              <div className="flex items-center gap-3">
+                <ImageIcon className="h-5 w-5 text-purple-600" />
+                <div>
+                  <h4 className="font-semibold text-purple-800">Sistema de Upload de Imagens</h4>
+                  <p className="text-sm text-purple-600">
+                    {useAdvancedMode ? "Modo avançado ativo com ferramentas profissionais" : "Modo padrão - sistema simples e eficaz"}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {/* Botão Ferramentas Avançadas */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAdvancedImageModal(true)}
+                  className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Ferramentas Avançadas
+                </Button>
+                
+                {/* Toggle Modo Avançado */}
+                <Button
+                  type="button"
+                  variant={useAdvancedMode ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setUseAdvancedMode(!useAdvancedMode)}
+                  className={useAdvancedMode ? "bg-purple-600 hover:bg-purple-700" : "border-purple-300 hover:bg-purple-50"}
+                >
+                  <Zap className="h-4 w-4 mr-2" />
+                  {useAdvancedMode ? "Modo Avançado" : "Modo Padrão"}
+                </Button>
+              </div>
+            </div>
+
+            {/* Sistema de Upload - Mantém o sistema atual */}
+            {isEditMode ? (
+              <CaseAdvancedImageManagement 
+                caseId={editingCase?.id}
+                onImagesChange={(images) => {
+                  console.log('Images updated:', images.length);
+                }}
+              />
+            ) : (
+              <TempImageUpload 
+                onChange={(images) => {
+                  console.log('Temp images updated:', images.length);
+                }}
+              />
+            )}
+
+            {/* Indicador de Modo Avançado */}
+            {useAdvancedMode && (
+              <div className="bg-purple-100 border border-purple-300 rounded-lg p-3">
+                <div className="flex items-center gap-2 text-purple-700">
+                  <Settings className="h-4 w-4" />
+                  <span className="font-medium">Modo Avançado Ativado</span>
+                </div>
+                <p className="text-sm text-purple-600 mt-1">
+                  Use o botão "Ferramentas Avançadas" para acessar editor de imagem, processador ZIP e visualizador stack.
+                </p>
+              </div>
+            )}
+          </div>
         </CaseFormGamifiedLayout>
 
         <CaseFormGamifiedLayout
@@ -464,7 +514,6 @@ export function CaseProfileFormEditable({
           title="Pergunta e Alternativas"
           description="Configure a pergunta principal e as opções de resposta"
         >
-          {/* NOVO: Botão AI para quiz completo */}
           <CaseQuizCompleteAI 
             form={form}
             setForm={setForm}
@@ -508,7 +557,6 @@ export function CaseProfileFormEditable({
           title="Explicação e Feedback"
           description="Configure as explicações e dicas para o usuário"
         >
-          {/* NOVO: Botão AI para explicação completa */}
           <CaseExplanationCompleteAI 
             form={form}
             setForm={setForm}
@@ -533,7 +581,6 @@ export function CaseProfileFormEditable({
           title="Configurações Avançadas"
           description="Configurações de gamificação e regras especiais"
         >
-          {/* NOVO: Botão AI para config avançada */}
           <CaseAdvancedConfigAI 
             form={form}
             setForm={setForm}
@@ -571,6 +618,18 @@ export function CaseProfileFormEditable({
           </div>
         </div>
       </form>
+
+      {/* Modal de Ferramentas Avançadas */}
+      <AdvancedImageManagerModal
+        open={showAdvancedImageModal}
+        onClose={() => setShowAdvancedImageModal(false)}
+        caseId={isEditMode ? editingCase?.id : undefined}
+        currentImages={Array.isArray(form.image_url) ? form.image_url : []}
+        onImagesUpdated={(images) => {
+          setForm(prev => ({ ...prev, image_url: images }));
+          toast({ title: "Imagens atualizadas com ferramentas avançadas!" });
+        }}
+      />
     </div>
   );
 }
