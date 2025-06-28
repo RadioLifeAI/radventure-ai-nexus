@@ -27,7 +27,6 @@ export default function CasosMedicos() {
             <p className="text-gray-600">Preencha todos os campos para criar um novo caso médico</p>
           </div>
           <div className="p-6 bg-white">
-            {console.log('📝 CasosMedicos: Renderizando CaseProfileForm')}
             <CaseProfileForm />
           </div>
         </div>
