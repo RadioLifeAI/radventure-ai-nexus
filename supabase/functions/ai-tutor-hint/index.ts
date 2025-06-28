@@ -13,7 +13,18 @@ serve(async (req) => {
   }
 
   try {
+    console.log('🤖 AI Tutor Hint - Iniciando processamento');
+    
     const { caseData, userQuestion } = await req.json();
+    
+    if (!caseData) {
+      throw new Error('Dados do caso não fornecidos');
+    }
+
+    console.log('📋 Dados recebidos:', { 
+      caseId: caseData.id, 
+      userQuestion: userQuestion?.substring(0, 50) + '...' 
+    });
     
     // Inicializar Supabase
     const supabaseClient = createClient(
@@ -30,12 +41,19 @@ serve(async (req) => {
       throw new Error('Usuário não autenticado');
     }
 
+    console.log('👤 Usuário autenticado:', user.id);
+
     // Verificar créditos disponíveis
-    const { data: helpAids } = await supabaseClient
+    const { data: helpAids, error: helpError } = await supabaseClient
       .from('user_help_aids')
       .select('ai_tutor_credits')
       .eq('user_id', user.id)
       .single();
+
+    if (helpError) {
+      console.error('❌ Erro ao buscar créditos:', helpError);
+      throw new Error('Erro ao verificar créditos');
+    }
 
     if (!helpAids || helpAids.ai_tutor_credits <= 0) {
       return new Response(
@@ -43,6 +61,8 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    console.log('💳 Créditos disponíveis:', helpAids.ai_tutor_credits);
 
     // Construir prompt para o OpenAI
     const prompt = `Você é um tutor médico especializado. Analise o caso clínico abaixo e forneça uma dica educativa que ajude o estudante a raciocinar sobre o diagnóstico, SEM revelar a resposta diretamente.
@@ -65,6 +85,8 @@ INSTRUÇÕES:
 6. Se não houver pergunta específica, dê uma dica geral sobre o que observar
 
 Responda apenas com a dica, sem preâmbulos.`;
+
+    console.log('🧠 Chamando OpenAI...');
 
     // Chamar OpenAI
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -91,11 +113,15 @@ Responda apenas com a dica, sem preâmbulos.`;
     });
 
     if (!openAIResponse.ok) {
+      const errorText = await openAIResponse.text();
+      console.error('❌ Erro OpenAI:', errorText);
       throw new Error('Erro na chamada do OpenAI');
     }
 
     const openAIData = await openAIResponse.json();
     const hint = openAIData.choices[0].message.content;
+
+    console.log('✅ Resposta gerada. Tamanho:', hint?.length);
 
     // Consumir crédito do usuário
     const { error: consumeError } = await supabaseClient.rpc('consume_help_aid', {
@@ -105,30 +131,48 @@ Responda apenas com a dica, sem preâmbulos.`;
     });
 
     if (consumeError) {
-      console.error('Erro ao consumir crédito:', consumeError);
+      console.error('❌ Erro ao consumir crédito:', consumeError);
+      // Não falhar a operação por causa disso
+    } else {
+      console.log('💳 Crédito consumido com sucesso');
     }
 
-    // Log da utilização
-    await supabaseClient
-      .from('ai_tutor_usage_logs')
-      .insert({
-        user_id: user.id,
-        case_id: caseData.id,
-        prompt_used: prompt,
-        response_text: hint,
-        tokens_used: openAIData.usage?.total_tokens || 0,
-        config_id: null
-      });
+    // Log da utilização (opcional - pode falhar sem afetar o resultado)
+    try {
+      await supabaseClient
+        .from('ai_tutor_usage_logs')
+        .insert({
+          user_id: user.id,
+          case_id: caseData.id,
+          prompt_used: prompt,
+          response_text: hint,
+          tokens_used: openAIData.usage?.total_tokens || 0,
+          config_id: null
+        });
+    } catch (logError) {
+      console.error('⚠️ Erro ao salvar log (não crítico):', logError);
+    }
+
+    const finalResponse = {
+      hint,
+      creditsRemaining: helpAids.ai_tutor_credits - 1,
+      success: true
+    };
+
+    console.log('🎉 Processamento concluído com sucesso');
 
     return new Response(
-      JSON.stringify({ hint, creditsRemaining: helpAids.ai_tutor_credits - 1 }),
+      JSON.stringify(finalResponse),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Erro no tutor AI:', error);
+    console.error('❌ Erro no tutor AI:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message || 'Erro interno do servidor',
+        success: false 
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

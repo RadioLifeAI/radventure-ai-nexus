@@ -94,27 +94,44 @@ export function useUserHelpAids() {
     mutationFn: async ({ caseData, userQuestion }: { caseData: any, userQuestion?: string }) => {
       if (!user?.id) throw new Error('User not authenticated');
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('No valid session');
+      console.log('🤖 Chamando Tutor AI:', { caseId: caseData.id, userQuestion });
 
-      const response = await fetch('/supabase/functions/v1/ai-tutor-hint', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ caseData, userQuestion }),
+      // CORREÇÃO: Usar supabase.functions.invoke em vez de fetch
+      const { data, error } = await supabase.functions.invoke('ai-tutor-hint', {
+        body: { 
+          caseData, 
+          userQuestion: userQuestion || 'Dica geral sobre este caso' 
+        }
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erro ao obter dica do tutor');
+      if (error) {
+        console.error('❌ Erro na Edge Function:', error);
+        throw new Error(error.message || 'Erro ao obter dica do tutor');
       }
 
-      return response.json();
+      if (!data) {
+        throw new Error('Resposta vazia do tutor AI');
+      }
+
+      console.log('✅ Resposta do Tutor AI:', data);
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('✅ Tutor AI - Sucesso:', data);
       queryClient.invalidateQueries({ queryKey: ['user-help-aids'] });
+      
+      toast({
+        title: 'Dica recebida!',
+        description: `Créditos restantes: ${data.creditsRemaining || 'N/A'}`,
+      });
+    },
+    onError: (error) => {
+      console.error('❌ Erro no Tutor AI:', error);
+      toast({
+        title: 'Erro no Tutor AI',
+        description: error.message || 'Não foi possível obter a dica',
+        variant: 'destructive'
+      });
     }
   });
 
@@ -123,7 +140,7 @@ export function useUserHelpAids() {
     isLoading,
     consumeHelp: consumeHelpMutation.mutate,
     isConsumingHelp: consumeHelpMutation.isPending,
-    getTutorHint: getTutorHintMutation.mutate,
+    getTutorHint: getTutorHintMutation.mutateAsync, // CORREÇÃO: usar mutateAsync para aguardar resultado
     isGettingHint: getTutorHintMutation.isPending,
     tutorHintData: getTutorHintMutation.data,
     tutorHintError: getTutorHintMutation.error

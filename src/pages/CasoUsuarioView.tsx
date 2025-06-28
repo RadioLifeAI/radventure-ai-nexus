@@ -219,21 +219,38 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
     setShowHelpConfirm(null);
   };
 
-  const handleTutorHintRequest = () => {
-    getTutorHint(
-      { caseData: caso, userQuestion: tutorQuestion },
-      {
-        onSuccess: (data) => {
-          setTutorHintText(data.hint);
-          setShowTutorHint(false);
-          setTutorQuestion("");
-          toast({
-            title: "Dica recebida!",
-            description: `Créditos restantes: ${data.creditsRemaining}`
-          });
-        }
+  const handleTutorHintRequest = async () => {
+    try {
+      console.log('🤖 Solicitando dica do Tutor AI...');
+      
+      const response = await getTutorHint({
+        caseData: caso,
+        userQuestion: tutorQuestion || 'Dica geral sobre este caso'
+      });
+
+      console.log('✅ Resposta recebida:', response);
+
+      // CORREÇÃO: Definir o texto da dica e fechar o modal
+      if (response?.hint) {
+        setTutorHintText(response.hint);
+        setShowTutorHint(false);
+        setTutorQuestion("");
+        
+        toast({
+          title: "Dica recebida!",
+          description: `Veja a dica abaixo. Créditos restantes: ${response.creditsRemaining || 'N/A'}`,
+        });
+      } else {
+        throw new Error('Resposta inválida do tutor AI');
       }
-    );
+    } catch (error) {
+      console.error('❌ Erro ao solicitar dica:', error);
+      toast({
+        title: "Erro no Tutor AI",
+        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        variant: "destructive"
+      });
+    }
   };
 
   const nextImage = () => {
@@ -573,18 +590,29 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
 
           {/* Dica do Tutor AI */}
           {tutorHintText && (
-            <div className="bg-gradient-to-r from-purple-50 to-violet-50 rounded-xl p-6 mb-6 border border-purple-200">
+            <div className="bg-gradient-to-r from-purple-50 to-violet-50 rounded-xl p-6 mb-6 border border-purple-200 animate-fade-in">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 bg-purple-500 rounded-lg">
                   <Brain className="h-5 w-5 text-white" />
                 </div>
                 <h3 className="text-lg font-bold text-purple-800">Dica do Tutor AI</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setTutorHintText("")}
+                  className="ml-auto text-purple-600 hover:bg-purple-100"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
               
               <div className="bg-white rounded-lg p-4 border border-purple-200">
-                <p className="text-purple-900 leading-relaxed">
-                  {tutorHintText}
-                </p>
+                <div className="flex items-start gap-2">
+                  <Brain className="h-5 w-5 text-purple-600 mt-1 flex-shrink-0" />
+                  <p className="text-purple-900 leading-relaxed">
+                    {tutorHintText}
+                  </p>
+                </div>
               </div>
             </div>
           )}
@@ -763,6 +791,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
                 onChange={(e) => setTutorQuestion(e.target.value)}
                 placeholder="Ex: Que achados devo observar na imagem? Qual a fisiopatologia envolvida?"
                 className="min-h-20"
+                disabled={isGettingHint}
               />
             </div>
             
@@ -780,14 +809,22 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
             <div className="flex gap-2">
               <Button
                 onClick={handleTutorHintRequest}
-                disabled={isGettingHint}
+                disabled={isGettingHint || !helpAids || helpAids.ai_tutor_credits <= 0}
                 className="flex-1"
               >
-                {isGettingHint ? "Gerando..." : "Obter Dica"}
+                {isGettingHint ? (
+                  <>
+                    <Brain className="h-4 w-4 mr-2 animate-spin" />
+                    Gerando...
+                  </>
+                ) : (
+                  "Obter Dica"
+                )}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setShowTutorHint(false)}
+                disabled={isGettingHint}
               >
                 Cancelar
               </Button>
