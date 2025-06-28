@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -36,9 +37,9 @@ const queryClient = new QueryClient();
 
 // Componente para redirecionamento inteligente
 function AuthRedirect() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   
-  if (isLoading) {
+  if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
   }
   
@@ -76,7 +77,6 @@ function App() {
               } 
             />
             
-            {/* Rotas Protegidas - Aplicação */}
             <Route 
               path="/app/casos" 
               element={

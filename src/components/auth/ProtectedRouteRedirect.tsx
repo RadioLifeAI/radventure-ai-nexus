@@ -13,17 +13,17 @@ export function ProtectedRouteRedirect({
   children, 
   redirectTo = '/login' 
 }: ProtectedRouteRedirectProps) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!loading && !isAuthenticated) {
       console.log('🔒 Usuário não autenticado, redirecionando para:', redirectTo);
       navigate(redirectTo, { replace: true });
     }
-  }, [isAuthenticated, isLoading, navigate, redirectTo]);
+  }, [isAuthenticated, loading, navigate, redirectTo]);
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader />
