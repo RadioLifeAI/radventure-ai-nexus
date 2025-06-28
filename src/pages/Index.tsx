@@ -234,7 +234,7 @@ export default function Index() {
       <CookieBanner />
 
       {/* Custom CSS for animations */}
-      <style jsx>{`
+      <style>{`
         .animate-fade-in-up {
           animation: fadeInUp 0.8s ease-out forwards;
         }

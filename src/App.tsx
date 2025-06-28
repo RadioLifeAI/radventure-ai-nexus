@@ -21,7 +21,7 @@ import CreateEvent from "@/pages/admin/CreateEvent";
 import CasosMedicos from "@/pages/admin/CasosMedicos";
 import FakeCasesPreview from "@/pages/admin/FakeCasesPreview";
 import NotFound from "@/pages/NotFound";
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
 // Novas páginas legais
 import TermosDeUso from "@/pages/TermosDeUso";
