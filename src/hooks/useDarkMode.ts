@@ -1,9 +1,7 @@
 
 import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
 
 export function useDarkMode() {
-  const location = useLocation();
   const [isDark, setIsDark] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('darkMode') === 'true' ||
@@ -12,45 +10,17 @@ export function useDarkMode() {
     return false;
   });
 
-  // Páginas onde o tema escuro é permitido (apenas landing page)
-  const isDarkModeAllowed = () => {
-    const allowedRoutes = ['/', '/sobre', '/contato', '/termos', '/privacidade', '/cookies', '/funcionalidades'];
-    return allowedRoutes.includes(location.pathname);
-  };
-
   useEffect(() => {
     const root = window.document.documentElement;
-    
-    // Aplicar tema escuro apenas em rotas permitidas
-    if (isDark && isDarkModeAllowed()) {
+    if (isDark) {
       root.classList.add('dark');
     } else {
       root.classList.remove('dark');
     }
-    
-    // Salvar preferência apenas se estiver em rota permitida
-    if (isDarkModeAllowed()) {
-      localStorage.setItem('darkMode', isDark.toString());
-    }
-  }, [isDark, location.pathname]);
+    localStorage.setItem('darkMode', isDark.toString());
+  }, [isDark]);
 
-  // Forçar tema claro quando sair das páginas permitidas
-  useEffect(() => {
-    if (!isDarkModeAllowed()) {
-      const root = window.document.documentElement;
-      root.classList.remove('dark');
-    }
-  }, [location.pathname]);
+  const toggleDarkMode = () => setIsDark(!isDark);
 
-  const toggleDarkMode = () => {
-    // Só permitir toggle em páginas permitidas
-    if (isDarkModeAllowed()) {
-      setIsDark(!isDark);
-    }
-  };
-
-  return { 
-    isDark: isDark && isDarkModeAllowed(), 
-    toggleDarkMode 
-  };
+  return { isDark, toggleDarkMode };
 }

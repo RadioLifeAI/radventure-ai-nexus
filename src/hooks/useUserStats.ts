@@ -43,7 +43,7 @@ export function useUserStats() {
         throw new Error('No user ID');
       }
 
-      // Buscar histórico de casos com otimização
+      // Buscar histórico de casos
       const { data: caseHistory, error: caseError } = await supabase
         .from('user_case_history')
         .select(`
@@ -55,36 +55,35 @@ export function useUserStats() {
           )
         `)
         .eq('user_id', user.id)
-        .order('answered_at', { ascending: false })
-        .limit(100); // Limitar para melhor performance
+        .order('answered_at', { ascending: false });
 
       if (caseError) throw caseError;
 
       // Buscar perfil para dados básicos
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('total_points, current_streak')
+        .select('*')
         .eq('id', user.id)
         .single();
 
       if (profileError) throw profileError;
 
-      // Buscar transações RadCoin otimizado
+      // Buscar transações RadCoin
       const { data: radcoinHistory, error: radcoinError } = await supabase
         .from('radcoin_transactions_log')
-        .select('created_at, amount, tx_type, balance_after')
+        .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(15); // Reduzir limite para melhor performance
+        .limit(20);
 
       if (radcoinError) throw radcoinError;
 
-      // Calcular estatísticas de forma otimizada
+      // Calcular estatísticas
       const totalCases = caseHistory?.length || 0;
       const correctAnswers = caseHistory?.filter(h => h.is_correct).length || 0;
       const accuracy = totalCases > 0 ? Math.round((correctAnswers / totalCases) * 100) : 0;
 
-      // Estatísticas por especialidade otimizada
+      // Estatísticas por especialidade
       const specialtyStats: Record<string, any> = {};
       caseHistory?.forEach(history => {
         const specialty = history.medical_cases?.specialty || 'Outros';
@@ -109,7 +108,7 @@ export function useUserStats() {
         stats.accuracy = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
       });
 
-      // Progresso semanal (últimos 7 dias) otimizado
+      // Progresso semanal (últimos 7 dias)
       const weeklyProgress = [];
       const today = new Date();
       for (let i = 6; i >= 0; i--) {
@@ -128,7 +127,7 @@ export function useUserStats() {
         });
       }
 
-      // Conquistas baseadas em estatísticas reais
+      // Conquistas simuladas baseadas em estatísticas reais
       const achievements = [];
       if (totalCases >= 10) {
         achievements.push({
@@ -173,9 +172,7 @@ export function useUserStats() {
       };
     },
     enabled: !!user?.id,
-    refetchInterval: 60000, // Reduzir para 60 segundos para melhor performance
-    staleTime: 1000 * 60 * 2, // Cache de 2 minutos
-    retry: 1 // Reduzir tentativas para performance
+    refetchInterval: 30000 // Atualizar a cada 30 segundos
   });
 
   return {

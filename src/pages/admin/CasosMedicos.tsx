@@ -6,7 +6,7 @@ import { BackToDashboard } from "@/components/navigation/BackToDashboard";
 
 export default function CasosMedicos() {
   return (
-    <div className="space-y-6 bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 min-h-full">
+    <div className="space-y-6">
       {/* Navegação */}
       <div className="flex items-center justify-between">
         <BackToDashboard variant="back" />
@@ -17,7 +17,7 @@ export default function CasosMedicos() {
 
       <CasesManagementHeader />
       
-      <div className="bg-white rounded-lg shadow-lg border border-gray-100">
+      <div className="bg-white rounded-lg shadow-lg">
         <CaseProfileForm />
       </div>
     </div>
