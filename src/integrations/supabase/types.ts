@@ -282,6 +282,39 @@ export type Database = {
           },
         ]
       }
+      contact_messages: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          message: string
+          metadata: Json | null
+          name: string
+          replied_at: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          message: string
+          metadata?: Json | null
+          name: string
+          replied_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string
+          metadata?: Json | null
+          name?: string
+          replied_at?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       difficulties: {
         Row: {
           description: string | null
@@ -784,6 +817,33 @@ export type Database = {
         }
         Relationships: []
       }
+      newsletter_leads: {
+        Row: {
+          email: string
+          id: string
+          is_active: boolean
+          metadata: Json | null
+          source: string | null
+          subscribed_at: string
+        }
+        Insert: {
+          email: string
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          source?: string | null
+          subscribed_at?: string
+        }
+        Update: {
+          email?: string
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          source?: string | null
+          subscribed_at?: string
+        }
+        Relationships: []
+      }
       permanent_admins: {
         Row: {
           created_at: string | null
@@ -1210,6 +1270,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_consent: {
+        Row: {
+          analytics_consent: boolean | null
+          created_at: string
+          functional_consent: boolean | null
+          id: string
+          marketing_consent: boolean | null
+          updated_at: string
+          user_session: string
+        }
+        Insert: {
+          analytics_consent?: boolean | null
+          created_at?: string
+          functional_consent?: boolean | null
+          id?: string
+          marketing_consent?: boolean | null
+          updated_at?: string
+          user_session: string
+        }
+        Update: {
+          analytics_consent?: boolean | null
+          created_at?: string
+          functional_consent?: boolean | null
+          id?: string
+          marketing_consent?: boolean | null
+          updated_at?: string
+          user_session?: string
+        }
+        Relationships: []
       }
       user_help_aids: {
         Row: {
