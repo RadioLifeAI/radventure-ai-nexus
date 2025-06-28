@@ -1,7 +1,7 @@
 
 import React from "react";
 import { AdminSidebar } from "@/components/AdminSidebar";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import CasosMedicos from "./admin/CasosMedicos";
 import GestaoCasos from "./admin/GestaoCasos";
 import CreateEvent from "./admin/CreateEvent";
@@ -59,7 +59,10 @@ export default function AdminPanel() {
         {/* Conteúdo Principal com espaçamento correto */}
         <section className="p-8 relative z-0">
           <Routes>
-            {/* Rotas integradas - todas funcionais */}
+            {/* Rota padrão do admin - redireciona para analytics */}
+            <Route index element={<Navigate to="analytics" replace />} />
+            
+            {/* Rotas implementadas - todas funcionais */}
             <Route path="analytics" element={<DashboardAnalyticsIntegrated />} />
             <Route path="usuarios" element={<UserManagement />} />
             <Route path="usuarios-avancado" element={<UserManagementAdvanced />} />
@@ -69,6 +72,9 @@ export default function AdminPanel() {
             <Route path="tutor-ia" element={<AITutorManagement />} />
             <Route path="conquistas" element={<AchievementManagement />} />
             <Route path="monitoramento" element={<SystemMonitoringIntegrated />} />
+            <Route path="recompensas" element={<RewardManagement />} />
+            <Route path="chaves-api" element={<APIKeyManagement />} />
+            <Route path="config-stripe" element={<StripeManagement />} />
             
             {/* Rotas existentes mantidas */}
             <Route path="casos-medicos" element={<CasosMedicos />} />
@@ -76,10 +82,13 @@ export default function AdminPanel() {
             <Route path="create-event" element={<CreateEvent />} />
             <Route path="events" element={<EventsManagement />} />
             
-            {/* Rotas implementadas */}
-            <Route path="recompensas" element={<RewardManagement />} />
-            <Route path="chaves-api" element={<APIKeyManagement />} />
-            <Route path="config-stripe" element={<StripeManagement />} />
+            {/* Rotas temporárias para funcionalidades em desenvolvimento */}
+            <Route path="configuracoes" element={
+              <div className="text-center p-8">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">Configurações</h2>
+                <p className="text-gray-600">Esta seção está em desenvolvimento.</p>
+              </div>
+            } />
           </Routes>
         </section>
       </main>

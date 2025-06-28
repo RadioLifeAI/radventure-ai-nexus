@@ -16,26 +16,33 @@ import {
   Brain,
 } from "lucide-react";
 
-// Menu admin limpo - apenas funcionalidades implementadas
+// Menu admin corrigido - links relativos para rotas aninhadas
 const adminMenu = [
-  { label: "Analytics", icon: <BarChart3 size={20} />, to: "/admin/analytics" },
-  { label: "Criar Eventos", icon: <Calendar size={20} />, to: "/admin/create-event" },
-  { label: "Gestão de Eventos", icon: <BookOpen size={20} />, to: "/admin/events" },
-  { label: "Casos Médicos", icon: <FileText size={20} />, to: "/admin/casos-medicos" },
-  { label: "Gestão de Casos", icon: <Settings size={20} />, to: "/admin/gestao-casos" },
-  { label: "Usuários", icon: <Users size={20} />, to: "/admin/usuarios" },
-  { label: "Assinaturas", icon: <CreditCard size={20} />, to: "/admin/assinaturas" },
-  { label: "Tutor IA", icon: <Brain size={20} />, to: "/admin/tutor-ia" },
-  { label: "Conquistas", icon: <Trophy size={20} />, to: "/admin/conquistas" },
-  { label: "Monitoramento", icon: <Monitor size={20} />, to: "/admin/monitoramento" },
-  { label: "Recompensas", icon: <Gift size={20} />, to: "/admin/recompensas" },
-  { label: "Configurações", icon: <Settings size={20} />, to: "/admin/configuracoes" },
-  { label: "Chaves API", icon: <KeyRound size={20} />, to: "/admin/chaves-api" },
-  { label: "Config. Stripe", icon: <CreditCard size={20} />, to: "/admin/config-stripe" },
+  { label: "Analytics", icon: <BarChart3 size={20} />, to: "analytics" },
+  { label: "Criar Eventos", icon: <Calendar size={20} />, to: "create-event" },
+  { label: "Gestão de Eventos", icon: <BookOpen size={20} />, to: "events" },
+  { label: "Casos Médicos", icon: <FileText size={20} />, to: "casos-medicos" },
+  { label: "Gestão de Casos", icon: <Settings size={20} />, to: "gestao-casos" },
+  { label: "Usuários", icon: <Users size={20} />, to: "usuarios" },
+  { label: "Assinaturas", icon: <CreditCard size={20} />, to: "assinaturas" },
+  { label: "Tutor IA", icon: <Brain size={20} />, to: "tutor-ia" },
+  { label: "Conquistas", icon: <Trophy size={20} />, to: "conquistas" },
+  { label: "Monitoramento", icon: <Monitor size={20} />, to: "monitoramento" },
+  { label: "Recompensas", icon: <Gift size={20} />, to: "recompensas" },
+  { label: "Configurações", icon: <Settings size={20} />, to: "configuracoes" },
+  { label: "Chaves API", icon: <KeyRound size={20} />, to: "chaves-api" },
+  { label: "Config. Stripe", icon: <CreditCard size={20} />, to: "config-stripe" },
 ];
 
 export function AdminSidebar() {
   const location = useLocation();
+  
+  // Função para verificar se a rota está ativa considerando rotas aninhadas
+  const isActiveRoute = (to: string) => {
+    const fullPath = `/admin/${to}`;
+    return location.pathname === fullPath || location.pathname.startsWith(`${fullPath}/`);
+  };
+
   return (
     <aside className="h-screen bg-white shadow border-r w-[235px] flex flex-col fixed top-0 left-0 z-30">
       <div className="flex items-center px-6 py-4 border-b">
@@ -48,7 +55,7 @@ export function AdminSidebar() {
             to={item.to}
             key={item.label}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-base font-semibold transition ${
-              location.pathname === item.to
+              isActiveRoute(item.to)
                 ? "bg-cyan-600 text-white"
                 : "text-gray-700 hover:bg-cyan-100"
             }`}

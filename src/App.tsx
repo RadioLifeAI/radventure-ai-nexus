@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
@@ -143,60 +142,12 @@ function App() {
           <Route path="/estatisticas" element={<Navigate to="/app/estatisticas" replace />} />
           <Route path="/jornadas" element={<Navigate to="/app/criar-jornada" replace />} />
 
-          {/* PÁGINAS ADMINISTRATIVAS - Mantidas como estavam (corretas) */}
+          {/* PÁGINAS ADMINISTRATIVAS - Apenas rota principal com rotas aninhadas */}
           <Route
-            path="/admin"
+            path="/admin/*"
             element={
               <ProtectedRoute requireAdmin={true}>
                 <AdminPanel />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/dashboard"
-            element={
-              <ProtectedRoute requireAdmin={true}>
-                <AdminDashboardAdvanced />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/casos"
-            element={
-              <ProtectedRoute requireAdmin={true}>
-                <GestaoCasos />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/eventos"
-            element={
-              <ProtectedRoute requireAdmin={true}>
-                <EventsManagement />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/criar-evento"
-            element={
-              <ProtectedRoute requireAdmin={true}>
-                <CreateEvent />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/casos-medicos"
-            element={
-              <ProtectedRoute requireAdmin={true}>
-                <CasosMedicos />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/casos-preview"
-            element={
-              <ProtectedRoute requireAdmin={true}>
-                <FakeCasesPreview />
               </ProtectedRoute>
             }
           />
