@@ -1,5 +1,5 @@
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import Index from "@/pages/Index";
@@ -59,7 +59,7 @@ function App() {
           <Route path="/contato" element={<Contato />} />
           <Route path="/funcionalidades" element={<Funcionalidades />} />
 
-          {/* Páginas protegidas da aplicação */}
+          {/* Páginas protegidas da aplicação - ROTAS CORRETAS COM /app */}
           <Route
             path="/dashboard"
             element={
@@ -69,15 +69,15 @@ function App() {
             }
           />
           <Route
-            path="/rankings"
+            path="/app/rankings"
             element={
               <ProtectedRoute>
                 <Rankings />
-              </ProtectedRoute>
+              </ProtectedRoute>  
             }
           />
           <Route
-            path="/ranking-eventos"
+            path="/app/ranking-eventos"
             element={
               <ProtectedRoute>
                 <RankingEventos />
@@ -85,7 +85,7 @@ function App() {
             }
           />
           <Route
-            path="/casos"
+            path="/app/casos"
             element={
               <ProtectedRoute>
                 <Casos />
@@ -93,7 +93,7 @@ function App() {
             }
           />
           <Route
-            path="/caso/:id"
+            path="/app/caso/:id"
             element={
               <ProtectedRoute>
                 <CasoUsuarioView />
@@ -101,7 +101,7 @@ function App() {
             }
           />
           <Route
-            path="/eventos"
+            path="/app/eventos"
             element={
               <ProtectedRoute>
                 <EventosEnhanced />
@@ -109,7 +109,7 @@ function App() {
             }
           />
           <Route
-            path="/evento/:id"
+            path="/app/evento/:id"
             element={
               <ProtectedRoute>
                 <EventoDetalhes />
@@ -117,7 +117,7 @@ function App() {
             }
           />
           <Route
-            path="/estatisticas"
+            path="/app/estatisticas"
             element={
               <ProtectedRoute>
                 <Estatisticas />
@@ -125,7 +125,7 @@ function App() {
             }
           />
           <Route
-            path="/jornadas"
+            path="/app/criar-jornada"
             element={
               <ProtectedRoute>
                 <CreateJourney />
@@ -133,7 +133,17 @@ function App() {
             }
           />
 
-          {/* FASE 1: Páginas administrativas COM proteção requireAdmin */}
+          {/* REDIRECTS para compatibilidade com rotas antigas */}
+          <Route path="/rankings" element={<Navigate to="/app/rankings" replace />} />
+          <Route path="/ranking-eventos" element={<Navigate to="/app/ranking-eventos" replace />} />
+          <Route path="/casos" element={<Navigate to="/app/casos" replace />} />
+          <Route path="/caso/:id" element={<Navigate to="/app/caso/:id" replace />} />
+          <Route path="/eventos" element={<Navigate to="/app/eventos" replace />} />
+          <Route path="/evento/:id" element={<Navigate to="/app/evento/:id" replace />} />
+          <Route path="/estatisticas" element={<Navigate to="/app/estatisticas" replace />} />
+          <Route path="/jornadas" element={<Navigate to="/app/criar-jornada" replace />} />
+
+          {/* PÁGINAS ADMINISTRATIVAS - Mantidas como estavam (corretas) */}
           <Route
             path="/admin"
             element={
