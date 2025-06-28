@@ -23,7 +23,7 @@ export default function Login() {
     const { error } = await signIn(email, password);
 
     if (!error) {
-      navigate("/app");
+      navigate("/dashboard"); // FASE 1: Correção do redirecionamento
     }
   };
 
@@ -36,14 +36,14 @@ export default function Login() {
     const { error } = await signUp(email, password, fullName);
 
     if (!error) {
-      navigate("/app");
+      navigate("/dashboard"); // FASE 1: Correção do redirecionamento
     }
   };
 
   const handleGoogleAuth = async () => {
     const { error } = await signInWithGoogle();
     if (!error) {
-      // Redirect happens automatically
+      // Redirect happens automatically to /dashboard
     }
   };
 

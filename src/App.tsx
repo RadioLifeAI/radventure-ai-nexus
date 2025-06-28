@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
@@ -132,11 +133,11 @@ function App() {
             }
           />
 
-          {/* Páginas administrativas */}
+          {/* FASE 1: Páginas administrativas COM proteção requireAdmin */}
           <Route
             path="/admin"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requireAdmin={true}>
                 <AdminPanel />
               </ProtectedRoute>
             }
@@ -144,7 +145,7 @@ function App() {
           <Route
             path="/admin/dashboard"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requireAdmin={true}>
                 <AdminDashboardAdvanced />
               </ProtectedRoute>
             }
@@ -152,7 +153,7 @@ function App() {
           <Route
             path="/admin/casos"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requireAdmin={true}>
                 <GestaoCasos />
               </ProtectedRoute>
             }
@@ -160,7 +161,7 @@ function App() {
           <Route
             path="/admin/eventos"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requireAdmin={true}>
                 <EventsManagement />
               </ProtectedRoute>
             }
@@ -168,7 +169,7 @@ function App() {
           <Route
             path="/admin/criar-evento"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requireAdmin={true}>
                 <CreateEvent />
               </ProtectedRoute>
             }
@@ -176,7 +177,7 @@ function App() {
           <Route
             path="/admin/casos-medicos"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requireAdmin={true}>
                 <CasosMedicos />
               </ProtectedRoute>
             }
@@ -184,7 +185,7 @@ function App() {
           <Route
             path="/admin/casos-preview"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requireAdmin={true}>
                 <FakeCasesPreview />
               </ProtectedRoute>
             }

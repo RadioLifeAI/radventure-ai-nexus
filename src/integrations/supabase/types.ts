@@ -1399,6 +1399,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      award_daily_login_bonus: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
       award_radcoins: {
         Args: {
           p_user_id: string
@@ -1500,6 +1504,10 @@ export type Database = {
       setup_first_admin: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      setup_initial_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
       }
       sync_user_benefits: {
         Args: { p_user_id: string }

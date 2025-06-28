@@ -62,7 +62,7 @@ export function useUserProfile() {
             email: user.email || '',
             username: user.email?.split('@')[0] || `user_${user.id.slice(0, 8)}`,
             full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
-            type: 'USER' as const, // Sempre USER por padrão
+            type: 'USER' as const,
             radcoin_balance: 0,
             total_points: 0,
             current_streak: 0,
@@ -92,8 +92,8 @@ export function useUserProfile() {
     },
     enabled: !!user?.id && isAuthenticated,
     refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5, // FASE 2: Cache de 5 minutos para performance
     retry: (failureCount, error: any) => {
-      // Tentar novamente apenas se não for erro de criação
       return failureCount < 2 && error?.code !== 'PGRST116';
     },
   });
@@ -123,10 +123,9 @@ export function useUserProfile() {
       return data;
     },
     onSuccess: (updatedProfile) => {
-      // Atualizar cache local
+      // FASE 2: Cache otimizado
       queryClient.setQueryData(['user-profile', user?.id], updatedProfile);
       
-      // Refresh avatar upload hook if avatar was updated
       if (updatedProfile.avatar_url) {
         queryClient.invalidateQueries({ queryKey: ['user-profile', user?.id] });
       }
@@ -146,7 +145,6 @@ export function useUserProfile() {
     }
   });
 
-  // Função para refrescar dados do perfil
   const refreshProfile = () => {
     queryClient.invalidateQueries({ queryKey: ['user-profile', user?.id] });
   };

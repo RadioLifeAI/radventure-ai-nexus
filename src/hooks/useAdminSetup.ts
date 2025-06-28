@@ -30,39 +30,41 @@ export function useAdminSetup() {
       setNeedsSetup(!hasAdmin);
       return hasAdmin;
     },
-    refetchInterval: 5000, // Verificar a cada 5 segundos se ainda precisa de setup
+    refetchInterval: 5000,
+    staleTime: 1000 * 30, // FASE 2: Cache de 30 segundos para performance
   });
 
-  const createFirstAdmin = async (email: string, fullName: string) => {
+  // FASE 1: Função simplificada para setup inicial
+  const setupFirstAdmin = async () => {
     try {
-      console.log('Criando primeiro admin do sistema...');
+      console.log('Configurando primeiro admin do sistema...');
       
       const { data, error } = await supabase
-        .rpc('create_admin_direct', {
-          p_email: email,
-          p_full_name: fullName,
-          p_type: 'ADMIN'
-        });
+        .rpc('setup_initial_admin');
 
       if (error) throw error;
 
-      console.log('Primeiro admin criado com ID:', data);
-      
-      toast({
-        title: '🎉 Primeiro Admin Criado!',
-        description: `Sistema configurado com sucesso. Admin: ${fullName}`,
-      });
+      if (data) {
+        toast({
+          title: '🎉 Admin Configurado!',
+          description: 'Você agora tem privilégios administrativos.',
+        });
+      } else {
+        toast({
+          title: 'ℹ️ Sistema já configurado',
+          description: 'Já existem administradores no sistema.',
+        });
+      }
 
-      // Recarregar verificação
       await refetch();
       
-      return { success: true, userId: data };
+      return { success: true };
     } catch (error: any) {
-      console.error('Erro ao criar primeiro admin:', error);
+      console.error('Erro ao configurar admin:', error);
       
       toast({
         title: '❌ Erro na Configuração',
-        description: error.message || 'Falha ao criar primeiro admin',
+        description: error.message || 'Falha ao configurar administrador',
         variant: 'destructive'
       });
       
@@ -74,7 +76,7 @@ export function useAdminSetup() {
     needsSetup,
     adminExists,
     isLoading,
-    createFirstAdmin,
+    setupFirstAdmin,
     refetch
   };
 }

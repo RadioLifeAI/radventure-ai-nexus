@@ -21,8 +21,9 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // FASE 1: Proteção administrativa implementada
   if (requireAdmin && !isAdmin) {
-    return <Navigate to="/app" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;

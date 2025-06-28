@@ -13,11 +13,33 @@ export function useAuth() {
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+
+        // Gamificação: Bonus de login diário (FASE 3)
+        if (event === 'SIGNED_IN' && session?.user) {
+          try {
+            const { data: bonusResult } = await supabase.rpc('award_daily_login_bonus', {
+              p_user_id: session.user.id
+            });
+            
+            if (bonusResult?.awarded) {
+              // Toast não-intrusivo para bonus
+              setTimeout(() => {
+                toast({
+                  title: '🎉 Bonus de Login!',
+                  description: bonusResult.message,
+                  duration: 3000,
+                });
+              }, 1000);
+            }
+          } catch (error) {
+            console.log('Erro no bonus de login:', error);
+          }
+        }
       }
     );
 
@@ -35,12 +57,12 @@ export function useAuth() {
     getSession();
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [toast]);
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     setLoading(true);
     try {
-      const redirectUrl = `${window.location.origin}/`;
+      const redirectUrl = `${window.location.origin}/dashboard`; // FASE 1: Correção do redirecionamento
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -109,13 +131,12 @@ export function useAuth() {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/app`
+          redirectTo: `${window.location.origin}/dashboard` // FASE 1: Correção do redirecionamento
         }
       });
 
       if (error) throw error;
 
-      // Note: The redirect will happen automatically, so we don't show a success toast here
       return { data, error: null };
     } catch (error: any) {
       console.error('Google sign in error:', error);
