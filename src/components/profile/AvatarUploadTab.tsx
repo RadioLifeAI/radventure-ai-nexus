@@ -6,16 +6,18 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Camera, Upload, Loader2 } from "lucide-react";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAvatarUpload } from "@/hooks/useAvatarUpload";
+import { useAuth } from "@/hooks/useAuth";
 
 export function AvatarUploadTab() {
   const { profile } = useUserProfile();
-  const { uploadAvatar, isUploading } = useAvatarUpload();
+  const { user } = useAuth();
+  const { uploadAvatar, uploading } = useAvatarUpload();
   const [dragOver, setDragOver] = useState(false);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      uploadAvatar(file);
+    if (file && user?.id) {
+      uploadAvatar(file, user.id);
     }
   };
 
@@ -23,8 +25,8 @@ export function AvatarUploadTab() {
     event.preventDefault();
     setDragOver(false);
     const file = event.dataTransfer.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      uploadAvatar(file);
+    if (file && file.type.startsWith('image/') && user?.id) {
+      uploadAvatar(file, user.id);
     }
   };
 
@@ -81,18 +83,18 @@ export function AvatarUploadTab() {
                 onChange={handleFileSelect}
                 className="hidden"
                 id="avatar-upload"
-                disabled={isUploading}
+                disabled={uploading}
               />
               <label htmlFor="avatar-upload">
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={isUploading}
+                  disabled={uploading}
                   className="cursor-pointer"
                   asChild
                 >
                   <span>
-                    {isUploading ? (
+                    {uploading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Enviando...
