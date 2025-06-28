@@ -30,12 +30,12 @@ export function useResponsive() {
   }, []);
 
   useEffect(() => {
-    // Throttle para melhor performance
+    // Throttle mais agressivo para melhor performance
     let timeoutId: NodeJS.Timeout;
     
     const handleResize = () => {
       clearTimeout(timeoutId);
-      timeoutId = setTimeout(updateScreenSize, 100);
+      timeoutId = setTimeout(updateScreenSize, 150); // Aumentado de 100ms para 150ms
     };
 
     window.addEventListener('resize', handleResize, { passive: true });

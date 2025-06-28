@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -69,6 +70,7 @@ export default {
 				sm: 'calc(var(--radius) - 4px)'
 			},
 			keyframes: {
+				// Apenas animações essenciais mantidas
 				'accordion-down': {
 					from: {
 						height: '0'
@@ -87,6 +89,7 @@ export default {
 				}
 			},
 			animation: {
+				// Apenas animações essenciais - performance otimizada
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out'
 			}

@@ -34,7 +34,7 @@ const adminMenu = [
   { label: "Config. Stripe", icon: <CreditCard size={20} />, to: "config-stripe" },
 ];
 
-export function AdminSidebar() {
+const AdminSidebar = React.memo(() => {
   const location = useLocation();
   
   // Função para verificar se a rota está ativa considerando rotas aninhadas
@@ -54,7 +54,7 @@ export function AdminSidebar() {
           <Link
             to={item.to}
             key={item.label}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition-colors ${
               isActiveRoute(item.to)
                 ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md"
                 : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
@@ -74,7 +74,9 @@ export function AdminSidebar() {
       </div>
     </aside>
   );
-}
+});
+
+AdminSidebar.displayName = "AdminSidebar";
 
 // Shield Icon para o admin
 function ShieldIcon() {
@@ -84,3 +86,5 @@ function ShieldIcon() {
     </svg>
   )
 }
+
+export { AdminSidebar };
