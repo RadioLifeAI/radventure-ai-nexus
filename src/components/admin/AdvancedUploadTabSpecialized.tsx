@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -20,7 +19,7 @@ import {
 import { ImageEditorModal } from '../image-editor/ImageEditorModal';
 import { MedicalStackViewer } from '../image-viewer/MedicalStackViewer';
 import { ZipProcessor } from '../upload/ZipProcessor';
-import { EnhancedImageUpload } from '../../pages/admin/components/EnhancedImageUpload';
+import { EnhancedImageUploadSpecialized } from '../../pages/admin/components/EnhancedImageUploadSpecialized';
 import { useSpecializedImageUpload } from '@/hooks/useSpecializedImageUpload';
 
 interface AdvancedUploadTabSpecializedProps {
@@ -101,7 +100,6 @@ export function AdvancedUploadTabSpecialized({
   const handleZipExtracted = (images: ExtractedImage[]) => {
     setExtractedImages(images);
     
-    // Converter para formato compatível com o viewer
     const viewerImages = images.map((img, index) => ({
       id: `temp_${index}`,
       url: URL.createObjectURL(img.file),
@@ -139,7 +137,6 @@ export function AdvancedUploadTabSpecialized({
     }
   };
 
-  // Informações da organização atual
   const getOrganizationPreview = () => {
     if (!categoryId && !modality) return 'Selecione categoria e modalidade primeiro';
     
@@ -173,7 +170,6 @@ export function AdvancedUploadTabSpecialized({
             </div>
           </CardTitle>
           
-          {/* Preview da Organização */}
           <Alert className="bg-white/70">
             <FolderTree className="h-4 w-4" />
             <AlertDescription>
@@ -351,8 +347,10 @@ export function AdvancedUploadTabSpecialized({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <EnhancedImageUpload 
+              <EnhancedImageUploadSpecialized 
                 caseId={caseId}
+                categoryId={categoryId}
+                modality={modality}
                 onChange={onImagesChange}
               />
               

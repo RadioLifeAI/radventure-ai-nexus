@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,7 +17,7 @@ import {
 import { ImageEditorModal } from '../image-editor/ImageEditorModal';
 import { MedicalStackViewer } from '../image-viewer/MedicalStackViewer';
 import { ZipProcessor } from '../upload/ZipProcessor';
-import { EnhancedImageUpload } from '../../pages/admin/components/EnhancedImageUpload';
+import { EnhancedImageUploadSpecialized } from '../../pages/admin/components/EnhancedImageUploadSpecialized';
 
 interface AdvancedUploadTabProps {
   caseId?: string;
@@ -72,7 +71,6 @@ export function AdvancedUploadTab({ caseId, onImagesChange }: AdvancedUploadTabP
   };
 
   const handleImageEdited = (editedFile: File) => {
-    // Aqui você integraria com o sistema de upload existente
     console.log('Imagem editada:', editedFile);
     setSelectedFile(null);
   };
@@ -80,7 +78,6 @@ export function AdvancedUploadTab({ caseId, onImagesChange }: AdvancedUploadTabP
   const handleZipExtracted = (images: ExtractedImage[]) => {
     setExtractedImages(images);
     
-    // Converter para formato compatível com o viewer
     const viewerImages = images.map((img, index) => ({
       id: `temp_${index}`,
       url: URL.createObjectURL(img.file),
@@ -97,12 +94,9 @@ export function AdvancedUploadTab({ caseId, onImagesChange }: AdvancedUploadTabP
 
   const handleUploadBatch = async () => {
     if (extractedImages.length === 0) return;
-    
-    // Aqui você integraria com o sistema de upload do Supabase
     console.log('Fazendo upload em lote de', extractedImages.length, 'imagens');
     
     for (const image of extractedImages) {
-      // Upload individual usando o sistema existente
       console.log('Upload:', image.name, 'Ordem:', image.order);
     }
   };
@@ -169,7 +163,7 @@ export function AdvancedUploadTab({ caseId, onImagesChange }: AdvancedUploadTabP
           <TabsTrigger value="editor">Editor de Imagem</TabsTrigger>
           <TabsTrigger value="zip">Processador ZIP</TabsTrigger>
           <TabsTrigger value="stack">Visualizador Stack</TabsTrigger>
-          <TabsTrigger value="upload">Upload Padrão</TabsTrigger>
+          <TabsTrigger value="upload">Upload Especializado</TabsTrigger>
         </TabsList>
 
         <TabsContent value="editor" className="space-y-4">
@@ -263,10 +257,10 @@ export function AdvancedUploadTab({ caseId, onImagesChange }: AdvancedUploadTabP
         <TabsContent value="upload" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Sistema de Upload Padrão</CardTitle>
+              <CardTitle>Sistema de Upload Especializado</CardTitle>
             </CardHeader>
             <CardContent>
-              <EnhancedImageUpload 
+              <EnhancedImageUploadSpecialized 
                 caseId={caseId}
                 onChange={onImagesChange}
               />
