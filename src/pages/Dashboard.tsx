@@ -80,7 +80,7 @@ export default function Dashboard() {
   };
 
   const handleCriarJornada = () => {
-    navigate('/app/criar-jornada');
+    navigate('/app/jornada/criar');
   };
 
   const handleEventos = () => {
