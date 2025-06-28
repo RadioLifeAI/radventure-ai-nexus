@@ -116,10 +116,10 @@ export function useUserProfile() {
     },
   });
 
-  // Verificar recompensas quando o perfil for carregado
+  // Verificar recompensas quando o perfil for carregado (apenas uma vez)
   useEffect(() => {
     if (profile && user) {
-      console.log('🎯 Verificando recompensas de perfil...');
+      console.log('🎯 Verificando recompensas de perfil no carregamento...');
       checkAndAwardProfileRewards(profile);
     }
   }, [profile, user, checkAndAwardProfileRewards]);
@@ -150,10 +150,6 @@ export function useUserProfile() {
     },
     onSuccess: (updatedProfile) => {
       queryClient.setQueryData(['user-profile', user?.id], updatedProfile);
-      
-      // Verificar recompensas imediatamente após atualização
-      console.log('🏆 Perfil atualizado, verificando recompensas...');
-      checkAndAwardProfileRewards(updatedProfile);
       
       toast({
         title: 'Perfil atualizado',
