@@ -13,11 +13,11 @@ type Props = {
   skipPenalty: number;
   eliminationPenalty: number;
   aiHintEnabled: boolean;
-  onEliminateOption: (correctAnswerIndex: number) => void; // CORREÇÃO: Passar índice correto
+  onEliminateOption: (correctAnswerIndex: number) => void;
   onSkip: () => void;
   onAIHint: () => void;
   eliminatedOptions: number[];
-  correctAnswerIndex: number; // NOVO: Receber índice da resposta correta
+  correctAnswerIndex: number;
 };
 
 export function HelpSystem({
@@ -34,8 +34,6 @@ export function HelpSystem({
 }: Props) {
   const { toast } = useToast();
   const [showConfirm, setShowConfirm] = useState<string | null>(null);
-  
-  // CORREÇÃO: Usar dados reais do banco de dados
   const { helpAids, consumeHelp } = useUserHelpAids();
 
   const handleElimination = () => {

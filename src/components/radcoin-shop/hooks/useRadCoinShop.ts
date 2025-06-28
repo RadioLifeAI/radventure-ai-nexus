@@ -1,40 +1,9 @@
 
-import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'sonner';
-
-export interface HelpPackage {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  benefits: {
-    elimination_aids?: number;
-    skip_aids?: number;
-    ai_tutor_credits?: number;
-  };
-  popular?: boolean;
-  discount?: number;
-}
-
-export interface SpecialOffer {
-  id: string;
-  name: string;
-  description: string;
-  originalPrice: number;
-  salePrice: number;
-  discount: number;
-  timeLeft: string;
-  benefits: any;
-  limited?: boolean;
-}
+import { HelpPackage, SpecialOffer } from './useRadCoinData';
+import { useRadCoinPurchase } from './useRadCoinPurchase';
 
 export function useRadCoinShop() {
-  const [isPurchasing, setIsPurchasing] = useState(false);
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
+  const { purchaseItem, isPurchasing } = useRadCoinPurchase();
 
   // Dados dos pacotes de ajuda
   const helpPackages: HelpPackage[] = [
@@ -111,184 +80,14 @@ export function useRadCoinShop() {
     }
   ];
 
-  const purchaseHelpPackage = useMutation({
-    mutationFn: async (packageData: HelpPackage) => {
-      if (!user?.id) throw new Error('Usuário não autenticado');
-
-      console.log('Comprando pacote de ajuda:', packageData);
-      
-      // Verificar saldo atual
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('radcoin_balance')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError) throw profileError;
-
-      const currentBalance = profile?.radcoin_balance || 0;
-      const finalPrice = packageData.discount 
-        ? Math.floor(packageData.price * (1 - packageData.discount / 100))
-        : packageData.price;
-
-      if (currentBalance < finalPrice) {
-        throw new Error('Saldo insuficiente de RadCoins');
-      }
-
-      // Debitar RadCoins
-      const { error: debitError } = await supabase
-        .from('profiles')
-        .update({ 
-          radcoin_balance: currentBalance - finalPrice,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
-
-      if (debitError) throw debitError;
-
-      // CORREÇÃO: Usar função add_help_aids em vez de consume_help_aid
-      const { data: addResult, error: benefitsError } = await supabase.rpc('add_help_aids', {
-        p_user_id: user.id,
-        p_elimination_aids: packageData.benefits.elimination_aids || 0,
-        p_skip_aids: packageData.benefits.skip_aids || 0,
-        p_ai_tutor_credits: packageData.benefits.ai_tutor_credits || 0
-      });
-
-      if (benefitsError) {
-        console.error('Erro ao adicionar benefícios:', benefitsError);
-        throw new Error('Erro ao creditar benefícios. Contate o suporte.');
-      }
-
-      // Registrar transação
-      const { error: logError } = await supabase
-        .from('radcoin_transactions_log')
-        .insert({
-          user_id: user.id,
-          tx_type: 'help_purchase',
-          amount: -finalPrice,
-          balance_after: currentBalance - finalPrice,
-          metadata: {
-            package_id: packageData.id,
-            package_name: packageData.name,
-            benefits: packageData.benefits
-          }
-        });
-
-      if (logError) throw logError;
-
-      return { success: true };
-    },
-    onMutate: () => setIsPurchasing(true),
-    onSuccess: (_, packageData) => {
-      toast.success(`Pacote "${packageData.name}" adquirido com sucesso! 🎉`, {
-        description: 'Seus benefícios foram adicionados à sua conta.',
-        duration: 5000
-      });
-      
-      // Invalidar queries para atualizar UI
-      queryClient.invalidateQueries({ queryKey: ['user-profile'] });
-      queryClient.invalidateQueries({ queryKey: ['user-help-aids'] });
-    },
-    onError: (error: any) => {
-      console.error('Erro na compra:', error);
-      toast.error('Erro na compra', {
-        description: error.message || 'Tente novamente em alguns instantes.',
-        duration: 5000
-      });
-    },
-    onSettled: () => setIsPurchasing(false)
-  });
-
-  const purchaseSpecialOffer = useMutation({
-    mutationFn: async (offerData: SpecialOffer) => {
-      if (!user?.id) throw new Error('Usuário não autenticado');
-
-      console.log('Comprando oferta especial:', offerData);
-      
-      // Verificar saldo atual
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('radcoin_balance')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError) throw profileError;
-
-      const currentBalance = profile?.radcoin_balance || 0;
-      if (currentBalance < offerData.salePrice) {
-        throw new Error('Saldo insuficiente de RadCoins');
-      }
-
-      // Debitar RadCoins
-      const { error: debitError } = await supabase
-        .from('profiles')
-        .update({ 
-          radcoin_balance: currentBalance - offerData.salePrice,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
-
-      if (debitError) throw debitError;
-
-      // CORREÇÃO: Usar função add_help_aids em vez de UPSERT incorreto
-      const { data: addResult, error: benefitsError } = await supabase.rpc('add_help_aids', {
-        p_user_id: user.id,
-        p_elimination_aids: offerData.benefits.elimination_aids || 0,
-        p_skip_aids: offerData.benefits.skip_aids || 0,
-        p_ai_tutor_credits: offerData.benefits.ai_tutor_credits || 0
-      });
-
-      if (benefitsError) {
-        console.error('Erro ao adicionar benefícios da oferta:', benefitsError);
-        throw new Error('Erro ao creditar benefícios. Contate o suporte.');
-      }
-
-      // Registrar transação
-      const { error: logError } = await supabase
-        .from('radcoin_transactions_log')
-        .insert({
-          user_id: user.id,
-          tx_type: 'help_purchase',
-          amount: -offerData.salePrice,
-          balance_after: currentBalance - offerData.salePrice,
-          metadata: {
-            offer_id: offerData.id,
-            offer_name: offerData.name,
-            original_price: offerData.originalPrice,
-            discount: offerData.discount,
-            benefits: offerData.benefits
-          }
-        });
-
-      if (logError) throw logError;
-
-      return { success: true };
-    },
-    onMutate: () => setIsPurchasing(true),
-    onSuccess: (_, offerData) => {
-      toast.success(`Oferta "${offerData.name}" adquirida! 🔥`, {
-        description: `Você economizou ${offerData.discount}% nesta compra!`,
-        duration: 5000
-      });
-      
-      queryClient.invalidateQueries({ queryKey: ['user-profile'] });
-      queryClient.invalidateQueries({ queryKey: ['user-help-aids'] });
-    },
-    onError: (error: any) => {
-      console.error('Erro na compra da oferta:', error);
-      toast.error('Erro na compra', {
-        description: error.message || 'Tente novamente em alguns instantes.',
-        duration: 5000
-      });
-    },
-    onSettled: () => setIsPurchasing(false)
-  });
-
   return {
     helpPackages,
     specialOffers,
     isPurchasing,
-    purchaseHelpPackage: purchaseHelpPackage.mutate,
-    purchaseSpecialOffer: purchaseSpecialOffer.mutate
+    purchaseHelpPackage: purchaseItem,
+    purchaseSpecialOffer: purchaseItem
   };
 }
+
+// Re-export tipos para compatibilidade
+export type { HelpPackage, SpecialOffer } from './useRadCoinData';
