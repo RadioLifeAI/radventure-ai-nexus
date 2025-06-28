@@ -54,7 +54,7 @@ export function CasesGrid({ filters }: Props) {
     },
     // Cache mais agressivo para melhor performance
     staleTime: 5 * 60 * 1000, // 5 minutos
-    cacheTime: 10 * 60 * 1000 // 10 minutos
+    gcTime: 10 * 60 * 1000 // 10 minutos (renamed from cacheTime)
   });
 
   if (isLoading) {
