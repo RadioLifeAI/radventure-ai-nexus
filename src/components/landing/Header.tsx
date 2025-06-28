@@ -1,13 +1,11 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Rocket, Menu, X, Sun, Moon } from 'lucide-react';
+import { Rocket, Menu, X } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useDarkMode } from '@/hooks/useDarkMode';
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { isDark, toggleDarkMode } = useDarkMode();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -44,7 +42,7 @@ export function Header() {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -64,19 +62,19 @@ export function Header() {
           <nav className="hidden md:flex items-center space-x-8">
             <Link
               to="/funcionalidades"
-              className="text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors font-medium"
+              className="text-gray-700 hover:text-cyan-600 transition-colors font-medium"
             >
               Funcionalidades
             </Link>
             <button
               onClick={() => scrollToSection('sobre')}
-              className="text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
+              className="text-gray-700 hover:text-cyan-600 transition-colors"
             >
               Sobre
             </button>
             <Link
               to="/contato"
-              className="text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
+              className="text-gray-700 hover:text-cyan-600 transition-colors"
             >
               Contato
             </Link>
@@ -84,18 +82,11 @@ export function Header() {
 
           {/* Right Side Buttons */}
           <div className="flex items-center gap-4">
-            <button
-              onClick={toggleDarkMode}
-              className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-            >
-              {isDark ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
-
             <div className="hidden md:flex items-center gap-3">
               <Button
                 variant="ghost"
                 onClick={() => navigate('/login')}
-                className="text-gray-700 dark:text-gray-300 hover:text-cyan-600"
+                className="text-gray-700 hover:text-cyan-600"
               >
                 Entrar
               </Button>
@@ -110,7 +101,7 @@ export function Header() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+              className="md:hidden p-2 rounded-lg bg-gray-100 text-gray-700"
             >
               {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -119,24 +110,24 @@ export function Header() {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="md:hidden py-4 border-t border-gray-200">
             <div className="flex flex-col space-y-4">
               <Link
                 to="/funcionalidades"
-                className="text-left text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors font-medium"
+                className="text-left text-gray-700 hover:text-cyan-600 transition-colors font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Funcionalidades
               </Link>
               <button
                 onClick={() => scrollToSection('sobre')}
-                className="text-left text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
+                className="text-left text-gray-700 hover:text-cyan-600 transition-colors"
               >
                 Sobre
               </button>
               <Link
                 to="/contato"
-                className="text-gray-700 dark:text-gray-300 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
+                className="text-gray-700 hover:text-cyan-600 transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Contato
@@ -148,7 +139,7 @@ export function Header() {
                     navigate('/login');
                     setIsMenuOpen(false);
                   }}
-                  className="justify-start text-gray-700 dark:text-gray-300"
+                  className="justify-start text-gray-700"
                 >
                   Entrar
                 </Button>

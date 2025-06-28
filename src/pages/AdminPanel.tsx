@@ -25,8 +25,8 @@ export default function AdminPanel() {
     <div className="flex min-h-screen w-full bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
       <AdminSidebar />
       <main className="flex-1 ml-[235px] min-h-screen">
-        {/* Header Gamificado Corrigido */}
-        <header className="w-full bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 text-white shadow-2xl relative z-10">
+        {/* Header Administrativo Claro e Profissional */}
+        <header className="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-lg relative z-10">
           <div className="flex items-center justify-between px-8 py-6">
             <div className="flex items-center gap-4">
               <div className="flex items-center justify-center w-12 h-12 bg-white/20 rounded-full backdrop-blur-sm">
@@ -34,10 +34,10 @@ export default function AdminPanel() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold flex items-center gap-2">
-                  Painel de Administração Master
+                  Painel de Administração
                   <Sparkles className="h-6 w-6 text-yellow-300" />
                 </h1>
-                <p className="text-blue-100 text-sm">Controle total da plataforma médica gamificada</p>
+                <p className="text-blue-100 text-sm">Gestão completa da plataforma médica</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -56,8 +56,8 @@ export default function AdminPanel() {
           </div>
         </header>
 
-        {/* Conteúdo Principal com espaçamento correto */}
-        <section className="p-8 relative z-0">
+        {/* Conteúdo Principal com Background Claro Consistente */}
+        <section className="p-8 bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 min-h-[calc(100vh-88px)]">
           <Routes>
             {/* Rota padrão do admin - redireciona para analytics */}
             <Route index element={<Navigate to="analytics" replace />} />
@@ -76,15 +76,15 @@ export default function AdminPanel() {
             <Route path="chaves-api" element={<APIKeyManagement />} />
             <Route path="config-stripe" element={<StripeManagement />} />
             
-            {/* Rotas existentes mantidas */}
+            {/* Rotas de casos médicos - layout claro garantido */}
             <Route path="casos-medicos" element={<CasosMedicos />} />
             <Route path="gestao-casos" element={<GestaoCasos />} />
             <Route path="create-event" element={<CreateEvent />} />
             <Route path="events" element={<EventsManagement />} />
             
-            {/* Rotas temporárias para funcionalidades em desenvolvimento */}
+            {/* Rota de configurações */}
             <Route path="configuracoes" element={
-              <div className="text-center p-8">
+              <div className="bg-white rounded-lg shadow-lg p-8 text-center">
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">Configurações</h2>
                 <p className="text-gray-600">Esta seção está em desenvolvimento.</p>
               </div>

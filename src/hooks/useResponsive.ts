@@ -1,30 +1,54 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export function useResponsive() {
-  const [screenSize, setScreenSize] = useState<'mobile' | 'tablet' | 'desktop'>('desktop');
+  const [screenSize, setScreenSize] = useState<'mobile' | 'tablet' | 'desktop'>(() => {
+    // Inicialização otimizada no primeiro render
+    if (typeof window !== 'undefined') {
+      const width = window.innerWidth;
+      if (width < 768) return 'mobile';
+      if (width < 1024) return 'tablet';
+      return 'desktop';
+    }
+    return 'desktop';
+  });
+
+  const updateScreenSize = useCallback(() => {
+    const width = window.innerWidth;
+    let newSize: 'mobile' | 'tablet' | 'desktop';
+    
+    if (width < 768) {
+      newSize = 'mobile';
+    } else if (width < 1024) {
+      newSize = 'tablet';
+    } else {
+      newSize = 'desktop';
+    }
+    
+    // Só atualiza se mudou para evitar re-renders desnecessários
+    setScreenSize(prevSize => prevSize !== newSize ? newSize : prevSize);
+  }, []);
 
   useEffect(() => {
-    const updateScreenSize = () => {
-      const width = window.innerWidth;
-      if (width < 768) {
-        setScreenSize('mobile');
-      } else if (width < 1024) {
-        setScreenSize('tablet');
-      } else {
-        setScreenSize('desktop');
-      }
+    // Throttle para melhor performance
+    let timeoutId: NodeJS.Timeout;
+    
+    const handleResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(updateScreenSize, 100);
     };
 
-    updateScreenSize();
-    window.addEventListener('resize', updateScreenSize);
+    window.addEventListener('resize', handleResize, { passive: true });
     
-    return () => window.removeEventListener('resize', updateScreenSize);
-  }, []);
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [updateScreenSize]);
 
   return {
     isMobile: screenSize === 'mobile',
-    isTablet: screenSize === 'tablet',
+    isTablet: screenSize === 'tablet', 
     isDesktop: screenSize === 'desktop',
     screenSize
   };

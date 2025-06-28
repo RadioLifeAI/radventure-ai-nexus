@@ -2,25 +2,22 @@
 import { useState, useEffect } from 'react';
 
 export function useDarkMode() {
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('darkMode') === 'true' ||
-        (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    }
-    return false;
-  });
+  // Modo escuro completamente desabilitado - sempre retorna false
+  const [isDark] = useState(false);
 
   useEffect(() => {
+    // Garantir que a classe dark seja sempre removida
     const root = window.document.documentElement;
-    if (isDark) {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
-    localStorage.setItem('darkMode', isDark.toString());
-  }, [isDark]);
+    root.classList.remove('dark');
+    
+    // Limpar localStorage para evitar conflitos
+    localStorage.removeItem('darkMode');
+  }, []);
 
-  const toggleDarkMode = () => setIsDark(!isDark);
+  // Função vazia - não faz nada quando chamada
+  const toggleDarkMode = () => {
+    // Não faz nada - modo escuro desabilitado
+  };
 
-  return { isDark, toggleDarkMode };
+  return { isDark: false, toggleDarkMode };
 }
