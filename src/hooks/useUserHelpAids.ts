@@ -1,4 +1,5 @@
 
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -90,17 +91,17 @@ export function useUserHelpAids() {
     }
   });
 
+  // CORREÇÃO: Tutor AI automático - sem modal de pergunta
   const getTutorHintMutation = useMutation({
-    mutationFn: async ({ caseData, userQuestion }: { caseData: any, userQuestion?: string }) => {
+    mutationFn: async ({ caseData }: { caseData: any }) => {
       if (!user?.id) throw new Error('User not authenticated');
 
-      console.log('🤖 Chamando Tutor AI:', { caseId: caseData.id, userQuestion });
+      console.log('🤖 Chamando Tutor AI automático:', { caseId: caseData.id });
 
-      // CORREÇÃO: Usar supabase.functions.invoke em vez de fetch
       const { data, error } = await supabase.functions.invoke('ai-tutor-hint', {
         body: { 
           caseData, 
-          userQuestion: userQuestion || 'Dica geral sobre este caso' 
+          userQuestion: 'Dica geral sobre este caso médico' 
         }
       });
 
@@ -109,7 +110,7 @@ export function useUserHelpAids() {
         throw new Error(error.message || 'Erro ao obter dica do tutor');
       }
 
-      if (!data) {
+      if (!data || !data.hint) {
         throw new Error('Resposta vazia do tutor AI');
       }
 
@@ -140,9 +141,10 @@ export function useUserHelpAids() {
     isLoading,
     consumeHelp: consumeHelpMutation.mutate,
     isConsumingHelp: consumeHelpMutation.isPending,
-    getTutorHint: getTutorHintMutation.mutateAsync, // CORREÇÃO: usar mutateAsync para aguardar resultado
+    getTutorHint: getTutorHintMutation.mutateAsync,
     isGettingHint: getTutorHintMutation.isPending,
     tutorHintData: getTutorHintMutation.data,
     tutorHintError: getTutorHintMutation.error
   };
 }
+

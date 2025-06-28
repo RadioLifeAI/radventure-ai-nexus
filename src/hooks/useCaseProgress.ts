@@ -1,4 +1,5 @@
 
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -8,6 +9,7 @@ export function useCaseProgress(caseId: string) {
   const [startTime] = useState(Date.now());
   const [helpUsed, setHelpUsed] = useState<string[]>([]);
   const [eliminatedOptions, setEliminatedOptions] = useState<number[]>([]);
+  const [eliminationCount, setEliminationCount] = useState(0); // NOVO: Contador de eliminações
   const [isAnswered, setIsAnswered] = useState(false);
 
   const { toast } = useToast();
@@ -17,7 +19,18 @@ export function useCaseProgress(caseId: string) {
     setHelpUsed(prev => [...prev, helpType]);
   };
 
+  // CORREÇÃO: Limitar eliminação a 2 usos máximo
   const eliminateOption = (correctAnswerIndex: number) => {
+    // Verificar limite de eliminações
+    if (eliminationCount >= 2) {
+      toast({
+        title: "Limite atingido",
+        description: "Você pode eliminar no máximo 2 alternativas por caso.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     // CORREÇÃO CRÍTICA: Nunca eliminar a alternativa correta
     const availableOptions = [0, 1, 2, 3].filter(i => 
       i !== correctAnswerIndex && !eliminatedOptions.includes(i)
@@ -35,11 +48,12 @@ export function useCaseProgress(caseId: string) {
     // Selecionar uma alternativa INCORRETA aleatória
     const randomIndex = availableOptions[Math.floor(Math.random() * availableOptions.length)];
     setEliminatedOptions(prev => [...prev, randomIndex]);
+    setEliminationCount(prev => prev + 1);
     addHelpUsed("Eliminação");
     
     toast({
       title: "Alternativa eliminada",
-      description: "Uma alternativa incorreta foi removida das opções.",
+      description: `Uma alternativa incorreta foi removida. Usos restantes: ${2 - eliminationCount - 1}`,
     });
   };
 
@@ -61,16 +75,41 @@ export function useCaseProgress(caseId: string) {
     });
   };
 
-  const calculatePoints = (basePoints: number, isCorrect: boolean, penalties: number) => {
-    if (!isCorrect) return 0;
-    return Math.max(0, basePoints - penalties);
+  // CORREÇÃO: Sistema de penalidades implementado
+  const calculatePenalties = (basePoints: number) => {
+    let totalPenalty = 0;
+    
+    helpUsed.forEach(helpType => {
+      switch (helpType) {
+        case "Eliminação":
+          totalPenalty += Math.floor(basePoints * 0.20); // -20%
+          break;
+        case "Pular":
+          totalPenalty += Math.floor(basePoints * 0.50); // -50%
+          break;
+        case "Dica IA":
+          totalPenalty += Math.floor(basePoints * 0.10); // -10%
+          break;
+      }
+    });
+    
+    return totalPenalty;
   };
 
-  const calculatePenalties = (skipPenalty: number, eliminationPenalty: number) => {
-    const skipCount = helpUsed.filter(h => h === "Pular").length;
-    const eliminationCount = helpUsed.filter(h => h === "Eliminação").length;
+  const calculatePoints = (basePoints: number, isCorrect: boolean) => {
+    if (!isCorrect) return 0;
     
-    return (skipCount * skipPenalty) + (eliminationCount * eliminationPenalty);
+    const penalties = calculatePenalties(basePoints);
+    const finalPoints = Math.max(0, basePoints - penalties);
+    
+    console.log('📊 Cálculo de pontos:', {
+      basePoints,
+      penalties,
+      finalPoints,
+      helpUsed
+    });
+    
+    return finalPoints;
   };
 
   // Função para normalizar texto para comparação melhorada
@@ -111,8 +150,10 @@ export function useCaseProgress(caseId: string) {
       }
     }
     
-    const penalties = calculatePenalties(case_.skip_penalty_points || 0, case_.elimination_penalty_points || 0);
-    const points = calculatePoints(case_.points || 10, isCorrect, penalties);
+    // CORREÇÃO: Usar novo sistema de penalidades
+    const basePoints = case_.points || 10;
+    const points = calculatePoints(basePoints, isCorrect);
+    const penalties = calculatePenalties(basePoints);
 
     setIsAnswered(true);
 
@@ -123,8 +164,9 @@ export function useCaseProgress(caseId: string) {
       answer_feedbacks: case_.answer_feedbacks,
       correct_answer_index: case_.correct_answer_index,
       isCorrect,
-      points,
+      basePoints,
       penalties,
+      finalPoints: points,
       helpUsed
     });
 
@@ -140,11 +182,13 @@ export function useCaseProgress(caseId: string) {
           time_spent: timeSpent,
           help_used: helpUsed,
           penalties: penalties,
+          base_points: basePoints,
           selected_index: selectedIndex,
           selected_text: case_.answer_options?.[selectedIndex],
           correct_text: case_.answer_options?.[case_.correct_answer_index],
           answer_feedbacks: case_.answer_feedbacks,
-          eliminated_options: eliminatedOptions
+          eliminated_options: eliminatedOptions,
+          elimination_count: eliminationCount
         }
       });
 
@@ -164,7 +208,7 @@ export function useCaseProgress(caseId: string) {
         });
       }
 
-      console.log('✅ Resposta salva com sucesso:', { isCorrect, points });
+      console.log('✅ Resposta salva com sucesso:', { isCorrect, points, penalties });
     } catch (error) {
       console.error('❌ Erro ao salvar conclusão do caso:', error);
       toast({
@@ -177,23 +221,28 @@ export function useCaseProgress(caseId: string) {
     return {
       isCorrect,
       points,
+      basePoints,
+      penalties,
       timeSpent,
       helpUsed,
-      penalties,
       selectedIndex,
       answerFeedbacks: case_.answer_feedbacks,
-      eliminatedOptions
+      eliminatedOptions,
+      eliminationCount
     };
   };
 
   return {
     helpUsed,
     eliminatedOptions,
+    eliminationCount, // NOVO: Expor contador de eliminações
     isAnswered,
     eliminateOption,
     skipCase,
     useAIHint,
     submitAnswer,
-    startTime
+    startTime,
+    canEliminate: eliminationCount < 2 // NOVO: Indicador se ainda pode eliminar
   };
 }
+

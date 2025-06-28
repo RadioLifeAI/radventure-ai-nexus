@@ -95,15 +95,15 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
   const [performance, setPerformance] = useState<any>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imageZoom, setImageZoom] = useState(1);
-  const [showTutorHint, setShowTutorHint] = useState(false);
-  const [tutorQuestion, setTutorQuestion] = useState("");
   const [tutorHintText, setTutorHintText] = useState("");
   const [showHelpConfirm, setShowHelpConfirm] = useState<string | null>(null);
 
-  // CORREÇÃO: Hook corrigido - só precisa do caseId
+  // CORREÇÃO: Hook corrigido com contador de eliminações
   const {
     helpUsed,
     eliminatedOptions,
+    eliminationCount,
+    canEliminate,
     isAnswered,
     eliminateOption,
     skipCase,
@@ -165,12 +165,21 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
     navigate(-1);
   };
 
-  // CORREÇÃO CRÍTICA: Eliminar alternativa correta nunca mais
+  // CORREÇÃO: Eliminar alternativa com limite de 2 usos
   const handleEliminateOption = () => {
     if (!helpAids || helpAids.elimination_aids <= 0) {
       toast({
         title: "Sem créditos",
         description: "Você não possui ajudas de eliminação disponíveis.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!canEliminate) {
+      toast({
+        title: "Limite atingido",
+        description: "Você já eliminou 2 alternativas neste caso.",
         variant: "destructive"
       });
       return;
@@ -192,7 +201,8 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
     setShowHelpConfirm('skip');
   };
 
-  const handleRequestTutorHint = () => {
+  // CORREÇÃO: Tutor AI automático - sem modal de pergunta
+  const handleRequestTutorHint = async () => {
     if (!helpAids || helpAids.ai_tutor_credits <= 0) {
       toast({
         title: "Sem créditos",
@@ -202,39 +212,20 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
       return;
     }
 
-    setShowTutorHint(true);
-  };
-
-  const confirmHelpAction = () => {
-    if (showHelpConfirm === 'eliminate') {
-      // CORREÇÃO: Passar o índice correto para eliminar apenas alternativas incorretas
-      eliminateOption(correctIdx);
-      consumeHelp({ aidType: 'elimination' });
-    } else if (showHelpConfirm === 'skip') {
-      consumeHelp({ aidType: 'skip' });
-      skipCase();
-      handleNextCase();
-    }
-
-    setShowHelpConfirm(null);
-  };
-
-  const handleTutorHintRequest = async () => {
     try {
-      console.log('🤖 Solicitando dica do Tutor AI...');
+      console.log('🤖 Solicitando dica automática do Tutor AI...');
+      
+      // Consumir crédito primeiro
+      consumeHelp({ aidType: 'ai_tutor' });
       
       const response = await getTutorHint({
-        caseData: caso,
-        userQuestion: tutorQuestion || 'Dica geral sobre este caso'
+        caseData: caso
       });
 
       console.log('✅ Resposta recebida:', response);
 
-      // CORREÇÃO: Definir o texto da dica e fechar o modal
       if (response?.hint) {
         setTutorHintText(response.hint);
-        setShowTutorHint(false);
-        setTutorQuestion("");
         
         toast({
           title: "Dica recebida!",
@@ -251,6 +242,20 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
         variant: "destructive"
       });
     }
+  };
+
+  const confirmHelpAction = () => {
+    if (showHelpConfirm === 'eliminate') {
+      // CORREÇÃO: Passar o índice correto para eliminar apenas alternativas incorretas
+      eliminateOption(correctIdx);
+      consumeHelp({ aidType: 'elimination' });
+    } else if (showHelpConfirm === 'skip') {
+      consumeHelp({ aidType: 'skip' });
+      skipCase();
+      handleNextCase();
+    }
+
+    setShowHelpConfirm(null);
   };
 
   const nextImage = () => {
@@ -588,14 +593,14 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
             )}
           </div>
 
-          {/* Dica do Tutor AI */}
+          {/* Dica do Tutor AI - CORRIGIDO exibição automática */}
           {tutorHintText && (
-            <div className="bg-gradient-to-r from-purple-50 to-violet-50 rounded-xl p-6 mb-6 border border-purple-200 animate-fade-in">
-              <div className="flex items-center gap-3 mb-4">
+            <div className="fixed bottom-4 right-4 max-w-md bg-gradient-to-r from-purple-50 to-violet-50 rounded-xl p-4 border border-purple-200 shadow-lg animate-fade-in z-50">
+              <div className="flex items-center gap-3 mb-3">
                 <div className="p-2 bg-purple-500 rounded-lg">
-                  <Brain className="h-5 w-5 text-white" />
+                  <Brain className="h-4 w-4 text-white" />
                 </div>
-                <h3 className="text-lg font-bold text-purple-800">Dica do Tutor AI</h3>
+                <h3 className="font-bold text-purple-800">Dica do Tutor AI</h3>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -606,10 +611,10 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
                 </Button>
               </div>
               
-              <div className="bg-white rounded-lg p-4 border border-purple-200">
+              <div className="bg-white rounded-lg p-3 border border-purple-200">
                 <div className="flex items-start gap-2">
-                  <Brain className="h-5 w-5 text-purple-600 mt-1 flex-shrink-0" />
-                  <p className="text-purple-900 leading-relaxed">
+                  <Brain className="h-4 w-4 text-purple-600 mt-1 flex-shrink-0" />
+                  <p className="text-purple-900 text-sm leading-relaxed">
                     {tutorHintText}
                   </p>
                 </div>
@@ -646,7 +651,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
           )}
         </div>
 
-        {/* Coluna 3: Sistema de Ajudas */}
+        {/* Coluna 3: Sistema de Ajudas - CORRIGIDO */}
         <div className="w-64 bg-gradient-to-b from-yellow-50 to-orange-50 border-l border-gray-200 p-4">
           <div className="flex items-center gap-2 mb-4">
             <div className="p-2 bg-yellow-500 rounded-lg">
@@ -656,13 +661,13 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
           </div>
 
           <div className="space-y-3">
-            {/* Eliminar Opção */}
+            {/* Eliminar Opção - CORRIGIDO com limite de 2 usos */}
             <div className="bg-white rounded-lg p-3 border border-yellow-200 hover:shadow-md transition-shadow">
               <Button
                 variant="outline"
                 size="sm"
                 className="w-full justify-start gap-2 border-yellow-300 hover:bg-yellow-50"
-                disabled={isAnswered || !helpAids || helpAids.elimination_aids <= 0}
+                disabled={isAnswered || !helpAids || helpAids.elimination_aids <= 0 || !canEliminate}
                 onClick={handleEliminateOption}
               >
                 <Zap className="h-4 w-4 text-yellow-600" />
@@ -671,10 +676,13 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
                   {helpAids?.elimination_aids || 0}
                 </Badge>
               </Button>
-              <p className="text-xs text-yellow-600 mt-2">Remove uma alternativa incorreta</p>
+              <p className="text-xs text-yellow-600 mt-2">
+                Remove uma alternativa incorreta<br/>
+                Usos: {eliminationCount}/2 (-20% pontos)
+              </p>
             </div>
 
-            {/* Pular Questão */}
+            {/* Pular Questão - CORRIGIDO com penalidade */}
             <div className="bg-white rounded-lg p-3 border border-orange-200 hover:shadow-md transition-shadow">
               <Button
                 variant="outline"
@@ -689,10 +697,10 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
                   {helpAids?.skip_aids || 0}
                 </Badge>
               </Button>
-              <p className="text-xs text-orange-600 mt-2">Avança sem perder pontos</p>
+              <p className="text-xs text-orange-600 mt-2">Avança sem perder pontos (-50% penalidade)</p>
             </div>
 
-            {/* Tutor AI */}
+            {/* Tutor AI - CORRIGIDO automático */}
             <div className="bg-gradient-to-r from-purple-100 to-blue-100 rounded-lg p-4 border border-purple-200">
               <div className="flex items-center gap-2 mb-3">
                 <Brain className="h-5 w-5 text-purple-600" />
@@ -702,17 +710,26 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
                 </Badge>
               </div>
               <p className="text-xs text-purple-700 mb-3">
-                IA especializada em medicina disponível para ajudar
+                IA especializada disponível (-10% pontos)
               </p>
               <Button
                 variant="outline"
                 size="sm"
                 className="w-full border-purple-300 hover:bg-purple-50"
-                disabled={isAnswered || !helpAids || helpAids.ai_tutor_credits <= 0}
+                disabled={isAnswered || !helpAids || helpAids.ai_tutor_credits <= 0 || isGettingHint}
                 onClick={handleRequestTutorHint}
               >
-                <Brain className="h-4 w-4 mr-2" />
-                Pedir Dica
+                {isGettingHint ? (
+                  <>
+                    <Brain className="h-4 w-4 mr-2 animate-spin" />
+                    Gerando...
+                  </>
+                ) : (
+                  <>
+                    <Brain className="h-4 w-4 mr-2" />
+                    Obter Dica
+                  </>
+                )}
               </Button>
             </div>
 
@@ -771,67 +788,6 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Modal para Pergunta do Tutor AI */}
-      <Dialog open={showTutorHint} onOpenChange={setShowTutorHint}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Brain className="h-5 w-5 text-purple-600" />
-              Tutor AI - Solicitar Dica
-            </DialogTitle>
-          </DialogHeader>
-          <div className="p-4">
-            <div className="mb-4">
-              <label className="text-sm font-medium text-gray-700 mb-2 block">
-                Qual sua dúvida sobre este caso? (opcional)
-              </label>
-              <Textarea
-                value={tutorQuestion}
-                onChange={(e) => setTutorQuestion(e.target.value)}
-                placeholder="Ex: Que achados devo observar na imagem? Qual a fisiopatologia envolvida?"
-                className="min-h-20"
-                disabled={isGettingHint}
-              />
-            </div>
-            
-            <div className="bg-blue-50 p-3 rounded-lg mb-4">
-              <div className="flex items-start gap-2">
-                <Info className="h-4 w-4 text-blue-600 mt-0.5" />
-                <div className="text-sm text-blue-700">
-                  <p className="font-medium mb-1">Sobre o Tutor AI:</p>
-                  <p>Créditos restantes: {helpAids?.ai_tutor_credits || 0}</p>
-                  <p>O tutor fornecerá uma dica educativa sem revelar a resposta diretamente.</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex gap-2">
-              <Button
-                onClick={handleTutorHintRequest}
-                disabled={isGettingHint || !helpAids || helpAids.ai_tutor_credits <= 0}
-                className="flex-1"
-              >
-                {isGettingHint ? (
-                  <>
-                    <Brain className="h-4 w-4 mr-2 animate-spin" />
-                    Gerando...
-                  </>
-                ) : (
-                  "Obter Dica"
-                )}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setShowTutorHint(false)}
-                disabled={isGettingHint}
-              >
-                Cancelar
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
