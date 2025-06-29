@@ -31,10 +31,28 @@ export function useProfileRewards() {
       return;
     }
 
+    // Verificar session storage para evitar execução dupla
+    const sessionKey = `profile_rewards_check_${user.id}_${Date.now()}`;
+    const existingSession = sessionStorage.getItem(`profile_rewards_${user.id}`);
+    
+    if (existingSession) {
+      const sessionData = JSON.parse(existingSession);
+      if (now - sessionData.timestamp < MINIMUM_INTERVAL) {
+        console.log('🔒 Session storage bloqueia execução recente');
+        return;
+      }
+    }
+
     try {
       // Marcar como processando IMEDIATAMENTE
       isProcessingRef.current = true;
       lastExecutionTimeRef.current = now;
+      
+      // Salvar no session storage
+      sessionStorage.setItem(`profile_rewards_${user.id}`, JSON.stringify({
+        sessionKey,
+        timestamp: now
+      }));
       
       console.log('🔍 Iniciando verificação DEFINITIVA de recompensas...');
 
@@ -51,14 +69,18 @@ export function useProfileRewards() {
         return;
       }
 
-      // Mapear campos já recompensados
+      // Mapear campos já recompensados com type casting correto
       const rewardedFields = new Set<string>();
       let bonusAlreadyGiven = false;
 
       existingTransactions?.forEach(tx => {
-        if (tx.tx_type === 'profile_completion' && tx.metadata?.field) {
-          rewardedFields.add(tx.metadata.field);
-          console.log(`✓ Campo ${tx.metadata.field} já recompensado`);
+        if (tx.tx_type === 'profile_completion' && tx.metadata) {
+          // Type casting seguro para acessar metadata.field
+          const metadata = tx.metadata as any;
+          if (metadata?.field) {
+            rewardedFields.add(metadata.field);
+            console.log(`✓ Campo ${metadata.field} já recompensado`);
+          }
         }
         if (tx.tx_type === 'profile_completion_bonus') {
           bonusAlreadyGiven = true;
@@ -108,7 +130,7 @@ export function useProfileRewards() {
 
       let totalNewRewards = 0;
 
-      // ETAPA 3: Processar cada campo individualmente
+      // ETAPA 3: Processar cada campo individualmente com controle rigoroso
       for (const field of rewardFields) {
         // Verificar se já foi recompensado
         if (rewardedFields.has(field.key)) {
@@ -128,6 +150,18 @@ export function useProfileRewards() {
           continue;
         }
 
+        // VERIFICAÇÃO ADICIONAL: Rate limiting por campo
+        const fieldKey = `field_${field.key}_${user.id}`;
+        const fieldLastExecution = sessionStorage.getItem(fieldKey);
+        
+        if (fieldLastExecution) {
+          const lastTime = parseInt(fieldLastExecution);
+          if (now - lastTime < 5 * 60 * 1000) { // 5 minutos por campo
+            console.log(`⏰ Rate limit ativo para ${field.key}`);
+            continue;
+          }
+        }
+
         console.log(`💰 Processando recompensa para ${field.key}: ${field.reward} RadCoins`);
         
         // Dar RadCoins usando a função do banco
@@ -139,7 +173,7 @@ export function useProfileRewards() {
             field: field.key,
             description: field.description,
             processed_at: new Date().toISOString(),
-            session_id: `session_${now}`,
+            session_id: sessionKey,
             execution_timestamp: now
           }
         });
@@ -151,6 +185,7 @@ export function useProfileRewards() {
 
         // Marcar como processado
         processedFieldsRef.current.add(field.key);
+        sessionStorage.setItem(fieldKey, now.toString());
         totalNewRewards += field.reward;
 
         // Mostrar toast de recompensa
@@ -163,7 +198,7 @@ export function useProfileRewards() {
         console.log(`✅ Recompensa de ${field.reward} RadCoins dada com sucesso para ${field.key}`);
 
         // Pequena pausa para evitar concorrência
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 200));
       }
 
       // ETAPA 4: Verificar bônus de perfil completo
@@ -179,7 +214,7 @@ export function useProfileRewards() {
           p_metadata: {
             description: 'Bônus de perfil 100% completo',
             processed_at: new Date().toISOString(),
-            session_id: `session_${now}`,
+            session_id: sessionKey,
             execution_timestamp: now
           }
         });
