@@ -4,8 +4,8 @@ import { FileText, Sparkles, Brain, Target } from "lucide-react";
 
 export function CasesManagementHeader() {
   return (
-    <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-lg">
-      <div className="absolute inset-0 bg-black/5"></div>
+    <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 text-white shadow-lg">
+      <div className="absolute inset-0 bg-black/10"></div>
       <div className="relative px-8 py-12">
         <div className="flex items-center space-x-4">
           <div className="flex items-center justify-center w-16 h-16 bg-white/20 rounded-full backdrop-blur-sm">

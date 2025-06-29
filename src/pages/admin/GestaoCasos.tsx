@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { BackToDashboard } from "@/components/navigation/BackToDashboard";
 import { CasesManagementHeader } from "@/components/admin/cases/CasesManagementHeader";
@@ -194,7 +195,7 @@ export default function GestaoCasos() {
 
   return (
     <NotificationProvider>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
         <div className="space-y-6 p-6">
           {/* Navegação com fundo garantido */}
           <div className="flex items-center justify-between bg-white rounded-lg shadow-sm p-4 border border-gray-200">
