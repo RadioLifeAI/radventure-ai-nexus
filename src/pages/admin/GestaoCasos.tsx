@@ -7,13 +7,18 @@ import { CasesViewSelector, ViewMode } from "./components/CasesViewSelector";
 import { CasesCardsView } from "./components/CasesCardsView";
 import { CasesGridView } from "./components/CasesGridView";
 import { MedicalCasesTable } from "./components/MedicalCasesTable";
+import { CaseEditFormModal } from "./components/CaseEditFormModal";
+import { CaseQuickEditModal } from "./components/CaseQuickEditModal";
 import { CaseRichViewModal } from "./components/CaseRichViewModal";
 import { CaseSmartDuplicateModal } from "./components/CaseSmartDuplicateModal";
 import { CaseAdvancedAnalyticsModal } from "./components/CaseAdvancedAnalyticsModal";
 import { CaseEditWizardModal } from "./components/CaseEditWizardModal";
 import { CaseVersionComparisonModal } from "./components/CaseVersionComparisonModal";
+
+// Phase 3 Components
 import { NotificationProvider, NotificationContainer } from "./components/CaseNotificationSystem";
 import { CaseShortcutsManager, useCaseShortcuts } from "./components/CaseShortcutsManager";
+
 import { useCasesManagement } from "./hooks/useCasesManagement";
 import { useDisclosure } from "@mantine/hooks";
 import { Loader } from "@/components/Loader";
@@ -53,26 +58,29 @@ export default function GestaoCasos() {
     viewMode 
   });
 
-  // Modal states - Unificados usando apenas wizard avançado
+  // Modal states - Phase 1
+  const [editModalOpen, { open: openEditModal, close: closeEditModal }] = useDisclosure(false);
+  const [quickEditModalOpen, { open: openQuickEditModal, close: closeQuickEditModal }] = useDisclosure(false);
   const [richViewModalOpen, { open: openRichViewModal, close: closeRichViewModal }] = useDisclosure(false);
   const [duplicateModalOpen, { open: openDuplicateModal, close: closeDuplicateModal }] = useDisclosure(false);
+  
+  // Modal states - Phase 2
   const [analyticsModalOpen, { open: openAnalyticsModal, close: closeAnalyticsModal }] = useDisclosure(false);
   const [wizardModalOpen, { open: openWizardModal, close: closeWizardModal }] = useDisclosure(false);
   const [versionModalOpen, { open: openVersionModal, close: closeVersionModal }] = useDisclosure(false);
   
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
 
-  // Handlers unificados - todos usam o wizard avançado
   const handleEdit = (caseId: string) => {
-    console.log('✏️ GestaoCasos: Abrindo wizard avançado para caso:', caseId);
+    console.log('✏️ GestaoCasos: Abrindo modal de edição para caso:', caseId);
     setSelectedCaseId(caseId);
-    openWizardModal();
+    openEditModal();
   };
 
   const handleQuickEdit = (caseId: string) => {
-    console.log('⚡ GestaoCasos: Abrindo wizard avançado (modo rápido) para caso:', caseId);
+    console.log('⚡ GestaoCasos: Abrindo edição rápida para caso:', caseId);
     setSelectedCaseId(caseId);
-    openWizardModal();
+    openQuickEditModal();
   };
 
   const handleView = (caseId: string) => {
@@ -87,6 +95,7 @@ export default function GestaoCasos() {
     openDuplicateModal();
   };
 
+  // Phase 2 handlers
   const handleAnalytics = (caseId: string) => {
     console.log('📈 GestaoCasos: Abrindo analytics para caso:', caseId);
     setSelectedCaseId(caseId);
@@ -108,6 +117,8 @@ export default function GestaoCasos() {
   const handleCaseSaved = () => {
     console.log('💾 GestaoCasos: Caso salvo, refazendo consulta...');
     refetch();
+    closeEditModal();
+    closeQuickEditModal();
     closeWizardModal();
   };
 
@@ -117,6 +128,7 @@ export default function GestaoCasos() {
     closeDuplicateModal();
   };
 
+  // Phase 3 - Shortcuts configuration
   const shortcuts = useCaseShortcuts({
     onQuickEdit: selectedCaseId ? () => handleQuickEdit(selectedCaseId) : undefined,
     onView: selectedCaseId ? () => handleView(selectedCaseId) : undefined,
@@ -185,6 +197,7 @@ export default function GestaoCasos() {
     <NotificationProvider>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
         <div className="space-y-6 p-6">
+          {/* Navegação com fundo garantido */}
           <div className="flex items-center justify-between bg-white rounded-lg shadow-sm p-4 border border-gray-200">
             <BackToDashboard variant="back" />
             <div className="text-sm text-gray-600 font-medium">
@@ -194,6 +207,7 @@ export default function GestaoCasos() {
 
           <CasesManagementHeader />
 
+          {/* Filtros Avançados com fundo claro forçado */}
           <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
             <CasesAdvancedFilters
               filters={filters}
@@ -206,6 +220,7 @@ export default function GestaoCasos() {
             />
           </div>
 
+          {/* Seletor de Visualização com fundo claro */}
           <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
             <CasesViewSelector
               viewMode={viewMode}
@@ -222,13 +237,28 @@ export default function GestaoCasos() {
             />
           </div>
 
+          {/* Visualização dos Casos com fundo garantido */}
           <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
             <div className="p-6 bg-white">
               {renderCasesView()}
             </div>
           </div>
 
-          {/* Modais Unificados - Apenas os essenciais */}
+          {/* Modais - Phase 1 com z-index otimizado */}
+          <CaseEditFormModal
+            open={editModalOpen}
+            onClose={closeEditModal}
+            caseId={selectedCaseId}
+            onSaved={handleCaseSaved}
+          />
+
+          <CaseQuickEditModal
+            open={quickEditModalOpen}
+            onClose={closeQuickEditModal}
+            caseId={selectedCaseId}
+            onSaved={handleCaseSaved}
+          />
+
           <CaseRichViewModal
             open={richViewModalOpen}
             onClose={closeRichViewModal}
@@ -247,13 +277,13 @@ export default function GestaoCasos() {
             onCreated={handleCaseCreated}
           />
 
+          {/* Modais - Phase 2 com z-index otimizado */}
           <CaseAdvancedAnalyticsModal
             open={analyticsModalOpen}
             onClose={closeAnalyticsModal}
             caseId={selectedCaseId}
           />
 
-          {/* Modal Unificado - Apenas o Wizard Avançado */}
           <CaseEditWizardModal
             open={wizardModalOpen}
             onClose={closeWizardModal}
@@ -271,6 +301,7 @@ export default function GestaoCasos() {
             }}
           />
 
+          {/* Phase 3 Components */}
           <NotificationContainer />
           <CaseShortcutsManager shortcuts={shortcuts} />
         </div>

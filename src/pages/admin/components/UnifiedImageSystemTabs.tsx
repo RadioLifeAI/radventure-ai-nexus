@@ -27,7 +27,8 @@ import {
   Play,
   Pause,
   SkipBack,
-  SkipForward
+  SkipForward,
+  X
 } from 'lucide-react';
 import { useSpecializedImageUpload } from '@/hooks/useSpecializedImageUpload';
 import { useSpecializedCaseImages } from '@/hooks/useSpecializedCaseImages';
@@ -37,13 +38,24 @@ interface UnifiedImageSystemTabsProps {
   categoryId?: number;
   modality?: string;
   onImagesChange?: (images: any[]) => void;
+  // Novas props para sistema integrado
+  tempImages?: File[];
+  onTempImageUpload?: (files: File[]) => void;
+  onRemoveTempImage?: (index: number) => void;
+  isProcessingImages?: boolean;
+  specializedImages?: any[];
 }
 
 export function UnifiedImageSystemTabs({ 
   caseId, 
   categoryId, 
   modality, 
-  onImagesChange 
+  onImagesChange,
+  tempImages = [],
+  onTempImageUpload,
+  onRemoveTempImage,
+  isProcessingImages = false,
+  specializedImages = []
 }: UnifiedImageSystemTabsProps) {
   const [activeTab, setActiveTab] = useState('upload');
   const [selectedImage, setSelectedImage] = useState<any>(null);
@@ -75,6 +87,7 @@ export function UnifiedImageSystemTabs({
   } = useSpecializedCaseImages(caseId);
 
   const isIntegrated = !!(categoryId && modality);
+  const isCreationMode = !caseId; // Modo criação (sem caseId ainda)
 
   // Upload Tab Component
   const UploadTab = () => (
@@ -86,7 +99,7 @@ export function UnifiedImageSystemTabs({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5" />
-            Upload Especializado Integrado
+            {isCreationMode ? 'Upload Integrado (Staging)' : 'Upload Especializado Integrado'}
             <Badge variant="secondary" className={isIntegrated 
               ? 'bg-green-100 text-green-700'
               : 'bg-orange-100 text-orange-700'
@@ -94,6 +107,11 @@ export function UnifiedImageSystemTabs({
               {isIntegrated ? <CheckCircle className="h-3 w-3 mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
               {isIntegrated ? 'INTEGRADO' : 'AGUARDANDO'}
             </Badge>
+            {isCreationMode && (
+              <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                Staging: {tempImages.length}
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -109,7 +127,9 @@ export function UnifiedImageSystemTabs({
             <div className="space-y-2">
               <p className="text-lg font-medium">
                 {isIntegrated 
-                  ? 'Arraste imagens aqui ou clique para selecionar'
+                  ? isCreationMode 
+                    ? 'Arraste imagens aqui (serão processadas após salvar caso)'
+                    : 'Arraste imagens aqui ou clique para selecionar'
                   : 'Configure formulário para habilitar upload'
                 }
               </p>
@@ -119,6 +139,7 @@ export function UnifiedImageSystemTabs({
               {isIntegrated && (
                 <p className="text-xs text-green-600">
                   🗂️ Organização automática: Cat#{categoryId} + {modality}
+                  {isCreationMode && ' (após salvamento)'}
                 </p>
               )}
             </div>
@@ -130,38 +151,81 @@ export function UnifiedImageSystemTabs({
               accept="image/*,.dcm"
               className="hidden"
               onChange={handleFileUpload}
-              disabled={!isIntegrated}
+              disabled={!isIntegrated || isProcessingImages}
             />
           </div>
 
-          {(uploading || processing) && (
+          {(uploading || processing || isProcessingImages) && (
             <div className="mt-4">
               <div className="flex justify-between text-sm mb-1">
-                <span>{processing ? 'Processando e organizando...' : 'Enviando...'}</span>
+                <span>
+                  {isProcessingImages ? 'Processando e organizando após salvamento...' : 
+                   processing ? 'Processando e organizando...' : 'Enviando...'}
+                </span>
               </div>
-              <Progress value={processing ? 75 : 25} className="h-2" />
+              <Progress value={isProcessingImages ? 85 : processing ? 75 : 25} className="h-2" />
             </div>
+          )}
+
+          {/* Área de Staging para modo criação */}
+          {isCreationMode && tempImages.length > 0 && (
+            <Card className="mt-4 bg-blue-50 border-blue-200">
+              <CardHeader>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4" />
+                  Imagens em Staging ({tempImages.length})
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                    Aguardando processamento
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {tempImages.map((file, index) => (
+                    <div key={index} className="relative group">
+                      <div className="w-full h-20 bg-gray-100 rounded border flex items-center justify-center">
+                        <ImageIcon className="h-6 w-6 text-gray-400" />
+                      </div>
+                      <div className="absolute top-1 right-1">
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="h-6 w-6 p-0"
+                          onClick={() => onRemoveTempImage?.(index)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <p className="text-xs mt-1 truncate">{file.name}</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-blue-600 mt-2">
+                  💡 Estas imagens serão processadas e organizadas automaticamente após salvar o caso
+                </p>
+              </CardContent>
+            </Card>
           )}
         </CardContent>
       </Card>
 
-      {/* Gallery */}
+      {/* Gallery - usa images existentes ou specializedImages */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <ImageIcon className="h-5 w-5" />
-            Galeria Integrada ({images.length})
+            Galeria Integrada ({(specializedImages?.length || images.length)})
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {images.length === 0 ? (
+          {(specializedImages?.length || images.length) === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <FolderTree className="h-12 w-12 mx-auto mb-2 opacity-50" />
               <p>Nenhuma imagem integrada ainda</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {images.map((image, index) => (
+              {(specializedImages || images).map((image, index) => (
                 <div key={image.id} className="relative group cursor-pointer" onClick={() => setSelectedImage(image)}>
                   <img
                     src={image.thumbnail_url || image.original_url}
@@ -493,18 +557,26 @@ export function UnifiedImageSystemTabs({
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || !isIntegrated) return;
     
-    for (let i = 0; i < e.target.files.length; i++) {
-      const file = e.target.files[i];
-      await uploadSpecializedImage(file, {
-        caseId,
-        categoryId,
-        modality,
-        sequenceOrder: images.length + i
-      });
-    }
+    const files = Array.from(e.target.files);
     
-    refetch();
-    onImagesChange?.(images);
+    if (isCreationMode) {
+      // Modo criação: adicionar a staging
+      onTempImageUpload?.(files);
+    } else {
+      // Modo edição: processar diretamente
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        await uploadSpecializedImage(file, {
+          caseId,
+          categoryId,
+          modality,
+          sequenceOrder: (specializedImages?.length || images.length) + i
+        });
+      }
+      
+      refetch();
+      onImagesChange?.(specializedImages || images);
+    }
   };
 
   const handleZipUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -566,10 +638,15 @@ export function UnifiedImageSystemTabs({
               {isIntegrated ? <CheckCircle className="h-3 w-3 mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
               {isIntegrated ? 'INTEGRADO' : 'AGUARDANDO'}
             </Badge>
+            {isCreationMode && isIntegrated && (
+              <Badge variant="outline" className="bg-blue-100 text-blue-700">
+                Modo Staging Ativo
+              </Badge>
+            )}
           </CardTitle>
           <p className="text-sm text-gray-600">
             {isIntegrated 
-              ? `Organização ativa: Cat#${categoryId} → ${modality}`
+              ? `Organização ativa: Cat#${categoryId} → ${modality}${isCreationMode ? ' (staging até salvamento)' : ''}`
               : 'Selecione categoria e modalidade no formulário para ativar todas as ferramentas'
             }
           </p>

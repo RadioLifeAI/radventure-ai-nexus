@@ -4,23 +4,22 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { SpecializedImageViewer } from "@/components/cases/SpecializedImageViewer";
-import { HelpSystem } from "@/components/cases/HelpSystem";
 import { useSpecializedCaseImages } from "@/hooks/useSpecializedCaseImages";
-import { useUserHelpAids } from "@/hooks/useUserHelpAids";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import { 
   ArrowLeft, 
   CheckCircle, 
-  XCircle,
+  XCircle, 
+  Clock,
   BookOpen,
   Award,
   User,
   Calendar,
   Target,
-  FolderTree,
-  Sparkles
+  FolderTree
 } from "lucide-react";
 
 interface MedicalCase {
@@ -40,12 +39,6 @@ interface MedicalCase {
   patient_age?: string;
   patient_gender?: string;
   created_at: string;
-  max_elimination: number;
-  can_skip: boolean;
-  skip_penalty_points: number;
-  elimination_penalty_points: number;
-  ai_hint_enabled: boolean;
-  manual_hint?: string;
 }
 
 export default function CasoUsuarioView() {
@@ -56,12 +49,9 @@ export default function CasoUsuarioView() {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResults, setShowResults] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [eliminatedOptions, setEliminatedOptions] = useState<number[]>([]);
-  const [aiHintText, setAiHintText] = useState<string>("");
-  const [showAiHint, setShowAiHint] = useState(false);
   
+  // Hook especializado único para imagens
   const { images, loading: imagesLoading } = useSpecializedCaseImages(id);
-  const { helpAids, refetch: refetchHelpAids } = useUserHelpAids();
 
   useEffect(() => {
     if (id) {
@@ -95,67 +85,13 @@ export default function CasoUsuarioView() {
     }
   };
 
-  const handleEliminateOption = (correctAnswerIndex: number) => {
-    if (!medicalCase) return;
-    
-    // Encontrar uma opção incorreta para eliminar
-    const incorrectOptions = medicalCase.answer_options
-      .map((_, index) => index)
-      .filter(index => index !== correctAnswerIndex && !eliminatedOptions.includes(index));
-    
-    if (incorrectOptions.length > 0) {
-      const randomIncorrect = incorrectOptions[Math.floor(Math.random() * incorrectOptions.length)];
-      setEliminatedOptions(prev => [...prev, randomIncorrect]);
-      
-      toast({
-        title: "✅ Alternativa Eliminada!",
-        description: `Alternativa ${String.fromCharCode(65 + randomIncorrect)} foi eliminada.`,
-      });
-    }
-  };
-
-  const handleSkip = () => {
-    toast({
-      title: "⏭️ Caso Pulado",
-      description: `Você perdeu ${medicalCase?.skip_penalty_points || 0} pontos.`,
-    });
-    navigate('/app/casos');
-  };
-
-  const handleAIHint = async () => {
-    if (!medicalCase) return;
-    
-    try {
-      setShowAiHint(true);
-      
-      // Simular dica de IA baseada no caso
-      const hintText = medicalCase.manual_hint || 
-        `Dica: Analise cuidadosamente os achados radiológicos e considere a idade do paciente (${medicalCase.patient_age}). 
-        Os sintomas apresentados são compatíveis com o padrão de imagem observado.`;
-      
-      setAiHintText(hintText);
-      
-      toast({
-        title: "🧠 Dica de IA Ativada!",
-        description: "Confira a dica abaixo para te ajudar na resolução.",
-      });
-      
-    } catch (error: any) {
-      console.error('❌ Erro ao buscar dica de IA:', error);
-      toast({
-        title: "Erro na dica de IA",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleAnswerSubmit = async () => {
     if (selectedAnswer === null || !medicalCase) return;
 
     const isCorrect = selectedAnswer === medicalCase.correct_answer_index;
     
     try {
+      // Processar resposta do caso
       const { error } = await supabase.rpc('process_case_completion', {
         p_user_id: (await supabase.auth.getUser()).data.user?.id,
         p_case_id: medicalCase.id,
@@ -204,7 +140,7 @@ export default function CasoUsuarioView() {
             <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
             <h2 className="text-xl font-bold mb-2">Caso não encontrado</h2>
             <p className="text-gray-600 mb-4">O caso médico solicitado não foi encontrado.</p>
-            <Button onClick={() => navigate('/app/casos')}>
+            <Button onClick={() => navigate('/casos')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar aos Casos
             </Button>
@@ -221,7 +157,7 @@ export default function CasoUsuarioView() {
         <div className="flex items-center justify-between">
           <Button 
             variant="outline" 
-            onClick={() => navigate('/app/casos')}
+            onClick={() => navigate('/casos')}
             className="bg-white"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -257,6 +193,7 @@ export default function CasoUsuarioView() {
               )}
             </CardTitle>
             
+            {/* Patient Info */}
             <div className="flex items-center gap-6 text-sm text-gray-600 mt-2">
               {medicalCase.patient_age && (
                 <div className="flex items-center gap-1">
@@ -278,39 +215,8 @@ export default function CasoUsuarioView() {
           </CardHeader>
         </Card>
 
-        {/* Sistema de Ajudas Integrado */}
-        {!showResults && (
-          <HelpSystem
-            maxElimination={medicalCase.max_elimination}
-            canSkip={medicalCase.can_skip}
-            skipPenalty={medicalCase.skip_penalty_points}
-            eliminationPenalty={medicalCase.elimination_penalty_points}
-            aiHintEnabled={medicalCase.ai_hint_enabled}
-            onEliminateOption={handleEliminateOption}
-            onSkip={handleSkip}
-            onAIHint={handleAIHint}
-            eliminatedOptions={eliminatedOptions}
-            correctAnswerIndex={medicalCase.correct_answer_index}
-          />
-        )}
-
-        {/* Dica de IA */}
-        {showAiHint && aiHintText && (
-          <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2 text-purple-800">
-                <Sparkles className="h-5 w-5" />
-                Dica da IA
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-purple-700">{aiHintText}</p>
-            </CardContent>
-          </Card>
-        )}
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Images Section */}
+          {/* Images Section - Sistema Especializado */}
           <Card className="bg-white shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -350,6 +256,7 @@ export default function CasoUsuarioView() {
 
           {/* Case Information */}
           <div className="space-y-6">
+            {/* Clinical Info */}
             <Card className="bg-white shadow-lg">
               <CardHeader>
                 <CardTitle className="text-lg">Informações Clínicas</CardTitle>
@@ -361,6 +268,7 @@ export default function CasoUsuarioView() {
               </CardContent>
             </Card>
 
+            {/* Findings */}
             <Card className="bg-white shadow-lg">
               <CardHeader>
                 <CardTitle className="text-lg">Achados Radiológicos</CardTitle>
@@ -392,15 +300,13 @@ export default function CasoUsuarioView() {
                   value={index}
                   checked={selectedAnswer === index}
                   onChange={() => setSelectedAnswer(index)}
-                  disabled={showResults || eliminatedOptions.includes(index)}
+                  disabled={showResults}
                   className="h-4 w-4 text-blue-600"
                 />
                 <label 
                   htmlFor={`option-${index}`} 
                   className={`flex-1 p-3 rounded-lg border cursor-pointer transition-colors ${
-                    eliminatedOptions.includes(index)
-                      ? 'bg-red-100 border-red-300 text-red-500 line-through opacity-50'
-                      : showResults
+                    showResults
                       ? index === medicalCase.correct_answer_index
                         ? 'bg-green-100 border-green-300 text-green-800'
                         : selectedAnswer === index && index !== medicalCase.correct_answer_index
@@ -418,9 +324,6 @@ export default function CasoUsuarioView() {
                   )}
                   {showResults && selectedAnswer === index && index !== medicalCase.correct_answer_index && (
                     <XCircle className="h-5 w-5 text-red-600 float-right" />
-                  )}
-                  {eliminatedOptions.includes(index) && (
-                    <XCircle className="h-5 w-5 text-red-500 float-right" />
                   )}
                 </label>
               </div>
@@ -440,7 +343,7 @@ export default function CasoUsuarioView() {
           </CardContent>
         </Card>
 
-        {/* Explanation */}
+        {/* Explanation - Show after answer */}
         {showResults && (
           <Card className="bg-white shadow-lg">
             <CardHeader>
