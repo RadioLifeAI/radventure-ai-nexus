@@ -20,6 +20,7 @@ import Rankings from "./pages/Rankings";
 import Estatisticas from "./pages/Estatisticas";
 import AdminPanel from "./pages/AdminPanel";
 import CreateJourney from "./pages/CreateJourney";
+import Conquistas from "./pages/Conquistas";
 import Sobre from "./pages/Sobre";
 import Funcionalidades from "./pages/Funcionalidades";
 import Contato from "./pages/Contato";
@@ -130,6 +131,14 @@ function App() {
               element={
                 <ProtectedRouteRedirect>
                   <Estatisticas />
+                </ProtectedRouteRedirect>
+              } 
+            />
+            <Route 
+              path="/app/conquistas" 
+              element={
+                <ProtectedRouteRedirect>
+                  <Conquistas />
                 </ProtectedRouteRedirect>
               } 
             />

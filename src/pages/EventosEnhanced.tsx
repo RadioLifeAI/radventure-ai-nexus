@@ -10,7 +10,6 @@ import { UpcomingEventsSlider } from "@/components/eventos/UpcomingEventsSlider"
 import { EventsGrid } from "@/components/eventos/EventsGrid";
 import { EventsDashboardRealTime } from "@/components/eventos/EventsDashboardRealTime";
 import { EventsAdvancedVisualization } from "@/components/eventos/EventsAdvancedVisualization";
-import { EventsGamificationHub } from "@/components/eventos/EventsGamificationHub";
 import { EventsNotificationSystem } from "@/components/eventos/EventsNotificationSystem";
 import { EventMetricsCards } from "@/components/eventos/EventMetricsCards";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -71,9 +70,16 @@ export default function EventosEnhanced() {
           </div>
           <div className="flex items-center gap-3">
             <EventsNotificationSystem />
+            <Button 
+              className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600"
+              onClick={() => navigate("/app/conquistas")}
+            >
+              <Trophy className="h-4 w-4 mr-2" />
+              Conquistas
+            </Button>
             {user && (
               <Button 
-                className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600"
+                className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"
                 onClick={() => navigate("/admin/events/create")}
               >
                 <Sparkles className="h-4 w-4 mr-2" />
@@ -98,10 +104,10 @@ export default function EventosEnhanced() {
         {/* Slider de eventos em destaque */}
         <UpcomingEventsSlider highlights={highlights} />
 
-        {/* Tabs avançadas */}
+        {/* Tabs simplificadas - removendo gamificação */}
         <div className="mt-6">
           <Tabs value={activeView} onValueChange={setActiveView} className="space-y-6">
-            <TabsList className="grid grid-cols-2 md:grid-cols-5 bg-white/10 backdrop-blur-sm border border-white/20">
+            <TabsList className="grid grid-cols-2 md:grid-cols-4 bg-white/10 backdrop-blur-sm border border-white/20">
               <TabsTrigger value="dashboard" className="data-[state=active]:bg-white/20">
                 <BarChart3 className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Dashboard</span>
@@ -109,10 +115,6 @@ export default function EventosEnhanced() {
               <TabsTrigger value="visualization" className="data-[state=active]:bg-white/20">
                 <TrendingUp className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Visualizações</span>
-              </TabsTrigger>
-              <TabsTrigger value="gamification" className="data-[state=active]:bg-white/20">
-                <Trophy className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Gamificação</span>
               </TabsTrigger>
               <TabsTrigger value="events" className="data-[state=active]:bg-white/20">
                 <Calendar className="h-4 w-4 mr-2" />
@@ -130,10 +132,6 @@ export default function EventosEnhanced() {
 
             <TabsContent value="visualization">
               <EventsAdvancedVisualization events={filteredEvents} onEnterEvent={handleEnterEvent} />
-            </TabsContent>
-
-            <TabsContent value="gamification">
-              <EventsGamificationHub />
             </TabsContent>
 
             <TabsContent value="events">
@@ -222,6 +220,17 @@ export default function EventosEnhanced() {
                             </div>
                             <div className="text-sm text-cyan-200">Taxa de Conclusão</div>
                           </div>
+                        </div>
+                        
+                        {/* Link para página de conquistas */}
+                        <div className="mt-4 text-center">
+                          <Button 
+                            onClick={() => navigate("/app/conquistas")}
+                            className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600"
+                          >
+                            <Trophy className="h-4 w-4 mr-2" />
+                            Ver Minhas Conquistas
+                          </Button>
                         </div>
                       </div>
                     ) : (

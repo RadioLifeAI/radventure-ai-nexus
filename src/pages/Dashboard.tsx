@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Activity,
@@ -8,6 +7,7 @@ import {
   Brain,
   Users,
   Loader2,
+  Trophy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
@@ -36,7 +36,10 @@ function ActionCard({ icon, title, description, link, color, onClick }: any) {
           className="mt-3 sm:mt-4 border-none text-[#11d3fc] bg-white hover:bg-[#d1f6fd] font-bold px-3 sm:px-4 rounded-xl shadow hover:shadow-lg transition-all duration-200 text-xs sm:text-sm"
         >
           <Activity size={12} className="sm:size-4 mr-1" />
-          {title === "Central de Casos" ? "Explorar" : title === "Crie sua Jornada" ? "Nova Jornada" : "Ver Eventos"}
+          {title === "Central de Casos" ? "Explorar" : 
+           title === "Crie sua Jornada" ? "Nova Jornada" : 
+           title === "Sistema de Conquistas" ? "Ver Conquistas" :
+           "Ver Eventos"}
         </Button>
       ) : (
         <Button asChild size="sm" variant="outline"
@@ -44,7 +47,10 @@ function ActionCard({ icon, title, description, link, color, onClick }: any) {
         >
           <Link to={link || "#"}>
             <Activity size={12} className="sm:size-4 mr-1" />
-            {title === "Central de Casos" ? "Explorar" : title === "Crie sua Jornada" ? "Nova Jornada" : "Ver Eventos"}
+            {title === "Central de Casos" ? "Explorar" : 
+             title === "Crie sua Jornada" ? "Nova Jornada" : 
+             title === "Sistema de Conquistas" ? "Ver Conquistas" :
+             "Ver Eventos"}
           </Link>
         </Button>
       )}
@@ -87,6 +93,10 @@ export default function Dashboard() {
     navigate('/app/eventos');
   };
 
+  const handleConquistas = () => {
+    navigate('/app/conquistas');
+  };
+
   // Separar especialidades por tipo
   const imagingSpecialties = specialties.filter(spec => 
     spec.name.includes('Radiologia') || 
@@ -119,8 +129,8 @@ export default function Dashboard() {
         {/* SEÇÃO DE EVENTOS GAMIFICADOS */}
         <EventsSectionPlayer onEnterEvent={handleEnterEvent} />
 
-        {/* Actions Cards - Agora com handlers funcionais e responsivos */}
-        <section className="w-full grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mt-2 mb-4">
+        {/* Actions Cards - Agora com 4 cards incluindo Conquistas */}
+        <section className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mt-2 mb-4">
           <ActionCard
             icon={<Activity />}
             title="Central de Casos"
@@ -141,6 +151,13 @@ export default function Dashboard() {
             description="Participe de eventos exclusivos e concorra no ranking."
             onClick={handleEventos}
             color="text-[#11d3fc]"
+          />
+          <ActionCard
+            icon={<Trophy />}
+            title="Sistema de Conquistas"
+            description="Desbloqueie conquistas épicas e ganhe RadCoins!"
+            onClick={handleConquistas}
+            color="text-[#ffd700]"
           />
         </section>
 
