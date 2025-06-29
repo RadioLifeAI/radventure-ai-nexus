@@ -146,7 +146,7 @@ export function IntelligentKnowledgeDashboard({ userProgress, casesStats }: Prop
                       {insight.trend && getTrendIcon(insight.trend)}
                       {insight.value && (
                         <Badge className="text-xs">
-                          {insight.value}{insight.type === 'accuracy' || insight.type === 'improvement' ? '%' : ''}
+                          {insight.value}%
                         </Badge>
                       )}
                     </div>
