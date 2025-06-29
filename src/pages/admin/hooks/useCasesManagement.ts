@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
@@ -44,10 +43,13 @@ export function useCasesManagement() {
   // Saved filters
   const [savedFilters, setSavedFilters] = useState<Array<{ name: string; filters: FilterState }>>([]);
 
+  // FASE 3: Modificar fetchCases para carregar imagens da tabela case_images
   const fetchCases = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Buscar casos com imagens associadas
+      const { data: casesData, error: casesError } = await supabase
         .from("medical_cases")
         .select(`
           *,
@@ -58,8 +60,45 @@ export function useCasesManagement() {
         `)
         .order(sortField, { ascending: sortDirection === "asc" });
 
-      if (error) throw error;
-      setCases(data || []);
+      if (casesError) throw casesError;
+
+      // FASE 3: Para cada caso, buscar imagens da tabela case_images
+      const casesWithImages = await Promise.all(
+        (casesData || []).map(async (case_) => {
+          try {
+            const { data: imagesData, error: imagesError } = await supabase
+              .from("case_images")
+              .select("*")
+              .eq("case_id", case_.id)
+              .order("sequence_order", { ascending: true });
+
+            if (imagesError) {
+              console.warn(`Erro ao carregar imagens do caso ${case_.id}:`, imagesError);
+            }
+
+            // Integrar imagens no caso
+            return {
+              ...case_,
+              case_images: imagesData || [],
+              // Manter compatibilidade: usar case_images ou fallback para image_url
+              display_images: imagesData?.length > 0 
+                ? imagesData.map(img => img.original_url)
+                : (Array.isArray(case_.image_url) ? case_.image_url : [])
+            };
+          } catch (error) {
+            console.warn(`Erro ao processar imagens do caso ${case_.id}:`, error);
+            return {
+              ...case_,
+              case_images: [],
+              display_images: Array.isArray(case_.image_url) ? case_.image_url : []
+            };
+          }
+        })
+      );
+
+      console.log('📊 Casos carregados com imagens:', casesWithImages.length);
+      setCases(casesWithImages);
+      
     } catch (error: any) {
       console.error("Erro ao carregar casos:", error);
       toast({

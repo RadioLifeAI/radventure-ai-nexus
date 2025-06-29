@@ -1,100 +1,166 @@
-
 import React, { useState, useEffect } from "react";
-import { CaseProfileFormWithWizard } from "./CaseProfileFormWithWizard";
-import { CaseProfileFormEditable } from "./CaseProfileFormEditable";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { 
-  Sparkles, 
-  FileText, 
-  Zap,
-  ToggleLeft,
-  ToggleRight
-} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/use-toast";
+import { CaseCreationWizard } from "./CaseCreationWizard";
+import { useCaseProfileFormState } from "../hooks/useCaseProfileFormState";
+import { useCaseProfileFormHandlers } from "../hooks/useCaseProfileFormHandlers";
+import { useUnifiedFormDataSource } from "@/hooks/useUnifiedFormDataSource";
+import { useTempCaseImages } from "@/hooks/useTempCaseImages";
+import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { HelpCircle } from "lucide-core";
 
-export function CaseProfileForm({ 
-  editingCase, 
-  onCreated 
-}: { 
-  editingCase?: any; 
-  onCreated?: () => void; 
-}) {
-  const [useWizardMode, setUseWizardMode] = useState(!editingCase); // Wizard para criação, Form para edição
+interface CaseProfileFormProps {
+  editingCase?: any;
+  onCreated?: () => void;
+}
 
-  // Se está editando, usar sempre o formulário tradicional
-  if (editingCase) {
-    return (
-      <CaseProfileFormEditable 
-        editingCase={editingCase}
-        onCreated={onCreated}
-      />
-    );
-  }
+export function CaseProfileForm({ editingCase, onCreated }: CaseProfileFormProps) {
+  const navigate = useNavigate();
+  const { form, setForm, resetForm } = useCaseProfileFormState();
+  const { associateWithCase, clearTempImages } = useTempCaseImages();
+  const [highlightedFields, setHighlightedFields] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState("");
+  
+  const { specialties, modalities, difficulties, isLoading } = useUnifiedFormDataSource();
+  const handlers = useCaseProfileFormHandlers({ form, setForm });
+
+  useEffect(() => {
+    if (editingCase) {
+      setForm(editingCase);
+    }
+  }, [editingCase, setForm]);
+
+  const renderTooltipTip = (id: string, content: string) => (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <HelpCircle
+          id={id}
+          className="inline-block h-4 w-4 text-blue-500 ml-1 cursor-pointer"
+        />
+      </TooltipTrigger>
+      <TooltipContent side="right" align="start">
+        <p className="max-w-[200px] text-xs">{content}</p>
+      </TooltipContent>
+    </Tooltip>
+  );
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (submitting) return;
+    
+    setSubmitting(true);
+    setFeedback("Preparando dados do caso...");
+    
+    try {
+      console.log('💾 Iniciando salvamento integrado do caso');
+      console.log('📊 Form antes do salvamento:', {
+        title: form.title,
+        image_url_length: form.image_url?.length || 0,
+        image_url: form.image_url
+      });
+
+      // Preparar dados do caso com image_url populacional
+      const caseData = {
+        ...form,
+        image_url: Array.isArray(form.image_url) ? form.image_url : [], // FASE 2: Garantir array
+        created_by: (await supabase.auth.getUser()).data.user?.id,
+        updated_at: new Date().toISOString()
+      };
+
+      setFeedback("Salvando caso médico...");
+
+      let savedCase;
+      if (editingCase) {
+        // Modo de edição
+        const { data, error } = await supabase
+          .from("medical_cases")
+          .update(caseData)
+          .eq("id", editingCase.id)
+          .select()
+          .single();
+
+        if (error) throw error;
+        savedCase = data;
+      } else {
+        // Modo de criação
+        const { data, error } = await supabase
+          .from("medical_cases")
+          .insert([caseData])
+          .select()
+          .single();
+
+        if (error) throw error;
+        savedCase = data;
+      }
+
+      console.log('✅ Caso salvo:', savedCase.id);
+      
+      // FASE 2: Associar imagens temporárias ao caso salvo
+      if (!editingCase && form.image_url?.length > 0) {
+        setFeedback("Processando imagens...");
+        
+        try {
+          const associatedImages = await associateWithCase(savedCase.id);
+          console.log('🖼️ Imagens associadas:', associatedImages.length);
+          
+          // Limpar imagens temporárias após associação
+          clearTempImages();
+          
+          setFeedback("Imagens processadas com sucesso!");
+        } catch (imageError) {
+          console.warn('⚠️ Erro ao associar imagens:', imageError);
+          // Não falhar o salvamento por erro de imagem
+        }
+      }
+
+      // Feedback de sucesso
+      toast({
+        title: editingCase ? "Caso atualizado!" : "Caso criado!",
+        description: `${savedCase.title || 'Novo caso'} foi ${editingCase ? 'atualizado' : 'criado'} com sucesso.`,
+        className: "bg-green-50 border-green-200",
+      });
+
+      // Resetar formulário ou chamar callback
+      if (editingCase) {
+        onCreated?.();
+      } else {
+        resetForm();
+        navigate('/admin/gestao-casos');
+      }
+
+    } catch (error: any) {
+      console.error('❌ Erro no salvamento:', error);
+      toast({
+        title: "Erro ao salvar caso",
+        description: error.message || "Tente novamente",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting(false);
+      setFeedback("");
+    }
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Toggle entre Wizard e Formulário Tradicional */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-purple-600" />
-              Modo de Criação
-            </div>
-            <div className="flex items-center gap-3">
-              <Button
-                variant={useWizardMode ? "default" : "outline"}
-                size="sm"
-                onClick={() => setUseWizardMode(true)}
-                className={useWizardMode ? "bg-purple-600 hover:bg-purple-700" : ""}
-              >
-                <Zap className="h-4 w-4 mr-2" />
-                Wizard Inteligente
-                <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700 text-xs">
-                  RECOMENDADO
-                </Badge>
-              </Button>
-              <Button
-                variant={!useWizardMode ? "default" : "outline"}
-                size="sm"
-                onClick={() => setUseWizardMode(false)}
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                Formulário Completo
-              </Button>
-            </div>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-sm text-gray-600">
-            {useWizardMode ? (
-              <div className="flex items-center gap-2">
-                <ToggleRight className="h-4 w-4 text-green-600" />
-                <span>
-                  <strong>Wizard Ativo:</strong> Processo guiado em 9 etapas com validação inteligente e AI integrada. 
-                  Ideal para novos usuários ou criação rápida.
-                </span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <ToggleLeft className="h-4 w-4 text-blue-600" />
-                <span>
-                  <strong>Formulário Completo:</strong> Acesso direto a todos os campos em uma única tela. 
-                  Ideal para usuários experientes.
-                </span>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Renderizar o modo selecionado */}
-      {useWizardMode ? (
-        <CaseProfileFormWithWizard onCreated={onCreated} />
-      ) : (
-        <CaseProfileFormEditable onCreated={onCreated} />
-      )}
-    </div>
+    <TooltipProvider delayDuration={0}>
+      <CaseCreationWizard
+        form={form}
+        setForm={setForm}
+        highlightedFields={highlightedFields}
+        setHighlightedFields={setHighlightedFields}
+        handlers={handlers}
+        categories={specialties}
+        difficulties={difficulties}
+        isEditMode={!!editingCase}
+        editingCase={editingCase}
+        onSubmit={handleSubmit}
+        submitting={submitting}
+        feedback={feedback}
+        renderTooltipTip={renderTooltipTip}
+      />
+    </TooltipProvider>
   );
 }

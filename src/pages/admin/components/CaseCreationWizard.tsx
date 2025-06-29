@@ -88,7 +88,7 @@ export function CaseCreationWizard({
   const [showPreview, setShowPreview] = useState(false);
   const [showAdvancedImageModal, setShowAdvancedImageModal] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [tempImageCount, setTempImageCount] = useState(0); // Novo estado para contagem
+  const [tempImageCount, setTempImageCount] = useState(0);
 
   const steps: WizardStep[] = [
     {
@@ -173,6 +173,21 @@ export function CaseCreationWizard({
       required: false
     }
   ];
+
+  // FASE 1: Sincronizar form.image_url com imagens temporárias
+  const handleTempImagesChange = (images: any[]) => {
+    const imageUrls = images
+      .filter(img => img.uploadedUrl || img.tempUrl)
+      .map(img => img.uploadedUrl || img.tempUrl);
+    
+    // Sincronizar com form.image_url
+    setForm((prev: any) => ({
+      ...prev,
+      image_url: imageUrls
+    }));
+    
+    console.log('🔄 Form.image_url sincronizado:', imageUrls.length, 'imagens');
+  };
 
   // Validação automática de cada etapa
   useEffect(() => {
@@ -463,7 +478,13 @@ export function CaseCreationWizard({
                 <div className="flex items-center gap-2 bg-white/70 px-3 py-1 rounded-full">
                   <ImageIcon className="h-4 w-4 text-purple-600" />
                   <span className="text-purple-700 font-medium">
-                    {tempImageCount} imagem(ns) {/* Usar contagem atualizada */}
+                    {tempImageCount} imagem(ns) carregada(s)
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 bg-green-100 px-3 py-1 rounded-full">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <span className="text-green-700 font-medium">
+                    {form.image_url?.length || 0} imagem(ns) no formulário
                   </span>
                 </div>
               </div>
@@ -480,14 +501,17 @@ export function CaseCreationWizard({
                   caseId={editingCase?.id}
                   onImagesChange={(images) => {
                     console.log('Images updated:', images.length);
+                    // Sincronizar com form para modo de edição
+                    setForm((prev: any) => ({
+                      ...prev,
+                      image_url: images.map(img => img.original_url).filter(Boolean)
+                    }));
                   }}
                 />
               ) : (
                 <TempImageUpload 
-                  onChange={(images) => {
-                    console.log('Temp images updated:', images.length);
-                  }}
-                  onImageCountChange={setTempImageCount} // Passar callback para atualizar contagem
+                  onChange={handleTempImagesChange} // FASE 1: Usar nova função de sincronização
+                  onImageCountChange={setTempImageCount}
                 />
               )}
             </div>
@@ -518,7 +542,7 @@ export function CaseCreationWizard({
                   <strong>Alternativas:</strong> {form.answer_options.filter((opt: string) => opt.trim()).length}
                 </div>
                 <div>
-                  <strong>Imagens:</strong> {tempImageCount} {/* Usar contagem real */}
+                  <strong>Imagens:</strong> {form.image_url?.length || 0} (sincronizadas)
                 </div>
               </div>
               <Button
