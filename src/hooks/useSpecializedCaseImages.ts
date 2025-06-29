@@ -16,6 +16,9 @@ export interface SpecializedImage {
   file_size_bytes?: number;
 }
 
+// Alias para compatibilidade com componentes existentes
+export type SpecializedCaseImage = SpecializedImage;
+
 export function useSpecializedCaseImages(caseId?: string) {
   const [images, setImages] = useState<SpecializedImage[]>([]);
   const [loading, setLoading] = useState(false);
@@ -53,29 +56,33 @@ export function useSpecializedCaseImages(caseId?: string) {
     }
   };
 
-  const uploadSpecializedImage = async (file: File, options: any) => {
+  const uploadSpecializedImage = async (file: File, options: any): Promise<SpecializedImage | null> => {
     setUploading(true);
     try {
       // Implementação básica de upload
       console.log('Upload de imagem especializada:', file.name, options);
       await fetchImages(); // Recarregar após upload
+      return null; // Retornar resultado real na implementação completa
     } catch (err: any) {
       console.error('Erro no upload:', err);
       setError(err.message);
+      return null;
     } finally {
       setUploading(false);
     }
   };
 
-  const processZipSpecialized = async (file: File, options: any) => {
+  const processZipSpecialized = async (file: File, options: any): Promise<SpecializedImage[] | null> => {
     setProcessing(true);
     try {
       // Implementação básica de processamento ZIP
       console.log('Processamento ZIP especializado:', file.name, options);
       await fetchImages(); // Recarregar após processamento
+      return []; // Retornar resultado real na implementação completa
     } catch (err: any) {
       console.error('Erro no processamento ZIP:', err);
       setError(err.message);
+      return null;
     } finally {
       setProcessing(false);
     }
