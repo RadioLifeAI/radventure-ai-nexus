@@ -38,7 +38,7 @@ function AuthRedirect() {
     return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
   }
   
-  return <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />;
+  return <Navigate to={isAuthenticated ? "/app/dashboard" : "/login"} replace />;
 }
 
 function App() {
@@ -62,9 +62,14 @@ function App() {
             {/* Redirecionamento para /app */}
             <Route path="/app" element={<AuthRedirect />} />
             
-            {/* Rotas Protegidas - Dashboard */}
+            {/* Rotas Protegidas - Dashboard (rota legacy mantida por compatibilidade) */}
             <Route 
               path="/dashboard" 
+              element={<Navigate to="/app/dashboard" replace />}
+            />
+            
+            <Route 
+              path="/app/dashboard" 
               element={
                 <ProtectedRouteRedirect>
                   <Dashboard />

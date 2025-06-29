@@ -28,12 +28,12 @@ export default function Estatisticas() {
 
   if (isLoading || !stats) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="min-h-screen bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6]">
         <HeaderNav />
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Carregando suas estatísticas...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400 mx-auto mb-4"></div>
+            <p className="text-cyan-100">Carregando suas estatísticas...</p>
           </div>
         </div>
       </div>
@@ -45,38 +45,38 @@ export default function Estatisticas() {
       title: "Total de Casos",
       value: stats.totalCases,
       icon: Trophy,
-      color: "text-blue-600",
-      bgColor: "bg-blue-50",
-      borderColor: "border-blue-200"
+      color: "text-blue-400",
+      bgColor: "bg-blue-500/20",
+      borderColor: "border-blue-400/30"
     },
     {
       title: "Precisão",
       value: `${stats.accuracy}%`,
       icon: Target,
-      color: "text-green-600",
-      bgColor: "bg-green-50",
-      borderColor: "border-green-200"
+      color: "text-green-400",
+      bgColor: "bg-green-500/20",
+      borderColor: "border-green-400/30"
     },
     {
       title: "Pontos Totais",
       value: stats.totalPoints.toLocaleString(),
       icon: Zap,
-      color: "text-yellow-600",
-      bgColor: "bg-yellow-50",
-      borderColor: "border-yellow-200"
+      color: "text-yellow-400",
+      bgColor: "bg-yellow-500/20",
+      borderColor: "border-yellow-400/30"
     },
     {
       title: "Sequência Atual",
       value: stats.currentStreak,
       icon: Award,
-      color: "text-purple-600",
-      bgColor: "bg-purple-50",
-      borderColor: "border-purple-200"
+      color: "text-purple-400",
+      bgColor: "bg-purple-500/20",
+      borderColor: "border-purple-400/30"
     }
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white">
       <HeaderNav />
       
       <main className="px-4 lg:px-8 py-6">
@@ -87,27 +87,27 @@ export default function Estatisticas() {
               <Button
                 variant="ghost"
                 onClick={() => navigate(-1)}
-                className="text-gray-600 hover:text-gray-900 mb-2"
+                className="text-cyan-200 hover:text-white hover:bg-white/10 mb-2"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Voltar
               </Button>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <BarChart3 className="h-8 w-8 text-blue-600" />
+              <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+                <BarChart3 className="h-8 w-8 text-cyan-400" />
                 Suas Estatísticas
-                <Badge className="bg-green-100 text-green-800 border-green-200">
+                <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0">
                   Dados Reais
                 </Badge>
               </h1>
-              <p className="text-gray-600 mt-2">
+              <p className="text-cyan-100 mt-2">
                 Análise completa do seu desempenho e progresso
               </p>
             </div>
             
             <div className="flex gap-2">
               <Button 
-                onClick={() => navigate('/app/criar-jornada')}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                onClick={() => navigate('/app/jornada/criar')}
+                className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0"
               >
                 <Brain className="h-4 w-4 mr-2" />
                 Criar Jornada IA
@@ -118,9 +118,9 @@ export default function Estatisticas() {
           {/* Overview Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {overviewStats.map((stat, index) => (
-              <Card key={index} className={`${stat.bgColor} border-2 ${stat.borderColor}`}>
+              <Card key={index} className={`${stat.bgColor} border ${stat.borderColor} bg-white/10 backdrop-blur-sm`}>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2">
+                  <CardTitle className="text-sm flex items-center gap-2 text-cyan-100">
                     <stat.icon className={`h-5 w-5 ${stat.color}`} />
                     {stat.title}
                   </CardTitle>
@@ -135,13 +135,15 @@ export default function Estatisticas() {
           </div>
 
           {/* Insights de Performance */}
-          <PerformanceInsights stats={stats} />
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
+            <PerformanceInsights stats={stats} />
+          </div>
 
           {/* Atividade Semanal */}
-          <Card className="bg-white shadow-sm">
+          <Card className="bg-white/10 backdrop-blur-sm border border-white/20">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-blue-600" />
+              <CardTitle className="flex items-center gap-2 text-white">
+                <Calendar className="h-5 w-5 text-cyan-400" />
                 Atividade dos Últimos 7 Dias
               </CardTitle>
             </CardHeader>
@@ -151,10 +153,10 @@ export default function Estatisticas() {
           </Card>
 
           {/* Performance por Especialidade */}
-          <Card className="bg-white shadow-sm">
+          <Card className="bg-white/10 backdrop-blur-sm border border-white/20">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-green-600" />
+              <CardTitle className="flex items-center gap-2 text-white">
+                <TrendingUp className="h-5 w-5 text-green-400" />
                 Performance por Especialidade
               </CardTitle>
             </CardHeader>
@@ -165,10 +167,10 @@ export default function Estatisticas() {
 
           {/* Conquistas Recentes */}
           {stats.recentAchievements.length > 0 && (
-            <Card className="bg-white shadow-sm">
+            <Card className="bg-white/10 backdrop-blur-sm border border-white/20">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Award className="h-5 w-5 text-yellow-600" />
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <Award className="h-5 w-5 text-yellow-400" />
                   Conquistas Recentes
                 </CardTitle>
               </CardHeader>

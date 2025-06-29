@@ -18,7 +18,7 @@ export function BackToDashboard({
   const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate('/dashboard');
+    navigate('/app/dashboard');
   };
 
   return (
