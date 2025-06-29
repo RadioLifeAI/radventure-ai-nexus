@@ -13,21 +13,21 @@ export function EventsSectionPlayer({ onEnterEvent }: Props) {
   if (loading) {
     return (
       <section className="w-full mt-6 mb-8 flex flex-col items-center animate-fade-in">
-        <span className="text-cyan-500">Carregando eventos...</span>
+        <span className="text-blue-600">Carregando eventos...</span>
       </section>
     );
   }
   if (events.length === 0) {
     return (
       <section className="w-full mt-6 mb-8 flex flex-col items-center animate-fade-in">
-        <span className="text-cyan-500">Nenhum evento disponível no momento. Volte em breve!</span>
+        <span className="text-gray-600">Nenhum evento disponível no momento. Volte em breve!</span>
       </section>
     );
   }
 
   return (
     <section className="w-full mt-6 mb-12">
-      <h2 className="font-extrabold text-2xl text-white mb-2">Eventos Gamificados de Radiologia</h2>
+      <h2 className="font-extrabold text-2xl text-gray-800 mb-2">Eventos Gamificados de Radiologia</h2>
       <div className="flex flex-col gap-6 md:grid md:grid-cols-2 xl:grid-cols-3">
         {events.map(event => (
           <EventCardPlayer key={event.id} event={event} onEnter={onEnterEvent} />

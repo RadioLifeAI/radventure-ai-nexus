@@ -12,8 +12,8 @@ interface EventsManagementHeaderProps {
 
 export function EventsManagementHeader({ totalEvents = 0, activeEvents = 0, onCreateNew }: EventsManagementHeaderProps) {
   return (
-    <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-orange-600 via-red-600 to-pink-600 text-white mb-6">
-      <div className="absolute inset-0 bg-black/20"></div>
+    <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white mb-6 shadow-lg">
+      <div className="absolute inset-0 bg-black/5"></div>
       <div className="relative px-8 py-12">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
@@ -33,7 +33,7 @@ export function EventsManagementHeader({ totalEvents = 0, activeEvents = 0, onCr
                   <Trophy className="h-4 w-4 mr-1" />
                   {totalEvents} eventos totais
                 </Badge>
-                <Badge className="bg-orange-500/80 text-white px-3 py-1">
+                <Badge className="bg-orange-400/80 text-white px-3 py-1">
                   <Zap className="h-4 w-4 mr-1" />
                   {activeEvents} ativos
                 </Badge>

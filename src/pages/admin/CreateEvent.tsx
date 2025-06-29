@@ -110,95 +110,97 @@ export default function CreateEvent() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <BackToDashboard variant="back" />
-        <Badge className="bg-purple-100 text-purple-700">
-          <Sparkles className="h-3 w-3 mr-1" />
-          Powered by AI
-        </Badge>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      <div className="space-y-6 animate-fade-in p-6">
+        <div className="flex items-center justify-between bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+          <BackToDashboard variant="back" />
+          <Badge className="bg-purple-50 text-purple-700 border border-purple-200">
+            <Sparkles className="h-3 w-3 mr-1" />
+            Powered by AI
+          </Badge>
+        </div>
 
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">
-          Criar Novo Evento
-        </h1>
-        <p className="text-gray-600">
-          Use nossa inteligência artificial para criar eventos otimizados e de alto engajamento
-        </p>
-      </div>
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+            Criar Novo Evento
+          </h1>
+          <p className="text-gray-600">
+            Use nossa inteligência artificial para criar eventos otimizados e de alto engajamento
+          </p>
+        </div>
 
-      <Tabs defaultValue="ai-assistant" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="ai-assistant" className="flex items-center gap-2">
-            <Brain className="h-4 w-4" />
-            Assistente de IA
-          </TabsTrigger>
-          <TabsTrigger value="manual-form" className="flex items-center gap-2">
-            <Edit className="h-4 w-4" />
-            Formulário Manual
-          </TabsTrigger>
-        </TabsList>
+        <Tabs defaultValue="ai-assistant" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200 shadow-sm">
+            <TabsTrigger value="ai-assistant" className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700">
+              <Brain className="h-4 w-4" />
+              Assistente de IA
+            </TabsTrigger>
+            <TabsTrigger value="manual-form" className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700">
+              <Edit className="h-4 w-4" />
+              Formulário Manual
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="ai-assistant" className="space-y-6">
-          <EventFormAISection
-            onApplySuggestion={handleApplySuggestion}
-            onAutoFill={handleAutoFill}
-            onApplyTemplate={handleApplyTemplate}
-            onApplyOptimization={handleApplyOptimization}
-            onSelectSchedule={handleSelectSchedule}
-            onConfigureAutomation={() => {}}
-            currentFilters={currentFilters}
-            eventData={eventData}
-          />
+          <TabsContent value="ai-assistant" className="space-y-6">
+            <EventFormAISection
+              onApplySuggestion={handleApplySuggestion}
+              onAutoFill={handleAutoFill}
+              onApplyTemplate={handleApplyTemplate}
+              onApplyOptimization={handleApplyOptimization}
+              onSelectSchedule={handleSelectSchedule}
+              onConfigureAutomation={() => {}}
+              currentFilters={currentFilters}
+              eventData={eventData}
+            />
 
-          {/* Formulário com dados preenchidos pela IA */}
-          {Object.keys(eventData).length > 0 && (
-            <Card>
+            {/* Formulário com dados preenchidos pela IA */}
+            {Object.keys(eventData).length > 0 && (
+              <Card className="bg-white border border-gray-200 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5 text-green-600" />
+                    Dados Preenchidos pela IA
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">
+                    Revise e ajuste os dados antes de criar o evento
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <EventForm
+                    mode="create"
+                    initialValues={eventData}
+                    loading={loading}
+                    onSubmit={handleSubmit}
+                    onCancel={() => navigate("/admin/events")}
+                  />
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="manual-form" className="space-y-6">
+            <Card className="bg-white border border-gray-200 shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-green-600" />
-                  Dados Preenchidos pela IA
+                  <Edit className="h-5 w-5 text-blue-600" />
+                  Formulário Manual de Criação
                 </CardTitle>
                 <p className="text-sm text-gray-600">
-                  Revise e ajuste os dados antes de criar o evento
+                  Preencha manualmente todos os campos do evento
                 </p>
               </CardHeader>
               <CardContent>
                 <EventForm
                   mode="create"
-                  initialValues={eventData}
                   loading={loading}
                   onSubmit={handleSubmit}
                   onCancel={() => navigate("/admin/events")}
                 />
               </CardContent>
             </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="manual-form" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Edit className="h-5 w-5 text-blue-600" />
-                Formulário Manual de Criação
-              </CardTitle>
-              <p className="text-sm text-gray-600">
-                Preencha manualmente todos os campos do evento
-              </p>
-            </CardHeader>
-            <CardContent>
-              <EventForm
-                mode="create"
-                loading={loading}
-                onSubmit={handleSubmit}
-                onCancel={() => navigate("/admin/events")}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

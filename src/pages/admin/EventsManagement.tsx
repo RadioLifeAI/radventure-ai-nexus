@@ -115,49 +115,57 @@ export default function EventsManagement() {
   const activeEvents = events.filter(e => e.status === 'ACTIVE' || e.status === 'SCHEDULED').length;
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Navegação */}
-      <div className="flex items-center justify-between">
-        <BackToDashboard variant="back" />
-        <div className="text-sm text-gray-500">
-          {events.length} de {totalEvents} eventos exibidos
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      <div className="space-y-6 animate-fade-in p-6">
+        {/* Navegação */}
+        <div className="flex items-center justify-between bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+          <BackToDashboard variant="back" />
+          <div className="text-sm text-gray-600">
+            {events.length} de {totalEvents} eventos exibidos
+          </div>
         </div>
-      </div>
 
-      <EventsManagementHeader 
-        totalEvents={totalEvents}
-        activeEvents={activeEvents}
-        onCreateNew={() => navigate('/admin/create-event')}
-      />
+        <EventsManagementHeader 
+          totalEvents={totalEvents}
+          activeEvents={activeEvents}
+          onCreateNew={() => navigate('/admin/create-event')}
+        />
 
-      {/* Filtros Avançados */}
-      <EventsAdvancedFilters
-        filters={filters}
-        onFiltersChange={setFilters}
-        savedFilters={savedFilters}
-        onSaveFilter={handleSaveFilter}
-        onLoadFilter={handleLoadFilter}
-        onDeleteFilter={handleDeleteFilter}
-        totalEvents={totalEvents}
-        filteredEvents={events.length}
-      />
+        {/* Filtros Avançados */}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+          <EventsAdvancedFilters
+            filters={filters}
+            onFiltersChange={setFilters}
+            savedFilters={savedFilters}
+            onSaveFilter={handleSaveFilter}
+            onLoadFilter={handleLoadFilter}
+            onDeleteFilter={handleDeleteFilter}
+            totalEvents={totalEvents}
+            filteredEvents={events.length}
+          />
+        </div>
 
-      {/* Seletor de Visualização */}
-      <EventsViewSelector
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        sortField={sortField}
-        sortDirection={sortDirection}
-        onSort={handleSort}
-        selectedCount={selectedEvents.length}
-        totalCount={events.length}
-        onBulkAction={handleBulkAction}
-        onExport={handleExport}
-      />
+        {/* Seletor de Visualização */}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+          <EventsViewSelector
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={handleSort}
+            selectedCount={selectedEvents.length}
+            totalCount={events.length}
+            onBulkAction={handleBulkAction}
+            onExport={handleExport}
+          />
+        </div>
 
-      {/* Visualização dos Eventos */}
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        {renderEventsView()}
+        {/* Visualização dos Eventos */}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+          <div className="p-6">
+            {renderEventsView()}
+          </div>
+        </div>
       </div>
     </div>
   );
