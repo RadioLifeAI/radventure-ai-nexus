@@ -8,9 +8,8 @@ export function useProfileRewards() {
   const { user } = useAuth();
   const { toast } = useToast();
   const isProcessingRef = useRef(false);
-  const lastProcessedRef = useRef<string>('');
   const lastExecutionTimeRef = useRef<number>(0);
-  const debounceTimeoutRef = useRef<NodeJS.Timeout>();
+  const processedFieldsRef = useRef<Set<string>>(new Set());
 
   const checkAndAwardProfileRewards = useCallback(async (profile: any) => {
     if (!user || !profile) {
@@ -18,243 +17,201 @@ export function useProfileRewards() {
       return;
     }
 
-    // Cooldown de 5 minutos entre execuções
+    // CONTROLE SUPER RIGOROSO - Múltiplas verificações
     const now = Date.now();
-    const COOLDOWN_TIME = 5 * 60 * 1000; // 5 minutos
+    const MINIMUM_INTERVAL = 10 * 60 * 1000; // 10 minutos entre execuções
     
-    if (now - lastExecutionTimeRef.current < COOLDOWN_TIME) {
-      console.log('⏰ Cooldown ativo, ignorando execução de recompensas');
+    if (now - lastExecutionTimeRef.current < MINIMUM_INTERVAL) {
+      console.log('⏰ Intervalo mínimo não atingido, bloqueando execução');
       return;
     }
 
-    // Gerar hash único do perfil para detectar mudanças reais
-    const profileHash = JSON.stringify({
-      full_name: profile.full_name,
-      city: profile.city,
-      state: profile.state,
-      medical_specialty: profile.medical_specialty,
-      academic_stage: profile.academic_stage,
-      college: profile.college,
-      birthdate: profile.birthdate,
-      bio: profile.bio
-    });
-
-    // Verificar se já processou este estado exato
-    if (lastProcessedRef.current === profileHash) {
-      console.log('🔄 Perfil já processado com este estado, ignorando...');
-      return;
-    }
-
-    // Verificar se já está processando (mutex simples)
     if (isProcessingRef.current) {
-      console.log('⏳ Já está processando recompensas, aguardando...');
+      console.log('⏳ Já está processando recompensas, bloqueando execução');
       return;
     }
 
-    // Limpar timeout anterior se existir
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
+    try {
+      // Marcar como processando IMEDIATAMENTE
+      isProcessingRef.current = true;
+      lastExecutionTimeRef.current = now;
+      
+      console.log('🔍 Iniciando verificação DEFINITIVA de recompensas...');
 
-    // Debounce de 3 segundos para evitar execuções muito próximas
-    debounceTimeoutRef.current = setTimeout(async () => {
-      try {
-        isProcessingRef.current = true;
-        lastExecutionTimeRef.current = now;
+      // ETAPA 1: Verificar transações existentes no banco
+      const { data: existingTransactions, error: transactionError } = await supabase
+        .from('radcoin_transactions_log')
+        .select('tx_type, metadata, created_at')
+        .eq('user_id', user.id)
+        .in('tx_type', ['profile_completion', 'profile_completion_bonus'])
+        .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()); // Últimas 24h
+
+      if (transactionError) {
+        console.error('❌ Erro ao buscar transações:', transactionError);
+        return;
+      }
+
+      // Mapear campos já recompensados
+      const rewardedFields = new Set<string>();
+      let bonusAlreadyGiven = false;
+
+      existingTransactions?.forEach(tx => {
+        if (tx.tx_type === 'profile_completion' && tx.metadata?.field) {
+          rewardedFields.add(tx.metadata.field);
+          console.log(`✓ Campo ${tx.metadata.field} já recompensado`);
+        }
+        if (tx.tx_type === 'profile_completion_bonus') {
+          bonusAlreadyGiven = true;
+          console.log('✓ Bônus de perfil completo já dado');
+        }
+      });
+
+      // ETAPA 2: Definir recompensas e verificar condições atuais
+      const rewardFields = [
+        { 
+          key: 'full_name_reward', 
+          condition: !!(profile.full_name && profile.full_name.trim().length > 0), 
+          reward: 10,
+          description: 'Nome completo preenchido'
+        },
+        { 
+          key: 'location_reward', 
+          condition: !!(profile.city && profile.state), 
+          reward: 15,
+          description: 'Localização preenchida'
+        },
+        { 
+          key: 'medical_specialty_reward', 
+          condition: !!(profile.medical_specialty && profile.medical_specialty.trim().length > 0), 
+          reward: 20,
+          description: 'Especialidade médica preenchida'
+        },
+        { 
+          key: 'academic_info_reward', 
+          condition: !!(profile.academic_stage && profile.college), 
+          reward: 25,
+          description: 'Informações acadêmicas preenchidas'
+        },
+        { 
+          key: 'birthdate_reward', 
+          condition: !!profile.birthdate, 
+          reward: 10,
+          description: 'Data de nascimento preenchida'
+        },
+        { 
+          key: 'bio_reward', 
+          condition: !!(profile.bio && profile.bio.trim().length > 20), 
+          reward: 15,
+          description: 'Biografia preenchida'
+        }
+      ];
+
+      let totalNewRewards = 0;
+
+      // ETAPA 3: Processar cada campo individualmente
+      for (const field of rewardFields) {
+        // Verificar se já foi recompensado
+        if (rewardedFields.has(field.key)) {
+          console.log(`⭕ Campo ${field.key} já recompensado - pulando`);
+          continue;
+        }
+
+        // Verificar se condition está atendida
+        if (!field.condition) {
+          console.log(`❌ Campo ${field.key} não atende condição - pulando`);
+          continue;
+        }
+
+        // Verificar se já foi processado nesta sessão
+        if (processedFieldsRef.current.has(field.key)) {
+          console.log(`🔒 Campo ${field.key} já processado nesta sessão - pulando`);
+          continue;
+        }
+
+        console.log(`💰 Processando recompensa para ${field.key}: ${field.reward} RadCoins`);
         
-        console.log('🎯 Iniciando verificação de recompensas para:', profile.email);
-
-        // Definir recompensas por campo completado
-        const rewardFields = [
-          { 
-            key: 'full_name_reward', 
-            condition: !!(profile.full_name && profile.full_name.trim().length > 0), 
-            reward: 10,
-            description: 'Nome completo preenchido'
-          },
-          { 
-            key: 'location_reward', 
-            condition: !!(profile.city && profile.state), 
-            reward: 15,
-            description: 'Localização preenchida'
-          },
-          { 
-            key: 'medical_specialty_reward', 
-            condition: !!(profile.medical_specialty && profile.medical_specialty.trim().length > 0), 
-            reward: 20,
-            description: 'Especialidade médica preenchida'
-          },
-          { 
-            key: 'academic_info_reward', 
-            condition: !!(profile.academic_stage && profile.college), 
-            reward: 25,
-            description: 'Informações acadêmicas preenchidas'
-          },
-          { 
-            key: 'birthdate_reward', 
-            condition: !!profile.birthdate, 
-            reward: 10,
-            description: 'Data de nascimento preenchida'
-          },
-          { 
-            key: 'bio_reward', 
-            condition: !!(profile.bio && profile.bio.trim().length > 20), 
-            reward: 15,
-            description: 'Biografia preenchida'
+        // Dar RadCoins usando a função do banco
+        const { error: radcoinError } = await supabase.rpc('award_radcoins', {
+          p_user_id: user.id,
+          p_amount: field.reward,
+          p_transaction_type: 'profile_completion',
+          p_metadata: {
+            field: field.key,
+            description: field.description,
+            processed_at: new Date().toISOString(),
+            session_id: `session_${now}`,
+            execution_timestamp: now
           }
-        ];
+        });
 
-        // Verificar quais recompensas já foram dadas
-        const currentPreferences = profile.preferences || {};
-        const profileRewards = currentPreferences.profile_rewards || {};
-
-        let totalNewRewards = 0;
-
-        for (const field of rewardFields) {
-          const alreadyRewarded = profileRewards[field.key];
-          
-          console.log(`🔍 Campo ${field.key}:`, {
-            condition: field.condition,
-            alreadyRewarded,
-            reward: field.reward
-          });
-          
-          if (field.condition && !alreadyRewarded) {
-            console.log(`💰 Dando ${field.reward} RadCoins por ${field.description}`);
-            
-            // Dar RadCoins usando a função do banco
-            const { error: radcoinError } = await supabase.rpc('award_radcoins', {
-              p_user_id: user.id,
-              p_amount: field.reward,
-              p_transaction_type: 'profile_completion',
-              p_metadata: {
-                field: field.key,
-                description: field.description,
-                processed_at: new Date().toISOString(),
-                profile_hash: profileHash,
-                execution_timestamp: now
-              }
-            });
-
-            if (radcoinError) {
-              console.error('❌ Erro ao dar RadCoins:', radcoinError);
-              continue;
-            }
-
-            // Marcar como recompensado
-            const updatedRewards = {
-              ...profileRewards,
-              [field.key]: {
-                awarded: true,
-                timestamp: now,
-                amount: field.reward
-              }
-            };
-
-            const { error: updateError } = await supabase
-              .from('profiles')
-              .update({
-                preferences: {
-                  ...currentPreferences,
-                  profile_rewards: updatedRewards
-                },
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', user.id);
-
-            if (updateError) {
-              console.error('❌ Erro ao marcar recompensa:', updateError);
-              continue;
-            }
-
-            totalNewRewards += field.reward;
-
-            // Mostrar toast de recompensa
-            toast({
-              title: '🎉 RadCoins Ganhas!',
-              description: `+${field.reward} RadCoins por ${field.description.toLowerCase()}`,
-              duration: 3000,
-            });
-
-            console.log(`✅ Recompensa de ${field.reward} RadCoins dada com sucesso`);
-          }
-        }
-
-        // Verificar se perfil está 100% completo para bônus adicional
-        const allFieldsComplete = rewardFields.every(field => field.condition);
-        const completionBonusGiven = profileRewards.completion_bonus?.awarded;
-
-        if (allFieldsComplete && !completionBonusGiven) {
-          console.log('🏆 Perfil 100% completo! Dando bônus de 50 RadCoins');
-          
-          const { error: bonusError } = await supabase.rpc('award_radcoins', {
-            p_user_id: user.id,
-            p_amount: 50,
-            p_transaction_type: 'profile_completion_bonus',
-            p_metadata: {
-              description: 'Bônus de perfil 100% completo',
-              processed_at: new Date().toISOString(),
-              profile_hash: profileHash,
-              execution_timestamp: now
-            }
-          });
-
-          if (!bonusError) {
-            await supabase
-              .from('profiles')
-              .update({
-                preferences: {
-                  ...currentPreferences,
-                  profile_rewards: {
-                    ...profileRewards,
-                    completion_bonus: {
-                      awarded: true,
-                      timestamp: now,
-                      amount: 50
-                    }
-                  }
-                },
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', user.id);
-
-            totalNewRewards += 50;
-
-            toast({
-              title: '🏆 Bônus de Perfil Completo!',
-              description: '+50 RadCoins por completar 100% do perfil!',
-              duration: 4000,
-            });
-
-            console.log('✅ Bônus de perfil completo dado com sucesso');
-          }
-        }
-
-        if (totalNewRewards > 0) {
-          console.log(`🎉 Total de ${totalNewRewards} RadCoins creditadas!`);
-        } else {
-          console.log('ℹ️ Nenhuma nova recompensa para dar');
+        if (radcoinError) {
+          console.error(`❌ Erro ao dar RadCoins para ${field.key}:`, radcoinError);
+          continue;
         }
 
         // Marcar como processado
-        lastProcessedRef.current = profileHash;
+        processedFieldsRef.current.add(field.key);
+        totalNewRewards += field.reward;
 
-      } catch (error) {
-        console.error('❌ Erro ao processar recompensas de perfil:', error);
-      } finally {
-        isProcessingRef.current = false;
+        // Mostrar toast de recompensa
+        toast({
+          title: '🎉 RadCoins Ganhas!',
+          description: `+${field.reward} RadCoins por ${field.description.toLowerCase()}`,
+          duration: 3000,
+        });
+
+        console.log(`✅ Recompensa de ${field.reward} RadCoins dada com sucesso para ${field.key}`);
+
+        // Pequena pausa para evitar concorrência
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
-    }, 3000); // Debounce de 3 segundos
+
+      // ETAPA 4: Verificar bônus de perfil completo
+      const allFieldsComplete = rewardFields.every(field => field.condition);
+
+      if (allFieldsComplete && !bonusAlreadyGiven && !processedFieldsRef.current.has('completion_bonus')) {
+        console.log('🏆 Perfil 100% completo! Processando bônus de 50 RadCoins');
+        
+        const { error: bonusError } = await supabase.rpc('award_radcoins', {
+          p_user_id: user.id,
+          p_amount: 50,
+          p_transaction_type: 'profile_completion_bonus',
+          p_metadata: {
+            description: 'Bônus de perfil 100% completo',
+            processed_at: new Date().toISOString(),
+            session_id: `session_${now}`,
+            execution_timestamp: now
+          }
+        });
+
+        if (!bonusError) {
+          processedFieldsRef.current.add('completion_bonus');
+          totalNewRewards += 50;
+
+          toast({
+            title: '🏆 Bônus de Perfil Completo!',
+            description: '+50 RadCoins por completar 100% do perfil!',
+            duration: 4000,
+          });
+
+          console.log('✅ Bônus de perfil completo dado com sucesso');
+        } else {
+          console.error('❌ Erro ao dar bônus de perfil completo:', bonusError);
+        }
+      }
+
+      if (totalNewRewards > 0) {
+        console.log(`🎉 Total de ${totalNewRewards} RadCoins creditadas nesta execução!`);
+      } else {
+        console.log('ℹ️ Nenhuma nova recompensa para dar nesta execução');
+      }
+
+    } catch (error) {
+      console.error('❌ Erro ao processar recompensas de perfil:', error);
+    } finally {
+      isProcessingRef.current = false;
+    }
   }, [user, toast]);
-
-  // Cleanup do timeout no unmount
-  useEffect(() => {
-    return () => {
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current);
-      }
-    };
-  }, []);
 
   return { checkAndAwardProfileRewards };
 }

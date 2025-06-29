@@ -36,9 +36,10 @@ export function useUserProfile() {
   const queryClient = useQueryClient();
   const { checkAndAwardProfileRewards } = useProfileRewards();
   
-  // Controles para evitar execução múltipla
+  // Controles super rigorosos para evitar execução múltipla
   const hasCheckedRewardsRef = useRef(false);
-  const loginTimeRef = useRef<number>(Date.now());
+  const processingRewardsRef = useRef(false);
+  const sessionKeyRef = useRef(`profile_rewards_${Date.now()}_${Math.random()}`);
 
   const { data: profile, isLoading, error } = useQuery({
     queryKey: ['user-profile', user?.id],
@@ -114,36 +115,69 @@ export function useUserProfile() {
     },
     enabled: !!user?.id && isAuthenticated,
     refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 2,
+    staleTime: 1000 * 60 * 5, // Aumentado para 5 minutos
     retry: (failureCount, error: any) => {
       return failureCount < 2 && error?.code !== 'PGRST116';
     },
   });
 
-  // Verificar recompensas APENAS uma vez no primeiro carregamento
+  // Controle SUPER RIGOROSO para verificar recompensas apenas UMA vez
   useEffect(() => {
-    if (profile && user && !hasCheckedRewardsRef.current) {
-      // Garantir que o usuário está logado há pelo menos 30 segundos
-      const timeSinceLogin = Date.now() - loginTimeRef.current;
-      
-      if (timeSinceLogin >= 30000) {
-        console.log('🎯 Verificando recompensas de perfil (execução única)...');
-        hasCheckedRewardsRef.current = true;
-        checkAndAwardProfileRewards(profile);
-      } else {
-        console.log('⏳ Aguardando 30 segundos desde login antes de verificar recompensas...');
-        const timeout = setTimeout(() => {
-          if (!hasCheckedRewardsRef.current) {
-            console.log('🎯 Verificando recompensas de perfil após timeout...');
-            hasCheckedRewardsRef.current = true;
-            checkAndAwardProfileRewards(profile);
-          }
-        }, 30000 - timeSinceLogin);
-        
-        return () => clearTimeout(timeout);
+    const executeRewards = async () => {
+      // Múltiplas verificações de segurança
+      if (!profile || !user) {
+        console.log('❌ Sem perfil ou usuário para recompensas');
+        return;
       }
-    }
-  }, [profile?.id]); // Apenas ID do perfil como dependência
+
+      if (hasCheckedRewardsRef.current) {
+        console.log('🔒 Recompensas já verificadas - bloqueando execução');
+        return;
+      }
+
+      if (processingRewardsRef.current) {
+        console.log('⏳ Já processando recompensas - bloqueando execução');
+        return;
+      }
+
+      // Verificar session storage para evitar execução dupla
+      const sessionKey = sessionKeyRef.current;
+      const sessionCheck = sessionStorage.getItem(`profile_rewards_${user.id}`);
+      
+      if (sessionCheck) {
+        console.log('🔒 Session storage indica recompensas já processadas');
+        hasCheckedRewardsRef.current = true;
+        return;
+      }
+
+      try {
+        // Marcar como processando IMEDIATAMENTE
+        processingRewardsRef.current = true;
+        hasCheckedRewardsRef.current = true;
+        
+        // Salvar no session storage
+        sessionStorage.setItem(`profile_rewards_${user.id}`, sessionKey);
+        
+        console.log('🎯 Iniciando verificação ÚNICA de recompensas...');
+        
+        // Executar verificação de recompensas
+        await checkAndAwardProfileRewards(profile);
+        
+        console.log('✅ Verificação de recompensas concluída');
+        
+      } catch (error) {
+        console.error('❌ Erro ao verificar recompensas:', error);
+        // Em caso de erro, resetar controles para permitir nova tentativa
+        hasCheckedRewardsRef.current = false;
+        processingRewardsRef.current = false;
+        sessionStorage.removeItem(`profile_rewards_${user.id}`);
+      } finally {
+        processingRewardsRef.current = false;
+      }
+    };
+
+    executeRewards();
+  }, [profile?.id, user?.id]); // Dependências mínimas e estáveis
 
   const updateProfileMutation = useMutation({
     mutationFn: async (updates: Partial<UserProfile>) => {
@@ -178,7 +212,7 @@ export function useUserProfile() {
         description: 'Suas informações foram salvas com sucesso.',
       });
       
-      console.log('✅ Cache atualizado sem invalidação para evitar loop de recompensas');
+      console.log('✅ Cache atualizado sem invalidação');
     },
     onError: (error: any) => {
       console.error('❌ Erro ao atualizar perfil:', error);
