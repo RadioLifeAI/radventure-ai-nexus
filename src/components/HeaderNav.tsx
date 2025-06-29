@@ -28,6 +28,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { ProfileSettingsModal } from "@/components/profile/ProfileSettingsModal";
 import { RadCoinStoreModal } from "@/components/radcoin-shop/RadCoinStoreModal";
+import { EventsNotificationSystem } from "@/components/eventos/EventsNotificationSystem";
 
 export function HeaderNav() {
   const location = useLocation();
@@ -100,6 +101,9 @@ export function HeaderNav() {
 
             {/* User Menu */}
             <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+              {/* Sistema de Notificações - NOVO */}
+              {user && <EventsNotificationSystem />}
+
               {/* RadCoins Display - AGORA CLICÁVEL */}
               <button
                 onClick={() => setShowRadCoinShop(true)}

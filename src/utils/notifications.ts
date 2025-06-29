@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-export type NotificationType = 'event_starting' | 'achievement_unlocked' | 'ranking_update' | 'new_event' | 'reminder';
+export type NotificationType = 'event_starting' | 'achievement_unlocked' | 'ranking_update' | 'new_event' | 'reminder' | 'radcoin_reward' | 'streak_milestone' | 'daily_login_bonus' | 'case_milestone';
 export type NotificationPriority = 'low' | 'medium' | 'high';
 
 interface CreateNotificationProps {
@@ -90,6 +90,54 @@ export async function createNotificationForAllUsers({
     return { success: true };
   } catch (error) {
     console.error('Erro ao criar notificações em massa:', error);
+    return { success: false, error };
+  }
+}
+
+// Função para marcar notificação como lida
+export async function markNotificationAsRead(notificationId: string) {
+  try {
+    const { error } = await supabase
+      .from('notifications')
+      .update({ is_read: true, updated_at: new Date().toISOString() })
+      .eq('id', notificationId);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error('Erro ao marcar notificação como lida:', error);
+    return { success: false, error };
+  }
+}
+
+// Função para obter estatísticas de notificações
+export async function getNotificationStats() {
+  try {
+    const { data: totalSent, error: sentError } = await supabase
+      .from('notifications')
+      .select('id', { count: 'exact' });
+
+    const { data: totalRead, error: readError } = await supabase
+      .from('notifications')
+      .select('id', { count: 'exact' })
+      .eq('is_read', true);
+
+    if (sentError || readError) throw sentError || readError;
+
+    const sentCount = totalSent?.length || 0;
+    const readCount = totalRead?.length || 0;
+    const openRate = sentCount > 0 ? Math.round((readCount / sentCount) * 100) : 0;
+
+    return {
+      success: true,
+      stats: {
+        totalSent: sentCount,
+        totalRead: readCount,
+        openRate
+      }
+    };
+  } catch (error) {
+    console.error('Erro ao obter estatísticas:', error);
     return { success: false, error };
   }
 }

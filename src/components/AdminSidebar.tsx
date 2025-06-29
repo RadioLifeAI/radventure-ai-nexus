@@ -14,6 +14,7 @@ import {
   BookOpen,
   Trophy,
   Brain,
+  Bell,
 } from "lucide-react";
 
 // Menu admin - links relativos para rotas aninhadas
@@ -27,6 +28,7 @@ const adminMenu = [
   { label: "Assinaturas", icon: <CreditCard size={20} />, to: "/admin/assinaturas" },
   { label: "Tutor IA", icon: <Brain size={20} />, to: "/admin/tutor-ia" },
   { label: "Conquistas", icon: <Trophy size={20} />, to: "/admin/conquistas" },
+  { label: "Notificações", icon: <Bell size={20} />, to: "/admin/notificacoes" },
   { label: "Monitoramento", icon: <Monitor size={20} />, to: "/admin/monitoramento" },
   { label: "Recompensas", icon: <Gift size={20} />, to: "/admin/recompensas" },
   { label: "Configurações", icon: <Settings size={20} />, to: "/admin/configuracoes" },
