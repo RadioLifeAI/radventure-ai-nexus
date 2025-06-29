@@ -7,17 +7,19 @@ import { CasesViewSelector, ViewMode } from "./components/CasesViewSelector";
 import { CasesCardsView } from "./components/CasesCardsView";
 import { CasesGridView } from "./components/CasesGridView";
 import { MedicalCasesTable } from "./components/MedicalCasesTable";
-import { CaseEditFormModal } from "./components/CaseEditFormModal";
 import { CaseQuickEditModal } from "./components/CaseQuickEditModal";
 import { CaseRichViewModal } from "./components/CaseRichViewModal";
 import { CaseSmartDuplicateModal } from "./components/CaseSmartDuplicateModal";
 import { CaseAdvancedAnalyticsModal } from "./components/CaseAdvancedAnalyticsModal";
-import { CaseEditWizardModal } from "./components/CaseEditWizardModal";
 import { CaseVersionComparisonModal } from "./components/CaseVersionComparisonModal";
 
 // Phase 3 Components
 import { NotificationProvider, NotificationContainer } from "./components/CaseNotificationSystem";
 import { CaseShortcutsManager, useCaseShortcuts } from "./components/CaseShortcutsManager";
+
+// Modal unificado usando apenas o wizard avançado
+import { Dialog, DialogContent, DialogTitle, DialogHeader } from "@/components/ui/dialog";
+import { CaseProfileFormWithWizard } from "./components/CaseProfileFormWithWizard";
 
 import { useCasesManagement } from "./hooks/useCasesManagement";
 import { useDisclosure } from "@mantine/hooks";
@@ -58,7 +60,7 @@ export default function GestaoCasos() {
     viewMode 
   });
 
-  // Modal states - Phase 1
+  // Modal states - usando apenas um modal de edição unificado
   const [editModalOpen, { open: openEditModal, close: closeEditModal }] = useDisclosure(false);
   const [quickEditModalOpen, { open: openQuickEditModal, close: closeQuickEditModal }] = useDisclosure(false);
   const [richViewModalOpen, { open: openRichViewModal, close: closeRichViewModal }] = useDisclosure(false);
@@ -66,13 +68,15 @@ export default function GestaoCasos() {
   
   // Modal states - Phase 2
   const [analyticsModalOpen, { open: openAnalyticsModal, close: closeAnalyticsModal }] = useDisclosure(false);
-  const [wizardModalOpen, { open: openWizardModal, close: closeWizardModal }] = useDisclosure(false);
   const [versionModalOpen, { open: openVersionModal, close: closeVersionModal }] = useDisclosure(false);
   
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
+  const [selectedCase, setSelectedCase] = useState<any>(null);
 
   const handleEdit = (caseId: string) => {
-    console.log('✏️ GestaoCasos: Abrindo modal de edição para caso:', caseId);
+    console.log('✏️ GestaoCasos: Abrindo modal de edição unificado para caso:', caseId);
+    const case_ = cases.find(c => c.id === caseId);
+    setSelectedCase(case_);
     setSelectedCaseId(caseId);
     openEditModal();
   };
@@ -103,9 +107,8 @@ export default function GestaoCasos() {
   };
 
   const handleWizardEdit = (caseId: string) => {
-    console.log('🧙 GestaoCasos: Abrindo wizard para caso:', caseId);
-    setSelectedCaseId(caseId);
-    openWizardModal();
+    console.log('🧙 GestaoCasos: Usando modal unificado para edição avançada:', caseId);
+    handleEdit(caseId); // Usa o mesmo modal unificado
   };
 
   const handleVersionComparison = (caseId: string) => {
@@ -119,7 +122,6 @@ export default function GestaoCasos() {
     refetch();
     closeEditModal();
     closeQuickEditModal();
-    closeWizardModal();
   };
 
   const handleCaseCreated = () => {
@@ -244,14 +246,24 @@ export default function GestaoCasos() {
             </div>
           </div>
 
-          {/* Modais - Phase 1 com z-index otimizado */}
-          <CaseEditFormModal
-            open={editModalOpen}
-            onClose={closeEditModal}
-            caseId={selectedCaseId}
-            onSaved={handleCaseSaved}
-          />
+          {/* Modal Unificado de Edição - Usando apenas CaseProfileFormWithWizard */}
+          <Dialog open={editModalOpen} onOpenChange={closeEditModal}>
+            <DialogContent className="max-w-7xl max-h-[95vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>
+                  {selectedCase ? `Editar: ${selectedCase.title}` : 'Novo Caso Médico'}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="mt-4">
+                <CaseProfileFormWithWizard
+                  editingCase={selectedCase}
+                  onCreated={handleCaseSaved}
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
 
+          {/* Modais restantes mantidos */}
           <CaseQuickEditModal
             open={quickEditModalOpen}
             onClose={closeQuickEditModal}
@@ -277,18 +289,10 @@ export default function GestaoCasos() {
             onCreated={handleCaseCreated}
           />
 
-          {/* Modais - Phase 2 com z-index otimizado */}
           <CaseAdvancedAnalyticsModal
             open={analyticsModalOpen}
             onClose={closeAnalyticsModal}
             caseId={selectedCaseId}
-          />
-
-          <CaseEditWizardModal
-            open={wizardModalOpen}
-            onClose={closeWizardModal}
-            caseId={selectedCaseId}
-            onSaved={handleCaseSaved}
           />
 
           <CaseVersionComparisonModal
