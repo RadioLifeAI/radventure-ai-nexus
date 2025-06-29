@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,9 +20,10 @@ import {
 
 interface TempImageUploadProps {
   onChange?: (images: TempCaseImage[]) => void;
+  onImageCountChange?: (count: number) => void; // Nova prop para notificar mudanças
 }
 
-export function TempImageUpload({ onChange }: TempImageUploadProps) {
+export function TempImageUpload({ onChange, onImageCountChange }: TempImageUploadProps) {
   const {
     tempImages,
     uploading,
@@ -40,7 +40,8 @@ export function TempImageUpload({ onChange }: TempImageUploadProps) {
 
   React.useEffect(() => {
     onChange?.(tempImages);
-  }, [tempImages, onChange]);
+    onImageCountChange?.(tempImages.length); // Notificar mudança na contagem
+  }, [tempImages, onChange, onImageCountChange]);
 
   const handleFileSelect = async (files: FileList | null) => {
     if (!files) return;

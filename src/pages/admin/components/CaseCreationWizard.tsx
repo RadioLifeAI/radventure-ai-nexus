@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -89,6 +88,7 @@ export function CaseCreationWizard({
   const [showPreview, setShowPreview] = useState(false);
   const [showAdvancedImageModal, setShowAdvancedImageModal] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [tempImageCount, setTempImageCount] = useState(0); // Novo estado para contagem
 
   const steps: WizardStep[] = [
     {
@@ -463,7 +463,7 @@ export function CaseCreationWizard({
                 <div className="flex items-center gap-2 bg-white/70 px-3 py-1 rounded-full">
                   <ImageIcon className="h-4 w-4 text-purple-600" />
                   <span className="text-purple-700 font-medium">
-                    {Array.isArray(form.image_url) ? form.image_url.length : 0} imagem(ns)
+                    {tempImageCount} imagem(ns) {/* Usar contagem atualizada */}
                   </span>
                 </div>
               </div>
@@ -487,6 +487,7 @@ export function CaseCreationWizard({
                   onChange={(images) => {
                     console.log('Temp images updated:', images.length);
                   }}
+                  onImageCountChange={setTempImageCount} // Passar callback para atualizar contagem
                 />
               )}
             </div>
@@ -517,7 +518,7 @@ export function CaseCreationWizard({
                   <strong>Alternativas:</strong> {form.answer_options.filter((opt: string) => opt.trim()).length}
                 </div>
                 <div>
-                  <strong>Imagens:</strong> {Array.isArray(form.image_url) ? form.image_url.length : 0}
+                  <strong>Imagens:</strong> {tempImageCount} {/* Usar contagem real */}
                 </div>
               </div>
               <Button
