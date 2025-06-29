@@ -1,13 +1,14 @@
+
 import React from "react";
 import { CaseCreationWizard } from "./CaseCreationWizard";
 import { useCaseProfileFormHandlers } from "../hooks/useCaseProfileFormHandlers";
 import { useFieldUndo } from "../hooks/useFieldUndo";
 import { useCaseTitleGenerator } from "../hooks/useCaseTitleGenerator";
+import { useTempImageManager } from "@/hooks/useTempImageManager";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import { useSpecializedCaseImages } from "@/hooks/useSpecializedCaseImages";
-import { useSpecializedImageUpload } from "@/hooks/useSpecializedImageUpload";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 interface CaseProfileFormWithWizardProps {
@@ -21,11 +22,10 @@ export function CaseProfileFormWithWizard({
 }: CaseProfileFormWithWizardProps) {
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
   const [difficulties, setDifficulties] = useState<{ id: number; level: number; description: string | null }[]>([]);
-  const [tempImages, setTempImages] = useState<File[]>([]);
-  const [isProcessingImages, setIsProcessingImages] = useState(false);
-
   const { images: specializedImages, refetch: refetchImages } = useSpecializedCaseImages(editingCase?.id);
-  const { uploadSpecializedImage, processZipSpecialized } = useSpecializedImageUpload();
+  
+  // Sistema de imagens temporárias integrado
+  const tempImageManager = useTempImageManager();
 
   useEffect(() => {
     supabase.from("medical_specialties")
@@ -63,13 +63,11 @@ export function CaseProfileFormWithWizard({
     if (editingCase) {
       setForm({
         ...editingCase,
-        // Não usar image_url - imagens vêm apenas da tabela case_images
-        image_url: [], // Campo depreciado, zerado
+        // Não incluir mais image_url do form - usar apenas case_images
         answer_options: editingCase.answer_options || ["", "", "", ""],
         answer_feedbacks: editingCase.answer_feedbacks || ["", "", "", ""],
         answer_short_tips: editingCase.answer_short_tips || ["", "", "", ""],
         correct_answer_index: editingCase.correct_answer_index || 0,
-        // ... keep existing code (todos os outros campos do formulário)
         secondary_diagnoses: editingCase.secondary_diagnoses || [],
         anatomical_regions: editingCase.anatomical_regions || [],
         finding_types: editingCase.finding_types || [],
@@ -110,19 +108,6 @@ export function CaseProfileFormWithWizard({
     }
   }, [form.category_id, form.modality, form.difficulty_level, isEditMode]);
 
-  // Handler para imagens temporárias
-  const handleTempImageUpload = (files: File[]) => {
-    setTempImages(prev => [...prev, ...files]);
-    toast({
-      title: "📸 Imagens Adicionadas",
-      description: `${files.length} imagem(ns) prontas para processamento após salvar o caso.`
-    });
-  };
-
-  const removeTempImage = (index: number) => {
-    setTempImages(prev => prev.filter((_, i) => i !== index));
-  };
-
   function renderTooltipTip(id: string, text: string) {
     return (
       <Tooltip>
@@ -151,12 +136,11 @@ export function CaseProfileFormWithWizard({
     }
 
     setSubmitting(true);
-    setFeedback("Salvando caso...");
-
     try {
       const selectedCategory = categories.find(c => String(c.id) === String(form.category_id));
       const primary_diagnosis = form.primary_diagnosis ?? "";
 
+      // PAYLOAD SEM IMAGE_URL - Usar apenas case_images
       const payload: any = {
         specialty: selectedCategory ? selectedCategory.name : null,
         category_id: form.category_id ? Number(form.category_id) : null,
@@ -177,8 +161,7 @@ export function CaseProfileFormWithWizard({
         answer_feedbacks: form.answer_feedbacks,
         answer_short_tips: form.answer_short_tips,
         correct_answer_index: form.correct_answer_index,
-        // IMPORTANTE: image_url sempre vazio - imagens vão para case_images
-        image_url: [],
+        // Remover image_url do payload - não usar mais
         can_skip: form.can_skip,
         max_elimination: form.max_elimination,
         ai_hint_enabled: form.ai_hint_enabled,
@@ -191,7 +174,6 @@ export function CaseProfileFormWithWizard({
         reference_citation: form.is_radiopaedia_case ? form.reference_citation : null,
         reference_url: form.is_radiopaedia_case ? form.reference_url : null,
         access_date: form.is_radiopaedia_case && form.access_date ? form.access_date : null,
-        // ... keep existing code (todos os outros campos estruturados)
         primary_diagnosis: form.primary_diagnosis || null,
         secondary_diagnoses: form.secondary_diagnoses || [],
         case_classification: form.case_classification || "diagnostico",
@@ -227,83 +209,57 @@ export function CaseProfileFormWithWizard({
       });
 
       let error, data;
-      let caseId: string;
 
-      // ETAPA 1: Salvar caso primeiro
+      // ETAPA 1: SALVAR CASO PRIMEIRO
       if (isEditMode) {
         ({ error, data } = await supabase
           .from("medical_cases")
           .update(payload)
           .eq("id", editingCase.id)
           .select());
-        caseId = editingCase.id;
       } else {
         payload.created_at = new Date().toISOString();
         ({ error, data } = await supabase
           .from("medical_cases")
           .insert([payload])
           .select());
-        caseId = data?.[0]?.id;
       }
 
       if (error || !data?.[0]) {
         throw new Error(error?.message || "Erro ao salvar caso");
       }
 
+      const caseId = data[0].id;
       const resultTitle = data[0].title ?? form.title;
-      console.log('✅ Caso salvo com sucesso, ID:', caseId);
 
-      // ETAPA 2: Processar imagens com UUID real (somente se há imagens)
-      if (tempImages.length > 0 && !isEditMode) {
-        setFeedback("Organizando imagens especializadas...");
-        setIsProcessingImages(true);
+      console.log('✅ Caso salvo com sucesso:', caseId);
 
-        try {
-          for (let i = 0; i < tempImages.length; i++) {
-            const file = tempImages[i];
-            console.log(`📸 Processando imagem ${i + 1}/${tempImages.length}:`, file.name);
+      // ETAPA 2: PROCESSAR IMAGENS TEMPORÁRIAS COM UUID REAL
+      if (tempImageManager.tempImages.length > 0) {
+        console.log('🔄 Processando imagens temporárias...');
+        
+        toast({
+          title: "🔄 Processando Imagens...",
+          description: "Organizando imagens no sistema especializado..."
+        });
 
-            await uploadSpecializedImage(file, {
-              caseId: caseId,
-              categoryId: form.category_id ? Number(form.category_id) : undefined,
-              modality: form.modality || undefined,
-              sequenceOrder: i
-            });
-          }
-
-          console.log('✅ Todas as imagens processadas e organizadas com sucesso');
-          setTempImages([]); // Limpar imagens temporárias
-        } catch (imageError: any) {
-          console.error('❌ Erro no processamento de imagens:', imageError);
-          
-          // ROLLBACK: Deletar caso se imagens falharam
-          if (!isEditMode) {
-            console.log('🔄 Executando rollback do caso devido a falha nas imagens...');
-            await supabase.from("medical_cases").delete().eq("id", caseId);
-            throw new Error(`Erro ao processar imagens: ${imageError.message}. Caso não foi salvo.`);
-          } else {
-            // Em modo edição, apenas avisar sobre falha nas imagens
-            toast({
-              title: "⚠️ Caso salvo, mas erro nas imagens",
-              description: "O caso foi atualizado, mas houve erro ao processar algumas imagens.",
-              variant: "destructive"
-            });
-          }
-        } finally {
-          setIsProcessingImages(false);
-        }
+        await tempImageManager.processAllTempImages(
+          caseId,
+          form.category_id ? Number(form.category_id) : undefined,
+          form.modality
+        );
       }
 
-      // ETAPA 3: Finalização
+      // ETAPA 3: FINALIZAR COM SUCESSO
       setFeedback(isEditMode ? "Caso atualizado com sucesso!" : "Caso cadastrado com sucesso!");
       toast({ 
-        title: `✅ ${isEditMode ? "Caso Atualizado" : "Caso Criado"}!`, 
-        description: `${resultTitle}${tempImages.length > 0 ? ` • ${tempImages.length} imagem(ns) organizadas` : ""}`
+        title: `✅ Caso ${isEditMode ? "Atualizado" : "Criado"}!`, 
+        description: `${resultTitle} - Imagens organizadas automaticamente` 
       });
       
       if (!isEditMode) {
         resetForm();
-        setTempImages([]);
+        tempImageManager.clearAllTempImages();
       }
       
       // Atualizar imagens especializadas
@@ -312,18 +268,16 @@ export function CaseProfileFormWithWizard({
       onCreated?.();
 
     } catch (err: any) {
-      console.error("❌ Erro no salvamento integrado:", err);
+      console.error("❌ Erro no salvamento:", err);
       setFeedback(`Erro ao ${isEditMode ? "atualizar" : "cadastrar"} caso.`);
       toast({ 
         title: `❌ Erro ao ${isEditMode ? "Atualizar" : "Criar"} Caso!`, 
-        description: err.message,
+        description: err.message || "Erro desconhecido",
         variant: "destructive" 
       });
-    } finally {
-      setSubmitting(false);
-      setIsProcessingImages(false);
-      setTimeout(() => setFeedback(""), 2300);
     }
+    setSubmitting(false);
+    setTimeout(() => setFeedback(""), 2300);
   }
 
   return (
@@ -338,15 +292,11 @@ export function CaseProfileFormWithWizard({
       isEditMode={isEditMode}
       editingCase={editingCase}
       onSubmit={handleSubmit}
-      submitting={submitting || isProcessingImages}
+      submitting={submitting}
       feedback={feedback}
       renderTooltipTip={renderTooltipTip}
-      // Sistema integrado de imagens temporárias
-      tempImages={tempImages}
-      onTempImageUpload={handleTempImageUpload}
-      onRemoveTempImage={removeTempImage}
+      tempImageManager={tempImageManager}
       specializedImages={specializedImages}
-      isProcessingImages={isProcessingImages}
     />
   );
 }
