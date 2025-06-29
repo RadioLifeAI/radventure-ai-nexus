@@ -1,42 +1,41 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
 export function useAdminCheck() {
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const { data: isAdmin = false, isLoading } = useQuery({
-    queryKey: ['admin-check', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return false;
-      
-      console.log('Verificando permissões de admin para:', user.id);
-      
+  useEffect(() => {
+    checkAdminStatus();
+  }, [user]);
+
+  const checkAdminStatus = async () => {
+    if (!user) {
+      setIsAdmin(false);
+      setLoading(false);
+      return;
+    }
+
+    try {
       const { data, error } = await supabase
         .from('profiles')
         .select('type')
         .eq('id', user.id)
         .single();
 
-      if (error) {
-        console.error('Erro ao verificar admin:', error);
-        return false;
-      }
+      if (error) throw error;
 
-      const isUserAdmin = data?.type === 'ADMIN';
-      console.log('Usuário é admin:', isUserAdmin);
-      
-      return isUserAdmin;
-    },
-    enabled: !!user?.id && isAuthenticated,
-    refetchOnWindowFocus: false,
-    staleTime: 5 * 60 * 1000, // 5 minutos
-  });
-
-  return {
-    isAdmin,
-    isLoading,
-    isAuthenticated
+      setIsAdmin(data?.type === 'ADMIN');
+    } catch (error) {
+      console.error('Erro ao verificar status admin:', error);
+      setIsAdmin(false);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  return { isAdmin, loading };
 }

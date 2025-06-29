@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,97 +9,24 @@ import {
   Clock,
   Trophy,
   Zap,
-  Users,
   Star,
   Gift,
-  AlertCircle,
   CheckCircle
 } from "lucide-react";
-
-interface Notification {
-  id: string;
-  type: 'event_starting' | 'achievement_unlocked' | 'ranking_update' | 'new_event' | 'reminder';
-  title: string;
-  message: string;
-  timestamp: Date;
-  isRead: boolean;
-  priority: 'low' | 'medium' | 'high';
-  actionUrl?: string;
-  actionLabel?: string;
-}
+import { useRealNotifications } from "@/hooks/useRealNotifications";
+import { useNavigate } from "react-router-dom";
 
 export function EventsNotificationSystem() {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    // Simular notificações em tempo real
-    const mockNotifications: Notification[] = [
-      {
-        id: "1",
-        type: "event_starting",
-        title: "Evento iniciando em 5 minutos!",
-        message: "O evento 'Desafio Neurologia Avançada' está prestes a começar. Prepare-se!",
-        timestamp: new Date(Date.now() - 2 * 60 * 1000),
-        isRead: false,
-        priority: "high",
-        actionUrl: "/evento/123",
-        actionLabel: "Participar Agora"
-      },
-      {
-        id: "2",
-        type: "achievement_unlocked",
-        title: "Nova conquista desbloqueada! 🏆",
-        message: "Você conquistou o badge 'Speed Demon' por completar um evento em menos de 5 minutos!",
-        timestamp: new Date(Date.now() - 15 * 60 * 1000),
-        isRead: false,
-        priority: "medium",
-        actionUrl: "/profile/achievements",
-        actionLabel: "Ver Conquistas"
-      },
-      {
-        id: "3",
-        type: "ranking_update",
-        title: "Você subiu no ranking! 📈",
-        message: "Parabéns! Você agora está na 5ª posição do ranking geral de Neurologia.",
-        timestamp: new Date(Date.now() - 30 * 60 * 1000),
-        isRead: true,
-        priority: "medium",
-        actionUrl: "/rankings",
-        actionLabel: "Ver Ranking"
-      },
-      {
-        id: "4",
-        type: "new_event",
-        title: "Novo evento disponível! ✨",
-        message: "Um novo evento de Cardiologia foi criado: 'Arritmias na Prática Clínica'",
-        timestamp: new Date(Date.now() - 60 * 60 * 1000),
-        isRead: true,
-        priority: "low",
-        actionUrl: "/eventos",
-        actionLabel: "Ver Evento"
-      }
-    ];
-
-    setNotifications(mockNotifications);
-
-    // Simular novas notificações
-    const interval = setInterval(() => {
-      const newNotification: Notification = {
-        id: Date.now().toString(),
-        type: "reminder",
-        title: "Lembrete de estudo 📚",
-        message: "Que tal resolver alguns casos antes do evento de hoje à noite?",
-        timestamp: new Date(),
-        isRead: false,
-        priority: "low"
-      };
-
-      setNotifications(prev => [newNotification, ...prev.slice(0, 9)]);
-    }, 30000); // Nova notificação a cada 30 segundos
-
-    return () => clearInterval(interval);
-  }, []);
+  const { 
+    notifications, 
+    loading, 
+    markAsRead, 
+    markAllAsRead, 
+    removeNotification, 
+    unreadCount 
+  } = useRealNotifications();
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -121,28 +48,25 @@ export function EventsNotificationSystem() {
     }
   };
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(notif =>
-        notif.id === id ? { ...notif, isRead: true } : notif
-      )
-    );
+  const handleNotificationClick = (notification: any) => {
+    if (!notification.isRead) {
+      markAsRead(notification.id);
+    }
+    
+    if (notification.actionUrl) {
+      navigate(notification.actionUrl);
+      setIsOpen(false);
+    }
   };
-
-  const removeNotification = (id: string) => {
-    setNotifications(prev => prev.filter(notif => notif.id !== id));
-  };
-
-  const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
     <div className="relative">
-      {/* Botão de notificações */}
+      {/* Botão de notificações com estilo gamificado */}
       <Button
         variant="outline"
         size="sm"
         onClick={() => setIsOpen(!isOpen)}
-        className="relative"
+        className="relative bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white border-0"
       >
         <Bell className="h-4 w-4" />
         {unreadCount > 0 && (
@@ -168,7 +92,12 @@ export function EventsNotificationSystem() {
             </div>
 
             <div className="max-h-80 overflow-y-auto">
-              {notifications.length === 0 ? (
+              {loading ? (
+                <div className="p-4 text-center">
+                  <div className="animate-spin h-6 w-6 border-2 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
+                  <p className="mt-2 text-sm text-gray-500">Carregando...</p>
+                </div>
+              ) : notifications.length === 0 ? (
                 <div className="p-4 text-center text-gray-500">
                   <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
                   <p>Nenhuma notificação</p>
@@ -180,7 +109,7 @@ export function EventsNotificationSystem() {
                     className={`border-l-4 p-4 border-b hover:bg-gray-50 cursor-pointer ${
                       getPriorityColor(notification.priority)
                     } ${!notification.isRead ? 'bg-opacity-50' : ''}`}
-                    onClick={() => markAsRead(notification.id)}
+                    onClick={() => handleNotificationClick(notification)}
                   >
                     <div className="flex items-start gap-3">
                       <div className="flex-shrink-0 mt-0.5">
@@ -208,7 +137,7 @@ export function EventsNotificationSystem() {
                             })}
                           </span>
                           <div className="flex items-center gap-2">
-                            {notification.actionUrl && (
+                            {notification.actionLabel && (
                               <Button size="sm" variant="outline" className="text-xs px-2 py-1">
                                 {notification.actionLabel}
                               </Button>
@@ -233,12 +162,12 @@ export function EventsNotificationSystem() {
               )}
             </div>
 
-            {notifications.length > 0 && (
+            {notifications.length > 0 && unreadCount > 0 && (
               <div className="p-4 border-t">
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))}
+                  onClick={markAllAsRead}
                   className="w-full text-sm"
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
