@@ -41,7 +41,8 @@ import { CaseQualityRadar } from "./CaseQualityRadar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { IntegratedImageSystemTabs } from "./IntegratedImageSystemTabs";
+import { useSpecializedCaseImages } from "@/hooks/useSpecializedCaseImages";
+import { UnifiedImageSystemTabs } from "./UnifiedImageSystemTabs";
 
 interface WizardStep {
   id: string;
@@ -67,8 +68,6 @@ interface CaseCreationWizardProps {
   submitting: boolean;
   feedback: string;
   renderTooltipTip: any;
-  tempImageManager: any;
-  specializedImages: any[];
 }
 
 export function CaseCreationWizard({
@@ -84,24 +83,33 @@ export function CaseCreationWizard({
   onSubmit,
   submitting,
   feedback,
-  renderTooltipTip,
-  tempImageManager,
-  specializedImages
+  renderTooltipTip
 }: CaseCreationWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
   const [showAdvancedImageModal, setShowAdvancedImageModal] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
+  // Hook especializado para imagens - INTEGRADO COM FORMULÁRIO
+  const { 
+    images: specializedImages, 
+    uploading, 
+    processing, 
+    uploadSpecializedImage,
+    processZipSpecialized,
+    refetch: refetchImages
+  } = useSpecializedCaseImages(isEditMode ? editingCase?.id : undefined);
+
   // Estados para integração
   const [currentCategoryId, setCurrentCategoryId] = useState<number | undefined>(undefined);
   const [currentModality, setCurrentModality] = useState<string | undefined>(undefined);
 
-  // Sincronização com formulário
+  // Sincronização com formulário - CORREÇÃO CRÍTICA
   useEffect(() => {
     const newCategoryId = form.category_id ? Number(form.category_id) : undefined;
     const newModality = form.modality || undefined;
     
+    // Só atualiza se mudou para evitar re-renders desnecessários
     if (newCategoryId !== currentCategoryId || newModality !== currentModality) {
       setCurrentCategoryId(newCategoryId);
       setCurrentModality(newModality);
@@ -180,8 +188,8 @@ export function CaseCreationWizard({
     },
     {
       id: "images",
-      title: "Sistema Integrado",
-      description: "Upload e organização de imagens",
+      title: "Sistema Especializado",
+      description: "Upload e organização avançada de imagens",
       icon: <FolderTree className="h-5 w-5" />,
       completed: false,
       valid: true,
@@ -197,6 +205,11 @@ export function CaseCreationWizard({
       required: false
     }
   ];
+
+  // Validação automática de cada etapa
+  useEffect(() => {
+    validateCurrentStep();
+  }, [form, currentStep]);
 
   const validateCurrentStep = () => {
     const step = steps[currentStep];
@@ -259,10 +272,15 @@ export function CaseCreationWizard({
   const completedSteps = steps.filter(step => step.completed).length;
   const progressPercentage = (completedSteps / steps.length) * 100;
 
-  // Validação automática de cada etapa
-  useEffect(() => {
-    validateCurrentStep();
-  }, [form, currentStep]);
+  // Callback para atualização de imagens integrado
+  const handleImagesChange = (images: any[]) => {
+    console.log('📸 Imagens atualizadas pelo sistema especializado:', images.length);
+    refetchImages();
+    toast({ 
+      title: "🎯 Sistema Integrado!", 
+      description: `${images.length} imagem(ns) organizadas conforme formulário.` 
+    });
+  };
 
   const renderStepContent = () => {
     const step = steps[currentStep];
@@ -455,17 +473,15 @@ export function CaseCreationWizard({
       case "images":
         return (
           <div className="space-y-6">
-            {/* Sistema Integrado com Imagens Temporárias */}
-            <IntegratedImageSystemTabs
+            {/* Sistema Unificado Completo */}
+            <UnifiedImageSystemTabs
               caseId={isEditMode ? editingCase?.id : undefined}
               categoryId={currentCategoryId}
               modality={currentModality}
-              tempImageManager={tempImageManager}
-              specializedImages={specializedImages}
-              isEditMode={isEditMode}
+              onImagesChange={handleImagesChange}
             />
 
-            {/* Status da Integração */}
+            {/* Status da Integração Detalhado */}
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
               <h4 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
                 <FolderTree className="h-4 w-4" />
@@ -479,23 +495,27 @@ export function CaseCreationWizard({
                   <strong>Modalidade:</strong> {currentModality || 'Não selecionada'}
                 </div>
                 <div>
-                  <strong>Imagens Temporárias:</strong> {tempImageManager.tempImages.length}
+                  <strong>Ferramentas Ativas:</strong> {
+                    currentCategoryId && currentModality 
+                      ? 'Upload, Editor, ZIP, Stack, Templates'
+                      : 'Aguardando configuração'
+                  }
                 </div>
                 <div>
-                  <strong>Imagens Salvas:</strong> {specializedImages.length}
+                  <strong>Imagens Organizadas:</strong> {specializedImages.length}
                 </div>
               </div>
               
               {!currentCategoryId || !currentModality ? (
                 <div className="mt-3 p-2 bg-yellow-100 rounded border border-yellow-300">
                   <p className="text-yellow-800 text-sm">
-                    ⚠️ <strong>Para organização automática:</strong> Configure categoria e modalidade na aba "Informações Básicas"
+                    ⚠️ <strong>Para ativar todas as ferramentas:</strong> Configure categoria e modalidade na aba "Informações Básicas"
                   </p>
                 </div>
               ) : (
                 <div className="mt-3 p-2 bg-green-100 rounded border border-green-300">
                   <p className="text-green-800 text-sm">
-                    ✅ <strong>Sistema Integrado Ativo:</strong> Imagens serão organizadas automaticamente ao salvar
+                    ✅ <strong>Sistema Completo Ativo:</strong> Todas as ferramentas avançadas estão disponíveis e integradas
                   </p>
                 </div>
               )}
@@ -527,7 +547,7 @@ export function CaseCreationWizard({
                   <strong>Alternativas:</strong> {form.answer_options.filter((opt: string) => opt.trim()).length}
                 </div>
                 <div>
-                  <strong>Imagens Preparadas:</strong> {tempImageManager.tempImages.length + specializedImages.length}
+                  <strong>Imagens Organizadas:</strong> {specializedImages.length}
                 </div>
               </div>
               <Button
@@ -634,13 +654,13 @@ export function CaseCreationWizard({
           ) : (
             <Button 
               onClick={onSubmit} 
-              disabled={submitting || tempImageManager.processing}
+              disabled={submitting}
               className="bg-green-600 hover:bg-green-700"
             >
-              {submitting || tempImageManager.processing ? (
+              {submitting ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  {tempImageManager.processing ? "Processando Imagens..." : "Salvando..."}
+                  Salvando...
                 </>
               ) : (
                 <>
@@ -669,9 +689,7 @@ export function CaseCreationWizard({
         onClose={() => setShowPreview(false)} 
         form={form} 
         categories={categories} 
-        difficulties={difficulties}
-        tempImages={tempImageManager.tempImages}
-        specializedImages={specializedImages}
+        difficulties={difficulties} 
       />
 
       <AdvancedImageManagerModal
@@ -679,7 +697,7 @@ export function CaseCreationWizard({
         onClose={() => setShowAdvancedImageModal(false)}
         caseId={isEditMode ? editingCase?.id : undefined}
         currentImages={specializedImages.map(img => img.original_url)}
-        onImagesUpdated={() => {}}
+        onImagesUpdated={handleImagesChange}
       />
     </div>
   );

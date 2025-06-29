@@ -4,7 +4,6 @@ import { CaseCreationWizard } from "./CaseCreationWizard";
 import { useCaseProfileFormHandlers } from "../hooks/useCaseProfileFormHandlers";
 import { useFieldUndo } from "../hooks/useFieldUndo";
 import { useCaseTitleGenerator } from "../hooks/useCaseTitleGenerator";
-import { useTempImageManager } from "@/hooks/useTempImageManager";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
@@ -23,9 +22,6 @@ export function CaseProfileFormWithWizard({
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
   const [difficulties, setDifficulties] = useState<{ id: number; level: number; description: string | null }[]>([]);
   const { images: specializedImages, refetch: refetchImages } = useSpecializedCaseImages(editingCase?.id);
-  
-  // Sistema de imagens temporárias integrado
-  const tempImageManager = useTempImageManager();
 
   useEffect(() => {
     supabase.from("medical_specialties")
@@ -63,7 +59,7 @@ export function CaseProfileFormWithWizard({
     if (editingCase) {
       setForm({
         ...editingCase,
-        // Não incluir mais image_url do form - usar apenas case_images
+        image_url: Array.isArray(editingCase.image_url) ? editingCase.image_url : [],
         answer_options: editingCase.answer_options || ["", "", "", ""],
         answer_feedbacks: editingCase.answer_feedbacks || ["", "", "", ""],
         answer_short_tips: editingCase.answer_short_tips || ["", "", "", ""],
@@ -140,7 +136,29 @@ export function CaseProfileFormWithWizard({
       const selectedCategory = categories.find(c => String(c.id) === String(form.category_id));
       const primary_diagnosis = form.primary_diagnosis ?? "";
 
-      // PAYLOAD SEM IMAGE_URL - Usar apenas case_images
+      // Usar imagens do sistema especializado
+      let image_url_arr: any[] = [];
+      if (specializedImages.length > 0) {
+        image_url_arr = specializedImages.slice(0, 6).map((img: any) => ({
+          url: img.original_url,
+          legend: img.legend || ""
+        }));
+      } else if (Array.isArray(form.image_url)) {
+        image_url_arr = form.image_url;
+      } else if (typeof form.image_url === "string" && (form.image_url as string).trim() !== "") {
+        try {
+          const parsed = JSON.parse(form.image_url as string);
+          image_url_arr = Array.isArray(parsed) ? parsed : [];
+        } catch {
+          image_url_arr = [];
+        }
+      }
+
+      const image_url = image_url_arr.map((img: any) => ({
+        url: img?.url ?? "",
+        legend: img?.legend ?? ""
+      }));
+
       const payload: any = {
         specialty: selectedCategory ? selectedCategory.name : null,
         category_id: form.category_id ? Number(form.category_id) : null,
@@ -161,7 +179,7 @@ export function CaseProfileFormWithWizard({
         answer_feedbacks: form.answer_feedbacks,
         answer_short_tips: form.answer_short_tips,
         correct_answer_index: form.correct_answer_index,
-        // Remover image_url do payload - não usar mais
+        image_url,
         can_skip: form.can_skip,
         max_elimination: form.max_elimination,
         ai_hint_enabled: form.ai_hint_enabled,
@@ -209,8 +227,6 @@ export function CaseProfileFormWithWizard({
       });
 
       let error, data;
-
-      // ETAPA 1: SALVAR CASO PRIMEIRO
       if (isEditMode) {
         ({ error, data } = await supabase
           .from("medical_cases")
@@ -225,56 +241,30 @@ export function CaseProfileFormWithWizard({
           .select());
       }
 
-      if (error || !data?.[0]) {
-        throw new Error(error?.message || "Erro ao salvar caso");
-      }
-
-      const caseId = data[0].id;
-      const resultTitle = data[0].title ?? form.title;
-
-      console.log('✅ Caso salvo com sucesso:', caseId);
-
-      // ETAPA 2: PROCESSAR IMAGENS TEMPORÁRIAS COM UUID REAL
-      if (tempImageManager.tempImages.length > 0) {
-        console.log('🔄 Processando imagens temporárias...');
+      if (!error && data?.[0]) {
+        const caseId = data[0].id;
+        const resultTitle = data[0].title ?? form.title;
         
-        toast({
-          title: "🔄 Processando Imagens...",
-          description: "Organizando imagens no sistema especializado..."
-        });
-
-        await tempImageManager.processAllTempImages(
-          caseId,
-          form.category_id ? Number(form.category_id) : undefined,
-          form.modality
-        );
+        setFeedback(isEditMode ? "Caso atualizado com sucesso!" : "Caso cadastrado com sucesso!");
+        toast({ title: `Caso ${isEditMode ? "atualizado" : "criado"}! Título: ${resultTitle}` });
+        
+        if (!isEditMode) {
+          resetForm();
+        }
+        
+        // Atualizar imagens especializadas
+        refetchImages();
+        
+        onCreated?.();
+      } else {
+        console.error("Database error:", error);
+        setFeedback(`Erro ao ${isEditMode ? "atualizar" : "cadastrar"} caso.`);
+        toast({ title: `Erro ao ${isEditMode ? "atualizar" : "cadastrar"} caso!`, variant: "destructive" });
       }
-
-      // ETAPA 3: FINALIZAR COM SUCESSO
-      setFeedback(isEditMode ? "Caso atualizado com sucesso!" : "Caso cadastrado com sucesso!");
-      toast({ 
-        title: `✅ Caso ${isEditMode ? "Atualizado" : "Criado"}!`, 
-        description: `${resultTitle} - Imagens organizadas automaticamente` 
-      });
-      
-      if (!isEditMode) {
-        resetForm();
-        tempImageManager.clearAllTempImages();
-      }
-      
-      // Atualizar imagens especializadas
-      refetchImages();
-      
-      onCreated?.();
-
     } catch (err: any) {
-      console.error("❌ Erro no salvamento:", err);
+      console.error("Submit error:", err);
       setFeedback(`Erro ao ${isEditMode ? "atualizar" : "cadastrar"} caso.`);
-      toast({ 
-        title: `❌ Erro ao ${isEditMode ? "Atualizar" : "Criar"} Caso!`, 
-        description: err.message || "Erro desconhecido",
-        variant: "destructive" 
-      });
+      toast({ title: `Erro ao ${isEditMode ? "atualizar" : "cadastrar"} caso!`, variant: "destructive" });
     }
     setSubmitting(false);
     setTimeout(() => setFeedback(""), 2300);
@@ -295,8 +285,6 @@ export function CaseProfileFormWithWizard({
       submitting={submitting}
       feedback={feedback}
       renderTooltipTip={renderTooltipTip}
-      tempImageManager={tempImageManager}
-      specializedImages={specializedImages}
     />
   );
 }
