@@ -5,7 +5,6 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSpecializedCaseImages, type SpecializedCaseImage } from '@/hooks/useSpecializedCaseImages';
-import { useSpecializedImageUpload } from '@/hooks/useSpecializedImageUpload';
 import { 
   Upload, 
   Image as ImageIcon, 
@@ -17,8 +16,7 @@ import {
   AlertCircle,
   XCircle,
   FolderTree,
-  Sparkles,
-  AlertTriangle
+  Sparkles
 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { Textarea } from '@/components/ui/textarea';
@@ -39,21 +37,12 @@ export function EnhancedImageUploadSpecialized({
   const {
     images,
     loading,
-    uploading: hookUploading,
-    processing: hookProcessing,
-    uploadSpecializedImage: hookUpload,
+    uploading,
+    processing,
+    uploadSpecializedImage,
     deleteImage,
-    updateLegend,
-    refetch
+    updateLegend
   } = useSpecializedCaseImages(caseId);
-
-  // Hook unificado para upload
-  const { 
-    uploading: uploadHookUploading, 
-    processing: uploadHookProcessing, 
-    uploadSpecializedImage: uploadHookUpload,
-    validateImageUpload
-  } = useSpecializedImageUpload();
 
   const [dragOver, setDragOver] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -61,34 +50,17 @@ export function EnhancedImageUploadSpecialized({
   const [previewImage, setPreviewImage] = useState<SpecializedCaseImage | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Estados unificados
-  const uploading = hookUploading || uploadHookUploading;
-  const processing = hookProcessing || uploadHookProcessing;
-
-  // Status da integração
-  const isIntegrated = !!(categoryId && modality);
-
   React.useEffect(() => {
     onChange?.(images);
   }, [images, onChange]);
 
   const handleFileSelect = async (files: FileList | null) => {
-    if (!files) return;
-
-    // Verificação de integração
-    if (!isIntegrated) {
-      toast({
-        title: "⚠️ Integração Pendente",
-        description: "Selecione categoria e modalidade no formulário primeiro.",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (!files || !caseId) return;
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       
-      // Validações básicas
+      // Validações
       if (!file.type.startsWith('image/')) {
         toast({
           title: "Arquivo inválido",
@@ -107,13 +79,7 @@ export function EnhancedImageUploadSpecialized({
         continue;
       }
 
-      // Validação anti-duplicação
-      const isValid = await validateImageUpload(file, caseId);
-      if (!isValid) {
-        continue; // Pula este arquivo se for duplicado
-      }
-
-      // Upload integrado com formulário
+      // Upload especializado
       setUploadProgress(0);
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => {
@@ -125,13 +91,11 @@ export function EnhancedImageUploadSpecialized({
         });
       }, 200);
 
-      // Upload usando hook unificado
-      const result = await uploadHookUpload(file, {
+      await uploadSpecializedImage(file, {
         caseId,
         categoryId,
         modality,
-        sequenceOrder: images.length + i,
-        legend: `Imagem ${images.length + i + 1} - ${file.name}`
+        sequenceOrder: images.length + i
       });
       
       setUploadProgress(100);
@@ -139,11 +103,6 @@ export function EnhancedImageUploadSpecialized({
         clearInterval(progressInterval);
         setUploadProgress(0);
       }, 1000);
-
-      if (result) {
-        // Forçar atualização da lista
-        refetch();
-      }
     }
   };
 
@@ -204,7 +163,7 @@ export function EnhancedImageUploadSpecialized({
         <CardContent className="pt-6">
           <div className="text-center text-gray-500">
             <FolderTree className="h-12 w-12 mx-auto mb-2 opacity-50" />
-            <p>Salve o caso primeiro para habilitar o sistema integrado</p>
+            <p>Salve o caso primeiro para habilitar o sistema especializado</p>
           </div>
         </CardContent>
       </Card>
@@ -213,74 +172,56 @@ export function EnhancedImageUploadSpecialized({
 
   return (
     <div className="space-y-6">
-      {/* Header Integrado */}
-      <Card className={`border-2 ${isIntegrated 
-        ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200'
-        : 'bg-gradient-to-r from-orange-50 to-yellow-50 border-orange-200'
-      }`}>
+      {/* Header Especializado */}
+      <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FolderTree className="h-5 w-5 text-green-600" />
-            Upload Integrado com Formulário
-            <Badge variant="secondary" className={isIntegrated 
-              ? 'bg-green-100 text-green-700'
-              : 'bg-orange-100 text-orange-700'
-            }>
-              {isIntegrated ? <CheckCircle className="h-3 w-3 mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
-              {isIntegrated ? 'INTEGRADO' : 'AGUARDANDO'}
+            Sistema Especializado de Upload
+            <Badge variant="secondary" className="bg-green-100 text-green-700">
+              <Sparkles className="h-3 w-3 mr-1" />
+              Organização Automática
             </Badge>
           </CardTitle>
-          <div className={`text-sm ${isIntegrated ? 'text-green-700' : 'text-orange-700'}`}>
-            {isIntegrated ? (
-              <>📁 Organização Ativa: Categoria #{categoryId} → {modality}</>
-            ) : (
-              <>⚠️ Selecione categoria e modalidade no formulário para ativar</>
-            )}
-          </div>
+          {categoryId && modality && (
+            <div className="text-sm text-green-700">
+              📁 Organização: Especialidade #{categoryId} → {modality}
+            </div>
+          )}
         </CardHeader>
       </Card>
 
-      {/* Área de Upload Integrada */}
+      {/* Área de Upload Especializada */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5" />
-            Upload com Integração Total
+            Upload Especializado
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div
             className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-              !isIntegrated 
-                ? 'border-orange-300 bg-orange-50 cursor-not-allowed opacity-60'
-                : dragOver
-                  ? 'border-green-500 bg-green-50'
-                  : 'border-gray-300 hover:border-gray-400 cursor-pointer'
+              dragOver
+                ? 'border-green-500 bg-green-50'
+                : 'border-gray-300 hover:border-gray-400'
             }`}
-            onDrop={isIntegrated ? handleDrop : undefined}
-            onDragOver={isIntegrated ? handleDragOver : undefined}
-            onDragLeave={isIntegrated ? handleDragLeave : undefined}
-            onClick={isIntegrated ? () => fileInputRef.current?.click() : undefined}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onClick={() => fileInputRef.current?.click()}
           >
-            <FolderTree className={`h-10 w-10 mx-auto mb-4 ${isIntegrated ? 'text-green-500' : 'text-orange-400'}`} />
+            <FolderTree className="h-10 w-10 mx-auto mb-4 text-green-500" />
             <div className="space-y-2">
               <p className="text-lg font-medium">
-                {isIntegrated 
-                  ? 'Arraste imagens aqui ou clique para selecionar'
-                  : 'Configure formulário para habilitar upload'
-                }
+                Arraste imagens aqui ou clique para selecionar
               </p>
               <p className="text-sm text-gray-500">
-                {isIntegrated 
-                  ? 'Suporte para JPEG, PNG, WebP • Máximo 10MB por arquivo'
-                  : 'Vá para "Informações Básicas" e selecione categoria + modalidade'
-                }
+                Suporte para JPEG, PNG, WebP • Máximo 10MB por arquivo
               </p>
-              {isIntegrated && (
-                <p className="text-xs text-green-600">
-                  🗂️ Organização automática: Cat#{categoryId} + {modality}
-                </p>
-              )}
+              <p className="text-xs text-green-600">
+                🗂️ Organização automática por especialidade e modalidade
+              </p>
             </div>
             
             <input
@@ -290,7 +231,6 @@ export function EnhancedImageUploadSpecialized({
               accept="image/*"
               className="hidden"
               onChange={(e) => handleFileSelect(e.target.files)}
-              disabled={!isIntegrated}
             />
           </div>
 
@@ -298,7 +238,7 @@ export function EnhancedImageUploadSpecialized({
             <div className="mt-4">
               <div className="flex justify-between text-sm mb-1">
                 <span>
-                  {processing ? 'Organizando com integração...' : 'Enviando...'}
+                  {processing ? 'Organizando especializado...' : 'Enviando...'}
                 </span>
                 <span>{uploadProgress}%</span>
               </div>
@@ -308,30 +248,25 @@ export function EnhancedImageUploadSpecialized({
         </CardContent>
       </Card>
 
-      {/* Galeria Integrada */}
+      {/* Galeria Especializada */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <ImageIcon className="h-5 w-5" />
-            Galeria Integrada ({images.length})
+            Galeria Especializada ({images.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
-              <p className="mt-2 text-gray-600">Carregando imagens integradas...</p>
+              <p className="mt-2 text-gray-600">Carregando imagens especializadas...</p>
             </div>
           ) : images.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <FolderTree className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p>Nenhuma imagem integrada ainda</p>
-              <p className="text-xs mt-1">
-                {isIntegrated 
-                  ? 'Use o upload integrado acima'
-                  : 'Configure o formulário primeiro'
-                }
-              </p>
+              <p>Nenhuma imagem organizada ainda</p>
+              <p className="text-xs mt-1">Use o upload especializado acima</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -340,7 +275,7 @@ export function EnhancedImageUploadSpecialized({
                   <div className="relative">
                     <img
                       src={image.thumbnail_url || image.original_url}
-                      alt={image.legend || `Imagem integrada ${index + 1}`}
+                      alt={image.legend || `Imagem especializada ${index + 1}`}
                       className="w-full h-48 object-cover"
                     />
                     <div className="absolute top-2 right-2">
@@ -438,7 +373,7 @@ export function EnhancedImageUploadSpecialized({
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <FolderTree className="h-5 w-5 text-green-600" />
-                Preview Integrado - {previewImage.original_filename}
+                Preview Especializado - {previewImage.original_filename}
               </CardTitle>
               <Button
                 variant="ghost"
@@ -451,7 +386,7 @@ export function EnhancedImageUploadSpecialized({
             <CardContent>
               <img
                 src={previewImage.original_url}
-                alt={previewImage.legend || 'Preview integrado'}
+                alt={previewImage.legend || 'Preview especializado'}
                 className="w-full max-h-96 object-contain rounded"
               />
               {previewImage.legend && (
@@ -459,7 +394,7 @@ export function EnhancedImageUploadSpecialized({
               )}
               {previewImage.bucket_path && (
                 <div className="mt-2 text-xs text-green-600">
-                  📁 Organização Integrada: {previewImage.bucket_path}
+                  📁 Organização: {previewImage.bucket_path}
                 </div>
               )}
             </CardContent>

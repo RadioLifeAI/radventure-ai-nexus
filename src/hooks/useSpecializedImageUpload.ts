@@ -20,43 +20,9 @@ export interface ProcessedImageResult {
   organization_metadata?: any;
 }
 
-// Hook unificado e otimizado para upload especializado
 export function useSpecializedImageUpload() {
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState(false);
-
-  // Função de validação anti-duplicação
-  const validateImageUpload = async (file: File, caseId?: string): Promise<boolean> => {
-    if (!caseId) return true; // Permite upload temporário sem caseId
-    
-    try {
-      // Verificar se já existe arquivo com mesmo nome para este caso
-      const { data: existingImages, error } = await supabase
-        .from('case_images')
-        .select('id, original_filename')
-        .eq('case_id', caseId)
-        .eq('original_filename', file.name);
-
-      if (error) {
-        console.warn('Erro na validação de duplicação:', error);
-        return true; // Permite upload em caso de erro de validação
-      }
-
-      if (existingImages && existingImages.length > 0) {
-        toast({
-          title: "⚠️ Arquivo Duplicado",
-          description: `Já existe uma imagem com o nome "${file.name}" neste caso.`,
-          variant: "destructive"
-        });
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.warn('Erro na validação:', error);
-      return true; // Em caso de erro, permite o upload
-    }
-  };
 
   const uploadSpecializedImage = async (
     file: File, 
@@ -65,20 +31,7 @@ export function useSpecializedImageUpload() {
     try {
       setUploading(true);
       
-      // Validação anti-duplicação
-      const isValid = await validateImageUpload(file, options.caseId);
-      if (!isValid) {
-        return null;
-      }
-      
-      console.log('🚀 Iniciando upload especializado integrado:', {
-        filename: file.name,
-        categoryId: options.categoryId,
-        modality: options.modality,
-        caseId: options.caseId
-      });
-      
-      // 1. Upload para storage temporário
+      // 1. Upload para storage temporário (preserva fluxo existente)
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `temp-uploads/${fileName}`;
@@ -94,7 +47,13 @@ export function useSpecializedImageUpload() {
         .from('case-images')
         .getPublicUrl(filePath);
 
-      // 3. Processar com organização especializada INTEGRADA
+      console.log('📤 Upload concluído, iniciando processamento especializado:', {
+        publicUrl,
+        categoryId: options.categoryId,
+        modality: options.modality
+      });
+
+      // 3. Processar com organização especializada
       setProcessing(true);
       const { data: processResult, error: processError } = await supabase.functions
         .invoke('image-processor-specialized', {
@@ -105,37 +64,30 @@ export function useSpecializedImageUpload() {
             legend: options.legend,
             sequenceOrder: options.sequenceOrder,
             categoryId: options.categoryId,
-            modality: options.modality,
-            // Dados adicionais para integração perfeita
-            integrationSource: 'case_creation_wizard',
-            timestamp: new Date().toISOString()
+            modality: options.modality
           }
         });
 
       if (processError) throw processError;
 
       if (processResult?.success) {
-        console.log('✅ Processamento especializado integrado concluído:', {
-          organization: processResult.organization,
-          bucketPath: processResult.caseImage?.bucket_path
-        });
+        console.log('✅ Processamento especializado concluído:', processResult.organization);
         
         toast({
-          title: "🎯 Upload Integrado Concluído!",
-          description: `Organizado em ${processResult.organization.specialty_code}/${processResult.organization.modality_prefix}`,
-          duration: 3000
+          title: "🎯 Imagem Organizada!",
+          description: `Classificada em ${processResult.organization.specialty_code}/${processResult.organization.modality_prefix}`
         });
 
         return processResult.caseImage;
       } else {
-        throw new Error(processResult?.error || 'Erro no processamento especializado');
+        throw new Error(processResult?.error || 'Erro no processamento');
       }
 
     } catch (error: any) {
-      console.error('❌ Erro no upload especializado integrado:', error);
+      console.error('❌ Erro no upload especializado:', error);
       toast({
-        title: "Erro no Upload Integrado",
-        description: error.message || 'Erro desconhecido',
+        title: "Erro no Upload",
+        description: error.message,
         variant: "destructive"
       });
       return null;
@@ -152,12 +104,6 @@ export function useSpecializedImageUpload() {
     try {
       setProcessing(true);
 
-      console.log('📦 Iniciando processamento ZIP especializado integrado:', {
-        filename: zipFile.name,
-        categoryId: options.categoryId,
-        modality: options.modality
-      });
-
       // Upload ZIP para storage temporário
       const fileName = `zip-${Date.now()}-${zipFile.name}`;
       const filePath = `temp-zips/${fileName}`;
@@ -173,7 +119,9 @@ export function useSpecializedImageUpload() {
         .from('case-images')
         .getPublicUrl(filePath);
 
-      // Processar ZIP com organização especializada integrada
+      console.log('📦 ZIP uploaded, processando com organização especializada...');
+
+      // Processar ZIP com organização
       const { data: processResult, error: processError } = await supabase.functions
         .invoke('zip-processor-specialized', {
           body: {
@@ -181,38 +129,30 @@ export function useSpecializedImageUpload() {
             zipFileUrl: publicUrl,
             userId: (await supabase.auth.getUser()).data.user?.id,
             categoryId: options.categoryId,
-            modality: options.modality,
-            // Dados adicionais para integração
-            integrationSource: 'case_creation_wizard',
-            batchSize: 50, // Controle de lote para evitar sobrecarga
-            timestamp: new Date().toISOString()
+            modality: options.modality
           }
         });
 
       if (processError) throw processError;
 
       if (processResult?.success) {
-        console.log('✅ ZIP processado e organizado com integração:', {
-          imagesCount: processResult.images.length,
-          organization: processResult.organization
-        });
+        console.log('✅ ZIP processado e organizado:', processResult.organization);
         
         toast({
-          title: "🗂️ ZIP Processado com Integração!",
-          description: `${processResult.images.length} imagens organizadas em ${processResult.organization.specialty_code}/${processResult.organization.modality_prefix}`,
-          duration: 4000
+          title: "🗂️ ZIP Organizado!",
+          description: `${processResult.images.length} imagens em ${processResult.organization.specialty_code}/${processResult.organization.modality_prefix}`
         });
 
         return processResult.images;
       } else {
-        throw new Error(processResult?.error || 'Erro no processamento ZIP especializado');
+        throw new Error(processResult?.error || 'Erro no processamento ZIP');
       }
 
     } catch (error: any) {
-      console.error('❌ Erro no processamento ZIP especializado integrado:', error);
+      console.error('❌ Erro no processamento ZIP especializado:', error);
       toast({
         title: "Erro no Processamento ZIP",
-        description: error.message || 'Erro desconhecido',
+        description: error.message,
         variant: "destructive"
       });
       return null;
@@ -225,7 +165,6 @@ export function useSpecializedImageUpload() {
     uploading,
     processing,
     uploadSpecializedImage,
-    processZipSpecialized,
-    validateImageUpload
+    processZipSpecialized
   };
 }

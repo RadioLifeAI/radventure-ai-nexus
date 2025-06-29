@@ -42,7 +42,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSpecializedCaseImages } from "@/hooks/useSpecializedCaseImages";
-import { CaseAdvancedImageManagement } from "./CaseAdvancedImageManagement";
 
 interface WizardStep {
   id: string;
@@ -90,37 +89,14 @@ export function CaseCreationWizard({
   const [showAdvancedImageModal, setShowAdvancedImageModal] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  // Hook especializado para imagens - INTEGRADO COM FORMULÁRIO
+  // Hook especializado para imagens
   const { 
     images: specializedImages, 
     uploading, 
     processing, 
     uploadSpecializedImage,
-    processZipSpecialized,
-    refetch: refetchImages
+    processZipSpecialized 
   } = useSpecializedCaseImages(isEditMode ? editingCase?.id : undefined);
-
-  // Estados para integração
-  const [currentCategoryId, setCurrentCategoryId] = useState<number | undefined>(undefined);
-  const [currentModality, setCurrentModality] = useState<string | undefined>(undefined);
-
-  // Sincronização com formulário - CORREÇÃO CRÍTICA
-  useEffect(() => {
-    const newCategoryId = form.category_id ? Number(form.category_id) : undefined;
-    const newModality = form.modality || undefined;
-    
-    // Só atualiza se mudou para evitar re-renders desnecessários
-    if (newCategoryId !== currentCategoryId || newModality !== currentModality) {
-      setCurrentCategoryId(newCategoryId);
-      setCurrentModality(newModality);
-      
-      console.log('🔄 Formulário sincronizado:', {
-        categoryId: newCategoryId,
-        modality: newModality,
-        specialty: categories.find(c => c.id === newCategoryId)?.name
-      });
-    }
-  }, [form.category_id, form.modality, categories]);
 
   const steps: WizardStep[] = [
     {
@@ -217,7 +193,7 @@ export function CaseCreationWizard({
 
     switch (step.id) {
       case "structured":
-        isValid = true;
+        isValid = true; // Sempre válido, é opcional
         break;
       case "basic":
         isValid = !!(form.category_id && form.difficulty_level && form.modality && form.findings && form.patient_clinical_info);
@@ -232,7 +208,7 @@ export function CaseCreationWizard({
         isValid = !!form.explanation;
         break;
       case "advanced":
-        isValid = true;
+        isValid = true; // Sempre válido, configurações têm defaults
         break;
       case "reference":
         if (form.is_radiopaedia_case) {
@@ -242,7 +218,7 @@ export function CaseCreationWizard({
         }
         break;
       case "images":
-        isValid = true;
+        isValid = true; // Imagens são opcionais
         break;
       case "review":
         isValid = true;
@@ -271,16 +247,6 @@ export function CaseCreationWizard({
 
   const completedSteps = steps.filter(step => step.completed).length;
   const progressPercentage = (completedSteps / steps.length) * 100;
-
-  // Callback para atualização de imagens integrado
-  const handleImagesChange = (images: any[]) => {
-    console.log('📸 Imagens atualizadas pelo sistema especializado:', images.length);
-    refetchImages();
-    toast({ 
-      title: "🎯 Sistema Integrado!", 
-      description: `${images.length} imagem(ns) organizadas conforme formulário.` 
-    });
-  };
 
   const renderStepContent = () => {
     const step = steps[currentStep];
@@ -473,61 +439,72 @@ export function CaseCreationWizard({
       case "images":
         return (
           <div className="space-y-6">
-            {/* Integração Completa - COMPONENTE ÚNICO INTEGRADO */}
-            <CaseAdvancedImageManagement
-              caseId={isEditMode ? editingCase?.id : undefined}
-              categoryId={currentCategoryId}
-              modality={currentModality}
-              onImagesChange={handleImagesChange}
-            />
-
-            {/* Status da Integração */}
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <h4 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
-                <FolderTree className="h-4 w-4" />
-                Status da Integração Formulário → Upload
-              </h4>
-              <div className="grid grid-cols-2 gap-4 text-sm text-blue-700">
-                <div>
-                  <strong>Categoria Selecionada:</strong> {categories.find(c => c.id === currentCategoryId)?.name || 'Não selecionada'}
+            {/* Header do Sistema Especializado ÚNICO */}
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl shadow-lg">
+                    <FolderTree className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-green-800">Sistema Especializado Único</h3>
+                    <p className="text-green-600 text-sm">
+                      Organização automática por especialidade e modalidade
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <strong>Modalidade Selecionada:</strong> {currentModality || 'Não selecionada'}
-                </div>
-                <div>
-                  <strong>Código Especialidade:</strong> {categories.find(c => c.id === currentCategoryId)?.specialty_code || 'N/A'}
-                </div>
-                <div>
-                  <strong>Estrutura Ativa:</strong> {
-                    currentCategoryId && currentModality 
-                      ? `/medical-cases/${categories.find(c => c.id === currentCategoryId)?.specialty_code || 'geral'}/${currentModality.toLowerCase()}/`
-                      : 'Aguardando seleção no formulário'
-                  }
-                </div>
+                
+                <Button
+                  type="button"
+                  size="lg"
+                  onClick={() => setShowAdvancedImageModal(true)}
+                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold px-8 py-3 shadow-xl"
+                >
+                  <FolderTree className="h-5 w-5 mr-2" />
+                  Ferramentas Especializadas
+                  <Badge variant="secondary" className="ml-2 bg-green-300 text-green-800 font-bold">
+                    ORGANIZADO
+                  </Badge>
+                </Button>
               </div>
-              
-              {!currentCategoryId || !currentModality ? (
-                <div className="mt-3 p-2 bg-yellow-100 rounded border border-yellow-300">
-                  <p className="text-yellow-800 text-sm">
-                    ⚠️ <strong>Ação Necessária:</strong> Selecione categoria e modalidade na aba "Informações Básicas" para ativar a organização especializada.
-                  </p>
+
+              <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-2 bg-white/70 px-3 py-1 rounded-full">
+                  <ImageIcon className="h-4 w-4 text-green-600" />
+                  <span className="text-green-700 font-medium">
+                    {specializedImages.length} imagem(ns) organizadas
+                  </span>
                 </div>
-              ) : (
-                <div className="mt-3 p-2 bg-green-100 rounded border border-green-300">
-                  <p className="text-green-800 text-sm">
-                    ✅ <strong>Sistema Integrado:</strong> Upload será organizado automaticamente conforme seleções do formulário.
-                  </p>
-                </div>
-              )}
+                {(uploading || processing) && (
+                  <div className="flex items-center gap-2 bg-blue-100 px-3 py-1 rounded-full">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    <span className="text-blue-700 text-xs font-medium">
+                      {processing ? 'Organizando...' : 'Uploading...'}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Resumo das Imagens */}
+            {/* Informações da Organização Especializada */}
+            {form.category_id && form.modality && (
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <h4 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
+                  <FolderTree className="h-4 w-4" />
+                  Estrutura de Organização
+                </h4>
+                <div className="text-sm text-blue-700">
+                  <p><strong>Especialidade:</strong> {categories.find(c => String(c.id) === String(form.category_id))?.name || 'Não definida'}</p>
+                  <p><strong>Modalidade:</strong> {form.modality || 'Não definida'}</p>
+                  <p><strong>Caminho:</strong> /medical-cases/{categories.find(c => String(c.id) === String(form.category_id))?.specialty_code || 'geral'}/{form.modality?.toLowerCase() || 'img'}/</p>
+                </div>
+              </div>
+            )}
+
+            {/* Lista de Imagens Especializadas */}
             {specializedImages.length > 0 && (
               <div className="bg-white p-4 rounded-lg border border-gray-200">
-                <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                  <ImageIcon className="h-4 w-4" />
-                  Imagens Organizadas ({specializedImages.length})
-                </h4>
+                <h4 className="font-semibold text-gray-700 mb-3">Imagens Organizadas no Sistema</h4>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {specializedImages.map((img, index) => (
                     <div key={img.id} className="relative group">
@@ -537,13 +514,11 @@ export function CaseCreationWizard({
                         className="w-full h-24 object-cover rounded border"
                       />
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center">
-                        <span className="text-white text-xs font-medium text-center px-2">
-                          {img.original_filename}
-                        </span>
+                        <span className="text-white text-xs font-medium">{img.original_filename}</span>
                       </div>
                       {img.specialty_code && (
                         <Badge className="absolute top-1 right-1 text-xs bg-green-600">
-                          {img.specialty_code}/{img.modality_prefix}
+                          {img.specialty_code}
                         </Badge>
                       )}
                     </div>
@@ -551,6 +526,12 @@ export function CaseCreationWizard({
                 </div>
               </div>
             )}
+
+            {/* Status do Sistema */}
+            <div className="text-center text-sm text-gray-600">
+              <p>💡 As imagens serão organizadas automaticamente no Sistema Especializado</p>
+              <p>Use as "Ferramentas Especializadas" para upload avançado, edição e processamento ZIP</p>
+            </div>
           </div>
         );
 
@@ -578,7 +559,7 @@ export function CaseCreationWizard({
                   <strong>Alternativas:</strong> {form.answer_options.filter((opt: string) => opt.trim()).length}
                 </div>
                 <div>
-                  <strong>Imagens Organizadas:</strong> {specializedImages.length}
+                  <strong>Imagens:</strong> {Array.isArray(form.image_url) ? form.image_url.length : 0}
                 </div>
               </div>
               <Button
@@ -728,7 +709,13 @@ export function CaseCreationWizard({
         onClose={() => setShowAdvancedImageModal(false)}
         caseId={isEditMode ? editingCase?.id : undefined}
         currentImages={specializedImages.map(img => img.original_url)}
-        onImagesUpdated={handleImagesChange}
+        onImagesUpdated={(images) => {
+          console.log('🎉 Imagens do Sistema Especializado atualizadas:', images.length);
+          toast({ 
+            title: "🗂️ Sistema Especializado Atualizado!", 
+            description: `${images.length} imagem(ns) organizadas automaticamente.` 
+          });
+        }}
       />
     </div>
   );
