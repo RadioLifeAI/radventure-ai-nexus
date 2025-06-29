@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -42,8 +41,8 @@ import { CaseQualityRadar } from "./CaseQualityRadar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useCaseImageIntegration } from "@/hooks/useCaseImageIntegration";
-import { SimpleImageUpload } from "./SimpleImageUpload";
+import { useSpecializedCaseImages } from "@/hooks/useSpecializedCaseImages";
+import { CaseAdvancedImageManagement } from "./CaseAdvancedImageManagement";
 
 interface WizardStep {
   id: string;
@@ -90,14 +89,38 @@ export function CaseCreationWizard({
   const [showPreview, setShowPreview] = useState(false);
   const [showAdvancedImageModal, setShowAdvancedImageModal] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [tempImages, setTempImages] = useState<any[]>([]);
 
-  // Hook de integração de imagens UNIFICADO
-  const imageIntegration = useCaseImageIntegration({
-    caseId: isEditMode ? editingCase?.id : undefined,
-    categoryId: form.category_id ? Number(form.category_id) : undefined,
-    modality: form.modality || undefined
-  });
+  // Hook especializado para imagens - INTEGRADO COM FORMULÁRIO
+  const { 
+    images: specializedImages, 
+    uploading, 
+    processing, 
+    uploadSpecializedImage,
+    processZipSpecialized,
+    refetch: refetchImages
+  } = useSpecializedCaseImages(isEditMode ? editingCase?.id : undefined);
+
+  // Estados para integração
+  const [currentCategoryId, setCurrentCategoryId] = useState<number | undefined>(undefined);
+  const [currentModality, setCurrentModality] = useState<string | undefined>(undefined);
+
+  // Sincronização com formulário - CORREÇÃO CRÍTICA
+  useEffect(() => {
+    const newCategoryId = form.category_id ? Number(form.category_id) : undefined;
+    const newModality = form.modality || undefined;
+    
+    // Só atualiza se mudou para evitar re-renders desnecessários
+    if (newCategoryId !== currentCategoryId || newModality !== currentModality) {
+      setCurrentCategoryId(newCategoryId);
+      setCurrentModality(newModality);
+      
+      console.log('🔄 Formulário sincronizado:', {
+        categoryId: newCategoryId,
+        modality: newModality,
+        specialty: categories.find(c => c.id === newCategoryId)?.name
+      });
+    }
+  }, [form.category_id, form.modality, categories]);
 
   const steps: WizardStep[] = [
     {
@@ -165,9 +188,9 @@ export function CaseCreationWizard({
     },
     {
       id: "images",
-      title: "Upload de Imagens",
-      description: "Interface simples e integrada",
-      icon: <ImageIcon className="h-5 w-5" />,
+      title: "Sistema Especializado",
+      description: "Upload e organização avançada de imagens",
+      icon: <FolderTree className="h-5 w-5" />,
       completed: false,
       valid: true,
       required: false
@@ -249,22 +272,14 @@ export function CaseCreationWizard({
   const completedSteps = steps.filter(step => step.completed).length;
   const progressPercentage = (completedSteps / steps.length) * 100;
 
-  // Função para salvar caso COM imagens integradas
-  const handleSubmitWithImages = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Se não estamos editando, salvar imagens temporárias junto
-    if (!isEditMode && tempImages.length > 0) {
-      console.log('💾 Salvando caso com imagens integradas...');
-      
-      // Primeiro salvar o caso
-      await onSubmit(e);
-      
-      // Depois salvar as imagens (isto será feito no callback onCreated)
-    } else {
-      // Caso normal ou edição
-      await onSubmit(e);
-    }
+  // Callback para atualização de imagens integrado
+  const handleImagesChange = (images: any[]) => {
+    console.log('📸 Imagens atualizadas pelo sistema especializado:', images.length);
+    refetchImages();
+    toast({ 
+      title: "🎯 Sistema Integrado!", 
+      description: `${images.length} imagem(ns) organizadas conforme formulário.` 
+    });
   };
 
   const renderStepContent = () => {
@@ -458,17 +473,84 @@ export function CaseCreationWizard({
       case "images":
         return (
           <div className="space-y-6">
-            {/* Interface Simplificada de Upload */}
-            <SimpleImageUpload
+            {/* Integração Completa - COMPONENTE ÚNICO INTEGRADO */}
+            <CaseAdvancedImageManagement
               caseId={isEditMode ? editingCase?.id : undefined}
-              categoryId={form.category_id ? Number(form.category_id) : undefined}
-              modality={form.modality || undefined}
-              onImagesChange={(images) => {
-                console.log('📸 Imagens atualizadas via SimpleImageUpload:', images.length);
-                setTempImages(images);
-                imageIntegration.refetch();
-              }}
+              categoryId={currentCategoryId}
+              modality={currentModality}
+              onImagesChange={handleImagesChange}
             />
+
+            {/* Status da Integração */}
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <h4 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
+                <FolderTree className="h-4 w-4" />
+                Status da Integração Formulário → Upload
+              </h4>
+              <div className="grid grid-cols-2 gap-4 text-sm text-blue-700">
+                <div>
+                  <strong>Categoria Selecionada:</strong> {categories.find(c => c.id === currentCategoryId)?.name || 'Não selecionada'}
+                </div>
+                <div>
+                  <strong>Modalidade Selecionada:</strong> {currentModality || 'Não selecionada'}
+                </div>
+                <div>
+                  <strong>Código Especialidade:</strong> {categories.find(c => c.id === currentCategoryId)?.specialty_code || 'N/A'}
+                </div>
+                <div>
+                  <strong>Estrutura Ativa:</strong> {
+                    currentCategoryId && currentModality 
+                      ? `/medical-cases/${categories.find(c => c.id === currentCategoryId)?.specialty_code || 'geral'}/${currentModality.toLowerCase()}/`
+                      : 'Aguardando seleção no formulário'
+                  }
+                </div>
+              </div>
+              
+              {!currentCategoryId || !currentModality ? (
+                <div className="mt-3 p-2 bg-yellow-100 rounded border border-yellow-300">
+                  <p className="text-yellow-800 text-sm">
+                    ⚠️ <strong>Ação Necessária:</strong> Selecione categoria e modalidade na aba "Informações Básicas" para ativar a organização especializada.
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-3 p-2 bg-green-100 rounded border border-green-300">
+                  <p className="text-green-800 text-sm">
+                    ✅ <strong>Sistema Integrado:</strong> Upload será organizado automaticamente conforme seleções do formulário.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Resumo das Imagens */}
+            {specializedImages.length > 0 && (
+              <div className="bg-white p-4 rounded-lg border border-gray-200">
+                <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4" />
+                  Imagens Organizadas ({specializedImages.length})
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {specializedImages.map((img, index) => (
+                    <div key={img.id} className="relative group">
+                      <img 
+                        src={img.thumbnail_url || img.original_url} 
+                        alt={`Imagem ${index + 1}`}
+                        className="w-full h-24 object-cover rounded border"
+                      />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center">
+                        <span className="text-white text-xs font-medium text-center px-2">
+                          {img.original_filename}
+                        </span>
+                      </div>
+                      {img.specialty_code && (
+                        <Badge className="absolute top-1 right-1 text-xs bg-green-600">
+                          {img.specialty_code}/{img.modality_prefix}
+                        </Badge>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         );
 
@@ -496,7 +578,7 @@ export function CaseCreationWizard({
                   <strong>Alternativas:</strong> {form.answer_options.filter((opt: string) => opt.trim()).length}
                 </div>
                 <div>
-                  <strong>Imagens Integradas:</strong> {isEditMode ? imageIntegration.images.length : tempImages.length}
+                  <strong>Imagens Organizadas:</strong> {specializedImages.length}
                 </div>
               </div>
               <Button
@@ -602,7 +684,7 @@ export function CaseCreationWizard({
             </Button>
           ) : (
             <Button 
-              onClick={handleSubmitWithImages} 
+              onClick={onSubmit} 
               disabled={submitting}
               className="bg-green-600 hover:bg-green-700"
             >
@@ -636,11 +718,7 @@ export function CaseCreationWizard({
       <CaseFormPreviewModal 
         open={showPreview} 
         onClose={() => setShowPreview(false)} 
-        form={{
-          ...form,
-          // Passar imagens temporárias para o preview
-          tempImages: isEditMode ? [] : tempImages
-        }}
+        form={form} 
         categories={categories} 
         difficulties={difficulties} 
       />
@@ -649,8 +727,8 @@ export function CaseCreationWizard({
         open={showAdvancedImageModal}
         onClose={() => setShowAdvancedImageModal(false)}
         caseId={isEditMode ? editingCase?.id : undefined}
-        currentImages={imageIntegration.images.map(img => img.original_url)}
-        onImagesUpdated={() => imageIntegration.refetch()}
+        currentImages={specializedImages.map(img => img.original_url)}
+        onImagesUpdated={handleImagesChange}
       />
     </div>
   );

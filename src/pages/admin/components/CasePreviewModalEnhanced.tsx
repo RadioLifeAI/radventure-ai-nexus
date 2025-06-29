@@ -22,8 +22,7 @@ import {
   CheckCircle,
   XCircle,
   Maximize,
-  Eye,
-  Image as ImageIcon
+  Eye
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,7 +33,6 @@ import { ConfidenceSelector } from "@/components/cases/ConfidenceSelector";
 import { EnhancedImageViewer } from "@/components/cases/EnhancedImageViewer";
 import { ReviewModeBadge } from "@/components/cases/ReviewModeBadge";
 import { useCaseReviewStatus } from "@/hooks/useCaseReviewStatus";
-import { useCaseImageIntegration } from "@/hooks/useCaseImageIntegration";
 
 interface CasePreviewModalEnhancedProps {
   open: boolean;
@@ -44,7 +42,6 @@ interface CasePreviewModalEnhancedProps {
   categories?: any[];
   difficulties?: any[];
   isAdminView?: boolean;
-  tempImages?: any[];
 }
 
 export function CasePreviewModalEnhanced({
@@ -55,7 +52,6 @@ export function CasePreviewModalEnhanced({
   categories: externalCategories,
   difficulties: externalDifficulties,
   isAdminView = false,
-  tempImages = [],
 }: CasePreviewModalEnhancedProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -78,13 +74,6 @@ export function CasePreviewModalEnhanced({
   
   // Hook para status de revisão
   const { reviewStatus, isReview, previousAnswer, previousCorrect } = useCaseReviewStatus(caseId);
-
-  // Hook para imagens integradas - CORREÇÃO: usar dados corretos
-  const imageIntegration = useCaseImageIntegration({
-    caseId: formData ? undefined : caseId, // Usar caseId apenas se não for formData
-    categoryId: formData?.category_id ? Number(formData.category_id) : undefined,
-    modality: formData?.modality || undefined
-  });
 
   // Timer effect
   useEffect(() => {
@@ -222,46 +211,6 @@ export function CasePreviewModalEnhanced({
   const actualCategories = externalCategories || categories;
   const actualDifficulties = externalDifficulties || difficulties;
 
-  // CORREÇÃO COMPLETA: Lógica unificada de imagens
-  const form = actualCaseData || {};
-  
-  // Prioridade para imagens integradas (formData), depois imagens do banco
-  const images = (() => {
-    // 1. Se é formData e temos imagens temporárias passadas como prop, usar essas
-    if (formData && tempImages.length > 0) {
-      return tempImages.map(img => ({
-        url: img.original_url,
-        legend: img.legend || ""
-      }));
-    }
-
-    // 2. Se é formData e temos imagens integradas, usar essas
-    if (formData && imageIntegration.images.length > 0) {
-      return imageIntegration.images.map(img => ({
-        url: img.original_url,
-        legend: img.legend || ""
-      }));
-    }
-    
-    // 3. Se tem image_url no form, usar essas
-    if (form.image_url) {
-      if (Array.isArray(form.image_url)) {
-        return form.image_url.map((url: string, index: number) => ({
-          url,
-          legend: `Imagem ${index + 1}`
-        }));
-      } else {
-        return [{
-          url: form.image_url,
-          legend: "Imagem principal"
-        }];
-      }
-    }
-    
-    // 4. Caso contrário, array vazio
-    return [];
-  })();
-
   // Reset state when modal opens/closes or case changes
   useEffect(() => {
     if (open && actualCaseData) {
@@ -303,10 +252,14 @@ export function CasePreviewModalEnhanced({
     }
   }
 
+  const form = actualCaseData || {};
   const category = getCategoryName(actualCategories, form.category_id);
   const difficulty = getDifficultyDesc(actualDifficulties, form.difficulty_level);
   const difficultyLevel = form.difficulty_level || 1;
   
+  const images = Array.isArray(form.image_url) ? form.image_url : 
+    form.image_url ? [form.image_url] : [];
+
   const handleAnswerSelect = (index: number) => {
     if (hasAnswered || isAdminView) return;
     
@@ -392,6 +345,7 @@ export function CasePreviewModalEnhanced({
     onClose();
   };
 
+  // CORREÇÃO: Chamada automática do Tutor AI sem userQuestion
   const handleRequestTutorHint = async () => {
     if (isReview) {
       toast({
@@ -417,6 +371,7 @@ export function CasePreviewModalEnhanced({
       // Consumir crédito primeiro
       consumeHelp({ aidType: 'ai_tutor' });
       
+      // CORREÇÃO: Remover userQuestion da chamada
       const response = await getTutorHint({
         caseData: actualCaseData
       });
@@ -479,7 +434,7 @@ export function CasePreviewModalEnhanced({
               </div>
               <div>
                 <div className="flex items-center gap-3 mb-2">
-                  <Badge className="bg-blue-500 hover:bg-blue-600 text-white font-bold px-3">
+                  <Badge className="bg-blue-500 hover:bg-blue-600 text-white font-bold px-3 py-1">
                     {category}
                   </Badge>
                   <Badge className={cn("text-white font-bold px-3 py-1", getDifficultyColor(difficultyLevel))}>
@@ -533,7 +488,7 @@ export function CasePreviewModalEnhanced({
           </div>
         </div>
 
-        {/* Progress Bar */}
+        {/* Progress Bar - sem alterações */}
         {!isAdminView && (
           <div className="px-6 py-4 border-b">
             <CaseProgressBar
@@ -547,7 +502,7 @@ export function CasePreviewModalEnhanced({
 
         {/* Layout Principal - 3 Colunas */}
         <div className="flex h-full overflow-hidden">
-          {/* Coluna 1: Imagem Médica - CORREÇÃO: Usar imagens unificadas */}
+          {/* Coluna 1: Imagem Médica - sem alterações */}
           <div className="w-80 bg-white border-r border-gray-200 p-4 flex flex-col">
             <EnhancedImageViewer
               images={images}
@@ -555,17 +510,9 @@ export function CasePreviewModalEnhanced({
               onIndexChange={setCurrentImageIndex}
               className="flex-1"
             />
-            {images.length === 0 && (
-              <div className="flex-1 flex items-center justify-center bg-gray-50 rounded-lg">
-                <div className="text-center text-gray-500">
-                  <ImageIcon className="h-12 w-12 mx-auto mb-2" />
-                  <p className="text-sm">Nenhuma imagem disponível</p>
-                </div>
-              </div>
-            )}
           </div>
 
-          {/* Coluna 2: Caso Clínico Principal */}
+          {/* Coluna 2: Caso Clínico Principal - sem alterações significativas */}
           <div className="flex-1 p-6 overflow-y-auto">
             {/* História Clínica */}
             <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-5 mb-6 border border-green-200">
@@ -687,7 +634,7 @@ export function CasePreviewModalEnhanced({
               </div>
             </div>
 
-            {/* Dica do Tutor AI */}
+            {/* Dica do Tutor AI - mantida igual */}
             {tutorHintText && (
               <div className="bg-gradient-to-r from-purple-50 to-violet-50 rounded-xl p-6 mb-6 border border-purple-200">
                 <div className="flex items-center gap-3 mb-4">

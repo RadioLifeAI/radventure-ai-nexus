@@ -9,7 +9,7 @@ const corsHeaders = {
 
 interface ImageProcessingRequest {
   imageUrl: string
-  caseId: string | null // CORREÇÃO: Permitir null para uploads temporários
+  caseId: string
   filename: string
   legend?: string
   sequenceOrder?: number
@@ -80,13 +80,12 @@ serve(async (req) => {
     const modalityPrefix = modalityInfo?.modality_prefix || 'IMG'
     const bucketFolder = modalityInfo?.bucket_folder || 'geral'
     
-    // CORREÇÃO: Para casos temporários, usar pasta especial e permitir null
-    const caseFolder = caseId || 'temp-cases'
-    const bucketPath = `medical-cases/${specialtyCode.toLowerCase()}/${bucketFolder}/${caseFolder}`
+    // Estrutura: /medical-cases/{specialty-code}/{modality-folder}/{case-id}/
+    const bucketPath = `medical-cases/${specialtyCode.toLowerCase()}/${bucketFolder}/${caseId}`
     
     console.log('📁 Estrutura organizada:', { specialtyCode, modalityPrefix, bucketFolder, bucketPath })
 
-    // Simular processamento de diferentes tamanhos
+    // Simular processamento de diferentes tamanhos (implementação completa usaria Sharp/ImageMagick)
     const processedImages = {
       thumbnail: imageUrl,
       medium: imageUrl,
@@ -95,18 +94,18 @@ serve(async (req) => {
       jpeg: imageUrl
     }
 
-    // Simular dimensões
+    // Simular dimensões (em implementação real, extrairíamos da imagem)
     const dimensions = {
       width: 1200,
       height: 800,
       aspect_ratio: 1.5
     }
 
-    // CORREÇÃO: Inserir registro na tabela case_images com case_id NULL permitido
+    // Inserir registro na tabela case_images com organização especializada
     const { data: caseImage, error: insertError } = await supabase
       .from('case_images')
       .insert({
-        case_id: caseId, // Agora pode ser null sem erro
+        case_id: caseId,
         original_filename: filename,
         original_url: imageUrl,
         thumbnail_url: processedImages.thumbnail,
@@ -123,8 +122,7 @@ serve(async (req) => {
           compression_ratio: 0.8,
           file_type: 'image/jpeg',
           quality: 'high',
-          original_processing: true,
-          is_temporary: caseId === null // Flag para identificar imagens temporárias
+          original_processing: true
         },
         legend: legend || '',
         sequence_order: sequenceOrder || 0,
@@ -137,8 +135,7 @@ serve(async (req) => {
           specialty_name: specialtyInfo?.bucket_prefix || 'geral',
           modality_folder: bucketFolder,
           organized_at: new Date().toISOString(),
-          auto_classified: true,
-          temporary_upload: caseId === null
+          auto_classified: true
         }
       })
       .select()
@@ -153,8 +150,7 @@ serve(async (req) => {
       id: caseImage.id, 
       bucketPath,
       specialtyCode,
-      modalityPrefix,
-      isTemporary: caseId === null
+      modalityPrefix 
     })
 
     return new Response(
@@ -165,12 +161,9 @@ serve(async (req) => {
           specialty_code: specialtyCode,
           modality_prefix: modalityPrefix,
           bucket_path: bucketPath,
-          structured: true,
-          is_temporary: caseId === null
+          structured: true
         },
-        message: caseId === null 
-          ? 'Imagem temporária processada - será vinculada ao salvar o caso'
-          : 'Imagem processada e organizada com sucesso'
+        message: 'Imagem processada e organizada com sucesso'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

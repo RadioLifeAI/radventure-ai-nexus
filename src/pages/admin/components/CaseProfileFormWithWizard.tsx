@@ -4,10 +4,10 @@ import { CaseCreationWizard } from "./CaseCreationWizard";
 import { useCaseProfileFormHandlers } from "../hooks/useCaseProfileFormHandlers";
 import { useFieldUndo } from "../hooks/useFieldUndo";
 import { useCaseTitleGenerator } from "../hooks/useCaseTitleGenerator";
-import { useCaseImageIntegration } from "@/hooks/useCaseImageIntegration";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
+import { useSpecializedCaseImages } from "@/hooks/useSpecializedCaseImages";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 interface CaseProfileFormWithWizardProps {
@@ -21,6 +21,7 @@ export function CaseProfileFormWithWizard({
 }: CaseProfileFormWithWizardProps) {
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
   const [difficulties, setDifficulties] = useState<{ id: number; level: number; description: string | null }[]>([]);
+  const { images: specializedImages, refetch: refetchImages } = useSpecializedCaseImages(editingCase?.id);
 
   useEffect(() => {
     supabase.from("medical_specialties")
@@ -52,13 +53,6 @@ export function CaseProfileFormWithWizard({
 
   const isEditMode = !!editingCase;
   const { generateTitle } = useCaseTitleGenerator(categories);
-
-  // Hook de integração de imagens
-  const imageIntegration = useCaseImageIntegration({
-    caseId: isEditMode ? editingCase?.id : undefined,
-    categoryId: form.category_id ? Number(form.category_id) : undefined,
-    modality: form.modality || undefined
-  });
 
   // Preencher form com dados existentes se editando
   useEffect(() => {
@@ -140,23 +134,24 @@ export function CaseProfileFormWithWizard({
     setSubmitting(true);
     try {
       const selectedCategory = categories.find(c => String(c.id) === String(form.category_id));
+      const primary_diagnosis = form.primary_diagnosis ?? "";
 
-      // CORREÇÃO: Para casos novos, preparar imagens do sistema integrado
+      // Usar imagens do sistema especializado
       let image_url_arr: any[] = [];
-      if (isEditMode && imageIntegration.images.length > 0) {
-        // Para edição, usar imagens já salvas
-        image_url_arr = imageIntegration.images.slice(0, 6).map((img: any) => ({
-          url: img.original_url,
-          legend: img.legend || ""
-        }));
-      } else if (!isEditMode && imageIntegration.images.length > 0) {
-        // CORREÇÃO: Para casos novos, usar imagens da integração
-        image_url_arr = imageIntegration.images.slice(0, 6).map((img: any) => ({
+      if (specializedImages.length > 0) {
+        image_url_arr = specializedImages.slice(0, 6).map((img: any) => ({
           url: img.original_url,
           legend: img.legend || ""
         }));
       } else if (Array.isArray(form.image_url)) {
         image_url_arr = form.image_url;
+      } else if (typeof form.image_url === "string" && (form.image_url as string).trim() !== "") {
+        try {
+          const parsed = JSON.parse(form.image_url as string);
+          image_url_arr = Array.isArray(parsed) ? parsed : [];
+        } catch {
+          image_url_arr = [];
+        }
       }
 
       const image_url = image_url_arr.map((img: any) => ({
@@ -227,7 +222,6 @@ export function CaseProfileFormWithWizard({
         similar_cases_ids: form.similar_cases_ids || []
       };
 
-      // Limpar campos vazios
       Object.keys(payload).forEach(k => {
         if (typeof payload[k] === "string" && payload[k] === "") payload[k] = null;
       });
@@ -251,37 +245,15 @@ export function CaseProfileFormWithWizard({
         const caseId = data[0].id;
         const resultTitle = data[0].title ?? form.title;
         
-        // CORREÇÃO: Vincular imagens temporárias ao caso recém-criado
-        if (!isEditMode && imageIntegration.images.length > 0) {
-          console.log('💾 Vinculando imagens temporárias ao caso criado:', caseId);
-          const linkedImages = await imageIntegration.saveTempImages(caseId);
-          console.log('✅ Imagens vinculadas:', linkedImages.length);
-          
-          // CORREÇÃO: Atualizar o campo image_url na tabela medical_cases para compatibilidade
-          if (linkedImages.length > 0) {
-            const imageUrlFormatted = linkedImages.slice(0, 6).map((img: any) => ({
-              url: img.original_url,
-              legend: img.legend || ""
-            }));
-            
-            await supabase
-              .from("medical_cases")
-              .update({ image_url: imageUrlFormatted })
-              .eq("id", caseId);
-              
-            console.log('🔄 Campo image_url atualizado para compatibilidade');
-          }
-        }
-        
         setFeedback(isEditMode ? "Caso atualizado com sucesso!" : "Caso cadastrado com sucesso!");
-        toast({ 
-          title: `✅ Caso ${isEditMode ? "atualizado" : "criado"}!`, 
-          description: `${resultTitle} - ${imageIntegration.images.length} imagem(ns) ${isEditMode ? 'já vinculadas' : 'vinculadas'}`
-        });
+        toast({ title: `Caso ${isEditMode ? "atualizado" : "criado"}! Título: ${resultTitle}` });
         
         if (!isEditMode) {
           resetForm();
         }
+        
+        // Atualizar imagens especializadas
+        refetchImages();
         
         onCreated?.();
       } else {
