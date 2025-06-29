@@ -49,7 +49,7 @@ export function EventCardGamified({ event, onEnter }: Props) {
   };
 
   const handleCardClick = () => {
-    // Navegar para página de detalhes do evento
+    // Navegar para página de detalhes do evento - CORRIGIDO
     navigate(`/app/evento/${event.id}`);
   };
 

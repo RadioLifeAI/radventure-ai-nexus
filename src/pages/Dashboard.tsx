@@ -69,12 +69,12 @@ export default function Dashboard() {
     } : undefined
   }));
 
-  // Handler para eventos
+  // Handler para eventos - CORRIGIDO para usar rotas corretas
   function handleEnterEvent(eventId: string) {
-    navigate(`/evento/${eventId}`);
+    navigate(`/app/evento/${eventId}`);
   }
 
-  // Handlers para botões de ação - CORRIGIDO
+  // Handlers para botões de ação
   const handleCentralCasos = () => {
     navigate('/app/casos');
   };
