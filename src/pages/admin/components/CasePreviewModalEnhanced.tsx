@@ -22,8 +22,7 @@ import {
   CheckCircle,
   XCircle,
   Maximize,
-  Eye,
-  Image as ImageIcon
+  Eye
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
