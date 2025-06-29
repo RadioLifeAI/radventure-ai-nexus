@@ -135,8 +135,16 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
         return [];
       }
 
-      console.log('✅ Imagens encontradas:', data?.length || 0);
-      return Array.isArray(data) ? data : [];
+      console.log('✅ Imagens encontradas:', Array.isArray(data) ? data.length : 0);
+      
+      // CORREÇÃO: Validação e casting seguro de tipos
+      if (Array.isArray(data)) {
+        return data.filter((item): item is { url: string; legend?: string } => {
+          return item && typeof item === 'object' && typeof item.url === 'string';
+        });
+      }
+      
+      return [];
     } catch (error) {
       console.error('❌ Erro na busca híbrida de imagens:', error);
       return [];
@@ -168,7 +176,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
       
       setCaso(data);
       
-      // CORREÇÃO: Buscar imagens usando sistema híbrido
+      // CORREÇÃO: Buscar imagens usando sistema híbrido com tipo correto
       const images = await fetchCaseImages(id);
       setCaseImages(images);
       
@@ -487,8 +495,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
             {caseImages.length > 0 ? (
               <div className="relative h-full">
                 <img
-                  src={typeof caseImages[currentImageIndex] === 'object' ? 
-                    caseImages[currentImageIndex].url : caseImages[currentImageIndex]}
+                  src={caseImages[currentImageIndex]?.url || ''}
                   alt={`Imagem médica ${currentImageIndex + 1}`}
                   className="w-full h-full object-contain transition-transform duration-300"
                   style={{ transform: `scale(${imageZoom})` }}
@@ -529,7 +536,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
           </div>
 
           {/* Legenda da Imagem */}
-          {caseImages.length > 0 && typeof caseImages[currentImageIndex] === 'object' && caseImages[currentImageIndex].legend && (
+          {caseImages.length > 0 && caseImages[currentImageIndex]?.legend && (
             <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
               <p className="text-sm text-blue-800 font-medium">
                 {caseImages[currentImageIndex].legend}
