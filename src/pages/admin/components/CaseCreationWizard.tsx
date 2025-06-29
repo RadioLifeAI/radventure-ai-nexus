@@ -41,7 +41,7 @@ import { CaseQualityRadar } from "./CaseQualityRadar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useSpecializedCaseImages } from "@/hooks/useSpecializedCaseImages";
+import { useCaseImageIntegration } from "@/hooks/useCaseImageIntegration";
 import { UnifiedImageSystemTabs } from "./UnifiedImageSystemTabs";
 
 interface WizardStep {
@@ -90,37 +90,12 @@ export function CaseCreationWizard({
   const [showAdvancedImageModal, setShowAdvancedImageModal] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  // Hook especializado para imagens - INTEGRADO COM FORMULÁRIO
-  const { 
-    images: specializedImages, 
-    uploading, 
-    processing, 
-    uploadSpecializedImage,
-    processZipSpecialized,
-    refetch: refetchImages
-  } = useSpecializedCaseImages(isEditMode ? editingCase?.id : undefined);
-
-  // Estados para integração
-  const [currentCategoryId, setCurrentCategoryId] = useState<number | undefined>(undefined);
-  const [currentModality, setCurrentModality] = useState<string | undefined>(undefined);
-
-  // Sincronização com formulário - CORREÇÃO CRÍTICA
-  useEffect(() => {
-    const newCategoryId = form.category_id ? Number(form.category_id) : undefined;
-    const newModality = form.modality || undefined;
-    
-    // Só atualiza se mudou para evitar re-renders desnecessários
-    if (newCategoryId !== currentCategoryId || newModality !== currentModality) {
-      setCurrentCategoryId(newCategoryId);
-      setCurrentModality(newModality);
-      
-      console.log('🔄 Formulário sincronizado:', {
-        categoryId: newCategoryId,
-        modality: newModality,
-        specialty: categories.find(c => c.id === newCategoryId)?.name
-      });
-    }
-  }, [form.category_id, form.modality, categories]);
+  // Hook de integração de imagens UNIFICADO
+  const imageIntegration = useCaseImageIntegration({
+    caseId: isEditMode ? editingCase?.id : undefined,
+    categoryId: form.category_id ? Number(form.category_id) : undefined,
+    modality: form.modality || undefined
+  });
 
   const steps: WizardStep[] = [
     {
@@ -188,8 +163,8 @@ export function CaseCreationWizard({
     },
     {
       id: "images",
-      title: "Sistema Especializado",
-      description: "Upload e organização avançada de imagens",
+      title: "Sistema Integrado",
+      description: "Upload unificado com formulário",
       icon: <FolderTree className="h-5 w-5" />,
       completed: false,
       valid: true,
@@ -272,14 +247,22 @@ export function CaseCreationWizard({
   const completedSteps = steps.filter(step => step.completed).length;
   const progressPercentage = (completedSteps / steps.length) * 100;
 
-  // Callback para atualização de imagens integrado
-  const handleImagesChange = (images: any[]) => {
-    console.log('📸 Imagens atualizadas pelo sistema especializado:', images.length);
-    refetchImages();
-    toast({ 
-      title: "🎯 Sistema Integrado!", 
-      description: `${images.length} imagem(ns) organizadas conforme formulário.` 
-    });
+  // Função para salvar caso COM imagens integradas
+  const handleSubmitWithImages = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Se não estamos editando, salvar imagens temporárias junto
+    if (!isEditMode && imageIntegration.images.length > 0) {
+      console.log('💾 Salvando caso com imagens integradas...');
+      
+      // Primeiro salvar o caso
+      await onSubmit(e);
+      
+      // Depois salvar as imagens (isto será feito no callback onCreated)
+    } else {
+      // Caso normal ou edição
+      await onSubmit(e);
+    }
   };
 
   const renderStepContent = () => {
@@ -473,49 +456,52 @@ export function CaseCreationWizard({
       case "images":
         return (
           <div className="space-y-6">
-            {/* Sistema Unificado Completo */}
+            {/* Sistema Integrado Completo */}
             <UnifiedImageSystemTabs
               caseId={isEditMode ? editingCase?.id : undefined}
-              categoryId={currentCategoryId}
-              modality={currentModality}
-              onImagesChange={handleImagesChange}
+              categoryId={form.category_id ? Number(form.category_id) : undefined}
+              modality={form.modality || undefined}
+              onImagesChange={(images) => {
+                console.log('📸 Imagens atualizadas via integração:', images.length);
+                imageIntegration.refetch();
+              }}
             />
 
-            {/* Status da Integração Detalhado */}
+            {/* Status da Integração */}
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
               <h4 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
                 <FolderTree className="h-4 w-4" />
-                Status da Integração Completa
+                Status da Integração Unificada
               </h4>
               <div className="grid grid-cols-2 gap-4 text-sm text-blue-700">
                 <div>
-                  <strong>Categoria:</strong> {categories.find(c => c.id === currentCategoryId)?.name || 'Não selecionada'}
+                  <strong>Categoria:</strong> {categories.find(c => c.id === Number(form.category_id))?.name || 'Não selecionada'}
                 </div>
                 <div>
-                  <strong>Modalidade:</strong> {currentModality || 'Não selecionada'}
+                  <strong>Modalidade:</strong> {form.modality || 'Não selecionada'}
                 </div>
                 <div>
-                  <strong>Ferramentas Ativas:</strong> {
-                    currentCategoryId && currentModality 
-                      ? 'Upload, Editor, ZIP, Stack, Templates'
-                      : 'Aguardando configuração'
+                  <strong>Integração:</strong> {
+                    imageIntegration.isIntegrated 
+                      ? '✅ Ativa' 
+                      : '⚠️ Aguardando configuração'
                   }
                 </div>
                 <div>
-                  <strong>Imagens Organizadas:</strong> {specializedImages.length}
+                  <strong>Imagens:</strong> {imageIntegration.images.length} preparadas
                 </div>
               </div>
               
-              {!currentCategoryId || !currentModality ? (
+              {!imageIntegration.isIntegrated ? (
                 <div className="mt-3 p-2 bg-yellow-100 rounded border border-yellow-300">
                   <p className="text-yellow-800 text-sm">
-                    ⚠️ <strong>Para ativar todas as ferramentas:</strong> Configure categoria e modalidade na aba "Informações Básicas"
+                    ⚠️ <strong>Para ativar:</strong> Configure categoria e modalidade na aba "Informações Básicas"
                   </p>
                 </div>
               ) : (
                 <div className="mt-3 p-2 bg-green-100 rounded border border-green-300">
                   <p className="text-green-800 text-sm">
-                    ✅ <strong>Sistema Completo Ativo:</strong> Todas as ferramentas avançadas estão disponíveis e integradas
+                    ✅ <strong>Sistema Integrado:</strong> Upload sincronizado com formulário
                   </p>
                 </div>
               )}
@@ -547,7 +533,7 @@ export function CaseCreationWizard({
                   <strong>Alternativas:</strong> {form.answer_options.filter((opt: string) => opt.trim()).length}
                 </div>
                 <div>
-                  <strong>Imagens Organizadas:</strong> {specializedImages.length}
+                  <strong>Imagens Integradas:</strong> {imageIntegration.images.length}
                 </div>
               </div>
               <Button
@@ -653,7 +639,7 @@ export function CaseCreationWizard({
             </Button>
           ) : (
             <Button 
-              onClick={onSubmit} 
+              onClick={handleSubmitWithImages} 
               disabled={submitting}
               className="bg-green-600 hover:bg-green-700"
             >
@@ -696,8 +682,8 @@ export function CaseCreationWizard({
         open={showAdvancedImageModal}
         onClose={() => setShowAdvancedImageModal(false)}
         caseId={isEditMode ? editingCase?.id : undefined}
-        currentImages={specializedImages.map(img => img.original_url)}
-        onImagesUpdated={handleImagesChange}
+        currentImages={imageIntegration.images.map(img => img.original_url)}
+        onImagesUpdated={() => imageIntegration.refetch()}
       />
     </div>
   );

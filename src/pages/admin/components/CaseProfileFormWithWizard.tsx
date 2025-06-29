@@ -1,13 +1,12 @@
-
 import React from "react";
 import { CaseCreationWizard } from "./CaseCreationWizard";
 import { useCaseProfileFormHandlers } from "../hooks/useCaseProfileFormHandlers";
 import { useFieldUndo } from "../hooks/useFieldUndo";
 import { useCaseTitleGenerator } from "../hooks/useCaseTitleGenerator";
+import { useCaseImageIntegration } from "@/hooks/useCaseImageIntegration";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
-import { useSpecializedCaseImages } from "@/hooks/useSpecializedCaseImages";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 interface CaseProfileFormWithWizardProps {
@@ -21,7 +20,6 @@ export function CaseProfileFormWithWizard({
 }: CaseProfileFormWithWizardProps) {
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
   const [difficulties, setDifficulties] = useState<{ id: number; level: number; description: string | null }[]>([]);
-  const { images: specializedImages, refetch: refetchImages } = useSpecializedCaseImages(editingCase?.id);
 
   useEffect(() => {
     supabase.from("medical_specialties")
@@ -53,6 +51,13 @@ export function CaseProfileFormWithWizard({
 
   const isEditMode = !!editingCase;
   const { generateTitle } = useCaseTitleGenerator(categories);
+
+  // Hook de integração de imagens
+  const imageIntegration = useCaseImageIntegration({
+    caseId: isEditMode ? editingCase?.id : undefined,
+    categoryId: form.category_id ? Number(form.category_id) : undefined,
+    modality: form.modality || undefined
+  });
 
   // Preencher form com dados existentes se editando
   useEffect(() => {
@@ -136,10 +141,17 @@ export function CaseProfileFormWithWizard({
       const selectedCategory = categories.find(c => String(c.id) === String(form.category_id));
       const primary_diagnosis = form.primary_diagnosis ?? "";
 
-      // Usar imagens do sistema especializado
+      // Para casos novos, usar imagens do sistema integrado
       let image_url_arr: any[] = [];
-      if (specializedImages.length > 0) {
-        image_url_arr = specializedImages.slice(0, 6).map((img: any) => ({
+      if (!isEditMode && imageIntegration.images.length > 0) {
+        // Usar imagens temporárias (serão salvas após criar o caso)
+        image_url_arr = imageIntegration.images.slice(0, 6).map((img: any) => ({
+          url: img.original_url,
+          legend: img.legend || ""
+        }));
+      } else if (isEditMode && imageIntegration.images.length > 0) {
+        // Para edição, usar imagens já salvas
+        image_url_arr = imageIntegration.images.slice(0, 6).map((img: any) => ({
           url: img.original_url,
           legend: img.legend || ""
         }));
@@ -245,15 +257,21 @@ export function CaseProfileFormWithWizard({
         const caseId = data[0].id;
         const resultTitle = data[0].title ?? form.title;
         
+        // Se não é edição e há imagens temporárias, salvá-las agora
+        if (!isEditMode && imageIntegration.images.length > 0) {
+          console.log('💾 Salvando imagens temporárias para caso criado:', caseId);
+          await imageIntegration.saveTempImages(caseId);
+        }
+        
         setFeedback(isEditMode ? "Caso atualizado com sucesso!" : "Caso cadastrado com sucesso!");
-        toast({ title: `Caso ${isEditMode ? "atualizado" : "criado"}! Título: ${resultTitle}` });
+        toast({ 
+          title: `✅ Caso ${isEditMode ? "atualizado" : "criado"}!`, 
+          description: `${resultTitle} - ${imageIntegration.images.length} imagem(ns) integradas`
+        });
         
         if (!isEditMode) {
           resetForm();
         }
-        
-        // Atualizar imagens especializadas
-        refetchImages();
         
         onCreated?.();
       } else {
