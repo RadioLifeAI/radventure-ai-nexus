@@ -63,7 +63,7 @@ export function CasesCentral() {
 
   if (isLoading) {
     return (
-      <div className="space-y-8 bg-gradient-to-br from-slate-100 via-blue-100 to-cyan-100 min-h-screen p-8">
+      <div className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map((i) => (
             <Skeleton key={i} className="h-32 rounded-xl" />
@@ -75,15 +75,15 @@ export function CasesCentral() {
   }
 
   const StatCard = ({ icon: Icon, title, value, subtitle, color = "blue" }: any) => (
-    <Card className="hover:shadow-lg transition-shadow duration-300 bg-white/95 backdrop-blur-sm border-gray-300/60 shadow-md">
+    <Card className="hover:shadow-lg transition-shadow duration-300">
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-700">{title}</p>
+            <p className="text-sm font-medium text-gray-600">{title}</p>
             <p className={`text-3xl font-bold text-${color}-600`}>{value}</p>
-            <p className="text-xs text-gray-600">{subtitle}</p>
+            <p className="text-xs text-gray-500">{subtitle}</p>
           </div>
-          <div className={`p-3 bg-${color}-100 rounded-full border border-${color}-200/60`}>
+          <div className={`p-3 bg-${color}-100 rounded-full`}>
             <Icon className={`h-6 w-6 text-${color}-600`} />
           </div>
         </div>
@@ -98,13 +98,13 @@ export function CasesCentral() {
   } : { total: 0, bySpecialty: {} };
 
   return (
-    <div className="space-y-8 bg-gradient-to-br from-slate-100 via-blue-100 to-cyan-100 min-h-screen p-8">
+    <div className="space-y-8">
       {/* Header com estatísticas principais */}
       <div className="text-center">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-4">
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent mb-4">
           Central de Casos Avançada
         </h1>
-        <p className="text-gray-700 text-lg">
+        <p className="text-cyan-100 text-lg">
           Acompanhe seu progresso e explore casos médicos organizados por especialidade
         </p>
       </div>
@@ -142,20 +142,20 @@ export function CasesCentral() {
       </div>
 
       <Tabs defaultValue="explorer" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 bg-white/90 backdrop-blur-sm border border-gray-300/60 shadow-md">
-          <TabsTrigger value="explorer" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-md data-[state=active]:border-b-2 data-[state=active]:border-cyan-500 text-gray-700">
+        <TabsList className="grid w-full grid-cols-4 bg-white/10 backdrop-blur-sm border border-white/20">
+          <TabsTrigger value="explorer" className="data-[state=active]:bg-white/20">
             <Filter className="h-4 w-4 mr-2" />
             Explorar
           </TabsTrigger>
-          <TabsTrigger value="progress" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-md data-[state=active]:border-b-2 data-[state=active]:border-cyan-500 text-gray-700">
+          <TabsTrigger value="progress" className="data-[state=active]:bg-white/20">
             <BarChart3 className="h-4 w-4 mr-2" />
             Progresso
           </TabsTrigger>
-          <TabsTrigger value="recent" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-md data-[state=active]:border-b-2 data-[state=active]:border-cyan-500 text-gray-700">
+          <TabsTrigger value="recent" className="data-[state=active]:bg-white/20">
             <Calendar className="h-4 w-4 mr-2" />
             Recentes
           </TabsTrigger>
-          <TabsTrigger value="journey" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-md data-[state=active]:border-b-2 data-[state=active]:border-cyan-500 text-gray-700">
+          <TabsTrigger value="journey" className="data-[state=active]:bg-white/20">
             <Zap className="h-4 w-4 mr-2" />
             Jornada
           </TabsTrigger>
@@ -187,9 +187,9 @@ export function CasesCentral() {
         <TabsContent value="progress" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Progresso por Especialidade */}
-            <Card className="bg-white/95 backdrop-blur-sm border-gray-300/60 shadow-lg">
+            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
               <CardHeader>
-                <CardTitle className="text-gray-900 flex items-center gap-2">
+                <CardTitle className="text-white flex items-center gap-2">
                   <TrendingUp className="h-5 w-5" />
                   Progresso por Especialidade
                 </CardTitle>
@@ -198,14 +198,14 @@ export function CasesCentral() {
                 {Object.entries(userProgress?.bySpecialty || {}).map(([specialty, stats]: [string, any]) => (
                   <div key={specialty} className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-900 font-medium">{specialty}</span>
-                      <span className="text-gray-700">
+                      <span className="text-white font-medium">{specialty}</span>
+                      <span className="text-cyan-300">
                         {stats.correct}/{stats.total} ({Math.round((stats.correct / stats.total) * 100)}%)
                       </span>
                     </div>
                     <Progress 
                       value={(stats.correct / stats.total) * 100} 
-                      className="h-2 bg-gray-200"
+                      className="h-2 bg-white/20"
                     />
                   </div>
                 ))}
@@ -213,17 +213,17 @@ export function CasesCentral() {
             </Card>
 
             {/* Conquistas */}
-            <Card className="bg-white/95 backdrop-blur-sm border-gray-300/60 shadow-lg">
+            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
               <CardHeader>
-                <CardTitle className="text-gray-900 flex items-center gap-2">
+                <CardTitle className="text-white flex items-center gap-2">
                   <Trophy className="h-5 w-5" />
                   Conquistas Recentes
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-8">
-                  <Trophy className="h-16 w-16 text-yellow-500 mx-auto mb-4" />
-                  <p className="text-gray-700">Sistema de conquistas em desenvolvimento</p>
+                  <Trophy className="h-16 w-16 text-yellow-400 mx-auto mb-4" />
+                  <p className="text-white">Sistema de conquistas em desenvolvimento</p>
                 </div>
               </CardContent>
             </Card>
@@ -231,9 +231,9 @@ export function CasesCentral() {
         </TabsContent>
 
         <TabsContent value="recent" className="space-y-6">
-          <Card className="bg-white/95 backdrop-blur-sm border-gray-300/60 shadow-lg">
+          <Card className="bg-white/10 backdrop-blur-sm border-white/20">
             <CardHeader>
-              <CardTitle className="text-gray-900 flex items-center gap-2">
+              <CardTitle className="text-white flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
                 Cases Adicionados Recentemente
               </CardTitle>
@@ -241,17 +241,17 @@ export function CasesCentral() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {recentCases?.map((case_) => (
-                  <div key={case_.id} className="bg-gray-50/80 rounded-lg p-4 hover:bg-gray-100/80 transition-colors border border-gray-200/60">
-                    <h3 className="font-semibold text-gray-900 mb-2">{case_.title}</h3>
+                  <div key={case_.id} className="bg-white/20 rounded-lg p-4 hover:bg-white/30 transition-colors">
+                    <h3 className="font-semibold text-white mb-2">{case_.title}</h3>
                     <div className="flex items-center gap-2 mb-3">
-                      <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800">
+                      <Badge variant="secondary" className="text-xs">
                         {case_.specialty}
                       </Badge>
-                      <Badge variant="outline" className="text-xs border-yellow-400 text-yellow-700 bg-yellow-50">
+                      <Badge variant="outline" className="text-xs border-yellow-300 text-yellow-300">
                         {case_.points} pts
                       </Badge>
                     </div>
-                    <Button size="sm" className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 border border-white/20">
+                    <Button size="sm" className="w-full">
                       <Play className="h-4 w-4 mr-2" />
                       Resolver
                     </Button>
@@ -263,24 +263,24 @@ export function CasesCentral() {
         </TabsContent>
 
         <TabsContent value="journey" className="space-y-6">
-          <Card className="bg-gradient-to-r from-purple-100/80 to-pink-100/80 backdrop-blur-sm border-purple-300/60 shadow-lg">
+          <Card className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-sm border-purple-300/30">
             <CardHeader>
-              <CardTitle className="text-gray-900 flex items-center gap-2">
+              <CardTitle className="text-white flex items-center gap-2">
                 <Zap className="h-5 w-5" />
                 Crie sua Jornada Personalizada
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-center py-8">
-                <Brain className="h-16 w-16 text-purple-600 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                <Brain className="h-16 w-16 text-purple-400 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-white mb-2">
                   Trilhas de Aprendizado Inteligentes
                 </h3>
-                <p className="text-gray-700 mb-6">
+                <p className="text-purple-100 mb-6">
                   IA personalizada criará trilhas baseadas no seu perfil e objetivos
                 </p>
                 <Button 
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 border border-white/20 shadow-md"
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                   onClick={() => setShowJourneyModal(true)}
                 >
                   <Brain className="h-4 w-4 mr-2" />
