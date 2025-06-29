@@ -8,12 +8,16 @@ import {
   Target,
   TrendingUp,
   Activity,
-  Radar,
   Zap,
   BookOpen,
   Clock,
-  Award
+  Award,
+  ArrowUp,
+  ArrowDown,
+  Minus
 } from "lucide-react";
+import { useRealUserStats } from "@/hooks/useRealUserStats";
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar } from 'recharts';
 
 interface Props {
   userProgress: any;
@@ -21,166 +25,248 @@ interface Props {
 }
 
 export function IntelligentKnowledgeDashboard({ userProgress, casesStats }: Props) {
-  const competencyData = [
-    { specialty: "Neurorradiologia", progress: 85, cases: 45, accuracy: 92 },
-    { specialty: "Radiologia Torácica", progress: 72, cases: 38, accuracy: 88 },
-    { specialty: "Radiologia Abdominal", progress: 91, cases: 52, accuracy: 95 },
-    { specialty: "Musculoesquelética", progress: 68, cases: 29, accuracy: 85 },
-    { specialty: "Radiologia Pediátrica", progress: 45, cases: 18, accuracy: 78 }
-  ];
+  const { stats: realStats, isLoading } = useRealUserStats();
 
-  const modalityProgress = [
-    { modality: "TC", progress: 88, icon: "🧠" },
-    { modality: "RM", progress: 76, icon: "🔍" },
-    { modality: "RX", progress: 92, icon: "📸" },
-    { modality: "US", progress: 64, icon: "🌊" },
-    { modality: "PET", progress: 52, icon: "⚡" }
-  ];
+  if (isLoading || !realStats) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="h-64 bg-white/10 rounded-xl"></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="h-32 bg-white/10 rounded-xl"></div>
+          <div className="h-32 bg-white/10 rounded-xl"></div>
+        </div>
+      </div>
+    );
+  }
 
-  const learningInsights = [
-    {
-      type: "strength",
-      title: "Forte em TC Torácica",
-      description: "95% de acerto nos últimos 20 casos",
-      icon: TrendingUp,
-      color: "text-green-500"
-    },
-    {
-      type: "improvement",
-      title: "Foco em RM Neurológica",
-      description: "Área com maior potencial de crescimento",
-      icon: Target,
-      color: "text-orange-500"
-    },
-    {
-      type: "achievement",
-      title: "Streak de 15 dias!",
-      description: "Parabéns pela consistência",
-      icon: Award,
-      color: "text-purple-500"
+  const getTrendIcon = (trend: string) => {
+    switch (trend) {
+      case 'up': return <ArrowUp className="h-4 w-4 text-green-400" />;
+      case 'down': return <ArrowDown className="h-4 w-4 text-red-400" />;
+      default: return <Minus className="h-4 w-4 text-gray-400" />;
     }
-  ];
+  };
 
-  const getCompetencyColor = (progress: number) => {
-    if (progress >= 90) return "from-green-500 to-emerald-600";
-    if (progress >= 75) return "from-blue-500 to-cyan-600";
-    if (progress >= 60) return "from-yellow-500 to-orange-600";
-    return "from-red-500 to-pink-600";
+  const getInsightColor = (type: string) => {
+    switch (type) {
+      case 'strength': return 'text-green-500';
+      case 'improvement': return 'text-orange-500'; 
+      case 'streak': return 'text-blue-500';
+      case 'milestone': return 'text-purple-500';
+      default: return 'text-gray-500';
+    }
+  };
+
+  const getInsightIcon = (type: string) => {
+    switch (type) {
+      case 'strength': return TrendingUp;
+      case 'improvement': return Target;
+      case 'streak': return Clock;
+      case 'milestone': return Award;
+      default: return Activity;
+    }
   };
 
   return (
     <div className="space-y-6">
-      {/* Knowledge Heatmap */}
-      <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <Brain className="h-5 w-5 text-cyan-400" />
-            Mapa de Conhecimento - Radar de Competências
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {competencyData.map((comp, index) => (
-            <div key={index} className="space-y-2">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <span className="text-white font-medium">{comp.specialty}</span>
-                  <Badge variant="outline" className="text-xs border-cyan-300 text-cyan-300">
-                    {comp.cases} casos
-                  </Badge>
-                  <Badge variant="outline" className="text-xs border-green-300 text-green-300">
-                    {comp.accuracy}% precisão
-                  </Badge>
-                </div>
-                <span className="text-cyan-200 font-semibold">{comp.progress}%</span>
-              </div>
-              <div className="relative">
-                <Progress value={comp.progress} className="h-3 bg-white/20" />
-                <div 
-                  className={`absolute top-0 left-0 h-3 rounded-full bg-gradient-to-r ${getCompetencyColor(comp.progress)}`}
-                  style={{ width: `${comp.progress}%` }}
-                />
-              </div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Progresso por Modalidade */}
+      {/* Performance Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Radar className="h-5 w-5 text-purple-400" />
-              Domínio por Modalidade de Imagem
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {modalityProgress.map((modality, index) => (
-              <div key={index} className="flex items-center gap-4">
-                <div className="text-2xl">{modality.icon}</div>
-                <div className="flex-1">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-white font-medium">{modality.modality}</span>
-                    <span className="text-cyan-200">{modality.progress}%</span>
-                  </div>
-                  <Progress value={modality.progress} className="h-2 bg-white/20" />
-                </div>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-cyan-200">Casos Resolvidos</p>
+                <p className="text-2xl font-bold text-white">{realStats.totalCases}</p>
               </div>
-            ))}
+              <BookOpen className="h-8 w-8 text-cyan-400" />
+            </div>
           </CardContent>
         </Card>
 
-        {/* Insights de Aprendizado */}
         <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Zap className="h-5 w-5 text-yellow-400" />
-              Insights Inteligentes
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {learningInsights.map((insight, index) => (
-              <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-white/5">
-                <insight.icon className={`h-5 w-5 ${insight.color} mt-0.5`} />
-                <div>
-                  <h4 className="text-white font-medium text-sm">{insight.title}</h4>
-                  <p className="text-cyan-200 text-xs mt-1">{insight.description}</p>
-                </div>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-cyan-200">Precisão</p>
+                <p className="text-2xl font-bold text-white">{realStats.accuracy}%</p>
               </div>
-            ))}
+              <Target className="h-8 w-8 text-green-400" />
+            </div>
+            <div className="mt-2">
+              <Progress value={realStats.accuracy} className="h-2" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-cyan-200">Pontos Totais</p>
+                <p className="text-2xl font-bold text-white">{realStats.totalPoints.toLocaleString()}</p>
+              </div>
+              <Zap className="h-8 w-8 text-yellow-400" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-cyan-200">Sequência Atual</p>
+                <p className="text-2xl font-bold text-white">{realStats.currentStreak}</p>
+              </div>
+              <Clock className="h-8 w-8 text-orange-400" />
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Métricas de Performance Preditiva */}
-      <Card className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-sm border-purple-300/30">
+      {/* Performance Insights */}
+      <Card className="bg-white/10 backdrop-blur-sm border-white/20">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
-            <Activity className="h-5 w-5 text-pink-400" />
-            Analytics Preditivos - Próximos Passos
+            <Brain className="h-5 w-5 text-purple-400" />
+            Insights de Performance
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-white mb-2">
-                {Math.round((userProgress?.accuracy || 80) + 5)}%
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {realStats.performanceInsights.map((insight, index) => {
+              const IconComponent = getInsightIcon(insight.type);
+              return (
+                <div key={index} className="flex items-start gap-3 p-3 bg-white/5 rounded-lg">
+                  <div className={`p-2 rounded-full bg-white/10`}>
+                    <IconComponent className={`h-4 w-4 ${getInsightColor(insight.type)}`} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-semibold text-white">{insight.title}</h4>
+                      {insight.trend && getTrendIcon(insight.trend)}
+                      {insight.value && (
+                        <Badge className="text-xs">
+                          {insight.value}{insight.type === 'accuracy' || insight.type === 'improvement' ? '%' : ''}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-cyan-100 mt-1">{insight.description}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Atividade Semanal */}
+      <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Activity className="h-5 w-5 text-cyan-400" />
+            Atividade dos Últimos 7 Dias
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={realStats.weeklyActivity}>
+                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                <XAxis 
+                  dataKey="date" 
+                  tickFormatter={(date) => new Date(date).toLocaleDateString('pt-BR', { weekday: 'short' })}
+                  tick={{ fill: '#ffffff', fontSize: 12 }}
+                />
+                <YAxis tick={{ fill: '#ffffff', fontSize: 12 }} />
+                <Tooltip 
+                  labelFormatter={(date) => new Date(date).toLocaleDateString('pt-BR')}
+                  formatter={(value, name) => [value, name === 'cases' ? 'Casos' : 'Pontos']}
+                  contentStyle={{
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: '8px'
+                  }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="cases" 
+                  stroke="#06b6d4" 
+                  strokeWidth={3}
+                  dot={{ fill: '#06b6d4', strokeWidth: 2, r: 4 }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="points" 
+                  stroke="#f59e0b" 
+                  strokeWidth={2}
+                  dot={{ fill: '#f59e0b', strokeWidth: 2, r: 3 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Performance por Especialidade */}
+      <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Target className="h-5 w-5 text-green-400" />
+            Performance por Especialidade
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {realStats.specialtyBreakdown.slice(0, 6).map((specialty, index) => (
+              <div key={index} className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium text-white">{specialty.specialty}</span>
+                  <div className="flex items-center gap-2">
+                    <Badge 
+                      variant={specialty.accuracy >= 80 ? "default" : specialty.accuracy >= 60 ? "secondary" : "destructive"}
+                      className="text-xs"
+                    >
+                      {specialty.accuracy}%
+                    </Badge>
+                    <span className="text-sm text-cyan-200">
+                      {specialty.cases} casos
+                    </span>
+                  </div>
+                </div>
+                <Progress 
+                  value={specialty.accuracy} 
+                  className="h-2"
+                />
               </div>
-              <p className="text-pink-200 text-sm">Precisão Projetada</p>
-              <p className="text-pink-300 text-xs">+5% esta semana</p>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-white mb-2">
-                {Math.round((userProgress?.totalPoints || 500) * 1.2)}
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Conquistas Recentes */}
+      <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Award className="h-5 w-5 text-yellow-400" />
+            Conquistas Recentes
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {realStats.recentAchievements.map((achievement, index) => (
+              <div key={index} className="flex items-center gap-3 p-3 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-lg border border-yellow-300/30">
+                <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                  <Award className="h-5 w-5 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-white">{achievement.name}</h4>
+                  <p className="text-sm text-yellow-100">{achievement.description}</p>
+                  <p className="text-xs text-yellow-200 mt-1">
+                    {new Date(achievement.earnedAt).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
               </div>
-              <p className="text-pink-200 text-sm">Pontos no Próximo Nível</p>
-              <p className="text-pink-300 text-xs">12 casos para alcançar</p>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-white mb-2">7</div>
-              <p className="text-pink-200 text-sm">Dias para Meta</p>
-              <p className="text-pink-300 text-xs">Mantendo ritmo atual</p>
-            </div>
+            ))}
           </div>
         </CardContent>
       </Card>

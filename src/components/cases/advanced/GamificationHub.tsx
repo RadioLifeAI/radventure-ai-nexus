@@ -1,349 +1,291 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Trophy,
   Star,
-  Flame,
-  Crown,
-  Award,
-  Users,
-  Zap,
   Target,
-  Calendar,
-  TrendingUp,
+  Flame,
+  Award,
+  Zap,
+  Crown,
   Medal,
-  Gem,
-  Brain,
-  Clock
+  Gift
 } from "lucide-react";
+import { useRealUserStats } from "@/hooks/useRealUserStats";
+import { useUserRankings } from "@/hooks/useUserRankings";
 
 interface Props {
   userProgress: any;
 }
 
 export function GamificationHub({ userProgress }: Props) {
-  const [selectedAchievement, setSelectedAchievement] = useState<string | null>(null);
+  const { stats: realStats, isLoading: statsLoading } = useRealUserStats();
+  const { globalRankings, userRank, loading: rankingsLoading } = useUserRankings();
 
-  const achievements = [
+  if (statsLoading || rankingsLoading || !realStats) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="h-32 bg-white/10 rounded-xl"></div>
+          <div className="h-32 bg-white/10 rounded-xl"></div>
+          <div className="h-32 bg-white/10 rounded-xl"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Calcular nível baseado em pontos
+  const level = Math.floor(realStats.totalPoints / 100) + 1;
+  const pointsForNextLevel = ((level) * 100) - realStats.totalPoints;
+  const levelProgress = ((realStats.totalPoints % 100) / 100) * 100;
+
+  // Calcular recompensas disponíveis
+  const availableRewards = [
     {
-      id: "streak-master",
-      title: "Streak Master",
-      description: "Manteve 30 dias consecutivos de estudo",
-      icon: Flame,
-      progress: 85,
-      maxProgress: 100,
+      id: 1,
+      name: "Especialista Radiológico",
+      description: "Complete 100 casos de radiologia",
+      progress: Math.min((realStats.specialtyBreakdown.find(s => s.specialty.toLowerCase().includes('radiologia'))?.cases || 0) / 100 * 100, 100),
+      icon: Crown,
       rarity: "legendary",
-      unlocked: false,
-      reward: "100 RadCoins + Título especial"
+      reward: "500 RadCoins + Título Especial"
     },
     {
-      id: "neuro-expert",
-      title: "Especialista Neuro",
-      description: "Acertou 100 casos de neurorradiologia",
-      icon: Brain,
-      progress: 100,
-      maxProgress: 100,
-      rarity: "epic",
-      unlocked: true,
-      reward: "50 RadCoins + Badge Dourada"
-    },
-    {
-      id: "speed-demon",
-      title: "Speed Demon",
-      description: "Resolveu 10 casos em menos de 5 minutos cada",
-      icon: Zap,
-      progress: 60,
-      maxProgress: 100,
-      rarity: "rare",
-      unlocked: false,
-      reward: "30 RadCoins + Boost de velocidade"
-    },
-    {
-      id: "perfectionist",
-      title: "Perfeccionista",
-      description: "Conseguiu 100% de acerto em 20 casos seguidos",
+      id: 2,
+      name: "Precisão Cirúrgica",
+      description: "Mantenha 90% de precisão em 50 casos",
+      progress: realStats.accuracy >= 90 && realStats.totalCases >= 50 ? 100 : (realStats.accuracy >= 90 ? (realStats.totalCases / 50) * 100 : 0),
       icon: Target,
-      progress: 40,
-      maxProgress: 100,
       rarity: "epic",
-      unlocked: false,
-      reward: "75 RadCoins + Título Perfeccionista"
-    }
-  ];
-
-  const weeklyChallenge = {
-    title: "Desafio da Semana: Radiologia de Emergência",
-    description: "Complete 25 casos de emergência com 90%+ de acerto",
-    progress: 16,
-    maxProgress: 25,
-    timeLeft: "3 dias, 14 horas",
-    reward: "150 RadCoins + Badge Emergência",
-    participants: 1247
-  };
-
-  const leaderboard = [
-    { rank: 1, name: "Dr. Silva", points: 2850, badge: "👑" },
-    { rank: 2, name: "Dra. Santos", points: 2720, badge: "🥈" },
-    { rank: 3, name: "Dr. Oliveira", points: 2590, badge: "🥉" },
-    { rank: 4, name: "Você", points: userProgress?.totalPoints || 2340, badge: "" },
-    { rank: 5, name: "Dr. Costa", points: 2280, badge: "" }
-  ];
-
-  const specialtyTournaments = [
-    {
-      specialty: "Neurorradiologia",
-      participants: 89,
-      timeLeft: "2 dias",
-      prize: "300 RadCoins",
-      status: "active"
+      reward: "300 RadCoins + Badge Precisão"
     },
     {
-      specialty: "Radiologia Torácica", 
-      participants: 156,
-      timeLeft: "5 dias",
-      prize: "250 RadCoins",
-      status: "registering"
-    },
-    {
-      specialty: "Radiologia Abdominal",
-      participants: 203,
-      timeLeft: "1 semana",
-      prize: "400 RadCoins",
-      status: "upcoming"
+      id: 3,
+      name: "Maratonista Médico",
+      description: "Resolva casos por 30 dias consecutivos",
+      progress: Math.min((realStats.currentStreak / 30) * 100, 100),
+      icon: Flame,
+      rarity: "rare",
+      reward: "200 RadCoins + Multiplicador 2x"
     }
   ];
 
   const getRarityColor = (rarity: string) => {
     switch (rarity) {
-      case "legendary": return "from-purple-500 to-pink-500";
-      case "epic": return "from-blue-500 to-purple-500";
-      case "rare": return "from-green-500 to-blue-500";
-      case "common": return "from-gray-500 to-gray-600";
-      default: return "from-gray-500 to-gray-600";
+      case 'legendary': return 'from-yellow-400 to-orange-500';
+      case 'epic': return 'from-purple-400 to-pink-500';
+      case 'rare': return 'from-blue-400 to-cyan-500';
+      default: return 'from-gray-400 to-gray-500';
     }
   };
 
   const getRarityBorder = (rarity: string) => {
     switch (rarity) {
-      case "legendary": return "border-purple-400";
-      case "epic": return "border-blue-400";
-      case "rare": return "border-green-400";
-      case "common": return "border-gray-400";
-      default: return "border-gray-400";
+      case 'legendary': return 'border-yellow-400';
+      case 'epic': return 'border-purple-400';
+      case 'rare': return 'border-blue-400';
+      default: return 'border-gray-400';
     }
   };
 
-  // Simulated current streak data
-  const currentStreak = Math.floor(Math.random() * 20) + 5;
-
   return (
     <div className="space-y-6">
-      {/* Progress Rings Animados */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: "Nível Atual", value: Math.floor((userProgress?.totalPoints || 0) / 100) + 1, max: 50, color: "text-purple-400" },
-          { label: "Streak", value: currentStreak, max: 30, color: "text-orange-400" },
-          { label: "Conquistas", value: achievements.filter(a => a.unlocked).length, max: achievements.length, color: "text-yellow-400" },
-          { label: "Rank Semanal", value: 4, max: 10, color: "text-green-400" }
-        ].map((ring, index) => (
-          <Card key={index} className="bg-white/10 backdrop-blur-sm border-white/20 text-center">
-            <CardContent className="p-4">
-              <div className="relative w-16 h-16 mx-auto mb-2">
-                <svg className="w-16 h-16 transform -rotate-90">
-                  <circle
-                    cx="32"
-                    cy="32"
-                    r="28"
-                    stroke="rgba(255,255,255,0.2)"
-                    strokeWidth="4"
-                    fill="transparent"
-                  />
-                  <circle
-                    cx="32"
-                    cy="32"
-                    r="28"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    fill="transparent"
-                    strokeDasharray={`${(ring.value / ring.max) * 175.929} 175.929`}
-                    className={ring.color}
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">{ring.value}</span>
-                </div>
-              </div>
-              <p className="text-white text-sm font-medium">{ring.label}</p>
-              <p className="text-gray-300 text-xs">de {ring.max}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Sistema de Conquistas */}
-        <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-yellow-400" />
-              Conquistas e Badges
+      {/* Status do Jogador */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-sm border-purple-300/30">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-white flex items-center gap-2 text-lg">
+              <Star className="h-5 w-5 text-yellow-400" />
+              Nível Atual
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {achievements.map((achievement, index) => (
-              <div 
-                key={index} 
-                className={`p-4 rounded-lg border-2 ${getRarityBorder(achievement.rarity)} ${
-                  achievement.unlocked ? 'bg-gradient-to-r ' + getRarityColor(achievement.rarity) + ' bg-opacity-20' : 'bg-white/5'
-                } cursor-pointer hover:bg-white/10 transition-all`}
-                onClick={() => setSelectedAchievement(achievement.id)}
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-3">
-                    <achievement.icon className={`h-6 w-6 ${achievement.unlocked ? 'text-yellow-400' : 'text-gray-400'}`} />
-                    <div>
-                      <h4 className={`font-medium ${achievement.unlocked ? 'text-white' : 'text-gray-300'}`}>
-                        {achievement.title}
-                      </h4>
-                      <p className="text-xs text-gray-400">{achievement.description}</p>
-                    </div>
-                  </div>
-                  {achievement.unlocked && <Crown className="h-5 w-5 text-yellow-400" />}
-                </div>
-                <Progress 
-                  value={(achievement.progress / achievement.maxProgress) * 100} 
-                  className="h-2 bg-white/20 mb-2" 
-                />
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-300">
-                    {achievement.progress}/{achievement.maxProgress}
-                  </span>
-                  <Badge variant="outline" className="text-xs border-yellow-300 text-yellow-300">
-                    {achievement.reward}
-                  </Badge>
-                </div>
-              </div>
-            ))}
+          <CardContent>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-white mb-2">{level}</div>
+              <p className="text-purple-200 text-sm mb-3">
+                {pointsForNextLevel} pontos para próximo nível
+              </p>
+              <Progress value={levelProgress} className="h-3" />
+            </div>
           </CardContent>
         </Card>
 
-        {/* Leaderboard e Competições */}
-        <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Medal className="h-5 w-5 text-gold-400" />
-              Ranking e Competições
+        <Card className="bg-gradient-to-br from-blue-500/20 to-cyan-500/20 backdrop-blur-sm border-blue-300/30">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-white flex items-center gap-2 text-lg">
+              <Trophy className="h-5 w-5 text-yellow-400" />
+              Ranking Global
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <h4 className="text-white font-medium text-sm">Leaderboard Semanal</h4>
-              {leaderboard.map((player, index) => (
-                <div key={index} className={`flex items-center justify-between p-2 rounded ${
-                  player.name === "Você" ? 'bg-cyan-600/30 border border-cyan-400' : 'bg-white/5'
-                }`}>
-                  <div className="flex items-center gap-3">
-                    <span className="text-white font-bold w-6">#{player.rank}</span>
-                    <span className="text-lg">{player.badge}</span>
-                    <span className={`${player.name === "Você" ? 'text-cyan-300 font-bold' : 'text-white'}`}>
-                      {player.name}
-                    </span>
-                  </div>
-                  <span className="text-yellow-400 font-medium">{player.points} pts</span>
-                </div>
-              ))}
+          <CardContent>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-white mb-2">
+                #{userRank || '?'}
+              </div>
+              <p className="text-blue-200 text-sm">
+                de {globalRankings.length}+ jogadores
+              </p>
+              {userRank && userRank <= 100 && (
+                <Badge className="mt-2 bg-yellow-500/20 text-yellow-400 border-yellow-400">
+                  Top 100
+                </Badge>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-orange-500/20 to-red-500/20 backdrop-blur-sm border-orange-300/30">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-white flex items-center gap-2 text-lg">
+              <Flame className="h-5 w-5 text-orange-400" />
+              Sequência Atual
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-white mb-2">{realStats.currentStreak}</div>
+              <p className="text-orange-200 text-sm">
+                dias consecutivos
+              </p>
+              {realStats.currentStreak >= 7 && (
+                <Badge className="mt-2 bg-orange-500/20 text-orange-400 border-orange-400">
+                  Em Chamas!
+                </Badge>
+              )}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Desafio Semanal */}
-      <Card className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-sm border-blue-300/30">
+      {/* Conquistas Disponíveis */}
+      <Card className="bg-white/10 backdrop-blur-sm border-white/20">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-blue-400" />
-            {weeklyChallenge.title}
+            <Award className="h-5 w-5 text-yellow-400" />
+            Conquistas Disponíveis
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-2">
-              <p className="text-blue-200 mb-4">{weeklyChallenge.description}</p>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-blue-300">Progresso</span>
-                  <span className="text-white">{weeklyChallenge.progress}/{weeklyChallenge.maxProgress}</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {availableRewards.map((reward) => {
+              const IconComponent = reward.icon;
+              const isCompleted = reward.progress >= 100;
+              
+              return (
+                <div 
+                  key={reward.id}
+                  className={`relative p-4 rounded-lg border-2 ${getRarityBorder(reward.rarity)} ${
+                    isCompleted 
+                      ? 'bg-gradient-to-br from-green-500/20 to-emerald-500/20' 
+                      : 'bg-white/5'
+                  }`}
+                >
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className={`p-2 rounded-full bg-gradient-to-r ${getRarityColor(reward.rarity)}`}>
+                      <IconComponent className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-white text-sm">{reward.name}</h3>
+                      <p className="text-xs text-gray-300 mt-1">{reward.description}</p>
+                    </div>
+                    {isCompleted && (
+                      <Badge className="bg-green-500 text-white text-xs">
+                        Completo!
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-gray-300">Progresso</span>
+                      <span className="text-white font-medium">{Math.round(reward.progress)}%</span>
+                    </div>
+                    <Progress value={reward.progress} className="h-2" />
+                  </div>
+                  
+                  <div className="mt-3 p-2 bg-white/5 rounded text-xs">
+                    <div className="flex items-center gap-1 text-yellow-400">
+                      <Gift className="h-3 w-3" />
+                      <span>{reward.reward}</span>
+                    </div>
+                  </div>
+                  
+                  {isCompleted && (
+                    <Button 
+                      size="sm" 
+                      className="w-full mt-3 bg-green-600 hover:bg-green-700"
+                    >
+                      <Award className="h-4 w-4 mr-1" />
+                      Resgatar
+                    </Button>
+                  )}
                 </div>
-                <Progress value={(weeklyChallenge.progress / weeklyChallenge.maxProgress) * 100} className="h-3 bg-white/20" />
-              </div>
-              <div className="flex items-center gap-4 mt-4 text-sm">
-                <div className="flex items-center gap-1">
-                  <Users className="h-4 w-4 text-blue-400" />
-                  <span className="text-blue-300">{weeklyChallenge.participants} participantes</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Clock className="h-4 w-4 text-blue-400" />
-                  <span className="text-blue-300">{weeklyChallenge.timeLeft}</span>
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-col justify-center">
-              <div className="text-center mb-4">
-                <Gem className="h-8 w-8 text-purple-400 mx-auto mb-2" />
-                <p className="text-purple-300 font-medium">{weeklyChallenge.reward}</p>
-              </div>
-              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                Continuar Desafio
-              </Button>
-            </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
 
-      {/* Torneios por Especialidade */}
+      {/* Leaderboard */}
       <Card className="bg-white/10 backdrop-blur-sm border-white/20">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
-            <Star className="h-5 w-5 text-yellow-400" />
-            Torneios por Especialidade
+            <Crown className="h-5 w-5 text-yellow-400" />
+            Top Jogadores
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {specialtyTournaments.map((tournament, index) => (
-              <div key={index} className="p-4 rounded-lg bg-white/5 border border-white/10">
-                <h4 className="text-white font-medium mb-2">{tournament.specialty}</h4>
-                <div className="space-y-2 mb-4">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-gray-300">Participantes</span>
-                    <span className="text-white">{tournament.participants}</span>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-gray-300">Tempo restante</span>
-                    <span className="text-white">{tournament.timeLeft}</span>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-gray-300">Prêmio</span>
-                    <span className="text-yellow-400">{tournament.prize}</span>
-                  </div>
+          <div className="space-y-3">
+            {globalRankings.slice(0, 10).map((player, index) => (
+              <div 
+                key={player.id}
+                className={`flex items-center gap-4 p-3 rounded-lg ${
+                  index < 3 
+                    ? 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-400/30' 
+                    : 'bg-white/5'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  {index === 0 && <Crown className="h-5 w-5 text-yellow-400" />}
+                  {index === 1 && <Medal className="h-5 w-5 text-gray-400" />}
+                  {index === 2 && <Medal className="h-5 w-5 text-amber-600" />}
+                  <span className="font-bold text-white w-6 text-center">
+                    #{index + 1}
+                  </span>
                 </div>
-                <Button 
-                  size="sm" 
-                  className={`w-full ${
-                    tournament.status === 'active' ? 'bg-green-600 hover:bg-green-700' :
-                    tournament.status === 'registering' ? 'bg-blue-600 hover:bg-blue-700' :
-                    'bg-gray-600 hover:bg-gray-700'
-                  }`}
-                  disabled={tournament.status === 'upcoming'}
-                >
-                  {tournament.status === 'active' ? 'Participar' :
-                   tournament.status === 'registering' ? 'Inscrever-se' :
-                   'Em breve'}
-                </Button>
+                
+                <img 
+                  src={player.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${player.id}`}
+                  alt="Avatar"
+                  className="w-8 h-8 rounded-full border-2 border-white/20"
+                />
+                
+                <div className="flex-1">
+                  <div className="font-semibold text-white">
+                    {player.full_name || player.username}
+                  </div>
+                  {player.medical_specialty && (
+                    <div className="text-xs text-gray-300">
+                      {player.medical_specialty}
+                    </div>
+                  )}
+                </div>
+                
+                <div className="text-right">
+                  <div className="font-bold text-white">
+                    {player.total_points.toLocaleString()} pts
+                  </div>
+                  {player.current_streak > 0 && (
+                    <div className="text-xs text-orange-400 flex items-center gap-1">
+                      <Flame className="h-3 w-3" />
+                      {player.current_streak}
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>

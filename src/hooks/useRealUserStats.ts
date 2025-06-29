@@ -8,25 +8,11 @@ export interface RealUserStats {
   correctAnswers: number;
   accuracy: number;
   totalPoints: number;
-  radcoinBalance: number;
   currentStreak: number;
-  specialtyBreakdown: Record<string, {
-    attempted: number;
-    correct: number;
-    accuracy: number;
-    points: number;
-  }>;
-  difficultyBreakdown: Record<string, {
-    attempted: number;
-    correct: number;
-    accuracy: number;
-    avgPoints: number;
-  }>;
   weeklyActivity: Array<{
     date: string;
     cases: number;
     points: number;
-    accuracy: number;
   }>;
   monthlyTrends: Array<{
     month: string;
@@ -34,17 +20,31 @@ export interface RealUserStats {
     points: number;
     accuracy: number;
   }>;
+  specialtyBreakdown: Array<{
+    specialty: string;
+    cases: number;
+    accuracy: number;
+    points: number;
+  }>;
+  difficultyBreakdown: Array<{
+    difficulty: number;
+    cases: number;
+    accuracy: number;
+    averagePoints: number;
+  }>;
   recentAchievements: Array<{
     name: string;
     description: string;
+    type: string;
     earnedAt: string;
-    rarity: string;
   }>;
-  rankingPosition: {
-    global: number;
-    specialty: number;
-    totalUsers: number;
-  };
+  performanceInsights: Array<{
+    type: 'strength' | 'improvement' | 'streak' | 'milestone';
+    title: string;
+    description: string;
+    value?: number;
+    trend?: 'up' | 'down' | 'stable';
+  }>;
 }
 
 export function useRealUserStats() {
@@ -55,23 +55,14 @@ export function useRealUserStats() {
     queryFn: async (): Promise<RealUserStats> => {
       if (!user?.id) throw new Error('User not authenticated');
 
-      console.log('🔍 Buscando estatísticas reais para:', user.id);
+      console.log('📊 Buscando estatísticas reais completas para:', user.id);
 
-      // Buscar perfil do usuário
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError) throw profileError;
-
-      // Buscar histórico completo de casos
-      const { data: caseHistory, error: historyError } = await supabase
+      // Buscar histórico completo
+      const { data: history, error: historyError } = await supabase
         .from('user_case_history')
         .select(`
           *,
-          medical_cases!inner(
+          medical_cases (
             specialty,
             difficulty_level,
             points,
@@ -83,60 +74,19 @@ export function useRealUserStats() {
 
       if (historyError) throw historyError;
 
+      // Buscar perfil
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
       // Calcular estatísticas básicas
-      const totalCases = caseHistory?.length || 0;
-      const correctAnswers = caseHistory?.filter(h => h.is_correct).length || 0;
+      const totalCases = history?.length || 0;
+      const correctAnswers = history?.filter(h => h.is_correct).length || 0;
       const accuracy = totalCases > 0 ? Math.round((correctAnswers / totalCases) * 100) : 0;
-      const totalPoints = caseHistory?.reduce((sum, h) => sum + (h.points || 0), 0) || 0;
-
-      // Breakdown por especialidade
-      const specialtyBreakdown: Record<string, any> = {};
-      caseHistory?.forEach(history => {
-        const specialty = history.medical_cases?.specialty || 'Outros';
-        if (!specialtyBreakdown[specialty]) {
-          specialtyBreakdown[specialty] = {
-            attempted: 0,
-            correct: 0,
-            accuracy: 0,
-            points: 0
-          };
-        }
-        specialtyBreakdown[specialty].attempted++;
-        if (history.is_correct) specialtyBreakdown[specialty].correct++;
-        specialtyBreakdown[specialty].points += history.points || 0;
-      });
-
-      // Calcular accuracy por especialidade
-      Object.keys(specialtyBreakdown).forEach(specialty => {
-        const data = specialtyBreakdown[specialty];
-        data.accuracy = data.attempted > 0 ? Math.round((data.correct / data.attempted) * 100) : 0;
-      });
-
-      // Breakdown por dificuldade
-      const difficultyBreakdown: Record<string, any> = {};
-      caseHistory?.forEach(history => {
-        const level = history.medical_cases?.difficulty_level?.toString() || '1';
-        const difficultyKey = `Nível ${level}`;
-        if (!difficultyBreakdown[difficultyKey]) {
-          difficultyBreakdown[difficultyKey] = {
-            attempted: 0,
-            correct: 0,
-            accuracy: 0,
-            totalPoints: 0,
-            avgPoints: 0
-          };
-        }
-        difficultyBreakdown[difficultyKey].attempted++;
-        if (history.is_correct) difficultyBreakdown[difficultyKey].correct++;
-        difficultyBreakdown[difficultyKey].totalPoints += history.points || 0;
-      });
-
-      // Calcular médias por dificuldade
-      Object.keys(difficultyBreakdown).forEach(difficulty => {
-        const data = difficultyBreakdown[difficulty];
-        data.accuracy = data.attempted > 0 ? Math.round((data.correct / data.attempted) * 100) : 0;
-        data.avgPoints = data.attempted > 0 ? Math.round(data.totalPoints / data.attempted) : 0;
-      });
+      const totalPoints = profile?.total_points || 0;
+      const currentStreak = profile?.current_streak || 0;
 
       // Atividade semanal (últimos 7 dias)
       const weeklyActivity = [];
@@ -146,19 +96,14 @@ export function useRealUserStats() {
         date.setDate(date.getDate() - i);
         const dateStr = date.toISOString().split('T')[0];
         
-        const dayCases = caseHistory?.filter(h => 
+        const dayCases = history?.filter(h => 
           h.answered_at.startsWith(dateStr)
         ) || [];
         
-        const dayCorrect = dayCases.filter(h => h.is_correct).length;
-        const dayPoints = dayCases.reduce((sum, h) => sum + (h.points || 0), 0);
-        const dayAccuracy = dayCases.length > 0 ? Math.round((dayCorrect / dayCases.length) * 100) : 0;
-
         weeklyActivity.push({
-          date: date.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit' }),
+          date: dateStr,
           cases: dayCases.length,
-          points: dayPoints,
-          accuracy: dayAccuracy
+          points: dayCases.reduce((sum, h) => sum + (h.points || 0), 0)
         });
       }
 
@@ -169,110 +114,154 @@ export function useRealUserStats() {
         date.setMonth(date.getMonth() - i);
         const monthStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         
-        const monthCases = caseHistory?.filter(h => 
+        const monthCases = history?.filter(h => 
           h.answered_at.startsWith(monthStr)
         ) || [];
-        
+
         const monthCorrect = monthCases.filter(h => h.is_correct).length;
-        const monthPoints = monthCases.reduce((sum, h) => sum + (h.points || 0), 0);
-        const monthAccuracy = monthCases.length > 0 ? Math.round((monthCorrect / monthCases.length) * 100) : 0;
-
+        
         monthlyTrends.push({
-          month: date.toLocaleDateString('pt-BR', { month: 'short' }),
+          month: monthStr,
           cases: monthCases.length,
-          points: monthPoints,
-          accuracy: monthAccuracy
+          points: monthCases.reduce((sum, h) => sum + (h.points || 0), 0),
+          accuracy: monthCases.length > 0 ? Math.round((monthCorrect / monthCases.length) * 100) : 0
         });
       }
 
-      // Conquistas baseadas em dados reais
-      const recentAchievements = [];
-      if (totalCases >= 1) {
-        recentAchievements.push({
-          name: 'Primeiro Caso',
-          description: 'Resolveu seu primeiro caso médico',
-          earnedAt: caseHistory?.[caseHistory.length - 1]?.answered_at || new Date().toISOString(),
-          rarity: 'comum'
-        });
-      }
-      if (totalCases >= 10) {
-        recentAchievements.push({
-          name: 'Explorador Médico',
-          description: 'Completou 10 casos médicos',
-          earnedAt: caseHistory?.[totalCases - 10]?.answered_at || new Date().toISOString(),
-          rarity: 'raro'
-        });
-      }
-      if (correctAnswers >= 5) {
-        recentAchievements.push({
-          name: 'Diagnóstico Certeiro',
-          description: 'Acertou 5 diagnósticos consecutivos',
-          earnedAt: caseHistory?.find(h => h.is_correct)?.answered_at || new Date().toISOString(),
-          rarity: 'comum'
-        });
-      }
-      if (accuracy >= 80 && totalCases >= 5) {
-        recentAchievements.push({
-          name: 'Expert em Precisão',
-          description: 'Mantém 80% de precisão com pelo menos 5 casos',
-          earnedAt: new Date().toISOString(),
-          rarity: 'épico'
-        });
-      }
-
-      // Buscar posição no ranking global
-      const { data: allProfiles, error: rankingError } = await supabase
-        .from('profiles')
-        .select('id, total_points')
-        .order('total_points', { ascending: false });
-
-      if (rankingError) throw rankingError;
-
-      const globalRank = allProfiles?.findIndex(p => p.id === user.id) + 1 || 0;
-      const totalUsers = allProfiles?.length || 1;
-
-      // Ranking por especialidade (usando a especialidade mais jogada)
-      const topSpecialty = Object.keys(specialtyBreakdown).sort((a, b) => 
-        specialtyBreakdown[b].attempted - specialtyBreakdown[a].attempted
-      )[0];
-
-      let specialtyRank = 0;
-      if (topSpecialty && profile.medical_specialty) {
-        const { data: specialtyProfiles } = await supabase
-          .from('profiles')
-          .select('id, total_points')
-          .eq('medical_specialty', profile.medical_specialty)
-          .order('total_points', { ascending: false });
-
-        specialtyRank = specialtyProfiles?.findIndex(p => p.id === user.id) + 1 || 0;
-      }
-
-      console.log('✅ Estatísticas reais calculadas:', {
-        totalCases,
-        correctAnswers,
-        accuracy,
-        totalPoints,
-        globalRank
+      // Breakdown por especialidade
+      const specialtyStats: Record<string, any> = {};
+      history?.forEach(h => {
+        const specialty = h.medical_cases?.specialty || 'Outros';
+        if (!specialtyStats[specialty]) {
+          specialtyStats[specialty] = { cases: 0, correct: 0, points: 0 };
+        }
+        specialtyStats[specialty].cases++;
+        if (h.is_correct) specialtyStats[specialty].correct++;
+        specialtyStats[specialty].points += h.points || 0;
       });
 
-      return {
+      const specialtyBreakdown = Object.entries(specialtyStats).map(([specialty, stats]: [string, any]) => ({
+        specialty,
+        cases: stats.cases,
+        accuracy: stats.cases > 0 ? Math.round((stats.correct / stats.cases) * 100) : 0,
+        points: stats.points
+      })).sort((a, b) => b.cases - a.cases);
+
+      // Breakdown por dificuldade
+      const difficultyStats: Record<number, any> = {};
+      history?.forEach(h => {
+        const difficulty = h.medical_cases?.difficulty_level || 1;
+        if (!difficultyStats[difficulty]) {
+          difficultyStats[difficulty] = { cases: 0, correct: 0, totalPoints: 0 };
+        }
+        difficultyStats[difficulty].cases++;
+        if (h.is_correct) difficultyStats[difficulty].correct++;
+        difficultyStats[difficulty].totalPoints += h.points || 0;
+      });
+
+      const difficultyBreakdown = Object.entries(difficultyStats).map(([diff, stats]: [string, any]) => ({
+        difficulty: parseInt(diff),
+        cases: stats.cases,
+        accuracy: stats.cases > 0 ? Math.round((stats.correct / stats.cases) * 100) : 0,
+        averagePoints: stats.cases > 0 ? Math.round(stats.totalPoints / stats.cases) : 0
+      })).sort((a, b) => a.difficulty - b.difficulty);
+
+      // Conquistas recentes baseadas em dados reais
+      const recentAchievements = [];
+      
+      if (totalCases >= 50) {
+        recentAchievements.push({
+          name: 'Explorador Experiente',
+          description: `Resolveu ${totalCases} casos médicos`,
+          type: 'milestone',
+          earnedAt: new Date().toISOString()
+        });
+      }
+      
+      if (accuracy >= 85 && totalCases >= 10) {
+        recentAchievements.push({
+          name: 'Diagnóstico Preciso',
+          description: `Mantém ${accuracy}% de precisão`,
+          type: 'accuracy',
+          earnedAt: new Date().toISOString()
+        });
+      }
+      
+      if (currentStreak >= 7) {
+        recentAchievements.push({
+          name: 'Dedicação Semanal',
+          description: `${currentStreak} dias consecutivos`,
+          type: 'streak',
+          earnedAt: new Date().toISOString()
+        });
+      }
+
+      // Insights de performance baseados em dados reais
+      const performanceInsights = [];
+      
+      const bestSpecialty = specialtyBreakdown[0];
+      if (bestSpecialty && bestSpecialty.accuracy >= 80) {
+        performanceInsights.push({
+          type: 'strength' as const,
+          title: `Forte em ${bestSpecialty.specialty}`,
+          description: `${bestSpecialty.accuracy}% de acerto em ${bestSpecialty.cases} casos`,
+          value: bestSpecialty.accuracy,
+          trend: 'up' as const
+        });
+      }
+
+      const weakSpecialty = specialtyBreakdown.find(s => s.accuracy < 60 && s.cases >= 3);
+      if (weakSpecialty) {
+        performanceInsights.push({
+          type: 'improvement' as const,
+          title: `Melhore em ${weakSpecialty.specialty}`,
+          description: `${weakSpecialty.accuracy}% de acerto - pratique mais`,
+          value: weakSpecialty.accuracy,
+          trend: 'down' as const
+        });
+      }
+
+      if (currentStreak > 0) {
+        performanceInsights.push({
+          type: 'streak' as const,
+          title: 'Sequência Ativa',
+          description: `${currentStreak} dias seguidos de atividade`,
+          value: currentStreak,
+          trend: 'up' as const
+        });
+      }
+
+      const recentCases = history?.slice(0, 10) || [];
+      const recentAccuracy = recentCases.length > 0 
+        ? Math.round((recentCases.filter(h => h.is_correct).length / recentCases.length) * 100)
+        : 0;
+
+      if (recentAccuracy >= accuracy + 10) {
+        performanceInsights.push({
+          type: 'milestone' as const,
+          title: 'Evolução Recente',
+          description: `${recentAccuracy}% nos últimos casos (↑${recentAccuracy - accuracy}%)`,
+          value: recentAccuracy,
+          trend: 'up' as const
+        });
+      }
+
+      const result = {
         totalCases,
         correctAnswers,
         accuracy,
         totalPoints,
-        radcoinBalance: profile.radcoin_balance || 0,
-        currentStreak: profile.current_streak || 0,
-        specialtyBreakdown,
-        difficultyBreakdown,
+        currentStreak,
         weeklyActivity,
         monthlyTrends,
+        specialtyBreakdown,
+        difficultyBreakdown,
         recentAchievements,
-        rankingPosition: {
-          global: globalRank,
-          specialty: specialtyRank,
-          totalUsers
-        }
+        performanceInsights
       };
+
+      console.log('✅ Estatísticas reais calculadas:', result);
+      return result;
     },
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000, // 2 minutos
