@@ -42,7 +42,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSpecializedCaseImages } from "@/hooks/useSpecializedCaseImages";
-import { UnifiedImageSystemTabs } from "./UnifiedImageSystemTabs";
+import { CaseAdvancedImageManagement } from "./CaseAdvancedImageManagement";
 
 interface WizardStep {
   id: string;
@@ -473,53 +473,84 @@ export function CaseCreationWizard({
       case "images":
         return (
           <div className="space-y-6">
-            {/* Sistema Unificado Completo */}
-            <UnifiedImageSystemTabs
+            {/* Integração Completa - COMPONENTE ÚNICO INTEGRADO */}
+            <CaseAdvancedImageManagement
               caseId={isEditMode ? editingCase?.id : undefined}
               categoryId={currentCategoryId}
               modality={currentModality}
               onImagesChange={handleImagesChange}
             />
 
-            {/* Status da Integração Detalhado */}
+            {/* Status da Integração */}
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
               <h4 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
                 <FolderTree className="h-4 w-4" />
-                Status da Integração Completa
+                Status da Integração Formulário → Upload
               </h4>
               <div className="grid grid-cols-2 gap-4 text-sm text-blue-700">
                 <div>
-                  <strong>Categoria:</strong> {categories.find(c => c.id === currentCategoryId)?.name || 'Não selecionada'}
+                  <strong>Categoria Selecionada:</strong> {categories.find(c => c.id === currentCategoryId)?.name || 'Não selecionada'}
                 </div>
                 <div>
-                  <strong>Modalidade:</strong> {currentModality || 'Não selecionada'}
+                  <strong>Modalidade Selecionada:</strong> {currentModality || 'Não selecionada'}
                 </div>
                 <div>
-                  <strong>Ferramentas Ativas:</strong> {
+                  <strong>Código Especialidade:</strong> {categories.find(c => c.id === currentCategoryId)?.specialty_code || 'N/A'}
+                </div>
+                <div>
+                  <strong>Estrutura Ativa:</strong> {
                     currentCategoryId && currentModality 
-                      ? 'Upload, Editor, ZIP, Stack, Templates'
-                      : 'Aguardando configuração'
+                      ? `/medical-cases/${categories.find(c => c.id === currentCategoryId)?.specialty_code || 'geral'}/${currentModality.toLowerCase()}/`
+                      : 'Aguardando seleção no formulário'
                   }
-                </div>
-                <div>
-                  <strong>Imagens Organizadas:</strong> {specializedImages.length}
                 </div>
               </div>
               
               {!currentCategoryId || !currentModality ? (
                 <div className="mt-3 p-2 bg-yellow-100 rounded border border-yellow-300">
                   <p className="text-yellow-800 text-sm">
-                    ⚠️ <strong>Para ativar todas as ferramentas:</strong> Configure categoria e modalidade na aba "Informações Básicas"
+                    ⚠️ <strong>Ação Necessária:</strong> Selecione categoria e modalidade na aba "Informações Básicas" para ativar a organização especializada.
                   </p>
                 </div>
               ) : (
                 <div className="mt-3 p-2 bg-green-100 rounded border border-green-300">
                   <p className="text-green-800 text-sm">
-                    ✅ <strong>Sistema Completo Ativo:</strong> Todas as ferramentas avançadas estão disponíveis e integradas
+                    ✅ <strong>Sistema Integrado:</strong> Upload será organizado automaticamente conforme seleções do formulário.
                   </p>
                 </div>
               )}
             </div>
+
+            {/* Resumo das Imagens */}
+            {specializedImages.length > 0 && (
+              <div className="bg-white p-4 rounded-lg border border-gray-200">
+                <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4" />
+                  Imagens Organizadas ({specializedImages.length})
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {specializedImages.map((img, index) => (
+                    <div key={img.id} className="relative group">
+                      <img 
+                        src={img.thumbnail_url || img.original_url} 
+                        alt={`Imagem ${index + 1}`}
+                        className="w-full h-24 object-cover rounded border"
+                      />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center">
+                        <span className="text-white text-xs font-medium text-center px-2">
+                          {img.original_filename}
+                        </span>
+                      </div>
+                      {img.specialty_code && (
+                        <Badge className="absolute top-1 right-1 text-xs bg-green-600">
+                          {img.specialty_code}/{img.modality_prefix}
+                        </Badge>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         );
 
