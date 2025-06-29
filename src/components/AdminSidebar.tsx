@@ -47,11 +47,6 @@ export function AdminSidebar() {
       path: "/admin/conquistas"
     },
     {
-      label: "Notificações",
-      icon: Bell,
-      path: "/admin/notificacoes"
-    },
-    {
       label: "Monitoramento",
       icon: Activity,
       path: "/admin/monitoramento"
@@ -65,6 +60,11 @@ export function AdminSidebar() {
       label: "Assinaturas",
       icon: CreditCard,
       path: "/admin/assinaturas"
+    },
+    {
+      label: "Notificações",
+      icon: Bell,
+      path: "/admin/notificacoes"
     },
     {
       label: "Configurações",
