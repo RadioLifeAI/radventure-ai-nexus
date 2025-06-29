@@ -2,23 +2,23 @@
 import React from "react";
 import { CaseProfileExplanationSection } from "./CaseProfileExplanationSection";
 
-type Props = {
+interface Props {
   form: any;
+  setForm: (form: any) => void;
+  handlers: any;
   highlightedFields: string[];
-  handleFormChange: any;
-  handleSuggestExplanation: any;
-  renderTooltipTip: any;
-  handleSuggestHint: any;
-};
+  renderTooltipTip: (id: string, text: string) => React.ReactNode;
+}
 
 export function CaseProfileExplanationSectionContainer({
   form,
+  setForm,
+  handlers,
   highlightedFields,
-  handleFormChange,
-  handleSuggestExplanation,
-  renderTooltipTip,
-  handleSuggestHint
+  renderTooltipTip
 }: Props) {
+  const { handleFormChange, handleSuggestExplanation, handleSuggestHint } = handlers;
+
   return (
     <CaseProfileExplanationSection
       form={form}
