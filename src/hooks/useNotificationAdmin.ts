@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
-import { createNotification, createNotificationForAllUsers } from "@/utils/notifications";
+import { createNotification, createNotificationForAllUsers, type NotificationType } from "@/utils/notifications";
 
 export interface NotificationTemplate {
   id: string;
@@ -107,7 +106,7 @@ export function useNotificationAdmin() {
   const createSingleNotification = async (
     userId: string,
     notification: {
-      type: string;
+      type: NotificationType;
       title: string;
       message: string;
       priority?: 'low' | 'medium' | 'high' | 'urgent';
@@ -137,7 +136,7 @@ export function useNotificationAdmin() {
   // Criar notificação em massa
   const createBulkNotification = async (
     notification: {
-      type: string;
+      type: NotificationType;
       title: string;
       message: string;
       priority?: 'low' | 'medium' | 'high' | 'urgent';
@@ -164,7 +163,7 @@ export function useNotificationAdmin() {
   // Criar notificação com filtros
   const createFilteredNotification = async (
     notification: {
-      type: string;
+      type: NotificationType;
       title: string;
       message: string;
       priority?: 'low' | 'medium' | 'high' | 'urgent';
