@@ -15,8 +15,7 @@ import { AdvancedImageManagerModal } from "./AdvancedImageManagerModal";
 import { 
   Sparkles, 
   Image as ImageIcon,
-  TestTube,
-  FolderTree
+  TestTube
 } from "lucide-react";
 
 type CaseEditFormModalProps = {
@@ -91,8 +90,8 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
     if (editingCase) {
       setEditingCase(prev => ({ ...prev, image_url: images }));
       toast({ 
-        title: "🎉 Imagens Especializadas Atualizadas!", 
-        description: `${images.length} imagem(ns) organizadas no sistema especializado.` 
+        title: "🎉 Imagens Atualizadas!", 
+        description: `${images.length} imagem(ns) processada(s) com ferramentas avançadas.` 
       });
     }
   };
@@ -103,52 +102,41 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
     <>
       <Dialog open={open} onOpenChange={onClose}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-white border border-gray-200 shadow-xl z-50">
-          <DialogHeader className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 -m-6 mb-6 border-b border-gray-200">
+          <DialogHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 -m-6 mb-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
-              <DialogTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                <FolderTree className="h-6 w-6 text-green-600" />
-                Editar Caso Médico - Sistema Especializado
+              <DialogTitle className="text-xl font-bold text-gray-800">
+                Editar Caso Médico
               </DialogTitle>
               
-              {/* Botão de Ferramentas Especializadas - ATUALIZADO */}
+              {/* Botão de Ferramentas Avançadas - MELHORADO */}
               {editingCase && (
                 <div className="flex items-center gap-3">
                   <Button
                     type="button"
                     size="lg"
                     onClick={() => setShowAdvancedImageModal(true)}
-                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold px-6 py-2 shadow-lg"
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold px-6 py-2 shadow-lg"
                   >
                     <TestTube className="h-5 w-5 mr-2" />
-                    Ferramentas Especializadas
-                    <Badge variant="secondary" className="ml-2 bg-green-300 text-green-800 font-bold text-xs">
-                      <FolderTree className="h-3 w-3 mr-1" />
-                      ORGANIZADO
+                    Ferramentas PRO
+                    <Badge variant="secondary" className="ml-2 bg-yellow-300 text-purple-800 font-bold text-xs">
+                      AVANÇADO
                     </Badge>
                   </Button>
-                  <Badge variant="outline" className="bg-green-50 border-green-300 text-green-700">
+                  <Badge variant="outline" className="bg-purple-50 border-purple-300 text-purple-700">
                     <ImageIcon className="h-3 w-3 mr-1" />
                     {Array.isArray(editingCase.image_url) ? editingCase.image_url.length : 0} imagem(ns)
                   </Badge>
                 </div>
               )}
             </div>
-            
-            {/* Banner do Sistema Especializado */}
-            <div className="mt-4 p-3 bg-green-100 border border-green-200 rounded-lg">
-              <div className="flex items-center gap-2 text-sm text-green-800">
-                <Sparkles className="h-4 w-4" />
-                <span className="font-medium">Sistema Especializado Ativo:</span>
-                <span>Organização avançada de imagens por especialidade e modalidade</span>
-              </div>
-            </div>
           </DialogHeader>
           
           {loading ? (
             <div className="flex items-center justify-center min-h-[200px] bg-white">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
-                <div className="text-gray-600">Carregando dados do caso especializado...</div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <div className="text-gray-600">Carregando dados do caso...</div>
               </div>
             </div>
           ) : editingCase ? (
@@ -162,7 +150,7 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Ferramentas Especializadas */}
+      {/* Modal de Ferramentas Avançadas */}
       <AdvancedImageManagerModal
         open={showAdvancedImageModal}
         onClose={() => setShowAdvancedImageModal(false)}

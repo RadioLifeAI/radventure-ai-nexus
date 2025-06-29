@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -18,8 +19,7 @@ import {
   Image as ImageIcon,
   CheckCircle,
   Save,
-  Eye,
-  FolderTree
+  Eye
 } from "lucide-react";
 
 // Importar todos os componentes existentes
@@ -34,6 +34,8 @@ import { CaseProfileExplanationSectionContainer } from "./CaseProfileExplanation
 import { CaseAdvancedConfigAI } from "./CaseAdvancedConfigAI";
 import { CaseProfileAdvancedConfigContainer } from "./CaseProfileAdvancedConfigContainer";
 import { CaseReferenceSection } from "./CaseReferenceSection";
+import { CaseAdvancedImageManagement } from "./CaseAdvancedImageManagement";
+import { TempImageUpload } from "./TempImageUpload";
 import { AdvancedImageManagerModal } from "./AdvancedImageManagerModal";
 import { CaseFormPreviewModal } from "./CaseFormPreviewModal";
 import { CaseProgressDashboard } from "./CaseProgressDashboard";
@@ -41,7 +43,6 @@ import { CaseQualityRadar } from "./CaseQualityRadar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useSpecializedCaseImages } from "@/hooks/useSpecializedCaseImages";
 
 interface WizardStep {
   id: string;
@@ -88,15 +89,6 @@ export function CaseCreationWizard({
   const [showPreview, setShowPreview] = useState(false);
   const [showAdvancedImageModal, setShowAdvancedImageModal] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
-
-  // Hook especializado para imagens
-  const { 
-    images: specializedImages, 
-    uploading, 
-    processing, 
-    uploadSpecializedImage,
-    processZipSpecialized 
-  } = useSpecializedCaseImages(isEditMode ? editingCase?.id : undefined);
 
   const steps: WizardStep[] = [
     {
@@ -164,9 +156,9 @@ export function CaseCreationWizard({
     },
     {
       id: "images",
-      title: "Sistema Especializado",
-      description: "Upload e organização avançada de imagens",
-      icon: <FolderTree className="h-5 w-5" />,
+      title: "Gestão de Imagens",
+      description: "Upload e processamento de imagens",
+      icon: <ImageIcon className="h-5 w-5" />,
       completed: false,
       valid: true,
       required: false
@@ -439,17 +431,17 @@ export function CaseCreationWizard({
       case "images":
         return (
           <div className="space-y-6">
-            {/* Header do Sistema Especializado ÚNICO */}
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6">
+            {/* Header com Ferramentas Avançadas */}
+            <div className="bg-gradient-to-r from-blue-50 via-purple-50 to-indigo-50 p-6 rounded-xl border-2 border-purple-200">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl shadow-lg">
-                    <FolderTree className="h-6 w-6 text-white" />
+                  <div className="p-3 bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl shadow-lg">
+                    <ImageIcon className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-green-800">Sistema Especializado Único</h3>
-                    <p className="text-green-600 text-sm">
-                      Organização automática por especialidade e modalidade
+                    <h3 className="text-xl font-bold text-purple-800">Sistema Profissional de Imagens</h3>
+                    <p className="text-purple-600 text-sm">
+                      Upload avançado, editor profissional, processador ZIP e visualizador stack
                     </p>
                   </div>
                 </div>
@@ -458,79 +450,45 @@ export function CaseCreationWizard({
                   type="button"
                   size="lg"
                   onClick={() => setShowAdvancedImageModal(true)}
-                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold px-8 py-3 shadow-xl"
+                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold px-8 py-3 shadow-xl"
                 >
-                  <FolderTree className="h-5 w-5 mr-2" />
-                  Ferramentas Especializadas
-                  <Badge variant="secondary" className="ml-2 bg-green-300 text-green-800 font-bold">
-                    ORGANIZADO
+                  🔬 Ferramentas Avançadas
+                  <Badge variant="secondary" className="ml-2 bg-yellow-300 text-purple-800 font-bold">
+                    PRO
                   </Badge>
                 </Button>
               </div>
 
               <div className="flex items-center gap-4 text-sm">
                 <div className="flex items-center gap-2 bg-white/70 px-3 py-1 rounded-full">
-                  <ImageIcon className="h-4 w-4 text-green-600" />
-                  <span className="text-green-700 font-medium">
-                    {specializedImages.length} imagem(ns) organizadas
+                  <ImageIcon className="h-4 w-4 text-purple-600" />
+                  <span className="text-purple-700 font-medium">
+                    {Array.isArray(form.image_url) ? form.image_url.length : 0} imagem(ns)
                   </span>
                 </div>
-                {(uploading || processing) && (
-                  <div className="flex items-center gap-2 bg-blue-100 px-3 py-1 rounded-full">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                    <span className="text-blue-700 text-xs font-medium">
-                      {processing ? 'Organizando...' : 'Uploading...'}
-                    </span>
-                  </div>
-                )}
               </div>
             </div>
 
-            {/* Informações da Organização Especializada */}
-            {form.category_id && form.modality && (
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <h4 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
-                  <FolderTree className="h-4 w-4" />
-                  Estrutura de Organização
-                </h4>
-                <div className="text-sm text-blue-700">
-                  <p><strong>Especialidade:</strong> {categories.find(c => String(c.id) === String(form.category_id))?.name || 'Não definida'}</p>
-                  <p><strong>Modalidade:</strong> {form.modality || 'Não definida'}</p>
-                  <p><strong>Caminho:</strong> /medical-cases/{categories.find(c => String(c.id) === String(form.category_id))?.specialty_code || 'geral'}/{form.modality?.toLowerCase() || 'img'}/</p>
-                </div>
-              </div>
-            )}
-
-            {/* Lista de Imagens Especializadas */}
-            {specializedImages.length > 0 && (
-              <div className="bg-white p-4 rounded-lg border border-gray-200">
-                <h4 className="font-semibold text-gray-700 mb-3">Imagens Organizadas no Sistema</h4>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {specializedImages.map((img, index) => (
-                    <div key={img.id} className="relative group">
-                      <img 
-                        src={img.thumbnail_url || img.original_url} 
-                        alt={`Imagem ${index + 1}`}
-                        className="w-full h-24 object-cover rounded border"
-                      />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center">
-                        <span className="text-white text-xs font-medium">{img.original_filename}</span>
-                      </div>
-                      {img.specialty_code && (
-                        <Badge className="absolute top-1 right-1 text-xs bg-green-600">
-                          {img.specialty_code}
-                        </Badge>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Status do Sistema */}
-            <div className="text-center text-sm text-gray-600">
-              <p>💡 As imagens serão organizadas automaticamente no Sistema Especializado</p>
-              <p>Use as "Ferramentas Especializadas" para upload avançado, edição e processamento ZIP</p>
+            {/* Sistema de Upload Padrão */}
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <ImageIcon className="h-4 w-4" />
+                Upload Básico de Imagens
+              </h4>
+              {isEditMode ? (
+                <CaseAdvancedImageManagement 
+                  caseId={editingCase?.id}
+                  onImagesChange={(images) => {
+                    console.log('Images updated:', images.length);
+                  }}
+                />
+              ) : (
+                <TempImageUpload 
+                  onChange={(images) => {
+                    console.log('Temp images updated:', images.length);
+                  }}
+                />
+              )}
             </div>
           </div>
         );
@@ -708,12 +666,12 @@ export function CaseCreationWizard({
         open={showAdvancedImageModal}
         onClose={() => setShowAdvancedImageModal(false)}
         caseId={isEditMode ? editingCase?.id : undefined}
-        currentImages={specializedImages.map(img => img.original_url)}
+        currentImages={Array.isArray(form.image_url) ? form.image_url : []}
         onImagesUpdated={(images) => {
-          console.log('🎉 Imagens do Sistema Especializado atualizadas:', images.length);
+          setForm(prev => ({ ...prev, image_url: images }));
           toast({ 
-            title: "🗂️ Sistema Especializado Atualizado!", 
-            description: `${images.length} imagem(ns) organizadas automaticamente.` 
+            title: "🎉 Imagens Processadas!", 
+            description: `${images.length} imagem(ns) processada(s) com ferramentas avançadas.` 
           });
         }}
       />

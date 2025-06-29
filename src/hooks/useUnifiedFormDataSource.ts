@@ -8,28 +8,21 @@ export interface ModalityWithSubtypes {
   subtypes: Array<{ id: number; name: string; }>;
 }
 
-export interface SpecialtyWithCode {
-  id: number;
-  name: string;
-  specialty_code?: string;
-  bucket_prefix?: string;
-}
-
 export interface UnifiedFormDataSource {
-  specialties: Array<SpecialtyWithCode>;
+  specialties: Array<{ id: number; name: string; }>;
   modalities: Array<ModalityWithSubtypes>;
   difficulties: Array<{ id: number; level: number; description: string | null; }>;
   isLoading: boolean;
 }
 
 export function useUnifiedFormDataSource(): UnifiedFormDataSource {
-  // Buscar especialidades do banco com códigos
+  // Buscar especialidades do banco
   const { data: specialties, isLoading: loadingSpecialties } = useQuery({
-    queryKey: ['unified-specialties-with-codes'],
+    queryKey: ['unified-specialties'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('medical_specialties')
-        .select('id, name, specialty_code, bucket_prefix')
+        .select('id, name')
         .order('name', { ascending: true });
       
       if (error) throw error;
