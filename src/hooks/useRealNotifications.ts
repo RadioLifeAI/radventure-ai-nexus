@@ -5,17 +5,12 @@ import { useAuth } from "./useAuth";
 
 export interface Notification {
   id: string;
-  type: 'event_starting' | 'achievement_unlocked' | 'ranking_update' | 'new_event' | 'reminder' |
-        'case_completed' | 'streak_milestone' | 'radcoin_purchase' | 'radcoin_reward' | 
-        'journey_completed' | 'performance_milestone' | 'social_mention' | 'friend_activity' |
-        'learning_tip' | 'weekly_summary' | 'system_maintenance' | 'feature_announcement' |
-        'subscription_expiring' | 'subscription_renewed' | 'level_up' | 'badge_earned' |
-        'challenge_invitation' | 'study_reminder' | 'leaderboard_position' | 'daily_bonus';
+  type: 'event_starting' | 'achievement_unlocked' | 'ranking_update' | 'new_event' | 'reminder';
   title: string;
   message: string;
   timestamp: Date;
   isRead: boolean;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
+  priority: 'low' | 'medium' | 'high';
   actionUrl?: string;
   actionLabel?: string;
   metadata?: any;
@@ -66,7 +61,7 @@ export function useRealNotifications() {
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(20);
 
       if (error) throw error;
 
@@ -153,7 +148,6 @@ export function useRealNotifications() {
     markAsRead,
     markAllAsRead,
     removeNotification,
-    unreadCount: notifications.filter(n => !n.isRead).length,
-    refreshNotifications: fetchNotifications
+    unreadCount: notifications.filter(n => !n.isRead).length
   };
 }

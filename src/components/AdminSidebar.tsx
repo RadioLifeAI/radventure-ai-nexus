@@ -1,107 +1,85 @@
 
 import React from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { Link, useLocation } from "react-router-dom";
 import {
-  BarChart3,
-  Users,
-  Trophy,
   Calendar,
+  Users,
   FileText,
   Settings,
-  Shield,
+  Gift,
   CreditCard,
-  Bell,
-  Activity
+  KeyRound,
+  BarChart3,
+  Monitor,
+  BookOpen,
+  Trophy,
+  Brain,
 } from "lucide-react";
 
+// Menu admin - links relativos para rotas aninhadas
+const adminMenu = [
+  { label: "Analytics", icon: <BarChart3 size={20} />, to: "/admin/analytics" },
+  { label: "Criar Eventos", icon: <Calendar size={20} />, to: "/admin/create-event" },
+  { label: "Gestão de Eventos", icon: <BookOpen size={20} />, to: "/admin/events" },
+  { label: "Casos Médicos", icon: <FileText size={20} />, to: "/admin/casos-medicos" },
+  { label: "Gestão de Casos", icon: <Settings size={20} />, to: "/admin/gestao-casos" },
+  { label: "Usuários", icon: <Users size={20} />, to: "/admin/usuarios" },
+  { label: "Assinaturas", icon: <CreditCard size={20} />, to: "/admin/assinaturas" },
+  { label: "Tutor IA", icon: <Brain size={20} />, to: "/admin/tutor-ia" },
+  { label: "Conquistas", icon: <Trophy size={20} />, to: "/admin/conquistas" },
+  { label: "Monitoramento", icon: <Monitor size={20} />, to: "/admin/monitoramento" },
+  { label: "Recompensas", icon: <Gift size={20} />, to: "/admin/recompensas" },
+  { label: "Configurações", icon: <Settings size={20} />, to: "/admin/configuracoes" },
+  { label: "Chaves API", icon: <KeyRound size={20} />, to: "/admin/chaves-api" },
+  { label: "Config. Stripe", icon: <CreditCard size={20} />, to: "/admin/config-stripe" },
+];
+
 export function AdminSidebar() {
-  const navigate = useNavigate();
   const location = useLocation();
-
-  const menuItems = [
-    {
-      label: "Dashboard",
-      icon: BarChart3,
-      path: "/admin",
-      exact: true
-    },
-    {
-      label: "Usuários",
-      icon: Users,
-      path: "/admin/usuarios"
-    },
-    {
-      label: "Casos Médicos",
-      icon: FileText,
-      path: "/admin/casos"
-    },
-    {
-      label: "Eventos",
-      icon: Calendar,
-      path: "/admin/eventos"
-    },
-    {
-      label: "Conquistas",
-      icon: Trophy,
-      path: "/admin/conquistas"
-    },
-    {
-      label: "Notificações",
-      icon: Bell,
-      path: "/admin/notificacoes"
-    },
-    {
-      label: "Monitoramento",
-      icon: Activity,
-      path: "/admin/monitoramento"
-    },
-    {
-      label: "Segurança",
-      icon: Shield,
-      path: "/admin/seguranca"
-    },
-    {
-      label: "Assinaturas",
-      icon: CreditCard,
-      path: "/admin/assinaturas"
-    },
-    {
-      label: "Configurações",
-      icon: Settings,
-      path: "/admin/configuracoes"
-    }
-  ];
-
-  const isActive = (path: string, exact?: boolean) => {
-    if (exact) {
-      return location.pathname === path;
-    }
-    return location.pathname.startsWith(path);
+  
+  // Função para verificar se a rota está ativa considerando rotas aninhadas
+  const isActiveRoute = (to: string) => {
+    return location.pathname === to || location.pathname.startsWith(`${to}/`);
   };
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200 h-full">
-      <div className="p-4">
-        <h2 className="text-lg font-semibold text-gray-800">Painel Admin</h2>
+    <aside className="h-screen bg-white shadow-lg border-r border-gray-200 w-[235px] flex flex-col fixed top-0 left-0 z-30">
+      <div className="flex items-center px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <ShieldIcon />
+        <span className="ml-2 font-bold text-lg text-gray-800">Admin Panel</span>
       </div>
-      
-      <nav className="mt-4">
-        {menuItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <Button
-              key={item.path}
-              variant={isActive(item.path, item.exact) ? "secondary" : "ghost"}
-              className="w-full justify-start px-4 py-2 text-left"
-              onClick={() => navigate(item.path)}
-            >
-              <Icon className="h-4 w-4 mr-3" />
-              {item.label}
-            </Button>
-          );
-        })}
+      <nav className="flex-1 flex flex-col px-2 py-4 gap-1 overflow-y-auto bg-gradient-to-b from-gray-50 to-white">
+        {adminMenu.map((item) => (
+          <Link
+            to={item.to}
+            key={item.label}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
+              isActiveRoute(item.to)
+                ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md"
+                : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+            }`}
+          >
+            <span className={`${isActiveRoute(item.to) ? "text-white" : "text-gray-500"}`}>
+              {item.icon}
+            </span>
+            {item.label}
+          </Link>
+        ))}
       </nav>
-    </div>
+      <div className="p-4 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-blue-50">
+        <div className="text-xs text-gray-500 text-center">
+          RadVenture Admin v2.0
+        </div>
+      </div>
+    </aside>
   );
+}
+
+// Shield Icon para o admin
+function ShieldIcon() {
+  return (
+    <svg width="26" height="26" fill="none" viewBox="0 0 24 24">
+      <path fill="#3b82f6" d="M12 2l7 4v6c0 4.97-3.13 9.35-7 10-3.87-.65-7-5.03-7-10V6l7-4z"/>
+    </svg>
+  )
 }

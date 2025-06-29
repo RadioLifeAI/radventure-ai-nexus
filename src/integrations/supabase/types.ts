@@ -1515,10 +1515,6 @@ export type Database = {
         Args: { p_user_id: string; p_case_id: string }
         Returns: Json
       }
-      cleanup_old_notifications: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
       consume_help_aid: {
         Args: { p_user_id: string; p_aid_type: string; p_amount?: number }
         Returns: boolean
@@ -1543,19 +1539,6 @@ export type Database = {
       create_dev_user_simple: {
         Args: { p_email: string; p_full_name: string; p_type?: string }
         Returns: string
-      }
-      create_filtered_notification: {
-        Args: {
-          p_type: string
-          p_title: string
-          p_message: string
-          p_priority?: string
-          p_action_url?: string
-          p_action_label?: string
-          p_metadata?: Json
-          p_user_filter?: Json
-        }
-        Returns: number
       }
       create_user_with_auth: {
         Args: {
