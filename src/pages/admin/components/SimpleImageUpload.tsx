@@ -62,6 +62,7 @@ export function SimpleImageUpload({
       const file = e.dataTransfer.files[0];
       if (file.type.startsWith('image/')) {
         await imageIntegration.handleImageUpload(file);
+        // Notificar mudanças para o componente pai
         onImagesChange?.(imageIntegration.images);
       }
     }
@@ -71,12 +72,14 @@ export function SimpleImageUpload({
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       await imageIntegration.handleImageUpload(file);
+      // Notificar mudanças para o componente pai
       onImagesChange?.(imageIntegration.images);
     }
   }, [imageIntegration, onImagesChange]);
 
   const handleRemoveImage = useCallback((imageId: string) => {
     imageIntegration.removeImage(imageId);
+    // Notificar mudanças para o componente pai
     onImagesChange?.(imageIntegration.images);
   }, [imageIntegration, onImagesChange]);
 
@@ -85,6 +88,11 @@ export function SimpleImageUpload({
     // Por enquanto, vamos apenas fechar o editor
     setEditingLegend(null);
   }, []);
+
+  // Notificar mudanças sempre que as imagens mudarem
+  React.useEffect(() => {
+    onImagesChange?.(imageIntegration.images);
+  }, [imageIntegration.images, onImagesChange]);
 
   const isConfigured = imageIntegration.isIntegrated;
 

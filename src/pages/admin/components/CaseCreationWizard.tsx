@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -89,6 +90,7 @@ export function CaseCreationWizard({
   const [showPreview, setShowPreview] = useState(false);
   const [showAdvancedImageModal, setShowAdvancedImageModal] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [tempImages, setTempImages] = useState<any[]>([]);
 
   // Hook de integração de imagens UNIFICADO
   const imageIntegration = useCaseImageIntegration({
@@ -252,7 +254,7 @@ export function CaseCreationWizard({
     e.preventDefault();
     
     // Se não estamos editando, salvar imagens temporárias junto
-    if (!isEditMode && imageIntegration.images.length > 0) {
+    if (!isEditMode && tempImages.length > 0) {
       console.log('💾 Salvando caso com imagens integradas...');
       
       // Primeiro salvar o caso
@@ -463,6 +465,7 @@ export function CaseCreationWizard({
               modality={form.modality || undefined}
               onImagesChange={(images) => {
                 console.log('📸 Imagens atualizadas via SimpleImageUpload:', images.length);
+                setTempImages(images);
                 imageIntegration.refetch();
               }}
             />
@@ -493,7 +496,7 @@ export function CaseCreationWizard({
                   <strong>Alternativas:</strong> {form.answer_options.filter((opt: string) => opt.trim()).length}
                 </div>
                 <div>
-                  <strong>Imagens Integradas:</strong> {imageIntegration.images.length}
+                  <strong>Imagens Integradas:</strong> {isEditMode ? imageIntegration.images.length : tempImages.length}
                 </div>
               </div>
               <Button
@@ -633,7 +636,11 @@ export function CaseCreationWizard({
       <CaseFormPreviewModal 
         open={showPreview} 
         onClose={() => setShowPreview(false)} 
-        form={form} 
+        form={{
+          ...form,
+          // Passar imagens temporárias para o preview
+          tempImages: isEditMode ? [] : tempImages
+        }}
         categories={categories} 
         difficulties={difficulties} 
       />

@@ -25,6 +25,8 @@ export function CaseFormPreviewModal({
       formData={form}
       categories={categories}
       difficulties={difficulties}
+      tempImages={form.tempImages || []}
+      isAdminView={true}
     />
   );
 }

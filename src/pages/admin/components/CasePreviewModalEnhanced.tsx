@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -44,6 +43,7 @@ interface CasePreviewModalEnhancedProps {
   categories?: any[];
   difficulties?: any[];
   isAdminView?: boolean;
+  tempImages?: any[];
 }
 
 export function CasePreviewModalEnhanced({
@@ -54,6 +54,7 @@ export function CasePreviewModalEnhanced({
   categories: externalCategories,
   difficulties: externalDifficulties,
   isAdminView = false,
+  tempImages = [],
 }: CasePreviewModalEnhancedProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -77,7 +78,7 @@ export function CasePreviewModalEnhanced({
   // Hook para status de revisão
   const { reviewStatus, isReview, previousAnswer, previousCorrect } = useCaseReviewStatus(caseId);
 
-  // Hook para imagens integradas - AJUSTE CRÍTICO: usar dados corretos
+  // Hook para imagens integradas - CORREÇÃO: usar dados corretos
   const imageIntegration = useCaseImageIntegration({
     caseId: formData ? undefined : caseId, // Usar caseId apenas se não for formData
     categoryId: formData?.category_id ? Number(formData.category_id) : undefined,
@@ -225,7 +226,15 @@ export function CasePreviewModalEnhanced({
   
   // Prioridade para imagens integradas (formData), depois imagens do banco
   const images = (() => {
-    // 1. Se é formData e temos imagens integradas, usar essas
+    // 1. Se é formData e temos imagens temporárias passadas como prop, usar essas
+    if (formData && tempImages.length > 0) {
+      return tempImages.map(img => ({
+        url: img.original_url,
+        legend: img.legend || ""
+      }));
+    }
+
+    // 2. Se é formData e temos imagens integradas, usar essas
     if (formData && imageIntegration.images.length > 0) {
       return imageIntegration.images.map(img => ({
         url: img.original_url,
@@ -233,7 +242,7 @@ export function CasePreviewModalEnhanced({
       }));
     }
     
-    // 2. Se tem image_url no form, usar essas
+    // 3. Se tem image_url no form, usar essas
     if (form.image_url) {
       if (Array.isArray(form.image_url)) {
         return form.image_url.map((url: string, index: number) => ({
@@ -248,7 +257,7 @@ export function CasePreviewModalEnhanced({
       }
     }
     
-    // 3. Caso contrário, array vazio
+    // 4. Caso contrário, array vazio
     return [];
   })();
 
@@ -545,6 +554,14 @@ export function CasePreviewModalEnhanced({
               onIndexChange={setCurrentImageIndex}
               className="flex-1"
             />
+            {images.length === 0 && (
+              <div className="flex-1 flex items-center justify-center bg-gray-50 rounded-lg">
+                <div className="text-center text-gray-500">
+                  <ImageIcon className="h-12 w-12 mx-auto mb-2" />
+                  <p className="text-sm">Nenhuma imagem disponível</p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Coluna 2: Caso Clínico Principal */}
