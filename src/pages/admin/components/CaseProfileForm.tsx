@@ -68,7 +68,15 @@ export function CaseProfileForm({ editingCase, onCreated }: CaseProfileFormProps
         image_url: form.image_url
       });
 
-      // Preparar dados do caso com conversões de tipo necessárias
+      // Função para tratar campos de data - converter strings vazias para null
+      const sanitizeDateField = (dateValue: any) => {
+        if (!dateValue || dateValue === '' || dateValue === 'undefined') {
+          return null;
+        }
+        return dateValue;
+      };
+
+      // Preparar dados do caso com conversões de tipo necessárias e tratamento de datas
       const caseData = {
         ...form,
         image_url: Array.isArray(form.image_url) ? form.image_url : [],
@@ -76,8 +84,31 @@ export function CaseProfileForm({ editingCase, onCreated }: CaseProfileFormProps
         difficulty_level: form.difficulty_level ? parseInt(form.difficulty_level) : null,
         points: form.points ? parseInt(form.points) : null,
         created_by: (await supabase.auth.getUser()).data.user?.id,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        // CORREÇÃO PRINCIPAL: Tratar campo access_date corretamente
+        access_date: sanitizeDateField(form.access_date),
+        // Tratar outros campos que possam ser problemáticos
+        reference_citation: form.is_radiopaedia_case ? (form.reference_citation || null) : null,
+        reference_url: form.is_radiopaedia_case ? (form.reference_url || null) : null
       };
+
+      // Validação específica para casos do Radiopaedia
+      if (form.is_radiopaedia_case) {
+        if (!caseData.reference_citation?.trim()) {
+          toast({
+            title: "Citação da referência é obrigatória para casos do Radiopaedia",
+            variant: "destructive"
+          });
+          return;
+        }
+        if (!caseData.reference_url?.trim()) {
+          toast({
+            title: "URL de referência é obrigatória para casos do Radiopaedia", 
+            variant: "destructive"
+          });
+          return;
+        }
+      }
 
       setFeedback("Salvando caso médico...");
 
@@ -91,7 +122,10 @@ export function CaseProfileForm({ editingCase, onCreated }: CaseProfileFormProps
           .select()
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error('❌ Erro na atualização:', error);
+          throw error;
+        }
         savedCase = data;
       } else {
         // Modo de criação
@@ -101,7 +135,10 @@ export function CaseProfileForm({ editingCase, onCreated }: CaseProfileFormProps
           .select()
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error('❌ Erro na criação:', error);
+          throw error;
+        }
         savedCase = data;
       }
 
@@ -142,14 +179,23 @@ export function CaseProfileForm({ editingCase, onCreated }: CaseProfileFormProps
 
     } catch (error: any) {
       console.error('❌ Erro no salvamento:', error);
+      
+      // Tratamento específico para erros de data
+      let errorMessage = error.message || "Erro desconhecido";
+      if (error.message?.includes('Invalid input syntax for type date')) {
+        errorMessage = "Erro na data informada. Verifique o campo de data de acesso.";
+      }
+      
       toast({
         title: "Erro ao salvar caso",
-        description: error.message || "Tente novamente",
+        description: errorMessage,
         variant: "destructive",
       });
+      
+      setFeedback("Erro no salvamento. Verifique os dados informados.");
     } finally {
       setSubmitting(false);
-      setFeedback("");
+      setTimeout(() => setFeedback(""), 3000);
     }
   };
 
