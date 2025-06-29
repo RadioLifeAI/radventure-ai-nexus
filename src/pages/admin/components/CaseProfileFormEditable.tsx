@@ -78,6 +78,7 @@ export function CaseProfileFormEditable({
       });
   }, []);
 
+  // Hook agora gerencia seu próprio estado
   const handlers = useCaseProfileFormHandlers({ categories, difficulties });
   const {
     form, setForm, resetForm, submitting, setSubmitting, feedback, setFeedback,

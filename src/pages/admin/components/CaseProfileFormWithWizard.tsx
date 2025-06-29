@@ -1,4 +1,3 @@
-
 import React from "react";
 import { CaseCreationWizard } from "./CaseCreationWizard";
 import { useCaseProfileFormHandlers } from "../hooks/useCaseProfileFormHandlers";
@@ -45,6 +44,7 @@ export function CaseProfileFormWithWizard({
       });
   }, []);
 
+  // Hook agora gerencia seu próprio estado
   const handlers = useCaseProfileFormHandlers({ categories, difficulties });
   const {
     form, setForm, resetForm, submitting, setSubmitting, feedback, setFeedback,

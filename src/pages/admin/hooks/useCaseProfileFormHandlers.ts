@@ -27,18 +27,17 @@ function shuffleAlternatives(state: any) {
 }
 
 interface UseCaseProfileFormHandlersProps {
-  form: any;
-  setForm: any;
   categories: any[];
   difficulties: any[];
 }
 
 export function useCaseProfileFormHandlers({ 
-  form, 
-  setForm, 
   categories, 
   difficulties 
 }: UseCaseProfileFormHandlersProps) {
+  // Hook agora gerencia seu próprio estado
+  const { form, setForm, resetForm } = useCaseProfileFormState();
+  
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [highlightedFields, setHighlightedFields] = useState<string[]>([]);
@@ -138,6 +137,7 @@ export function useCaseProfileFormHandlers({
   return {
     form,
     setForm,
+    resetForm, // Restaurado
     submitting,
     setSubmitting,
     feedback,
