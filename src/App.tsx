@@ -12,6 +12,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Casos from "./pages/Casos";
+import CasoUsuarioView from "./pages/CasoUsuarioView";
 import EventosEnhanced from "./pages/EventosEnhanced";
 import EventoDetalhes from "./pages/EventoDetalhes";
 import RankingEventos from "./pages/RankingEventos";
@@ -79,17 +80,14 @@ function App() {
                 </ProtectedRouteRedirect>
               } 
             />
-            
-            {/* Rota modificada para usar o modal avançado */}
             <Route 
               path="/app/caso/:id" 
               element={
                 <ProtectedRouteRedirect>
-                  <Casos />
+                  <CasoUsuarioView />
                 </ProtectedRouteRedirect>
               } 
             />
-            
             <Route 
               path="/app/eventos" 
               element={

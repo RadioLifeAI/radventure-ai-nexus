@@ -75,7 +75,7 @@ export function AdvancedImageManagerModalUnified({
         modality
       });
 
-      if (result && result.length > 0) {
+      if (result) {
         toast({
           title: "🗂️ ZIP Processado com Sucesso!",
           description: `${result.length} imagens organizadas no sistema especializado.`
