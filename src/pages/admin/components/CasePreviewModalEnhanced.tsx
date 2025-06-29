@@ -219,6 +219,18 @@ export function CasePreviewModalEnhanced({
   const actualCategories = externalCategories || categories;
   const actualDifficulties = externalDifficulties || difficulties;
 
+  // CORREÇÃO: Declarar `form` ANTES de usar nas imagens
+  const form = actualCaseData || {};
+
+  // CORREÇÃO: Usar imagens da integração quando for formData, senão usar as do form
+  const images = formData && imageIntegration.images.length > 0 
+    ? imageIntegration.images.map(img => ({
+        url: img.original_url,
+        legend: img.legend || ""
+      }))
+    : Array.isArray(form.image_url) ? form.image_url : 
+      form.image_url ? [form.image_url] : [];
+
   // Reset state when modal opens/closes or case changes
   useEffect(() => {
     if (open && actualCaseData) {
@@ -260,16 +272,6 @@ export function CasePreviewModalEnhanced({
     }
   }
 
-  // CORREÇÃO: Usar imagens da integração quando for formData, senão usar as do form
-  const images = formData && imageIntegration.images.length > 0 
-    ? imageIntegration.images.map(img => ({
-        url: img.original_url,
-        legend: img.legend || ""
-      }))
-    : Array.isArray(form.image_url) ? form.image_url : 
-      form.image_url ? [form.image_url] : [];
-
-  const form = actualCaseData || {};
   const category = getCategoryName(actualCategories, form.category_id);
   const difficulty = getDifficultyDesc(actualDifficulties, form.difficulty_level);
   const difficultyLevel = form.difficulty_level || 1;
