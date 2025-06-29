@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import { CaseCreationWizard } from "./CaseCreationWizard";
-import { useCaseProfileFormState } from "../hooks/useCaseProfileFormState";
 import { useCaseProfileFormHandlers } from "../hooks/useCaseProfileFormHandlers";
 import { useUnifiedFormDataSource } from "@/hooks/useUnifiedFormDataSource";
 import { useTempCaseImages } from "@/hooks/useTempCaseImages";
@@ -18,19 +17,20 @@ interface CaseProfileFormProps {
 
 export function CaseProfileForm({ editingCase, onCreated }: CaseProfileFormProps) {
   const navigate = useNavigate();
-  const { form, setForm, resetForm } = useCaseProfileFormState();
   const { associateWithCase, clearTempImages } = useTempCaseImages();
   const [highlightedFields, setHighlightedFields] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState("");
   
   const { specialties, modalities, difficulties, isLoading } = useUnifiedFormDataSource();
+  
+  // Hook refatorado - agora gerencia seu próprio estado
   const handlers = useCaseProfileFormHandlers({ 
-    form, 
-    setForm,
     categories: specialties,
     difficulties
   });
+
+  const { form, setForm, resetForm } = handlers;
 
   useEffect(() => {
     if (editingCase) {
