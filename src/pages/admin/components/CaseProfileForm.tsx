@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +9,7 @@ import { useCaseProfileFormHandlers } from "../hooks/useCaseProfileFormHandlers"
 import { useUnifiedFormDataSource } from "@/hooks/useUnifiedFormDataSource";
 import { useTempCaseImages } from "@/hooks/useTempCaseImages";
 import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { HelpCircle } from "lucide-core";
+import { HelpCircle } from "lucide-react";
 
 interface CaseProfileFormProps {
   editingCase?: any;
@@ -24,7 +25,12 @@ export function CaseProfileForm({ editingCase, onCreated }: CaseProfileFormProps
   const [feedback, setFeedback] = useState("");
   
   const { specialties, modalities, difficulties, isLoading } = useUnifiedFormDataSource();
-  const handlers = useCaseProfileFormHandlers({ form, setForm });
+  const handlers = useCaseProfileFormHandlers({ 
+    form, 
+    setForm,
+    categories: specialties,
+    difficulties
+  });
 
   useEffect(() => {
     if (editingCase) {
@@ -62,10 +68,13 @@ export function CaseProfileForm({ editingCase, onCreated }: CaseProfileFormProps
         image_url: form.image_url
       });
 
-      // Preparar dados do caso com image_url populacional
+      // Preparar dados do caso com conversões de tipo necessárias
       const caseData = {
         ...form,
-        image_url: Array.isArray(form.image_url) ? form.image_url : [], // FASE 2: Garantir array
+        image_url: Array.isArray(form.image_url) ? form.image_url : [],
+        category_id: form.category_id ? parseInt(form.category_id) : null,
+        difficulty_level: form.difficulty_level ? parseInt(form.difficulty_level) : null,
+        points: form.points ? parseInt(form.points) : null,
         created_by: (await supabase.auth.getUser()).data.user?.id,
         updated_at: new Date().toISOString()
       };
@@ -88,7 +97,7 @@ export function CaseProfileForm({ editingCase, onCreated }: CaseProfileFormProps
         // Modo de criação
         const { data, error } = await supabase
           .from("medical_cases")
-          .insert([caseData])
+          .insert(caseData)
           .select()
           .single();
 

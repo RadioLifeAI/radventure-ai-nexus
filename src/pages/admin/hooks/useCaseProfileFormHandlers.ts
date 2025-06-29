@@ -26,8 +26,19 @@ function shuffleAlternatives(state: any) {
   };
 }
 
-export function useCaseProfileFormHandlers({ categories, difficulties }: { categories: any[], difficulties: any[] }) {
-  const { form, setForm, resetForm } = useCaseProfileFormState();
+interface UseCaseProfileFormHandlersProps {
+  form: any;
+  setForm: any;
+  categories: any[];
+  difficulties: any[];
+}
+
+export function useCaseProfileFormHandlers({ 
+  form, 
+  setForm, 
+  categories, 
+  difficulties 
+}: UseCaseProfileFormHandlersProps) {
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [highlightedFields, setHighlightedFields] = useState<string[]>([]);
@@ -127,7 +138,6 @@ export function useCaseProfileFormHandlers({ categories, difficulties }: { categ
   return {
     form,
     setForm,
-    resetForm,
     submitting,
     setSubmitting,
     feedback,

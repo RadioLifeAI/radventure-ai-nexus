@@ -26,6 +26,8 @@ interface CasesCardsViewProps {
   onDuplicate: (caseId: string) => void;
   onDelete: (caseId: string) => void;
   onAnalytics: (caseId: string) => void;
+  onWizardEdit: (caseId: string) => void;
+  onVersionComparison: (caseId: string) => void;
 }
 
 export function CasesCardsView({
@@ -36,7 +38,9 @@ export function CasesCardsView({
   onView,
   onDuplicate,
   onDelete,
-  onAnalytics
+  onAnalytics,
+  onWizardEdit,
+  onVersionComparison
 }: CasesCardsViewProps) {
   
   const formatDate = (dateString: string) => {
