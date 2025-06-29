@@ -56,7 +56,7 @@ export default function EventosEnhanced() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 to-blue-50 text-gray-900">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-100 via-slate-100 to-blue-100 text-gray-900">
       <HeaderNav />
       <main className="flex-1 flex flex-col px-2 md:px-16 pt-4 pb-10">
         {/* Header revolucionário */}
@@ -65,7 +65,7 @@ export default function EventosEnhanced() {
             <h1 className="font-extrabold text-4xl mb-2 animate-fade-in bg-gradient-to-r from-cyan-700 to-purple-700 bg-clip-text text-transparent">
               Eventos Gamificados 🚀
             </h1>
-            <p className="mb-4 text-gray-700 text-lg animate-fade-in">
+            <p className="mb-4 text-gray-800 text-lg animate-fade-in">
               Experiência revolucionária de aprendizado com IA, rankings em tempo real e conquistas épicas!
             </p>
           </div>
@@ -73,7 +73,7 @@ export default function EventosEnhanced() {
             <EventsNotificationSystem />
             {user && (
               <Button 
-                className="bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 shadow-sm"
+                className="bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 shadow-md"
                 onClick={() => navigate("/admin/events/create")}
               >
                 <Sparkles className="h-4 w-4 mr-2" />
@@ -83,7 +83,7 @@ export default function EventosEnhanced() {
             {!user && (
               <Button 
                 variant="outline"
-                className="text-gray-800 border-gray-400 hover:bg-gray-100 hover:text-gray-900 bg-white shadow-sm"
+                className="text-gray-900 border-gray-400 hover:bg-gray-100 hover:text-gray-900 bg-white shadow-md"
                 onClick={() => navigate("/login")}
               >
                 Fazer Login
@@ -101,24 +101,24 @@ export default function EventosEnhanced() {
         {/* Tabs avançadas */}
         <div className="mt-6">
           <Tabs value={activeView} onValueChange={setActiveView} className="space-y-6">
-            <TabsList className="grid grid-cols-2 md:grid-cols-5 bg-gray-100/80 backdrop-blur-sm border border-gray-300/60 shadow-sm">
-              <TabsTrigger value="dashboard" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm text-gray-700">
+            <TabsList className="grid grid-cols-2 md:grid-cols-5 bg-white/95 backdrop-blur-md border border-gray-300 shadow-lg">
+              <TabsTrigger value="dashboard" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-md text-gray-700">
                 <BarChart3 className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Dashboard</span>
               </TabsTrigger>
-              <TabsTrigger value="visualization" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm text-gray-700">
+              <TabsTrigger value="visualization" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-md text-gray-700">
                 <TrendingUp className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Visualizações</span>
               </TabsTrigger>
-              <TabsTrigger value="gamification" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm text-gray-700">
+              <TabsTrigger value="gamification" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-md text-gray-700">
                 <Trophy className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Gamificação</span>
               </TabsTrigger>
-              <TabsTrigger value="events" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm text-gray-700">
+              <TabsTrigger value="events" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-md text-gray-700">
                 <Calendar className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Todos</span>
               </TabsTrigger>
-              <TabsTrigger value="analytics" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm text-gray-700">
+              <TabsTrigger value="analytics" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-md text-gray-700">
                 <Target className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Analytics</span>
               </TabsTrigger>
@@ -157,7 +157,7 @@ export default function EventosEnhanced() {
             </TabsContent>
 
             <TabsContent value="analytics">
-              <Card className="bg-white border-gray-300/60 shadow-sm">
+              <Card className="bg-white border-gray-300 shadow-md">
                 <CardHeader>
                   <CardTitle className="text-gray-900">Analytics Avançado</CardTitle>
                 </CardHeader>
@@ -165,7 +165,7 @@ export default function EventosEnhanced() {
                   <div className="space-y-6">
                     {/* Performance por especialidade */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="bg-gray-50 rounded-lg p-4 border border-gray-300/60">
+                      <div className="bg-gray-50 rounded-lg p-4 border border-gray-300 shadow-sm">
                         <h4 className="font-medium text-gray-900 mb-3">Performance por Especialidade</h4>
                         <div className="space-y-3">
                           {['Neurologia', 'Cardiologia', 'Radiologia'].map((specialty, index) => (
@@ -185,7 +185,7 @@ export default function EventosEnhanced() {
                         </div>
                       </div>
 
-                      <div className="bg-gray-50 rounded-lg p-4 border border-gray-300/60">
+                      <div className="bg-gray-50 rounded-lg p-4 border border-gray-300 shadow-sm">
                         <h4 className="font-medium text-gray-900 mb-3">Tendências Semanais</h4>
                         <div className="space-y-3">
                           {['Participação', 'Pontuação Média', 'Novos Usuários'].map((metric, index) => (
@@ -203,7 +203,7 @@ export default function EventosEnhanced() {
 
                     {/* Estatísticas de autenticação */}
                     {user ? (
-                      <div className="bg-gray-50 rounded-lg p-4 border border-gray-300/60">
+                      <div className="bg-gray-50 rounded-lg p-4 border border-gray-300 shadow-sm">
                         <h4 className="font-medium text-gray-900 mb-3">Seu Desempenho</h4>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div className="text-center">
@@ -225,9 +225,9 @@ export default function EventosEnhanced() {
                         </div>
                       </div>
                     ) : (
-                      <div className="bg-gray-50 rounded-lg p-4 text-center border border-gray-300/60">
+                      <div className="bg-gray-50 rounded-lg p-4 text-center border border-gray-300 shadow-sm">
                         <h4 className="font-medium text-gray-900 mb-3">Faça Login para Ver Suas Estatísticas</h4>
-                        <Button onClick={() => navigate("/login")} className="bg-cyan-700 hover:bg-cyan-800 shadow-sm">
+                        <Button onClick={() => navigate("/login")} className="bg-cyan-700 hover:bg-cyan-800 shadow-md">
                           Fazer Login
                         </Button>
                       </div>
