@@ -94,13 +94,13 @@ export function useSpecializedImageUpload() {
         .from('case-images')
         .getPublicUrl(filePath);
 
-      // 3. Processar com organização especializada INTEGRADA
+      // 3. CORREÇÃO: Processar com organização especializada usando NULL em vez de "temp"
       setProcessing(true);
       const { data: processResult, error: processError } = await supabase.functions
         .invoke('image-processor-specialized', {
           body: {
             imageUrl: publicUrl,
-            caseId: options.caseId || 'temp',
+            caseId: options.caseId || null, // CORREÇÃO: usar null em vez de 'temp'
             filename: fileName,
             legend: options.legend,
             sequenceOrder: options.sequenceOrder,

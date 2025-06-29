@@ -9,7 +9,7 @@ const corsHeaders = {
 
 interface ImageProcessingRequest {
   imageUrl: string
-  caseId: string | null // Permite null para uploads temporários
+  caseId: string | null // CORREÇÃO: Permitir null para uploads temporários
   filename: string
   legend?: string
   sequenceOrder?: number
@@ -80,7 +80,7 @@ serve(async (req) => {
     const modalityPrefix = modalityInfo?.modality_prefix || 'IMG'
     const bucketFolder = modalityInfo?.bucket_folder || 'geral'
     
-    // Para casos temporários, usar pasta especial
+    // CORREÇÃO: Para casos temporários, usar pasta especial e permitir null
     const caseFolder = caseId || 'temp-cases'
     const bucketPath = `medical-cases/${specialtyCode.toLowerCase()}/${bucketFolder}/${caseFolder}`
     
@@ -102,11 +102,11 @@ serve(async (req) => {
       aspect_ratio: 1.5
     }
 
-    // Inserir registro na tabela case_images
+    // CORREÇÃO: Inserir registro na tabela case_images com case_id NULL permitido
     const { data: caseImage, error: insertError } = await supabase
       .from('case_images')
       .insert({
-        case_id: caseId, // Agora pode ser null
+        case_id: caseId, // Agora pode ser null sem erro
         original_filename: filename,
         original_url: imageUrl,
         thumbnail_url: processedImages.thumbnail,

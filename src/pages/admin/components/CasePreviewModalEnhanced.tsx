@@ -33,6 +33,7 @@ import { ConfidenceSelector } from "@/components/cases/ConfidenceSelector";
 import { EnhancedImageViewer } from "@/components/cases/EnhancedImageViewer";
 import { ReviewModeBadge } from "@/components/cases/ReviewModeBadge";
 import { useCaseReviewStatus } from "@/hooks/useCaseReviewStatus";
+import { useCaseImageIntegration } from "@/hooks/useCaseImageIntegration";
 
 interface CasePreviewModalEnhancedProps {
   open: boolean;
@@ -74,6 +75,13 @@ export function CasePreviewModalEnhanced({
   
   // Hook para status de revisão
   const { reviewStatus, isReview, previousAnswer, previousCorrect } = useCaseReviewStatus(caseId);
+
+  // CORREÇÃO: Hook para imagens integradas quando usando formData
+  const imageIntegration = useCaseImageIntegration({
+    caseId: formData ? undefined : caseId, // Usar caseId apenas se não for formData
+    categoryId: formData?.category_id ? Number(formData.category_id) : undefined,
+    modality: formData?.modality || undefined
+  });
 
   // Timer effect
   useEffect(() => {
@@ -252,14 +260,20 @@ export function CasePreviewModalEnhanced({
     }
   }
 
+  // CORREÇÃO: Usar imagens da integração quando for formData, senão usar as do form
+  const images = formData && imageIntegration.images.length > 0 
+    ? imageIntegration.images.map(img => ({
+        url: img.original_url,
+        legend: img.legend || ""
+      }))
+    : Array.isArray(form.image_url) ? form.image_url : 
+      form.image_url ? [form.image_url] : [];
+
   const form = actualCaseData || {};
   const category = getCategoryName(actualCategories, form.category_id);
   const difficulty = getDifficultyDesc(actualDifficulties, form.difficulty_level);
   const difficultyLevel = form.difficulty_level || 1;
   
-  const images = Array.isArray(form.image_url) ? form.image_url : 
-    form.image_url ? [form.image_url] : [];
-
   const handleAnswerSelect = (index: number) => {
     if (hasAnswered || isAdminView) return;
     
@@ -434,7 +448,7 @@ export function CasePreviewModalEnhanced({
               </div>
               <div>
                 <div className="flex items-center gap-3 mb-2">
-                  <Badge className="bg-blue-500 hover:bg-blue-600 text-white font-bold px-3 py-1">
+                  <Badge className="bg-blue-500 hover:bg-blue-600 text-white font-bold px-3">
                     {category}
                   </Badge>
                   <Badge className={cn("text-white font-bold px-3 py-1", getDifficultyColor(difficultyLevel))}>
@@ -502,7 +516,7 @@ export function CasePreviewModalEnhanced({
 
         {/* Layout Principal - 3 Colunas */}
         <div className="flex h-full overflow-hidden">
-          {/* Coluna 1: Imagem Médica - sem alterações */}
+          {/* Coluna 1: Imagem Médica - CORREÇÃO: Usar imagens integradas */}
           <div className="w-80 bg-white border-r border-gray-200 p-4 flex flex-col">
             <EnhancedImageViewer
               images={images}

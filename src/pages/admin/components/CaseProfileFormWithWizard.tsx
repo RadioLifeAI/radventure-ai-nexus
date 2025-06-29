@@ -1,3 +1,4 @@
+
 import React from "react";
 import { CaseCreationWizard } from "./CaseCreationWizard";
 import { useCaseProfileFormHandlers } from "../hooks/useCaseProfileFormHandlers";
@@ -140,10 +141,16 @@ export function CaseProfileFormWithWizard({
     try {
       const selectedCategory = categories.find(c => String(c.id) === String(form.category_id));
 
-      // Para casos novos, preparar payload sem imagens (serão vinculadas depois)
+      // CORREÇÃO: Para casos novos, preparar imagens do sistema integrado
       let image_url_arr: any[] = [];
       if (isEditMode && imageIntegration.images.length > 0) {
         // Para edição, usar imagens já salvas
+        image_url_arr = imageIntegration.images.slice(0, 6).map((img: any) => ({
+          url: img.original_url,
+          legend: img.legend || ""
+        }));
+      } else if (!isEditMode && imageIntegration.images.length > 0) {
+        // CORREÇÃO: Para casos novos, usar imagens da integração
         image_url_arr = imageIntegration.images.slice(0, 6).map((img: any) => ({
           url: img.original_url,
           legend: img.legend || ""
@@ -244,11 +251,26 @@ export function CaseProfileFormWithWizard({
         const caseId = data[0].id;
         const resultTitle = data[0].title ?? form.title;
         
-        // CRÍTICO: Vincular imagens temporárias ao caso recém-criado
+        // CORREÇÃO: Vincular imagens temporárias ao caso recém-criado
         if (!isEditMode && imageIntegration.images.length > 0) {
           console.log('💾 Vinculando imagens temporárias ao caso criado:', caseId);
           const linkedImages = await imageIntegration.saveTempImages(caseId);
           console.log('✅ Imagens vinculadas:', linkedImages.length);
+          
+          // CORREÇÃO: Atualizar o campo image_url na tabela medical_cases para compatibilidade
+          if (linkedImages.length > 0) {
+            const imageUrlFormatted = linkedImages.slice(0, 6).map((img: any) => ({
+              url: img.original_url,
+              legend: img.legend || ""
+            }));
+            
+            await supabase
+              .from("medical_cases")
+              .update({ image_url: imageUrlFormatted })
+              .eq("id", caseId);
+              
+            console.log('🔄 Campo image_url atualizado para compatibilidade');
+          }
         }
         
         setFeedback(isEditMode ? "Caso atualizado com sucesso!" : "Caso cadastrado com sucesso!");
