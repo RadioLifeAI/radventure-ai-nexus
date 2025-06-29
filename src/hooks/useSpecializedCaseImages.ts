@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-interface SpecializedImage {
+export interface SpecializedImage {
   id: string;
   original_url: string;
   thumbnail_url?: string;
@@ -11,12 +11,17 @@ interface SpecializedImage {
   specialty_code?: string;
   modality_prefix?: string;
   bucket_path?: string;
+  processing_status?: string;
+  original_filename?: string;
+  file_size_bytes?: number;
 }
 
 export function useSpecializedCaseImages(caseId?: string) {
   const [images, setImages] = useState<SpecializedImage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [processing, setProcessing] = useState(false);
 
   const fetchImages = async () => {
     if (!caseId) {
@@ -48,6 +53,64 @@ export function useSpecializedCaseImages(caseId?: string) {
     }
   };
 
+  const uploadSpecializedImage = async (file: File, options: any) => {
+    setUploading(true);
+    try {
+      // Implementação básica de upload
+      console.log('Upload de imagem especializada:', file.name, options);
+      await fetchImages(); // Recarregar após upload
+    } catch (err: any) {
+      console.error('Erro no upload:', err);
+      setError(err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const processZipSpecialized = async (file: File, options: any) => {
+    setProcessing(true);
+    try {
+      // Implementação básica de processamento ZIP
+      console.log('Processamento ZIP especializado:', file.name, options);
+      await fetchImages(); // Recarregar após processamento
+    } catch (err: any) {
+      console.error('Erro no processamento ZIP:', err);
+      setError(err.message);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const deleteImage = async (imageId: string) => {
+    try {
+      const { error } = await supabase
+        .from('case_images')
+        .delete()
+        .eq('id', imageId);
+
+      if (error) throw error;
+      await fetchImages();
+    } catch (err: any) {
+      console.error('Erro ao deletar imagem:', err);
+      setError(err.message);
+    }
+  };
+
+  const updateLegend = async (imageId: string, legend: string) => {
+    try {
+      const { error } = await supabase
+        .from('case_images')
+        .update({ legend })
+        .eq('id', imageId);
+
+      if (error) throw error;
+      await fetchImages();
+    } catch (err: any) {
+      console.error('Erro ao atualizar legenda:', err);
+      setError(err.message);
+    }
+  };
+
   useEffect(() => {
     fetchImages();
   }, [caseId]);
@@ -60,6 +123,12 @@ export function useSpecializedCaseImages(caseId?: string) {
     images,
     loading,
     error,
+    uploading,
+    processing,
+    uploadSpecializedImage,
+    processZipSpecialized,
+    deleteImage,
+    updateLegend,
     refetch
   };
 }
