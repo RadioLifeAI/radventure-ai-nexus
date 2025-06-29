@@ -72,7 +72,6 @@ function App() {
               } 
             />
             
-            {/* Rotas unificadas usando CasesCentralAdvanced */}
             <Route 
               path="/app/casos" 
               element={
@@ -89,8 +88,6 @@ function App() {
                 </ProtectedRouteRedirect>
               } 
             />
-            
-            {/* Outras rotas mantidas */}
             <Route 
               path="/app/eventos" 
               element={
