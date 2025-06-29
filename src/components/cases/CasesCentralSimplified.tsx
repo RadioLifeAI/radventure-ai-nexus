@@ -64,18 +64,18 @@ export function CasesCentralSimplified() {
       label: "Casos Resolvidos",
       value: realStats.totalCases,
       icon: Target,
-      color: "text-blue-600"
+      color: "text-blue-400"
     },
     {
       label: "Precisão",
       value: `${realStats.accuracy}%`,
       icon: TrendingUp,
-      color: "text-green-600"
+      color: "text-green-400"
     }
   ] : [];
 
   return (
-    <div className="min-h-screen w-full overflow-x-hidden flex flex-col bg-gradient-to-br from-slate-50 to-blue-50 text-gray-900">
+    <div className="min-h-screen w-full overflow-x-hidden flex flex-col bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white">
       <HeaderNav />
       
       <main className="flex-1 w-full px-4 lg:px-8 py-6 overflow-x-hidden">
@@ -88,23 +88,23 @@ export function CasesCentralSimplified() {
                   variant="ghost"
                   size="sm"
                   onClick={handleBackToDashboard}
-                  className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                  className="text-cyan-200 hover:text-white hover:bg-white/10"
                 >
                   <ArrowLeft className="h-4 w-4 mr-1" />
                   Voltar ao Dashboard
                 </Button>
-                <div className="bg-blue-100 rounded-full px-4 py-2 border border-blue-200">
-                  <span className="text-blue-800 text-sm">
-                    Filtrado por: <strong>{filters.specialty}</strong>
+                <div className="bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 border border-white/20">
+                  <span className="text-cyan-200 text-sm">
+                    Filtrado por: <strong className="text-white">{filters.specialty}</strong>
                   </span>
                 </div>
               </div>
             )}
             
-            <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
+            <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2">
               Explorar Casos Médicos
             </h1>
-            <p className="text-gray-600 text-lg max-w-2xl mx-auto mb-6">
+            <p className="text-cyan-100 text-lg max-w-2xl mx-auto mb-6">
               Pratique com casos reais e aprimore suas habilidades diagnósticas
             </p>
 
@@ -112,11 +112,11 @@ export function CasesCentralSimplified() {
             {quickStats.length > 0 && (
               <div className="flex justify-center gap-6 mb-6">
                 {quickStats.map((stat, index) => (
-                  <div key={index} className="flex items-center gap-2 bg-white rounded-lg px-4 py-2 shadow-sm border">
+                  <div key={index} className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 border border-white/20">
                     <stat.icon className={`h-5 w-5 ${stat.color}`} />
                     <div className="text-left">
-                      <p className="text-xs text-gray-500">{stat.label}</p>
-                      <p className="font-semibold text-gray-900">{stat.value}</p>
+                      <p className="text-xs text-cyan-200">{stat.label}</p>
+                      <p className="font-semibold text-white">{stat.value}</p>
                     </div>
                   </div>
                 ))}
@@ -133,9 +133,9 @@ export function CasesCentralSimplified() {
                 Ver Estatísticas Completas
               </Button>
               <Button 
-                onClick={() => navigate('/app/criar-jornada')}
+                onClick={() => navigate('/app/jornada/criar')}
                 variant="outline"
-                className="border-blue-200 text-blue-700 hover:bg-blue-50"
+                className="border-cyan-200 text-cyan-200 hover:bg-white/10 hover:text-white"
               >
                 <Brain className="h-4 w-4 mr-2" />
                 Criar Jornada IA
@@ -143,7 +143,7 @@ export function CasesCentralSimplified() {
               <Button 
                 onClick={() => navigate('/app/rankings')}
                 variant="outline"
-                className="border-green-200 text-green-700 hover:bg-green-50"
+                className="border-green-200 text-green-200 hover:bg-white/10 hover:text-white"
               >
                 <Award className="h-4 w-4 mr-2" />
                 Rankings
@@ -152,7 +152,7 @@ export function CasesCentralSimplified() {
           </div>
 
           {/* Filtros */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
             <CaseFilters 
               filters={filters} 
               onFiltersChange={setFilters}
@@ -161,10 +161,10 @@ export function CasesCentralSimplified() {
           </div>
 
           {/* Grid de casos */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-6">
             <div className="flex items-center gap-2 mb-4">
-              <Filter className="h-5 w-5 text-gray-500" />
-              <h2 className="text-lg font-semibold text-gray-900">
+              <Filter className="h-5 w-5 text-cyan-200" />
+              <h2 className="text-lg font-semibold text-white">
                 Casos Disponíveis
               </h2>
             </div>
