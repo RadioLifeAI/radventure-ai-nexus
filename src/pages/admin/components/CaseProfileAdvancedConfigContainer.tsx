@@ -2,23 +2,20 @@
 import React from "react";
 import { CaseProfileAdvancedConfig } from "./CaseProfileAdvancedConfig";
 
-interface Props {
+type Props = {
   form: any;
-  setForm: (form: any) => void;
-  handlers: any;
-  highlightedFields: string[];
-  renderTooltipTip: (id: string, text: string) => React.ReactNode;
-}
+  handleFormChange: any;
+  handleSuggestHint: any;
+  showAdvanced: boolean;
+};
 
 export function CaseProfileAdvancedConfigContainer({
   form,
-  setForm,
-  handlers,
-  highlightedFields,
-  renderTooltipTip
+  handleFormChange,
+  handleSuggestHint,
+  showAdvanced,
 }: Props) {
-  const { handleFormChange, handleSuggestHint } = handlers;
-
+  if (!showAdvanced) return null;
   return (
     <CaseProfileAdvancedConfig
       form={form}
