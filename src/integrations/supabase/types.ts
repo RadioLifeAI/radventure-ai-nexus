@@ -1508,6 +1508,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_case_images_unified: {
+        Args: { p_case_id: string }
+        Returns: Json
+      }
       get_system_status: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -1571,6 +1575,10 @@ export type Database = {
       }
       setup_initial_admin: {
         Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      sync_case_images_to_legacy: {
+        Args: { p_case_id: string }
         Returns: boolean
       }
       sync_user_benefits: {

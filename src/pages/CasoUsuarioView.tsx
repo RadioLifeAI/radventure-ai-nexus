@@ -99,6 +99,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
   const [imageZoom, setImageZoom] = useState(1);
   const [tutorHintText, setTutorHintText] = useState("");
   const [showHelpConfirm, setShowHelpConfirm] = useState<string | null>(null);
+  const [caseImages, setCaseImages] = useState<Array<{ url: string; legend?: string }>>([]);
 
   const {
     helpUsed,
@@ -118,6 +119,29 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
 
   const { toast } = useToast();
   const { helpAids, consumeHelp, getTutorHint, isGettingHint } = useUserHelpAids();
+
+  // CORREÇÃO: Busca híbrida de imagens usando a nova função SQL
+  const fetchCaseImages = async (caseId: string) => {
+    try {
+      console.log('🖼️ Buscando imagens do caso:', caseId);
+      
+      // Usar a nova função SQL que busca em ambos os sistemas
+      const { data, error } = await supabase.rpc('get_case_images_unified', {
+        p_case_id: caseId
+      });
+
+      if (error) {
+        console.error('❌ Erro ao buscar imagens unificadas:', error);
+        return [];
+      }
+
+      console.log('✅ Imagens encontradas:', data?.length || 0);
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error('❌ Erro na busca híbrida de imagens:', error);
+      return [];
+    }
+  };
 
   useEffect(() => {
     async function fetchCaso() {
@@ -141,7 +165,13 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
         setLoading(false);
         return;
       }
+      
       setCaso(data);
+      
+      // CORREÇÃO: Buscar imagens usando sistema híbrido
+      const images = await fetchCaseImages(id);
+      setCaseImages(images);
+      
       setLoading(false);
     }
     if (id) fetchCaso();
@@ -302,17 +332,6 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
     setImageZoom(1);
   };
 
-  let caseImages: Array<{ url: string; legend?: string }> = [];
-  try {
-    caseImages = Array.isArray(caso?.image_url)
-      ? caso.image_url
-      : typeof caso?.image_url === "string" && caso.image_url?.startsWith("[")
-        ? JSON.parse(caso.image_url)
-        : !!caso?.image_url ? [{ url: caso.image_url }] : [];
-  } catch {
-    caseImages = !!caso?.image_url ? [{ url: caso.image_url }] : [];
-  }
-
   function getDifficultyColor(level: number) {
     switch (level) {
       case 1: return "bg-green-500";
@@ -432,7 +451,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
 
       {/* Layout Principal - 3 Colunas */}
       <div className="flex max-w-7xl mx-auto">
-        {/* Coluna 1: Imagem Médica - sem alterações */}
+        {/* Coluna 1: Imagem Médica - CORRIGIDA com sistema híbrido */}
         <div className="w-80 bg-white border-r border-gray-200 p-4 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-gray-800 flex items-center gap-2">
