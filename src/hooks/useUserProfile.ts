@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -35,6 +35,10 @@ export function useUserProfile() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { checkAndAwardProfileRewards } = useProfileRewards();
+  
+  // Controles para evitar execução múltipla
+  const hasCheckedRewardsRef = useRef(false);
+  const loginTimeRef = useRef<number>(Date.now());
 
   const { data: profile, isLoading, error } = useQuery({
     queryKey: ['user-profile', user?.id],
@@ -116,13 +120,30 @@ export function useUserProfile() {
     },
   });
 
-  // Verificar recompensas quando o perfil for carregado (apenas uma vez)
+  // Verificar recompensas APENAS uma vez no primeiro carregamento
   useEffect(() => {
-    if (profile && user) {
-      console.log('🎯 Verificando recompensas de perfil no carregamento...');
-      checkAndAwardProfileRewards(profile);
+    if (profile && user && !hasCheckedRewardsRef.current) {
+      // Garantir que o usuário está logado há pelo menos 30 segundos
+      const timeSinceLogin = Date.now() - loginTimeRef.current;
+      
+      if (timeSinceLogin >= 30000) {
+        console.log('🎯 Verificando recompensas de perfil (execução única)...');
+        hasCheckedRewardsRef.current = true;
+        checkAndAwardProfileRewards(profile);
+      } else {
+        console.log('⏳ Aguardando 30 segundos desde login antes de verificar recompensas...');
+        const timeout = setTimeout(() => {
+          if (!hasCheckedRewardsRef.current) {
+            console.log('🎯 Verificando recompensas de perfil após timeout...');
+            hasCheckedRewardsRef.current = true;
+            checkAndAwardProfileRewards(profile);
+          }
+        }, 30000 - timeSinceLogin);
+        
+        return () => clearTimeout(timeout);
+      }
     }
-  }, [profile, user, checkAndAwardProfileRewards]);
+  }, [profile?.id]); // Apenas ID do perfil como dependência
 
   const updateProfileMutation = useMutation({
     mutationFn: async (updates: Partial<UserProfile>) => {
@@ -149,6 +170,7 @@ export function useUserProfile() {
       return data;
     },
     onSuccess: (updatedProfile) => {
+      // Usar apenas setQueryData para atualizar o cache - SEM invalidateQueries
       queryClient.setQueryData(['user-profile', user?.id], updatedProfile);
       
       toast({
@@ -156,10 +178,7 @@ export function useUserProfile() {
         description: 'Suas informações foram salvas com sucesso.',
       });
       
-      // Atualizar cache após pequeno delay para capturar mudanças de RadCoins
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['user-profile', user?.id] });
-      }, 1500);
+      console.log('✅ Cache atualizado sem invalidação para evitar loop de recompensas');
     },
     onError: (error: any) => {
       console.error('❌ Erro ao atualizar perfil:', error);
@@ -172,7 +191,7 @@ export function useUserProfile() {
   });
 
   const refreshProfile = () => {
-    console.log('🔄 Atualizando perfil...');
+    console.log('🔄 Atualizando perfil manualmente...');
     queryClient.invalidateQueries({ queryKey: ['user-profile', user?.id] });
   };
 

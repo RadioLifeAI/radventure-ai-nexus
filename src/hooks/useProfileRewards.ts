@@ -9,11 +9,21 @@ export function useProfileRewards() {
   const { toast } = useToast();
   const isProcessingRef = useRef(false);
   const lastProcessedRef = useRef<string>('');
+  const lastExecutionTimeRef = useRef<number>(0);
   const debounceTimeoutRef = useRef<NodeJS.Timeout>();
 
   const checkAndAwardProfileRewards = useCallback(async (profile: any) => {
     if (!user || !profile) {
       console.log('⚠️ Sem usuário ou perfil para verificar recompensas');
+      return;
+    }
+
+    // Cooldown de 5 minutos entre execuções
+    const now = Date.now();
+    const COOLDOWN_TIME = 5 * 60 * 1000; // 5 minutos
+    
+    if (now - lastExecutionTimeRef.current < COOLDOWN_TIME) {
+      console.log('⏰ Cooldown ativo, ignorando execução de recompensas');
       return;
     }
 
@@ -46,10 +56,12 @@ export function useProfileRewards() {
       clearTimeout(debounceTimeoutRef.current);
     }
 
-    // Debounce de 2 segundos para evitar execuções muito próximas
+    // Debounce de 3 segundos para evitar execuções muito próximas
     debounceTimeoutRef.current = setTimeout(async () => {
       try {
         isProcessingRef.current = true;
+        lastExecutionTimeRef.current = now;
+        
         console.log('🎯 Iniciando verificação de recompensas para:', profile.email);
 
         // Definir recompensas por campo completado
@@ -119,7 +131,8 @@ export function useProfileRewards() {
                 field: field.key,
                 description: field.description,
                 processed_at: new Date().toISOString(),
-                profile_hash: profileHash
+                profile_hash: profileHash,
+                execution_timestamp: now
               }
             });
 
@@ -131,7 +144,11 @@ export function useProfileRewards() {
             // Marcar como recompensado
             const updatedRewards = {
               ...profileRewards,
-              [field.key]: true
+              [field.key]: {
+                awarded: true,
+                timestamp: now,
+                amount: field.reward
+              }
             };
 
             const { error: updateError } = await supabase
@@ -165,7 +182,7 @@ export function useProfileRewards() {
 
         // Verificar se perfil está 100% completo para bônus adicional
         const allFieldsComplete = rewardFields.every(field => field.condition);
-        const completionBonusGiven = profileRewards.completion_bonus;
+        const completionBonusGiven = profileRewards.completion_bonus?.awarded;
 
         if (allFieldsComplete && !completionBonusGiven) {
           console.log('🏆 Perfil 100% completo! Dando bônus de 50 RadCoins');
@@ -177,7 +194,8 @@ export function useProfileRewards() {
             p_metadata: {
               description: 'Bônus de perfil 100% completo',
               processed_at: new Date().toISOString(),
-              profile_hash: profileHash
+              profile_hash: profileHash,
+              execution_timestamp: now
             }
           });
 
@@ -189,7 +207,11 @@ export function useProfileRewards() {
                   ...currentPreferences,
                   profile_rewards: {
                     ...profileRewards,
-                    completion_bonus: true
+                    completion_bonus: {
+                      awarded: true,
+                      timestamp: now,
+                      amount: 50
+                    }
                   }
                 },
                 updated_at: new Date().toISOString()
@@ -222,7 +244,7 @@ export function useProfileRewards() {
       } finally {
         isProcessingRef.current = false;
       }
-    }, 2000); // Debounce de 2 segundos
+    }, 3000); // Debounce de 3 segundos
   }, [user, toast]);
 
   // Cleanup do timeout no unmount

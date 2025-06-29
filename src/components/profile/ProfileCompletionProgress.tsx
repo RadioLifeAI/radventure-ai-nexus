@@ -19,16 +19,22 @@ import { UserProfile } from "@/hooks/useUserProfile";
 interface ProfileCompletionProgressProps {
   profile: UserProfile;
   onOpenSettings: () => void;
+  forceHide?: boolean;
 }
 
-export function ProfileCompletionProgress({ profile, onOpenSettings }: ProfileCompletionProgressProps) {
+export function ProfileCompletionProgress({ profile, onOpenSettings, forceHide }: ProfileCompletionProgressProps) {
+  // Se forceHide estiver ativo, não renderizar
+  if (forceHide) {
+    return null;
+  }
+
   // Calcular campos completados
   const completionFields = [
     { 
       key: 'full_name', 
       label: 'Nome Completo', 
       icon: User, 
-      completed: !!profile.full_name,
+      completed: !!(profile.full_name && profile.full_name.trim().length > 0),
       reward: 10
     },
     { 
@@ -42,7 +48,7 @@ export function ProfileCompletionProgress({ profile, onOpenSettings }: ProfileCo
       key: 'medical_specialty', 
       label: 'Especialidade Médica', 
       icon: GraduationCap, 
-      completed: !!profile.medical_specialty,
+      completed: !!(profile.medical_specialty && profile.medical_specialty.trim().length > 0),
       reward: 20
     },
     { 
@@ -63,7 +69,7 @@ export function ProfileCompletionProgress({ profile, onOpenSettings }: ProfileCo
       key: 'bio', 
       label: 'Biografia', 
       icon: User, 
-      completed: !!(profile.bio && profile.bio.length > 20),
+      completed: !!(profile.bio && profile.bio.trim().length > 20),
       reward: 15
     }
   ];
@@ -76,6 +82,12 @@ export function ProfileCompletionProgress({ profile, onOpenSettings }: ProfileCo
 
   // Verificar se o perfil está completo
   const isProfileComplete = completionPercentage === 100;
+
+  // Se o perfil estiver completo, não renderizar (lógica adicional de segurança)
+  if (isProfileComplete) {
+    console.log('✅ Perfil completo - ocultando card de progresso');
+    return null;
+  }
 
   // Definir cor do progresso baseado no percentual
   const getProgressColor = () => {
@@ -99,8 +111,8 @@ export function ProfileCompletionProgress({ profile, onOpenSettings }: ProfileCo
             Progresso do Perfil
           </div>
           <Badge 
-            variant={isProfileComplete ? "default" : "outline"}
-            className={isProfileComplete ? "bg-green-500 text-white" : "border-purple-300 text-purple-700"}
+            variant="outline"
+            className="border-purple-300 text-purple-700"
           >
             {completionPercentage}% Completo
           </Badge>
@@ -174,30 +186,18 @@ export function ProfileCompletionProgress({ profile, onOpenSettings }: ProfileCo
 
         {/* Mensagem de Progresso */}
         <div className="text-center space-y-3">
-          {isProfileComplete ? (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <div className="flex items-center justify-center gap-2 text-green-800 mb-2">
-                <Award className="h-5 w-5" />
-                <span className="font-bold">Perfil Completo!</span>
-              </div>
-              <p className="text-sm text-green-700">
-                Parabéns! Você ganhou todas as {totalPossibleReward} RadCoins de perfil.
-              </p>
-            </div>
-          ) : (
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-              <p className="text-sm text-purple-700 mb-3">
-                Complete seu perfil para ganhar mais <strong>{totalPossibleReward - earnedReward} RadCoins</strong>!
-              </p>
-              <Button 
-                onClick={onOpenSettings}
-                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-2"
-              >
-                <User className="h-4 w-4 mr-2" />
-                Completar Perfil
-              </Button>
-            </div>
-          )}
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <p className="text-sm text-purple-700 mb-3">
+              Complete seu perfil para ganhar mais <strong>{totalPossibleReward - earnedReward} RadCoins</strong>!
+            </p>
+            <Button 
+              onClick={onOpenSettings}
+              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-2"
+            >
+              <User className="h-4 w-4 mr-2" />
+              Completar Perfil
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

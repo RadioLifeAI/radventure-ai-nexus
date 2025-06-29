@@ -29,6 +29,21 @@ export function UserProfile() {
     }
   }, [profile, isLoading]);
 
+  // Calcular se o perfil está completo (mesma lógica do ProfileCompletionProgress)
+  const isProfileComplete = profile ? (() => {
+    const completionFields = [
+      { completed: !!(profile.full_name && profile.full_name.trim().length > 0) },
+      { completed: !!(profile.city && profile.state) },
+      { completed: !!(profile.medical_specialty && profile.medical_specialty.trim().length > 0) },
+      { completed: !!(profile.academic_stage && profile.college) },
+      { completed: !!profile.birthdate },
+      { completed: !!(profile.bio && profile.bio.trim().length > 20) }
+    ];
+    
+    const completedCount = completionFields.filter(field => field.completed).length;
+    return completedCount === completionFields.length;
+  })() : false;
+
   const handleOnboardingClose = () => {
     setShowOnboarding(false);
     if (profile) {
@@ -177,11 +192,13 @@ export function UserProfile() {
           </div>
         </div>
 
-        {/* Progresso do Perfil */}
-        <ProfileCompletionProgress 
-          profile={profile} 
-          onOpenSettings={() => setIsSettingsOpen(true)} 
-        />
+        {/* Progresso do Perfil - Renderizado condicionalmente */}
+        {!isProfileComplete && (
+          <ProfileCompletionProgress 
+            profile={profile} 
+            onOpenSettings={() => setIsSettingsOpen(true)} 
+          />
+        )}
       </section>
 
       <ProfileSettingsModal 
