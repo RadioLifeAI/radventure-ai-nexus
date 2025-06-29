@@ -139,7 +139,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
       
       // CORREÇÃO: Validação e casting seguro de tipos
       if (Array.isArray(data)) {
-        return data.filter((item): item is { url: string; legend?: string } => {
+        return data.filter((item: any): item is { url: string; legend?: string } => {
           return item && typeof item === 'object' && typeof item.url === 'string';
         });
       }
