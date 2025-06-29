@@ -28,11 +28,11 @@ export function CaseCard({ case: caseData }: CaseCardProps) {
 
   const getDifficultyColor = (level: number) => {
     switch (level) {
-      case 1: return "bg-green-100 text-green-800 border-green-200";
-      case 2: return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case 3: return "bg-orange-100 text-orange-800 border-orange-200";
-      case 4: return "bg-red-100 text-red-800 border-red-200";
-      default: return "bg-gray-100 text-gray-800 border-gray-200";
+      case 1: return "bg-green-50 text-green-800 border-green-300";
+      case 2: return "bg-yellow-50 text-yellow-800 border-yellow-300";
+      case 3: return "bg-orange-50 text-orange-800 border-orange-300";
+      case 4: return "bg-red-50 text-red-800 border-red-300";
+      default: return "bg-gray-50 text-gray-800 border-gray-300";
     }
   };
 
@@ -41,17 +41,17 @@ export function CaseCard({ case: caseData }: CaseCardProps) {
       <Star
         key={i}
         className={`h-3 w-3 ${
-          i < level ? "text-yellow-500 fill-yellow-500" : "text-gray-300"
+          i < level ? "text-yellow-600 fill-yellow-600" : "text-gray-400"
         }`}
       />
     ));
   };
 
   return (
-    <Card className="group hover:shadow-lg transition-all duration-300 hover:scale-[1.02] bg-white/90 backdrop-blur-sm border-white/20">
+    <Card className="group hover:shadow-lg transition-all duration-300 hover:scale-[1.02] bg-white border-gray-300/60 shadow-sm">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
-          <CardTitle className="text-lg font-bold text-gray-900 group-hover:text-blue-700 transition-colors line-clamp-2">
+          <CardTitle className="text-lg font-bold text-gray-900 group-hover:text-blue-800 transition-colors line-clamp-2">
             {caseData.title}
           </CardTitle>
           <div className="flex items-center gap-1">
@@ -60,11 +60,11 @@ export function CaseCard({ case: caseData }: CaseCardProps) {
         </div>
         
         <div className="flex flex-wrap gap-2 mt-2">
-          <Badge variant="secondary" className="text-xs">
+          <Badge variant="secondary" className="text-xs bg-blue-50 text-blue-800 border-blue-300">
             {caseData.specialty}
           </Badge>
           {caseData.modality && (
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline" className="text-xs border-gray-400 text-gray-700 bg-gray-50">
               {caseData.modality}
             </Badge>
           )}
@@ -78,13 +78,13 @@ export function CaseCard({ case: caseData }: CaseCardProps) {
 
       <CardContent className="pt-0">
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-4 text-sm text-gray-600">
+          <div className="flex items-center gap-4 text-sm text-gray-700">
             <div className="flex items-center gap-1">
-              <Trophy className="h-4 w-4 text-yellow-500" />
-              <span className="font-semibold">{caseData.points} pts</span>
+              <Trophy className="h-4 w-4 text-yellow-600" />
+              <span className="font-semibold text-gray-800">{caseData.points} pts</span>
             </div>
             <div className="flex items-center gap-1">
-              <Clock className="h-4 w-4 text-blue-500" />
+              <Clock className="h-4 w-4 text-blue-600" />
               <span>~5 min</span>
             </div>
           </div>
@@ -92,7 +92,7 @@ export function CaseCard({ case: caseData }: CaseCardProps) {
 
         <Button 
           onClick={handleResolveCase}
-          className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold py-2 px-4 rounded-xl shadow-md hover:shadow-lg transition-all duration-300"
+          className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold py-2 px-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300"
         >
           <Play className="h-4 w-4 mr-2" />
           Resolver Caso
