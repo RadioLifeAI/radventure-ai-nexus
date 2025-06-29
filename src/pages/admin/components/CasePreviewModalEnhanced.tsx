@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -76,7 +77,7 @@ export function CasePreviewModalEnhanced({
   // Hook para status de revisão
   const { reviewStatus, isReview, previousAnswer, previousCorrect } = useCaseReviewStatus(caseId);
 
-  // CORREÇÃO: Hook para imagens integradas quando usando formData
+  // Hook para imagens integradas - AJUSTE CRÍTICO: usar dados corretos
   const imageIntegration = useCaseImageIntegration({
     caseId: formData ? undefined : caseId, // Usar caseId apenas se não for formData
     categoryId: formData?.category_id ? Number(formData.category_id) : undefined,
@@ -219,17 +220,37 @@ export function CasePreviewModalEnhanced({
   const actualCategories = externalCategories || categories;
   const actualDifficulties = externalDifficulties || difficulties;
 
-  // CORREÇÃO: Declarar `form` ANTES de usar nas imagens
+  // CORREÇÃO COMPLETA: Lógica unificada de imagens
   const form = actualCaseData || {};
-
-  // CORREÇÃO: Usar imagens da integração quando for formData, senão usar as do form
-  const images = formData && imageIntegration.images.length > 0 
-    ? imageIntegration.images.map(img => ({
+  
+  // Prioridade para imagens integradas (formData), depois imagens do banco
+  const images = (() => {
+    // 1. Se é formData e temos imagens integradas, usar essas
+    if (formData && imageIntegration.images.length > 0) {
+      return imageIntegration.images.map(img => ({
         url: img.original_url,
         legend: img.legend || ""
-      }))
-    : Array.isArray(form.image_url) ? form.image_url : 
-      form.image_url ? [form.image_url] : [];
+      }));
+    }
+    
+    // 2. Se tem image_url no form, usar essas
+    if (form.image_url) {
+      if (Array.isArray(form.image_url)) {
+        return form.image_url.map((url: string, index: number) => ({
+          url,
+          legend: `Imagem ${index + 1}`
+        }));
+      } else {
+        return [{
+          url: form.image_url,
+          legend: "Imagem principal"
+        }];
+      }
+    }
+    
+    // 3. Caso contrário, array vazio
+    return [];
+  })();
 
   // Reset state when modal opens/closes or case changes
   useEffect(() => {
@@ -361,7 +382,6 @@ export function CasePreviewModalEnhanced({
     onClose();
   };
 
-  // CORREÇÃO: Chamada automática do Tutor AI sem userQuestion
   const handleRequestTutorHint = async () => {
     if (isReview) {
       toast({
@@ -387,7 +407,6 @@ export function CasePreviewModalEnhanced({
       // Consumir crédito primeiro
       consumeHelp({ aidType: 'ai_tutor' });
       
-      // CORREÇÃO: Remover userQuestion da chamada
       const response = await getTutorHint({
         caseData: actualCaseData
       });
@@ -504,7 +523,7 @@ export function CasePreviewModalEnhanced({
           </div>
         </div>
 
-        {/* Progress Bar - sem alterações */}
+        {/* Progress Bar */}
         {!isAdminView && (
           <div className="px-6 py-4 border-b">
             <CaseProgressBar
@@ -518,7 +537,7 @@ export function CasePreviewModalEnhanced({
 
         {/* Layout Principal - 3 Colunas */}
         <div className="flex h-full overflow-hidden">
-          {/* Coluna 1: Imagem Médica - CORREÇÃO: Usar imagens integradas */}
+          {/* Coluna 1: Imagem Médica - CORREÇÃO: Usar imagens unificadas */}
           <div className="w-80 bg-white border-r border-gray-200 p-4 flex flex-col">
             <EnhancedImageViewer
               images={images}
@@ -528,7 +547,7 @@ export function CasePreviewModalEnhanced({
             />
           </div>
 
-          {/* Coluna 2: Caso Clínico Principal - sem alterações significativas */}
+          {/* Coluna 2: Caso Clínico Principal */}
           <div className="flex-1 p-6 overflow-y-auto">
             {/* História Clínica */}
             <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-5 mb-6 border border-green-200">
@@ -650,7 +669,7 @@ export function CasePreviewModalEnhanced({
               </div>
             </div>
 
-            {/* Dica do Tutor AI - mantida igual */}
+            {/* Dica do Tutor AI */}
             {tutorHintText && (
               <div className="bg-gradient-to-r from-purple-50 to-violet-50 rounded-xl p-6 mb-6 border border-purple-200">
                 <div className="flex items-center gap-3 mb-4">

@@ -42,7 +42,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCaseImageIntegration } from "@/hooks/useCaseImageIntegration";
-import { UnifiedImageSystemTabs } from "./UnifiedImageSystemTabs";
+import { SimpleImageUpload } from "./SimpleImageUpload";
 
 interface WizardStep {
   id: string;
@@ -163,9 +163,9 @@ export function CaseCreationWizard({
     },
     {
       id: "images",
-      title: "Sistema Integrado",
-      description: "Upload unificado com formulário",
-      icon: <FolderTree className="h-5 w-5" />,
+      title: "Upload de Imagens",
+      description: "Interface simples e integrada",
+      icon: <ImageIcon className="h-5 w-5" />,
       completed: false,
       valid: true,
       required: false
@@ -456,56 +456,16 @@ export function CaseCreationWizard({
       case "images":
         return (
           <div className="space-y-6">
-            {/* Sistema Integrado Completo */}
-            <UnifiedImageSystemTabs
+            {/* Interface Simplificada de Upload */}
+            <SimpleImageUpload
               caseId={isEditMode ? editingCase?.id : undefined}
               categoryId={form.category_id ? Number(form.category_id) : undefined}
               modality={form.modality || undefined}
               onImagesChange={(images) => {
-                console.log('📸 Imagens atualizadas via integração:', images.length);
+                console.log('📸 Imagens atualizadas via SimpleImageUpload:', images.length);
                 imageIntegration.refetch();
               }}
             />
-
-            {/* Status da Integração */}
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <h4 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
-                <FolderTree className="h-4 w-4" />
-                Status da Integração Unificada
-              </h4>
-              <div className="grid grid-cols-2 gap-4 text-sm text-blue-700">
-                <div>
-                  <strong>Categoria:</strong> {categories.find(c => c.id === Number(form.category_id))?.name || 'Não selecionada'}
-                </div>
-                <div>
-                  <strong>Modalidade:</strong> {form.modality || 'Não selecionada'}
-                </div>
-                <div>
-                  <strong>Integração:</strong> {
-                    imageIntegration.isIntegrated 
-                      ? '✅ Ativa' 
-                      : '⚠️ Aguardando configuração'
-                  }
-                </div>
-                <div>
-                  <strong>Imagens:</strong> {imageIntegration.images.length} preparadas
-                </div>
-              </div>
-              
-              {!imageIntegration.isIntegrated ? (
-                <div className="mt-3 p-2 bg-yellow-100 rounded border border-yellow-300">
-                  <p className="text-yellow-800 text-sm">
-                    ⚠️ <strong>Para ativar:</strong> Configure categoria e modalidade na aba "Informações Básicas"
-                  </p>
-                </div>
-              ) : (
-                <div className="mt-3 p-2 bg-green-100 rounded border border-green-300">
-                  <p className="text-green-800 text-sm">
-                    ✅ <strong>Sistema Integrado:</strong> Upload sincronizado com formulário
-                  </p>
-                </div>
-              )}
-            </div>
           </div>
         );
 
