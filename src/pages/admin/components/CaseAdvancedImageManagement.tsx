@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { EnhancedImageUploadSpecialized } from './EnhancedImageUploadSpecialized';
+import { EnhancedImageUpload } from './EnhancedImageUpload';
 import { 
   Images, 
   Zap, 
@@ -13,45 +13,35 @@ import {
   Settings,
   FileImage,
   CloudUpload,
-  Cpu,
-  FolderTree,
-  Sparkles
+  Cpu
 } from 'lucide-react';
 
 interface CaseAdvancedImageManagementProps {
   caseId?: string;
-  categoryId?: number;
-  modality?: string;
   onImagesChange?: (images: any[]) => void;
 }
 
 export function CaseAdvancedImageManagement({ 
   caseId, 
-  categoryId,
-  modality,
   onImagesChange 
 }: CaseAdvancedImageManagementProps) {
   
   return (
     <div className="space-y-6">
-      {/* Header da Seção Especializada */}
-      <Card className="bg-gradient-to-r from-purple-50 via-blue-50 to-green-50 border-2 border-purple-200">
+      {/* Header da Seção */}
+      <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-purple-500 to-green-600 rounded-xl shadow-lg">
-                <FolderTree className="h-6 w-6 text-white" />
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <Images className="h-6 w-6 text-purple-600" />
               </div>
               <div>
-                <CardTitle className="text-xl text-purple-900 flex items-center gap-2">
-                  Gestão Avançada Especializada
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">
-                    <Sparkles className="h-3 w-3 mr-1" />
-                    Organização Automática
-                  </Badge>
+                <CardTitle className="text-xl text-purple-900">
+                  Gestão Avançada de Imagens
                 </CardTitle>
                 <p className="text-sm text-purple-700 mt-1">
-                  Sistema unificado com organização automática por especialidade médica
+                  Sistema robusto com processamento automático, múltiplos formatos e CDN otimizado
                 </p>
               </div>
             </div>
@@ -65,11 +55,11 @@ export function CaseAdvancedImageManagement({
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="flex items-center gap-2 text-sm">
               <CloudUpload className="h-4 w-4 text-blue-600" />
-              <span>Upload Especializado</span>
+              <span>Upload Inteligente</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
-              <FolderTree className="h-4 w-4 text-green-600" />
-              <span>Organização Automática</span>
+              <Cpu className="h-4 w-4 text-green-600" />
+              <span>Processamento Automático</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <FileImage className="h-4 w-4 text-orange-600" />
@@ -89,11 +79,11 @@ export function CaseAdvancedImageManagement({
           <CardContent className="pt-6">
             <div className="text-center">
               <div className="p-3 bg-green-100 rounded-full w-fit mx-auto mb-3">
-                <FolderTree className="h-6 w-6 text-green-600" />
+                <CloudUpload className="h-6 w-6 text-green-600" />
               </div>
-              <h3 className="font-semibold text-green-900 mb-2">Organização Especializada</h3>
+              <h3 className="font-semibold text-green-900 mb-2">Upload Inteligente</h3>
               <p className="text-sm text-green-700">
-                Classificação automática por especialidade e modalidade
+                Drag & drop, validação automática, progress em tempo real
               </p>
             </div>
           </CardContent>
@@ -121,7 +111,7 @@ export function CaseAdvancedImageManagement({
               </div>
               <h3 className="font-semibold text-orange-900 mb-2">Metadata Rica</h3>
               <p className="text-sm text-orange-700">
-                Dimensões, formatos, qualidade, organização especializada
+                Dimensões, formatos, qualidade, analytics detalhados
               </p>
             </div>
           </CardContent>
@@ -130,11 +120,9 @@ export function CaseAdvancedImageManagement({
 
       <Separator />
 
-      {/* Sistema de Upload Especializado */}
-      <EnhancedImageUploadSpecialized 
+      {/* Sistema de Upload Avançado */}
+      <EnhancedImageUpload 
         caseId={caseId}
-        categoryId={categoryId}
-        modality={modality}
         onChange={onImagesChange}
       />
 
@@ -143,18 +131,18 @@ export function CaseAdvancedImageManagement({
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-sm">
             <Settings className="h-4 w-4" />
-            Especificações Técnicas Especializadas
+            Especificações Técnicas
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
             <div>
-              <h4 className="font-semibold mb-2">Organização Especializada</h4>
+              <h4 className="font-semibold mb-2">Formatos Suportados</h4>
               <ul className="space-y-1 text-gray-600">
-                <li>• Classificação por especialidade médica</li>
-                <li>• Organização por modalidade de exame</li>
-                <li>• Estrutura: /medical-cases/{specialty}/{modality}/</li>
-                <li>• Metadata especializada automática</li>
+                <li>• JPEG/JPG (alta compatibilidade)</li>
+                <li>• PNG (transparência preservada)</li>
+                <li>• WebP (compressão otimizada)</li>
+                <li>• AVIF (futuro-compatível)</li>
               </ul>
             </div>
             <div>
@@ -167,21 +155,21 @@ export function CaseAdvancedImageManagement({
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">Performance Especializada</h4>
+              <h4 className="font-semibold mb-2">Performance</h4>
               <ul className="space-y-1 text-gray-600">
-                <li>• CDN global com estrutura organizada</li>
-                <li>• Cache inteligente por especialidade</li>
-                <li>• Lazy loading especializado</li>
-                <li>• Compressão otimizada por modalidade</li>
+                <li>• CDN global do Supabase</li>
+                <li>• Cache inteligente de 30 dias</li>
+                <li>• Lazy loading automático</li>
+                <li>• Compressão sem perda de qualidade</li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">Segurança e Organização</h4>
+              <h4 className="font-semibold mb-2">Limites e Segurança</h4>
               <ul className="space-y-1 text-gray-600">
                 <li>• Máximo 10MB por arquivo</li>
-                <li>• Validação especializada de tipo</li>
+                <li>• Validação de tipo MIME</li>
                 <li>• Scan automático de malware</li>
-                <li>• Backup em estrutura organizada</li>
+                <li>• Backup automático em 3 regiões</li>
               </ul>
             </div>
           </div>

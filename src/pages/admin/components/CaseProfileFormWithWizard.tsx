@@ -7,7 +7,7 @@ import { useCaseTitleGenerator } from "../hooks/useCaseTitleGenerator";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
-import { useSpecializedCaseImages } from "@/hooks/useSpecializedCaseImages";
+import { useTempCaseImages } from "@/hooks/useTempCaseImages";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 interface CaseProfileFormWithWizardProps {
@@ -21,7 +21,7 @@ export function CaseProfileFormWithWizard({
 }: CaseProfileFormWithWizardProps) {
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
   const [difficulties, setDifficulties] = useState<{ id: number; level: number; description: string | null }[]>([]);
-  const { images: specializedImages, refetch: refetchImages } = useSpecializedCaseImages(editingCase?.id);
+  const { associateWithCase, clearTempImages } = useTempCaseImages();
 
   useEffect(() => {
     supabase.from("medical_specialties")
@@ -136,14 +136,8 @@ export function CaseProfileFormWithWizard({
       const selectedCategory = categories.find(c => String(c.id) === String(form.category_id));
       const primary_diagnosis = form.primary_diagnosis ?? "";
 
-      // Usar imagens do sistema especializado
       let image_url_arr: any[] = [];
-      if (specializedImages.length > 0) {
-        image_url_arr = specializedImages.slice(0, 6).map((img: any) => ({
-          url: img.original_url,
-          legend: img.legend || ""
-        }));
-      } else if (Array.isArray(form.image_url)) {
+      if (Array.isArray(form.image_url)) {
         image_url_arr = form.image_url;
       } else if (typeof form.image_url === "string" && (form.image_url as string).trim() !== "") {
         try {
@@ -152,9 +146,10 @@ export function CaseProfileFormWithWizard({
         } catch {
           image_url_arr = [];
         }
+      } else {
+        image_url_arr = [];
       }
-
-      const image_url = image_url_arr.map((img: any) => ({
+      const image_url = image_url_arr.slice(0, 6).map((img: any) => ({
         url: img?.url ?? "",
         legend: img?.legend ?? ""
       }));
@@ -245,15 +240,22 @@ export function CaseProfileFormWithWizard({
         const caseId = data[0].id;
         const resultTitle = data[0].title ?? form.title;
         
+        if (!isEditMode) {
+          try {
+            await associateWithCase(caseId);
+            console.log('✅ Imagens temporárias associadas ao caso:', caseId);
+          } catch (imageError) {
+            console.warn('⚠️ Erro ao associar imagens temporárias:', imageError);
+          }
+        }
+        
         setFeedback(isEditMode ? "Caso atualizado com sucesso!" : "Caso cadastrado com sucesso!");
         toast({ title: `Caso ${isEditMode ? "atualizado" : "criado"}! Título: ${resultTitle}` });
         
         if (!isEditMode) {
           resetForm();
+          clearTempImages();
         }
-        
-        // Atualizar imagens especializadas
-        refetchImages();
         
         onCreated?.();
       } else {
