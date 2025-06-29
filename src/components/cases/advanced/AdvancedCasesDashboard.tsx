@@ -36,8 +36,8 @@ export function AdvancedCasesDashboard() {
   if (isLoading) {
     return (
       <div className="space-y-4 sm:space-y-6 animate-pulse">
-        <div className="h-24 sm:h-32 bg-white/10 rounded-xl"></div>
-        <div className="h-64 sm:h-96 bg-white/10 rounded-xl"></div>
+        <div className="h-24 sm:h-32 bg-white/40 rounded-xl"></div>
+        <div className="h-64 sm:h-96 bg-white/40 rounded-xl"></div>
       </div>
     );
   }
@@ -86,28 +86,28 @@ export function AdvancedCasesDashboard() {
       label: "Streak Atual",
       value: Math.floor(Math.random() * 20) + 5,
       icon: Flame,
-      color: "text-orange-500",
+      color: "text-orange-600",
       bgColor: "bg-orange-100"
     },
     {
       label: isMobile ? "Casos" : "Casos Esta Semana",
       value: Math.floor(Math.random() * 15) + 3,
       icon: Target,
-      color: "text-blue-500",
+      color: "text-blue-600",
       bgColor: "bg-blue-100"
     },
     {
       label: isMobile ? "Precisão" : "Precisão Média",
       value: `${userProgress?.accuracy || 0}%`,
       icon: TrendingUp,
-      color: "text-green-500",
+      color: "text-green-600",
       bgColor: "bg-green-100"
     },
     {
       label: isMobile ? "Nível" : "Nível Atual",
       value: Math.floor((userProgress?.totalPoints || 0) / 100) + 1,
       icon: Star,
-      color: "text-purple-500",
+      color: "text-purple-600",
       bgColor: "bg-purple-100"
     }
   ];
@@ -134,14 +134,14 @@ export function AdvancedCasesDashboard() {
       {/* Header com estatísticas rápidas - Otimizado para Mobile */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
         {quickStats.map((stat, index) => (
-          <Card key={index} className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 transition-all">
+          <Card key={index} className="bg-white/95 backdrop-blur-sm border-gray-300/60 hover:bg-white transition-all shadow-md">
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs text-cyan-200 truncate">{stat.label}</p>
-                  <p className="text-lg sm:text-2xl font-bold text-white">{stat.value}</p>
+                  <p className="text-xs text-gray-700 truncate">{stat.label}</p>
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900">{stat.value}</p>
                 </div>
-                <div className={`p-2 rounded-lg ${stat.bgColor} flex-shrink-0`}>
+                <div className={`p-2 rounded-lg ${stat.bgColor} flex-shrink-0 border border-gray-200/60`}>
                   <stat.icon className={`h-4 w-4 sm:h-5 sm:w-5 ${stat.color}`} />
                 </div>
               </div>
@@ -151,10 +151,10 @@ export function AdvancedCasesDashboard() {
       </div>
 
       {/* Seletor de modos de visualização - Otimizado para Mobile */}
-      <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+      <Card className="bg-white/95 backdrop-blur-sm border-gray-300/60 shadow-lg">
         <CardHeader className="pb-3 sm:pb-4">
-          <CardTitle className="text-white flex items-center gap-2 text-base sm:text-lg">
-            <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400" />
+          <CardTitle className="text-gray-900 flex items-center gap-2 text-base sm:text-lg">
+            <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
             {isMobile ? "Modos de Visualização" : "Modos de Visualização Avançados"}
           </CardTitle>
         </CardHeader>
@@ -168,8 +168,8 @@ export function AdvancedCasesDashboard() {
                   variant={activeMode === mode.id ? "default" : "outline"}
                   className={`flex flex-col h-auto p-3 text-xs ${
                     activeMode === mode.id 
-                      ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white border-none" 
-                      : "bg-white/10 border-white/30 text-white hover:bg-white/20"
+                      ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white border-none shadow-md" 
+                      : "bg-white/80 border-gray-300 text-gray-800 hover:bg-gray-50"
                   }`}
                   onClick={() => setActiveMode(mode.id)}
                 >
@@ -187,8 +187,8 @@ export function AdvancedCasesDashboard() {
                   variant={activeMode === mode.id ? "default" : "outline"}
                   className={`flex flex-col h-auto p-4 ${
                     activeMode === mode.id 
-                      ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white border-none" 
-                      : "bg-white/10 border-white/30 text-white hover:bg-white/20"
+                      ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white border-none shadow-md" 
+                      : "bg-white/80 border-gray-300 text-gray-800 hover:bg-gray-50"
                   }`}
                   onClick={() => setActiveMode(mode.id)}
                 >
