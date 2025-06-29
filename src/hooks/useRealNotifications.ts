@@ -67,12 +67,12 @@ export function useRealNotifications() {
 
       const formattedNotifications: Notification[] = (data || []).map(notif => ({
         id: notif.id,
-        type: notif.type,
+        type: notif.type as Notification['type'],
         title: notif.title,
         message: notif.message,
         timestamp: new Date(notif.created_at),
         isRead: notif.is_read,
-        priority: notif.priority,
+        priority: notif.priority as Notification['priority'],
         actionUrl: notif.action_url,
         actionLabel: notif.action_label,
         metadata: notif.metadata
