@@ -1,12 +1,13 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
-import { createNotification, createNotificationForAllUsers, NotificationType } from "@/utils/notifications";
+import { createNotification, createNotificationForAllUsers } from "@/utils/notifications";
 
 export interface NotificationTemplate {
   id: string;
   name: string;
-  type: NotificationType;
+  type: string;
   title: string;
   message: string;
   priority: 'low' | 'medium' | 'high' | 'urgent';
@@ -74,6 +75,7 @@ export function useNotificationAdmin() {
     }
   };
 
+  // Buscar estatísticas
   const fetchStats = async () => {
     try {
       const { data: allNotifications, error } = await supabase
@@ -105,7 +107,7 @@ export function useNotificationAdmin() {
   const createSingleNotification = async (
     userId: string,
     notification: {
-      type: NotificationType;
+      type: string;
       title: string;
       message: string;
       priority?: 'low' | 'medium' | 'high' | 'urgent';
@@ -135,7 +137,7 @@ export function useNotificationAdmin() {
   // Criar notificação em massa
   const createBulkNotification = async (
     notification: {
-      type: NotificationType;
+      type: string;
       title: string;
       message: string;
       priority?: 'low' | 'medium' | 'high' | 'urgent';
@@ -162,7 +164,7 @@ export function useNotificationAdmin() {
   // Criar notificação com filtros
   const createFilteredNotification = async (
     notification: {
-      type: NotificationType;
+      type: string;
       title: string;
       message: string;
       priority?: 'low' | 'medium' | 'high' | 'urgent';
@@ -200,6 +202,7 @@ export function useNotificationAdmin() {
     }
   };
 
+  // Deletar notificação
   const deleteNotification = async (notificationId: string) => {
     try {
       const { error } = await supabase
@@ -219,6 +222,7 @@ export function useNotificationAdmin() {
     }
   };
 
+  // Limpeza automática
   const cleanupOldNotifications = async () => {
     try {
       const { error } = await supabase.rpc('cleanup_old_notifications');
