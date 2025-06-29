@@ -1,7 +1,7 @@
 
 import React from "react";
-import { CasesCentralAdvanced } from "@/components/cases/CasesCentralAdvanced";
+import { CasesCentralSimplified } from "@/components/cases/CasesCentralSimplified";
 
 export default function Casos() {
-  return <CasesCentralAdvanced />;
+  return <CasesCentralSimplified />;
 }
