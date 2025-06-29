@@ -441,7 +441,7 @@ export function UnifiedImageSystemTabs({
     </div>
   );
 
-  // Templates Tab
+  // Templates Tab with Settings icon
   const TemplatesTab = () => {
     const modalityTemplates = {
       'Radiografia (RX)': { icon: '🦴', settings: { brightness: 10, contrast: 20 } },
