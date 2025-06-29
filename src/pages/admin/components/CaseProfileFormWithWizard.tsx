@@ -139,17 +139,10 @@ export function CaseProfileFormWithWizard({
     setSubmitting(true);
     try {
       const selectedCategory = categories.find(c => String(c.id) === String(form.category_id));
-      const primary_diagnosis = form.primary_diagnosis ?? "";
 
-      // Para casos novos, usar imagens do sistema integrado
+      // Para casos novos, preparar payload sem imagens (serão vinculadas depois)
       let image_url_arr: any[] = [];
-      if (!isEditMode && imageIntegration.images.length > 0) {
-        // Usar imagens temporárias (serão salvas após criar o caso)
-        image_url_arr = imageIntegration.images.slice(0, 6).map((img: any) => ({
-          url: img.original_url,
-          legend: img.legend || ""
-        }));
-      } else if (isEditMode && imageIntegration.images.length > 0) {
+      if (isEditMode && imageIntegration.images.length > 0) {
         // Para edição, usar imagens já salvas
         image_url_arr = imageIntegration.images.slice(0, 6).map((img: any) => ({
           url: img.original_url,
@@ -157,13 +150,6 @@ export function CaseProfileFormWithWizard({
         }));
       } else if (Array.isArray(form.image_url)) {
         image_url_arr = form.image_url;
-      } else if (typeof form.image_url === "string" && (form.image_url as string).trim() !== "") {
-        try {
-          const parsed = JSON.parse(form.image_url as string);
-          image_url_arr = Array.isArray(parsed) ? parsed : [];
-        } catch {
-          image_url_arr = [];
-        }
       }
 
       const image_url = image_url_arr.map((img: any) => ({
@@ -234,6 +220,7 @@ export function CaseProfileFormWithWizard({
         similar_cases_ids: form.similar_cases_ids || []
       };
 
+      // Limpar campos vazios
       Object.keys(payload).forEach(k => {
         if (typeof payload[k] === "string" && payload[k] === "") payload[k] = null;
       });
@@ -257,16 +244,17 @@ export function CaseProfileFormWithWizard({
         const caseId = data[0].id;
         const resultTitle = data[0].title ?? form.title;
         
-        // Se não é edição e há imagens temporárias, salvá-las agora
+        // CRÍTICO: Vincular imagens temporárias ao caso recém-criado
         if (!isEditMode && imageIntegration.images.length > 0) {
-          console.log('💾 Salvando imagens temporárias para caso criado:', caseId);
-          await imageIntegration.saveTempImages(caseId);
+          console.log('💾 Vinculando imagens temporárias ao caso criado:', caseId);
+          const linkedImages = await imageIntegration.saveTempImages(caseId);
+          console.log('✅ Imagens vinculadas:', linkedImages.length);
         }
         
         setFeedback(isEditMode ? "Caso atualizado com sucesso!" : "Caso cadastrado com sucesso!");
         toast({ 
           title: `✅ Caso ${isEditMode ? "atualizado" : "criado"}!`, 
-          description: `${resultTitle} - ${imageIntegration.images.length} imagem(ns) integradas`
+          description: `${resultTitle} - ${imageIntegration.images.length} imagem(ns) ${isEditMode ? 'já vinculadas' : 'vinculadas'}`
         });
         
         if (!isEditMode) {

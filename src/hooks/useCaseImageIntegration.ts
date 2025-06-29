@@ -1,6 +1,8 @@
 
 import { useState, useCallback } from 'react';
+import { useSpecializedImageUpload } from './useSpecializedImageUpload';
 import { useSpecializedCaseImages } from './useSpecializedCaseImages';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
 interface ImageIntegrationOptions {
@@ -14,16 +16,22 @@ export function useCaseImageIntegration(options: ImageIntegrationOptions) {
   
   const {
     images: savedImages,
-    uploading,
-    processing,
-    uploadSpecializedImage,
-    processZipSpecialized,
+    uploading: savedUploading,
+    processing: savedProcessing,
     refetch
   } = useSpecializedCaseImages(options.caseId);
+
+  const {
+    uploading: tempUploading,
+    processing: tempProcessing,
+    uploadSpecializedImage
+  } = useSpecializedImageUpload();
 
   // Durante a criação do caso, usar imagens temporárias
   // Após salvar, usar imagens do banco
   const currentImages = options.caseId ? savedImages : tempImages;
+  const uploading = options.caseId ? savedUploading : tempUploading;
+  const processing = options.caseId ? savedProcessing : tempProcessing;
 
   const handleImageUpload = useCallback(async (file: File) => {
     if (!options.categoryId || !options.modality) {
@@ -35,74 +43,94 @@ export function useCaseImageIntegration(options: ImageIntegrationOptions) {
       return null;
     }
 
-    if (options.caseId) {
-      // Caso já existe - salvar diretamente
-      return await uploadSpecializedImage(file, {
-        caseId: options.caseId,
+    try {
+      // Usar o hook correto para upload especializado
+      const result = await uploadSpecializedImage(file, {
+        caseId: options.caseId || null, // null para uploads temporários
         categoryId: options.categoryId,
         modality: options.modality,
+        legend: `Imagem ${currentImages.length + 1}`,
         sequenceOrder: currentImages.length
       });
-    } else {
-      // Caso ainda não existe - armazenar temporariamente
-      const tempImage = {
-        id: `temp_${Date.now()}`,
-        file,
-        original_url: URL.createObjectURL(file),
-        original_filename: file.name,
-        legend: `Imagem ${tempImages.length + 1}`,
-        sequence_order: tempImages.length,
-        processing_status: 'pending'
-      };
-      
-      setTempImages(prev => [...prev, tempImage]);
-      
+
+      if (result) {
+        if (options.caseId) {
+          // Caso já existe - refetch para atualizar lista
+          refetch();
+        } else {
+          // Caso ainda não existe - adicionar à lista temporária
+          setTempImages(prev => [...prev, result]);
+        }
+
+        toast({
+          title: "🎯 Upload Concluído!",
+          description: `Imagem organizada: ${options.modality}`,
+          duration: 3000
+        });
+      }
+
+      return result;
+    } catch (error: any) {
+      console.error('❌ Erro no upload:', error);
       toast({
-        title: "📁 Imagem Preparada",
-        description: "Será salva junto com o caso",
+        title: "Erro no Upload",
+        description: error.message || 'Erro desconhecido',
+        variant: "destructive"
       });
-      
-      return tempImage;
+      return null;
     }
-  }, [options, tempImages.length, uploadSpecializedImage, currentImages.length]);
+  }, [options, currentImages.length, uploadSpecializedImage, refetch]);
 
   const saveTempImages = useCallback(async (finalCaseId: string) => {
-    if (tempImages.length === 0) return [];
-
-    console.log('💾 Salvando imagens temporárias para caso:', finalCaseId);
-    
-    const savedImages = [];
-    
-    for (let i = 0; i < tempImages.length; i++) {
-      const tempImage = tempImages[i];
-      
-      if (tempImage.file) {
-        const result = await uploadSpecializedImage(tempImage.file, {
-          caseId: finalCaseId,
-          categoryId: options.categoryId,
-          modality: options.modality,
-          legend: tempImage.legend,
-          sequenceOrder: i
-        });
-        
-        if (result) {
-          savedImages.push(result);
-        }
-      }
+    if (tempImages.length === 0) {
+      console.log('📝 Nenhuma imagem temporária para vincular');
+      return [];
     }
+
+    console.log('💾 Vinculando imagens temporárias ao caso:', finalCaseId, 'Total:', tempImages.length);
     
-    // Limpar imagens temporárias
-    setTempImages([]);
-    
-    return savedImages;
-  }, [tempImages, uploadSpecializedImage, options]);
+    try {
+      // Atualizar todas as imagens temporárias com o case_id real
+      const { data, error } = await supabase
+        .from('case_images')
+        .update({ 
+          case_id: finalCaseId,
+          updated_at: new Date().toISOString()
+        })
+        .in('id', tempImages.map(img => img.id))
+        .select();
+
+      if (error) {
+        console.error('❌ Erro ao vincular imagens:', error);
+        throw error;
+      }
+
+      console.log('✅ Imagens vinculadas ao caso:', data?.length);
+      
+      // Limpar imagens temporárias
+      setTempImages([]);
+      
+      return data || [];
+    } catch (error: any) {
+      console.error('❌ Erro no saveTempImages:', error);
+      toast({
+        title: "Erro ao vincular imagens",
+        description: error.message,
+        variant: "destructive"
+      });
+      return [];
+    }
+  }, [tempImages]);
 
   const removeImage = useCallback((imageId: string) => {
-    if (imageId.startsWith('temp_')) {
+    if (options.caseId) {
+      // Para imagens salvas, usar o método do hook principal
+      // (implementar se necessário)
+    } else {
+      // Para imagens temporárias, remover da lista local
       setTempImages(prev => prev.filter(img => img.id !== imageId));
     }
-    // Para imagens salvas, usar o método do hook principal
-  }, []);
+  }, [options.caseId]);
 
   return {
     images: currentImages,
