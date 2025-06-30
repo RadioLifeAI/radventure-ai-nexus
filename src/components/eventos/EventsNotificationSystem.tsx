@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -57,8 +56,8 @@ export function EventsNotificationSystem() {
     // Se for notificação de report, abrir modal
     if (notification.type === 'report_update' && notification.metadata?.report_id) {
       // Usar a função global para abrir o modal
-      if (window.openReportModal) {
-        window.openReportModal(notification.metadata.report_id);
+      if ((window as any).openReportModal) {
+        (window as any).openReportModal(notification.metadata.report_id);
       }
       setIsOpen(false);
       return;

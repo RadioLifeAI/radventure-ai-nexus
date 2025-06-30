@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { 
@@ -59,9 +58,9 @@ export function HeaderNav() {
 
   // Tornar a função disponível globalmente para as notificações
   React.useEffect(() => {
-    window.openReportModal = openReportModal;
+    (window as any).openReportModal = openReportModal;
     return () => {
-      delete window.openReportModal;
+      delete (window as any).openReportModal;
     };
   }, [getReportById]);
 
