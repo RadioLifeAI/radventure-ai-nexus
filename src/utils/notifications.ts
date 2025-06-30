@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-export type NotificationType = 'event_starting' | 'achievement_unlocked' | 'ranking_update' | 'new_event' | 'reminder' | 'radcoin_reward' | 'streak_milestone' | 'daily_login_bonus' | 'case_milestone' | 'report_update';
+export type NotificationType = 'event_starting' | 'achievement_unlocked' | 'ranking_update' | 'new_event' | 'reminder' | 'radcoin_reward' | 'streak_milestone' | 'daily_login_bonus' | 'case_milestone' | 'report_update' | 'ai_chat_usage';
 export type NotificationPriority = 'low' | 'medium' | 'high';
 
 interface CreateNotificationProps {
@@ -115,6 +115,30 @@ export async function createReportNotification({
     message,
     priority,
     metadata: { report_id: reportId }
+  });
+}
+
+// Função para notificações do RadBot AI
+export async function createRadBotNotification({
+  userId,
+  title,
+  message,
+  priority = 'low',
+  sessionId
+}: {
+  userId: string;
+  title: string;
+  message: string;
+  priority?: NotificationPriority;
+  sessionId?: string;
+}) {
+  return createNotification({
+    userId,
+    type: 'ai_chat_usage',
+    title,
+    message,
+    priority,
+    metadata: { session_id: sessionId, source: 'radbot_ai' }
   });
 }
 

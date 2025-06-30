@@ -1,70 +1,46 @@
 
 import React from "react";
 import { HeaderNav } from "@/components/HeaderNav";
-import { UserProfile } from "@/components/UserProfile";
-import { EventsSectionPlayer } from "@/components/EventsSectionPlayer";
-import { DashboardSkeleton } from "@/components/ui/skeleton-loader";
-import { useDashboardData } from "@/hooks/useDashboardData";
-import { useDashboardHandlers } from "@/hooks/useDashboardHandlers";
-import { useSpecialtiesData } from "@/hooks/useSpecialtiesData";
-import { QuickActionsSection } from "@/components/dashboard/QuickActionsSection";
 import { SpecialtiesSection } from "@/components/dashboard/SpecialtiesSection";
-import { EmptySpecialtiesMessage } from "@/components/dashboard/EmptySpecialtiesMessage";
+import { QuickActionsSection } from "@/components/dashboard/QuickActionsSection";
+import { RankingWidget } from "@/components/dashboard/RankingWidget";
 import { DashboardFooter } from "@/components/dashboard/DashboardFooter";
+import { RadBotFloatingButton } from "@/components/radbot/RadBotFloatingButton";
 
 export default function Dashboard() {
-  const { specialties, events, profile, isLoading: dashboardLoading } = useDashboardData();
-  const { specialtiesWithProgress, isLoading: progressLoading } = useSpecialtiesData(specialties);
-  const {
-    handleCentralCasos,
-    handleCriarJornada,
-    handleEventos,
-    handleConquistas,
-    handleEnterEvent
-  } = useDashboardHandlers();
-
-  const isLoading = dashboardLoading || progressLoading;
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen w-full overflow-x-hidden flex flex-col bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white">
-        <HeaderNav />
-        <main className="flex-1 w-full px-2 md:px-4 lg:px-8 xl:px-16 pt-4 pb-10 overflow-x-hidden">
-          <DashboardSkeleton />
-        </main>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen w-full overflow-x-hidden flex flex-col bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50">
       <HeaderNav />
-      <main className="flex-1 w-full flex flex-col gap-4 px-2 md:px-4 lg:px-8 xl:px-16 pt-4 pb-10 overflow-x-hidden">
-        <UserProfile />
-        <EventsSectionPlayer onEnterEvent={handleEnterEvent} />
-        
-        <QuickActionsSection
-          onCentralCasos={handleCentralCasos}
-          onCriarJornada={handleCriarJornada}
-          onEventos={handleEventos}
-          onConquistas={handleConquistas}
-        />
+      
+      <main className="container mx-auto px-4 py-8 space-y-8">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-4">
+            Bem-vindo ao RadVenture! 🚀
+          </h1>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Sua jornada gamificada pela radiologia médica começa aqui. 
+            Resolva casos, ganhe pontos e torne-se um expert! ✨
+          </p>
+        </div>
 
-        {specialties.length > 0 ? (
-          <SpecialtiesSection 
-            specialties={specialties}
-            specialtiesWithProgress={specialtiesWithProgress}
-          />
-        ) : (
-          <EmptySpecialtiesMessage />
-        )}
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            <SpecialtiesSection />
+            <QuickActionsSection />
+          </div>
+          
+          {/* Sidebar */}
+          <div className="space-y-6">
+            <RankingWidget />
+          </div>
+        </div>
       </main>
 
-      <DashboardFooter 
-        specialties={specialties}
-        events={events}
-        profile={profile}
-      />
+      <DashboardFooter />
+      
+      {/* RadBot AI Floating Button */}
+      <RadBotFloatingButton />
     </div>
   );
 }

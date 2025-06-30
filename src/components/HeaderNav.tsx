@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { 
@@ -11,7 +12,8 @@ import {
   User,
   ChevronDown,
   Loader2,
-  Rocket
+  Rocket,
+  Bot
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -30,6 +32,7 @@ import { ProfileSettingsModal } from "@/components/profile/ProfileSettingsModal"
 import { UserReportsModal } from "@/components/profile/UserReportsModal";
 import { RadCoinStoreModal } from "@/components/radcoin-shop/RadCoinStoreModal";
 import { EventsNotificationSystem } from "@/components/eventos/EventsNotificationSystem";
+import { RadBotChat } from "@/components/radbot/RadBotChat";
 
 export function HeaderNav() {
   const location = useLocation();
@@ -39,6 +42,7 @@ export function HeaderNav() {
   const { getReportById } = useUserOwnReports();
   const [showProfileSettings, setShowProfileSettings] = useState(false);
   const [showRadCoinShop, setShowRadCoinShop] = useState(false);
+  const [showRadBot, setShowRadBot] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
   const [showReportsModal, setShowReportsModal] = useState(false);
 
@@ -122,8 +126,21 @@ export function HeaderNav() {
 
             {/* User Menu */}
             <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
-              {/* Sistema de Notificações - NOVO */}
+              {/* Sistema de Notificações */}
               {user && <EventsNotificationSystem />}
+
+              {/* RadBot AI Button */}
+              {user && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowRadBot(true)}
+                  className="relative bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white border-0 hidden sm:flex"
+                >
+                  <Bot className="h-4 w-4 mr-1" />
+                  RadBot AI
+                </Button>
+              )}
 
               {/* RadCoins Display - AGORA CLICÁVEL */}
               <button
@@ -175,6 +192,10 @@ export function HeaderNav() {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setShowRadBot(true)}>
+                    <Bot className="mr-2 h-4 w-4" />
+                    <span>RadBot AI</span>
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setShowProfileSettings(true)}>
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Gerenciar Conta</span>
@@ -205,6 +226,12 @@ export function HeaderNav() {
       <RadCoinStoreModal 
         isOpen={showRadCoinShop}
         onClose={() => setShowRadCoinShop(false)}
+      />
+
+      {/* RadBot AI Modal */}
+      <RadBotChat
+        isOpen={showRadBot}
+        onClose={() => setShowRadBot(false)}
       />
 
       {/* User Reports Modal */}
