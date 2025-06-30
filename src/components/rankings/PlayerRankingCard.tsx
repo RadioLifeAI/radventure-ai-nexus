@@ -2,7 +2,7 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Trophy, Target, Zap, Star } from "lucide-react";
+import { Trophy, Target, Zap, Star, Calendar, TrendingUp } from "lucide-react";
 
 type PlayerData = {
   id: string;
@@ -11,6 +11,11 @@ type PlayerData = {
   avatar_url?: string;
   total_points: number;
   rank: number;
+  casesResolved?: number;
+  accuracy?: number;
+  current_streak?: number;
+  weeklyPoints?: number;
+  monthlyPoints?: number;
 };
 
 type Props = {
@@ -93,18 +98,47 @@ export function PlayerRankingCard({ player, isCurrentUser = false, onClick }: Pr
         </div>
 
         {/* Performance Metrics */}
-        <div className="hidden md:flex flex-col items-end text-right">
-          <div className="text-sm text-gray-500">Performance</div>
-          <div className="flex items-center gap-2">
-            <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full transition-all duration-300"
-                style={{ width: `${Math.min((player.total_points / 5000) * 100, 100)}%` }}
-              />
-            </div>
-            <span className="text-xs text-cyan-600 font-semibold">
-              {Math.min(Math.round((player.total_points / 5000) * 100), 100)}%
-            </span>
+        <div className="hidden md:flex flex-col gap-2">
+          <div className="grid grid-cols-2 gap-3 text-center">
+            {player.casesResolved !== undefined && (
+              <div className="bg-blue-50 p-2 rounded">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <Target size={12} className="text-blue-600" />
+                  <span className="text-xs text-blue-600">Casos</span>
+                </div>
+                <span className="text-sm font-bold text-blue-800">{player.casesResolved}</span>
+              </div>
+            )}
+            
+            {player.accuracy !== undefined && (
+              <div className="bg-green-50 p-2 rounded">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <TrendingUp size={12} className="text-green-600" />
+                  <span className="text-xs text-green-600">Precisão</span>
+                </div>
+                <span className="text-sm font-bold text-green-800">{player.accuracy}%</span>
+              </div>
+            )}
+            
+            {player.weeklyPoints !== undefined && player.weeklyPoints > 0 && (
+              <div className="bg-orange-50 p-2 rounded">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <Calendar size={12} className="text-orange-600" />
+                  <span className="text-xs text-orange-600">Semana</span>
+                </div>
+                <span className="text-sm font-bold text-orange-800">{player.weeklyPoints}</span>
+              </div>
+            )}
+            
+            {player.current_streak !== undefined && player.current_streak > 0 && (
+              <div className="bg-purple-50 p-2 rounded">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <Star size={12} className="text-purple-600" />
+                  <span className="text-xs text-purple-600">Streak</span>
+                </div>
+                <span className="text-sm font-bold text-purple-800">{player.current_streak}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>

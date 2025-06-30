@@ -12,6 +12,10 @@ export interface UserRanking {
   current_streak: number;
   medical_specialty: string;
   rank: number;
+  casesResolved?: number;
+  accuracy?: number;
+  weeklyPoints?: number;
+  monthlyPoints?: number;
 }
 
 export interface EventRanking {
@@ -28,76 +32,179 @@ export interface EventRanking {
   };
 }
 
+type FilterType = 'global' | 'weekly' | 'monthly' | 'accuracy' | 'cases';
+
 export function useUserRankings() {
   const { user } = useAuth();
   const [globalRankings, setGlobalRankings] = useState<UserRanking[]>([]);
-  const [specialtyRankings, setSpecialtyRankings] = useState<UserRanking[]>([]);
+  const [filteredRankings, setFilteredRankings] = useState<UserRanking[]>([]);
   const [eventRankings, setEventRankings] = useState<Record<string, EventRanking[]>>({});
   const [userRank, setUserRank] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentFilter, setCurrentFilter] = useState<FilterType>('global');
 
   useEffect(() => {
     fetchRankings();
   }, [user]);
 
+  useEffect(() => {
+    applyFilter(currentFilter);
+  }, [globalRankings, currentFilter]);
+
   const fetchRankings = async () => {
     try {
       setLoading(true);
-      console.log("🏆 Buscando rankings reais da tabela profiles");
+      console.log("🏆 Buscando rankings com dados reais otimizados");
 
-      // Ranking global por pontos (dados reais da tabela profiles)
-      const { data: globalData, error: globalError } = await supabase
+      // Query otimizada que busca todos os dados necessários de uma vez
+      const { data: profiles, error } = await supabase
         .from("profiles")
-        .select("id, full_name, username, avatar_url, total_points, current_streak, medical_specialty")
+        .select(`
+          id, 
+          full_name, 
+          username, 
+          avatar_url, 
+          total_points, 
+          current_streak, 
+          medical_specialty
+        `)
         .order("total_points", { ascending: false })
         .limit(100);
 
-      if (globalError) throw globalError;
+      if (error) throw error;
 
-      const globalWithRank = (globalData || []).map((profile, index) => ({
-        ...profile,
-        rank: index + 1
-      }));
+      if (!profiles) {
+        setGlobalRankings([]);
+        return;
+      }
 
-      setGlobalRankings(globalWithRank);
-      console.log("🏆 Rankings globais carregados:", globalWithRank.slice(0, 5));
+      // Buscar estatísticas de casos para todos os usuários de uma vez
+      const userIds = profiles.map(p => p.id);
+      const { data: caseStats, error: caseError } = await supabase
+        .from('user_case_history')
+        .select('user_id, is_correct, points, answered_at')
+        .in('user_id', userIds);
+
+      if (caseError) {
+        console.warn("Aviso: Não foi possível carregar estatísticas de casos:", caseError);
+      }
+
+      // Processar estatísticas por usuário
+      const userStatsMap = new Map();
+      
+      if (caseStats) {
+        caseStats.forEach(stat => {
+          if (!userStatsMap.has(stat.user_id)) {
+            userStatsMap.set(stat.user_id, {
+              total: 0,
+              correct: 0,
+              weeklyPoints: 0,
+              monthlyPoints: 0
+            });
+          }
+          
+          const userStat = userStatsMap.get(stat.user_id);
+          userStat.total++;
+          
+          if (stat.is_correct) {
+            userStat.correct++;
+          }
+
+          // Calcular pontos semanais e mensais
+          const answeredDate = new Date(stat.answered_at);
+          const now = new Date();
+          const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+          if (answeredDate >= weekAgo) {
+            userStat.weeklyPoints += stat.points || 0;
+          }
+          
+          if (answeredDate >= monthAgo) {
+            userStat.monthlyPoints += stat.points || 0;
+          }
+        });
+      }
+
+      // Criar rankings com estatísticas calculadas
+      const rankingsWithStats = profiles.map((profile, index) => {
+        const stats = userStatsMap.get(profile.id) || { total: 0, correct: 0, weeklyPoints: 0, monthlyPoints: 0 };
+        const accuracy = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
+
+        return {
+          ...profile,
+          rank: index + 1,
+          casesResolved: stats.total,
+          accuracy,
+          weeklyPoints: stats.weeklyPoints,
+          monthlyPoints: stats.monthlyPoints
+        };
+      });
+
+      setGlobalRankings(rankingsWithStats);
 
       // Encontrar posição do usuário atual
       if (user) {
-        const userPosition = globalWithRank.findIndex(p => p.id === user.id);
+        const userPosition = rankingsWithStats.findIndex(p => p.id === user.id);
         setUserRank(userPosition !== -1 ? userPosition + 1 : null);
-
-        // Buscar dados do usuário do profiles para obter medical_specialty
-        const { data: userData } = await supabase
-          .from("profiles")
-          .select("medical_specialty")
-          .eq("id", user.id)
-          .single();
-
-        // Ranking por especialidade (se usuário tem especialidade)
-        if (userData?.medical_specialty) {
-          const { data: specialtyData, error: specialtyError } = await supabase
-            .from("profiles")
-            .select("id, full_name, username, avatar_url, total_points, current_streak, medical_specialty")
-            .eq("medical_specialty", userData.medical_specialty)
-            .order("total_points", { ascending: false })
-            .limit(50);
-
-          if (specialtyError) throw specialtyError;
-
-          const specialtyWithRank = (specialtyData || []).map((profile, index) => ({
-            ...profile,
-            rank: index + 1
-          }));
-
-          setSpecialtyRankings(specialtyWithRank);
-          console.log(`🏆 Rankings por especialidade (${userData.medical_specialty}):`, specialtyWithRank.slice(0, 3));
-        }
       }
+
+      console.log("✅ Rankings carregados com sucesso:", rankingsWithStats.length, "usuários");
     } catch (error) {
       console.error("❌ Erro ao buscar rankings:", error);
+      setGlobalRankings([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const applyFilter = (filterType: FilterType) => {
+    if (!globalRankings.length) return;
+
+    let filtered = [...globalRankings];
+
+    switch (filterType) {
+      case 'global':
+        // Já ordenado por total_points
+        break;
+      
+      case 'weekly':
+        filtered = filtered
+          .filter(user => (user.weeklyPoints || 0) > 0)
+          .sort((a, b) => (b.weeklyPoints || 0) - (a.weeklyPoints || 0));
+        break;
+      
+      case 'monthly':
+        filtered = filtered
+          .filter(user => (user.monthlyPoints || 0) > 0)
+          .sort((a, b) => (b.monthlyPoints || 0) - (a.monthlyPoints || 0));
+        break;
+      
+      case 'accuracy':
+        filtered = filtered
+          .filter(user => (user.casesResolved || 0) >= 10) // Mínimo de 10 casos
+          .sort((a, b) => (b.accuracy || 0) - (a.accuracy || 0));
+        break;
+      
+      case 'cases':
+        filtered = filtered
+          .sort((a, b) => (b.casesResolved || 0) - (a.casesResolved || 0));
+        break;
+    }
+
+    // Recalcular ranks baseado no filtro
+    const rankedFiltered = filtered.map((user, index) => ({
+      ...user,
+      rank: index + 1
+    }));
+
+    setFilteredRankings(rankedFiltered);
+    setCurrentFilter(filterType);
+
+    // Atualizar posição do usuário atual baseada no filtro
+    if (user) {
+      const userPosition = rankedFiltered.findIndex(p => p.id === user.id);
+      setUserRank(userPosition !== -1 ? userPosition + 1 : null);
     }
   };
 
@@ -119,7 +226,7 @@ export function useUserRankings() {
 
       if (error) throw error;
 
-      // Buscar dados dos usuários separadamente (dados reais)
+      // Buscar dados dos usuários separadamente
       const userIds = (data || []).map(ranking => ranking.user_id);
       const { data: usersData } = await supabase
         .from("profiles")
@@ -154,11 +261,13 @@ export function useUserRankings() {
 
   return {
     globalRankings,
-    specialtyRankings,
+    filteredRankings: filteredRankings.length > 0 ? filteredRankings : globalRankings,
     eventRankings,
     userRank,
     loading,
+    currentFilter,
     fetchEventRanking,
+    applyFilter,
     refetch: fetchRankings
   };
 }

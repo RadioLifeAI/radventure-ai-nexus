@@ -6,12 +6,15 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Trophy, TrendingUp, Zap, Target, Star, Award } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useUserProfile } from "@/hooks/useUserProfile";
-import { useUserStats } from "@/hooks/useUserStats";
+import { useUserRankings } from "@/hooks/useUserRankings";
 
 export function RankingWidget() {
   const navigate = useNavigate();
   const { profile } = useUserProfile();
-  const { stats, isLoading } = useUserStats();
+  const { userRank, loading, filteredRankings } = useUserRankings();
+
+  // Encontrar dados do usuário atual no ranking
+  const currentUserData = profile ? filteredRankings.find(p => p.id === profile.id) : null;
 
   const getRankBadgeColor = (rank?: number) => {
     if (!rank) return "bg-gray-500";
@@ -20,11 +23,7 @@ export function RankingWidget() {
     return "bg-gradient-to-r from-gray-500 to-gray-600";
   };
 
-  // Simular ranking baseado em pontos
-  const userRank = profile?.total_points ? Math.max(1, Math.floor(Math.random() * 50) + 1) : undefined;
-  const weeklyPosition = stats?.weeklyProgress?.reduce((sum, day) => sum + day.cases, 0) || 0;
-
-  if (isLoading) {
+  if (loading) {
     return (
       <Card className="bg-gradient-to-br from-cyan-50 to-blue-50 border-2 border-cyan-200 animate-pulse">
         <CardHeader className="pb-3">
@@ -112,35 +111,35 @@ export function RankingWidget() {
           
           <div className="bg-white/80 p-3 rounded-lg hover:bg-white transition-colors">
             <div className="flex items-center justify-center gap-1 mb-1">
-              <TrendingUp size={16} className="text-green-500" />
-              <span className="text-xs text-gray-500">Esta Semana</span>
+              <Target size={16} className="text-green-500" />
+              <span className="text-xs text-gray-500">Casos</span>
             </div>
             <div className="text-lg font-bold text-gray-800">
-              {weeklyPosition} casos
+              {currentUserData?.casesResolved || 0}
             </div>
           </div>
         </div>
 
-        {stats?.accuracy && stats.accuracy >= 70 && (
+        {currentUserData?.accuracy && currentUserData.accuracy >= 70 && (
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 p-3 rounded-lg">
             <div className="flex items-center gap-2 mb-1">
               <Target size={14} className="text-green-600" />
               <span className="text-xs font-semibold text-green-700">Alta Precisão!</span>
             </div>
             <div className="text-sm text-green-800">
-              {stats.accuracy}% de acertos em {stats.totalCases} casos
+              {currentUserData.accuracy}% de acertos
             </div>
           </div>
         )}
 
-        {stats?.currentStreak && stats.currentStreak > 0 && (
+        {profile?.current_streak && profile.current_streak > 0 && (
           <div className="bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200 p-3 rounded-lg">
             <div className="flex items-center gap-2 mb-1">
               <Zap size={14} className="text-orange-600" />
               <span className="text-xs font-semibold text-orange-700">Sequência Ativa!</span>
             </div>
             <div className="text-sm text-orange-800">
-              {stats.currentStreak} dia{stats.currentStreak > 1 ? 's' : ''} consecutivos
+              {profile.current_streak} dia{profile.current_streak > 1 ? 's' : ''} consecutivos
             </div>
           </div>
         )}
