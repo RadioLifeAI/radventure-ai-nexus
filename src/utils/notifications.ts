@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-export type NotificationType = 'event_starting' | 'achievement_unlocked' | 'ranking_update' | 'new_event' | 'reminder' | 'radcoin_reward' | 'streak_milestone' | 'daily_login_bonus' | 'case_milestone';
+export type NotificationType = 'event_starting' | 'achievement_unlocked' | 'ranking_update' | 'new_event' | 'reminder' | 'radcoin_reward' | 'streak_milestone' | 'daily_login_bonus' | 'case_milestone' | 'report_update';
 export type NotificationPriority = 'low' | 'medium' | 'high';
 
 interface CreateNotificationProps {
@@ -92,6 +92,30 @@ export async function createNotificationForAllUsers({
     console.error('Erro ao criar notificações em massa:', error);
     return { success: false, error };
   }
+}
+
+// Função específica para notificações de report
+export async function createReportNotification({
+  userId,
+  reportId,
+  title,
+  message,
+  priority = 'medium'
+}: {
+  userId: string;
+  reportId: string;
+  title: string;
+  message: string;
+  priority?: NotificationPriority;
+}) {
+  return createNotification({
+    userId,
+    type: 'report_update',
+    title,
+    message,
+    priority,
+    metadata: { report_id: reportId }
+  });
 }
 
 // Função para marcar notificação como lida

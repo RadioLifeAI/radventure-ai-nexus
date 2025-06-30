@@ -26,7 +26,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { useUserOwnReports } from "@/hooks/useUserOwnReports";
 import { ProfileSettingsModal } from "@/components/profile/ProfileSettingsModal";
+import { UserReportsModal } from "@/components/profile/UserReportsModal";
 import { RadCoinStoreModal } from "@/components/radcoin-shop/RadCoinStoreModal";
 import { EventsNotificationSystem } from "@/components/eventos/EventsNotificationSystem";
 
@@ -35,13 +37,33 @@ export function HeaderNav() {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const { profile, isLoading: profileLoading } = useUserProfile();
+  const { getReportById } = useUserOwnReports();
   const [showProfileSettings, setShowProfileSettings] = useState(false);
   const [showRadCoinShop, setShowRadCoinShop] = useState(false);
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [showReportsModal, setShowReportsModal] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
   };
+
+  // Função para abrir modal de report (será chamada pelas notificações)
+  const openReportModal = (reportId: string) => {
+    const report = getReportById(reportId);
+    if (report) {
+      setSelectedReport(report);
+      setShowReportsModal(true);
+    }
+  };
+
+  // Tornar a função disponível globalmente para as notificações
+  React.useEffect(() => {
+    window.openReportModal = openReportModal;
+    return () => {
+      delete window.openReportModal;
+    };
+  }, [getReportById]);
 
   const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: Home },
@@ -184,6 +206,16 @@ export function HeaderNav() {
       <RadCoinStoreModal 
         isOpen={showRadCoinShop}
         onClose={() => setShowRadCoinShop(false)}
+      />
+
+      {/* User Reports Modal */}
+      <UserReportsModal
+        report={selectedReport}
+        isOpen={showReportsModal}
+        onClose={() => {
+          setShowReportsModal(false);
+          setSelectedReport(null);
+        }}
       />
     </>
   );

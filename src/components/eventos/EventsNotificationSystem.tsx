@@ -35,6 +35,7 @@ export function EventsNotificationSystem() {
       case 'ranking_update': return <Star className="h-4 w-4 text-blue-500" />;
       case 'new_event': return <Gift className="h-4 w-4 text-purple-500" />;
       case 'reminder': return <Clock className="h-4 w-4 text-gray-500" />;
+      case 'report_update': return <Bell className="h-4 w-4 text-blue-500" />;
       default: return <Bell className="h-4 w-4 text-gray-500" />;
     }
   };
@@ -53,6 +54,17 @@ export function EventsNotificationSystem() {
       markAsRead(notification.id);
     }
     
+    // Se for notificação de report, abrir modal
+    if (notification.type === 'report_update' && notification.metadata?.report_id) {
+      // Usar a função global para abrir o modal
+      if (window.openReportModal) {
+        window.openReportModal(notification.metadata.report_id);
+      }
+      setIsOpen(false);
+      return;
+    }
+    
+    // Para outras notificações, navegar normalmente
     if (notification.actionUrl) {
       navigate(notification.actionUrl);
       setIsOpen(false);
@@ -137,9 +149,14 @@ export function EventsNotificationSystem() {
                             })}
                           </span>
                           <div className="flex items-center gap-2">
-                            {notification.actionLabel && (
+                            {notification.actionLabel && notification.type !== 'report_update' && (
                               <Button size="sm" variant="outline" className="text-xs px-2 py-1">
                                 {notification.actionLabel}
+                              </Button>
+                            )}
+                            {notification.type === 'report_update' && (
+                              <Button size="sm" variant="outline" className="text-xs px-2 py-1">
+                                Ver Report
                               </Button>
                             )}
                             <Button
