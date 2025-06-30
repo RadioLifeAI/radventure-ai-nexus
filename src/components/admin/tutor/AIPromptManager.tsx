@@ -42,6 +42,21 @@ interface AIPromptConfig {
   updated_at: string;
 }
 
+// Tipo específico para upsert que garante config_name obrigatório
+interface AIPromptConfigUpsert {
+  id?: string;
+  config_name: string;
+  ai_function_type: string;
+  prompt_category: string;
+  api_provider: string;
+  model_name: string;
+  max_tokens: number;
+  temperature: number;
+  is_active: boolean;
+  is_default: boolean;
+  prompt_template: string;
+}
+
 const AI_FUNCTION_TYPES = {
   'ai_tutor': { name: 'AI Tutor', icon: Bot, color: 'bg-blue-500' },
   'radbot_chat': { name: 'RadBot Chat', icon: MessageSquare, color: 'bg-purple-500' },
@@ -71,7 +86,7 @@ export function AIPromptManager() {
   });
 
   const saveConfigMutation = useMutation({
-    mutationFn: async (config: Partial<AIPromptConfig>) => {
+    mutationFn: async (config: AIPromptConfigUpsert) => {
       const { data, error } = await supabase
         .from("ai_tutor_config")
         .upsert(config)
@@ -93,9 +108,16 @@ export function AIPromptManager() {
   });
 
   const handleSaveConfig = (formData: FormData) => {
-    const config = {
+    const configName = formData.get('config_name') as string;
+    
+    if (!configName || configName.trim() === '') {
+      toast.error("Nome da configuração é obrigatório");
+      return;
+    }
+
+    const config: AIPromptConfigUpsert = {
       id: editingConfig?.id,
-      config_name: formData.get('config_name') as string,
+      config_name: configName,
       ai_function_type: formData.get('ai_function_type') as string,
       prompt_category: formData.get('prompt_category') as string,
       api_provider: formData.get('api_provider') as string,
