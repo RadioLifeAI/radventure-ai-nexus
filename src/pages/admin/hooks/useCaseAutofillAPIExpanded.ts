@@ -1,7 +1,7 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
+import { usePromptManager } from "@/hooks/usePromptManager";
 
 export interface AutofillOptions {
   action: 'smart_autofill' | 'template_autofill' | 'field_completion' | 'consistency_check' | 'smart_suggestions' |
@@ -14,12 +14,14 @@ export interface AutofillOptions {
 export function useCaseAutofillAPIExpanded() {
   const [loading, setLoading] = useState(false);
   const [lastSuggestions, setLastSuggestions] = useState<any>(null);
+  const { promptStats } = usePromptManager();
 
   const callAutofillAPI = async (caseData: any, options: AutofillOptions) => {
     setLoading(true);
     
     try {
       console.log('🚀 Calling case-autofill API:', options);
+      console.log('📊 Current prompt stats:', promptStats?.case_autofill);
       
       const { data, error } = await supabase.functions.invoke('case-autofill', {
         body: { 
@@ -46,8 +48,9 @@ export function useCaseAutofillAPIExpanded() {
       }
 
       console.log('✅ API Response:', data);
+      console.log('🤖 Prompt usado:', data?.prompt_used || 'unknown');
       
-      const suggestions = data?.suggestions;
+      const suggestions = data?.suggestions || data?.autofill_data;
       setLastSuggestions(suggestions);
       
       return suggestions;
@@ -55,7 +58,7 @@ export function useCaseAutofillAPIExpanded() {
       console.error('💥 Autofill API Error:', error);
       toast({ 
         title: "Erro no auto-preenchimento", 
-        description: error.message || "Erro desconhecido",
+        description: error.message || "Erro desconhecido. Verifique se o sistema de prompts está configurado.",
         variant: "destructive" 
       });
       return null;
@@ -126,6 +129,8 @@ export function useCaseAutofillAPIExpanded() {
   return {
     loading,
     lastSuggestions,
+    // Informações do sistema centralizado
+    promptStats: promptStats?.case_autofill,
     // Novas funções por seção
     autofillBasicComplete,
     autofillStructuredComplete,

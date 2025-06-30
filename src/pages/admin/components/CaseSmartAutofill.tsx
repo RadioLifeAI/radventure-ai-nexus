@@ -11,10 +11,12 @@ import {
   Lightbulb,
   Loader2,
   Sparkles,
-  Target
+  Target,
+  Database
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { usePromptManager } from "@/hooks/usePromptManager";
 
 type Props = {
   form: any;
@@ -26,6 +28,7 @@ export function CaseSmartAutofill({ form, setForm, onFieldsUpdated }: Props) {
   const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<any>(null);
   const [lastAction, setLastAction] = useState<string | null>(null);
+  const { promptStats } = usePromptManager();
 
   const callAutofillAPI = async (action: string, templateType?: string) => {
     setLoading(true);
@@ -42,8 +45,16 @@ export function CaseSmartAutofill({ form, setForm, onFieldsUpdated }: Props) {
 
       if (error) throw error;
 
-      setSuggestions(data.suggestions);
-      return data.suggestions;
+      setSuggestions(data.suggestions || data.autofill_data);
+      
+      // Mostrar informação sobre o sistema de prompts usado
+      if (data.prompt_used === 'centralized') {
+        console.log('✅ Usando sistema centralizado de prompts');
+      } else {
+        console.log('⚠️ Usando prompts de fallback');
+      }
+      
+      return data.suggestions || data.autofill_data;
     } catch (error: any) {
       console.error('Erro no auto-preenchimento:', error);
       toast({ 
@@ -140,6 +151,12 @@ export function CaseSmartAutofill({ form, setForm, onFieldsUpdated }: Props) {
             <Wand2 className="h-5 w-5" />
             Auto-preenchimento Inteligente
             <Badge className="bg-purple-500 text-white">IA</Badge>
+            {promptStats?.total_calls > 0 && (
+              <Badge variant="outline" className="flex items-center gap-1">
+                <Database className="h-3 w-3" />
+                {promptStats.total_calls} chamadas
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
