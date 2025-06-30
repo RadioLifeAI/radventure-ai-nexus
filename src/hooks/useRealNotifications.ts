@@ -5,7 +5,7 @@ import { useAuth } from "./useAuth";
 
 export interface Notification {
   id: string;
-  type: 'event_starting' | 'achievement_unlocked' | 'ranking_update' | 'new_event' | 'reminder';
+  type: 'event_starting' | 'achievement_unlocked' | 'ranking_update' | 'new_event' | 'reminder' | 'report_update';
   title: string;
   message: string;
   timestamp: Date;
