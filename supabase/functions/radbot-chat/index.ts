@@ -53,11 +53,11 @@ serve(async (req) => {
       });
     }
 
-    // Debitar RadCoins usando a função award_radcoins com valor negativo
+    // CORREÇÃO CRÍTICA: Usar 'help_purchase' em vez de 'premium_service'
     const { error: debitError } = await supabase.rpc('award_radcoins', {
       p_user_id: userId,
       p_amount: -chatCost,
-      p_transaction_type: 'premium_service',
+      p_transaction_type: 'help_purchase',
       p_metadata: { service: 'radbot_ai', cost_per_message: chatCost }
     });
 
@@ -71,61 +71,127 @@ serve(async (req) => {
       });
     }
 
-    // Buscar dados do usuário para contexto
+    // Buscar dados completos do usuário para contexto enriquecido
     const { data: fullProfile } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
       .single();
 
-    // Buscar progresso do usuário
+    // Buscar progresso detalhado do usuário
     const { data: caseHistory } = await supabase
       .from('user_case_history')
       .select('*')
       .eq('user_id', userId)
       .order('answered_at', { ascending: false })
+      .limit(20);
+
+    // Buscar conquistas do usuário
+    const { data: achievements } = await supabase
+      .from('user_achievements_progress')
+      .select(`
+        *,
+        achievement_system (*)
+      `)
+      .eq('user_id', userId)
+      .eq('is_completed', true)
       .limit(10);
 
-    // Criar contexto personalizado
+    // Buscar eventos ativos que o usuário pode participar
+    const { data: activeEvents } = await supabase
+      .from('events')
+      .select('*')
+      .eq('status', 'ACTIVE')
+      .limit(3);
+
+    // Calcular estatísticas do usuário
+    const totalCasesResolved = caseHistory?.length || 0;
+    const correctAnswers = caseHistory?.filter(h => h.is_correct).length || 0;
+    const accuracy = totalCasesResolved > 0 ? Math.round((correctAnswers / totalCasesResolved) * 100) : 0;
+    const achievementsCount = achievements?.length || 0;
+
+    // Criar contexto personalizado e enriquecido
     const userContext = `
-Dados do usuário:
-- Nome: ${fullProfile?.full_name || 'Usuário'}
+DADOS DO USUÁRIO:
+- Nome: ${fullProfile?.full_name || 'Estudante'}
 - Especialidade: ${fullProfile?.medical_specialty || 'Não informada'}
+- Estágio acadêmico: ${fullProfile?.academic_stage || 'Não informado'}
 - Pontos totais: ${fullProfile?.total_points || 0}
 - RadCoins: ${(fullProfile?.radcoin_balance || 0) - chatCost}
-- Casos resolvidos: ${caseHistory?.length || 0}
+- Streak atual: ${fullProfile?.current_streak || 0} dias
+
+PROGRESSO ATUAL:
+- Casos resolvidos: ${totalCasesResolved}
+- Taxa de acerto: ${accuracy}%
+- Conquistas desbloqueadas: ${achievementsCount}
 - Último acesso: ${fullProfile?.updated_at || 'Não informado'}
+
+EVENTOS ATIVOS:
+${activeEvents?.map(e => `- ${e.name} (${e.participants_count || 0} participantes)`).join('\n') || '- Nenhum evento ativo no momento'}
+
+CONQUISTAS RECENTES:
+${achievements?.slice(0, 3).map(a => `- ${a.achievement_system?.name || 'Conquista'}`).join('\n') || '- Nenhuma conquista recente'}
 `;
 
-    // Preparar prompt do sistema
+    // Prompt do sistema melhorado e mais contextual
     const systemPrompt = `Você é o RadBot AI, assistente especializado da plataforma RadVenture para estudantes de radiologia médica.
 
-SUAS PRINCIPAIS FUNÇÕES:
-1. Explicar o funcionamento do app RadVenture
-2. Ensinar conceitos de radiologia médica (baseado em Radiopaedia, CBR, RSNA, ACR)
-3. Mostrar progresso do usuário quando solicitado
-4. Ajudar com navegação e funcionalidades
-5. Criar reports quando o usuário relatar problemas
+🎯 SUAS 3 FUNÇÕES PRINCIPAIS:
 
-CONTEXTO DO USUÁRIO:
+1. **EXPLICAR O FUNCIONAMENTO DO APP RADVENTURE**
+   - Rankings, conquistas, pontuação, títulos e eventos
+   - Como jogar, enviar casos e ganhar RadCoins
+   - Sistema de progressão e recompensas
+   - Funcionalidades e navegação
+
+2. **ENSINAR CONCEITOS DE RADIOLOGIA MÉDICA**
+   - Base em fontes confiáveis: Radiopaedia.org, CBR, RSNA, ACR
+   - Explicações técnicas mas acessíveis
+   - Correlações clínico-radiológicas
+   - Casos práticos e diagnósticos diferenciais
+
+3. **INTERAGIR COM O PROGRESSO DO USUÁRIO**
+   - Análise personalizada do desempenho
+   - Sugestões de melhoria baseadas nos dados
+   - Incentivo e gamificação
+   - Recomendações de casos e especialidades
+
+📊 CONTEXTO ATUAL DO USUÁRIO:
 ${userContext}
 
-COMANDOS ESPECIAIS:
-- /meus-stats: Mostrar estatísticas do usuário
-- /radcoins: Explicar sobre RadCoins
-- /eventos: Informações sobre eventos
-- /conquistas: Sistema de conquistas
+🤖 COMANDOS ESPECIAIS:
+- /meus-stats: Análise completa do progresso
+- /radcoins: Sistema de moeda virtual
+- /eventos: Competições e rankings
+- /conquistas: Sistema de badges e recompensas
+- /help: Ajuda e funcionalidades
 
-REGRAS IMPORTANTES:
-- Sempre use linguagem técnica mas acessível
-- Cite fontes médicas quando apropriado
-- Se detectar um pedido de suporte/bug, sugira criar um report
-- Mantenha respostas concisas e úteis
-- Use emojis médicos: 🩺🔬💊🧬⚡
+⚡ PERSONALIZAÇÃO INTELIGENTE:
+- Se accuracy < 70%: Ofereça dicas de estudo
+- Se streak >= 7: Parabenize pela consistência  
+- Se poucos RadCoins: Explique como ganhar mais
+- Se muitas conquistas: Desafie com casos avançados
+- Se eventos ativos: Incentive participação
 
-DISCLAIMER: Lembre sempre que suas informações são educacionais e não substituem consulta médica profissional.`;
+🔍 DETECÇÃO AUTOMÁTICA DE REPORTS:
+- Palavras-chave: "problema", "bug", "erro", "não funciona", "travou"
+- Se detectado: Sugira criar report automaticamente
+- Colete detalhes específicos do problema
 
-    // Chamar OpenAI
+💡 ESTILO DE COMUNICAÇÃO:
+- Use emojis médicos: 🩺🔬💊🧬⚡📋🏆
+- Linguagem técnica mas acessível
+- Respostas concisas e objetivas
+- Cite fontes quando apropriado
+- Mantenha tom encorajador e educativo
+
+⚠️ DISCLAIMER OBRIGATÓRIO:
+Sempre lembre que suas informações são educacionais e não substituem consulta médica profissional.
+
+🎯 RESPOSTA CONTEXTUAL:
+Baseie suas respostas no progresso atual do usuário mostrado acima. Se ele tem poucos casos resolvidos, seja mais introdutório. Se tem muitas conquistas, seja mais avançado.`;
+
+    // Chamar OpenAI com modelo otimizado
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -138,7 +204,7 @@ DISCLAIMER: Lembre sempre que suas informações são educacionais e não substi
           { role: 'system', content: systemPrompt },
           { role: 'user', content: message }
         ],
-        max_tokens: 800,
+        max_tokens: 1000,
         temperature: 0.7,
       }),
     });
@@ -150,7 +216,7 @@ DISCLAIMER: Lembre sempre que suas informações são educacionais e não substi
     const openAIData = await openAIResponse.json();
     const botResponse = openAIData.choices[0].message.content;
 
-    // Salvar conversa no banco
+    // Salvar conversa no banco com mais metadados
     const sessionId = `session_${userId}_${Date.now()}`;
     const { error: saveError } = await supabase
       .from('ai_chat_messages')
@@ -160,14 +226,26 @@ DISCLAIMER: Lembre sempre que suas informações são educacionais e não substi
           user_id: userId,
           content: message,
           message_type: 'user',
-          radcoins_cost: chatCost
+          radcoins_cost: chatCost,
+          context_data: {
+            user_stats: {
+              total_points: fullProfile?.total_points || 0,
+              cases_resolved: totalCasesResolved,
+              accuracy: accuracy,
+              streak: fullProfile?.current_streak || 0
+            }
+          }
         },
         {
           session_id: sessionId,
           user_id: userId,
           content: botResponse,
           message_type: 'assistant',
-          radcoins_cost: 0
+          radcoins_cost: 0,
+          context_data: {
+            openai_model: 'gpt-4o-mini',
+            response_tokens: openAIData.usage?.completion_tokens || 0
+          }
         }
       ]);
 
@@ -175,11 +253,11 @@ DISCLAIMER: Lembre sempre que suas informações são educacionais e não substi
       console.error('Erro ao salvar conversa:', saveError);
     }
 
-    // Detectar se é pedido de report
-    const isReportRequest = message.toLowerCase().includes('problema') || 
-                           message.toLowerCase().includes('bug') || 
-                           message.toLowerCase().includes('erro') ||
-                           message.toLowerCase().includes('report');
+    // Detecção automática melhorada de reports
+    const reportKeywords = ['problema', 'bug', 'erro', 'não funciona', 'travou', 'quebrou', 'falha', 'defeito'];
+    const isReportRequest = reportKeywords.some(keyword => 
+      message.toLowerCase().includes(keyword)
+    );
 
     let shouldCreateReport = false;
     if (isReportRequest && botResponse.toLowerCase().includes('report')) {
@@ -190,7 +268,13 @@ DISCLAIMER: Lembre sempre que suas informações são educacionais e não substi
       response: botResponse,
       shouldCreateReport,
       costPaid: chatCost,
-      newBalance: (fullProfile?.radcoin_balance || 0) - chatCost
+      newBalance: (fullProfile?.radcoin_balance || 0) - chatCost,
+      userStats: {
+        casesResolved: totalCasesResolved,
+        accuracy: accuracy,
+        achievements: achievementsCount,
+        streak: fullProfile?.current_streak || 0
+      }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
