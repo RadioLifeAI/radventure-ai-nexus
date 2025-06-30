@@ -5,8 +5,11 @@ import { PodiumDisplay } from "@/components/rankings/PodiumDisplay";
 import { PlayerRankingCard } from "@/components/rankings/PlayerRankingCard";
 import { RankingFilters } from "@/components/rankings/RankingFilters";
 import { MyRankingCard } from "@/components/rankings/MyRankingCard";
+import { SeasonSelector } from "@/components/rankings/SeasonSelector";
+import { IntegratedRewardsPanel } from "@/components/rankings/IntegratedRewardsPanel";
+import { AnalyticsInsights } from "@/components/rankings/AnalyticsInsights";
 import { Trophy } from "lucide-react";
-import { useUserRankings } from "@/hooks/useUserRankings";
+import { useSeasonRankings } from "@/hooks/useSeasonRankings";
 import { useAuth } from "@/hooks/useAuth";
 
 type FilterType = 'global' | 'weekly' | 'monthly' | 'accuracy' | 'cases';
@@ -18,8 +21,12 @@ export default function Rankings() {
     userRank,
     loading,
     currentFilter,
+    currentSeason,
+    seasons,
+    changeSeason,
+    getCurrentSeasonInfo,
     applyFilter
-  } = useUserRankings();
+  } = useSeasonRankings();
 
   const handleFilterChange = (filter: FilterType) => {
     applyFilter(filter);
@@ -38,13 +45,18 @@ export default function Rankings() {
   } : null;
 
   const getFilterDescription = () => {
-    switch (currentFilter) {
-      case 'weekly': return 'Pontos dos últimos 7 dias';
-      case 'monthly': return 'Pontos dos últimos 30 dias';
-      case 'accuracy': return 'Precisão (mín. 10 casos)';
-      case 'cases': return 'Número de casos resolvidos';
-      default: return 'Pontuação total de todos os tempos';
-    }
+    const seasonInfo = getCurrentSeasonInfo();
+    const baseDesc = (() => {
+      switch (currentFilter) {
+        case 'weekly': return 'Pontos dos últimos 7 dias';
+        case 'monthly': return 'Pontos dos últimos 30 dias';
+        case 'accuracy': return 'Precisão (mín. 10 casos)';
+        case 'cases': return 'Número de casos resolvidos';
+        default: return 'Pontuação total de todos os tempos';
+      }
+    })();
+    
+    return `${baseDesc} - ${seasonInfo.name}`;
   };
 
   return (
@@ -59,6 +71,19 @@ export default function Rankings() {
           <p className="mb-6 text-cyan-100 text-lg">
             {getFilterDescription()}
           </p>
+
+          {/* Seletor de Temporadas */}
+          <SeasonSelector 
+            seasons={seasons}
+            currentSeason={currentSeason}
+            onSeasonChange={changeSeason}
+          />
+
+          {/* Painel de Recompensas Integrado */}
+          <IntegratedRewardsPanel />
+
+          {/* Analytics e Insights */}
+          <AnalyticsInsights />
 
           <RankingFilters 
             activeFilter={currentFilter} 
