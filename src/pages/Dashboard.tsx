@@ -6,41 +6,8 @@ import { QuickActionsSection } from "@/components/dashboard/QuickActionsSection"
 import { RankingWidget } from "@/components/dashboard/RankingWidget";
 import { DashboardFooter } from "@/components/dashboard/DashboardFooter";
 import { RadBotFloatingButton } from "@/components/radbot/RadBotFloatingButton";
-import { useDashboardData } from "@/hooks/useDashboardData";
-import { useDashboardHandlers } from "@/hooks/useDashboardHandlers";
-import { useUserProgress } from "@/hooks/useUserProgress";
 
 export default function Dashboard() {
-  const { specialties, events, profile, isLoading } = useDashboardData();
-  const { 
-    handleCentralCasos, 
-    handleCriarJornada, 
-    handleEventos, 
-    handleConquistas 
-  } = useDashboardHandlers();
-  
-  // Calcular progresso por especialidade
-  const { userProgress } = useUserProgress();
-  
-  const specialtiesWithProgress = specialties.map(specialty => ({
-    ...specialty,
-    progress: userProgress?.bySpecialty?.[specialty.name] || { total: 0, correct: 0 }
-  }));
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50">
-        <HeaderNav />
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Carregando dashboard...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50">
       <HeaderNav />
@@ -59,16 +26,8 @@ export default function Dashboard() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            <SpecialtiesSection 
-              specialties={specialties}
-              specialtiesWithProgress={specialtiesWithProgress}
-            />
-            <QuickActionsSection 
-              onCentralCasos={handleCentralCasos}
-              onCriarJornada={handleCriarJornada}
-              onEventos={handleEventos}
-              onConquistas={handleConquistas}
-            />
+            <SpecialtiesSection />
+            <QuickActionsSection />
           </div>
           
           {/* Sidebar */}
@@ -78,11 +37,7 @@ export default function Dashboard() {
         </div>
       </main>
 
-      <DashboardFooter 
-        specialties={specialties}
-        events={events}
-        profile={profile}
-      />
+      <DashboardFooter />
       
       {/* RadBot AI Floating Button */}
       <RadBotFloatingButton />
