@@ -1,7 +1,7 @@
-
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { createNotification } from "@/utils/notifications";
 
 export function useEventRegistration() {
   const [loading, setLoading] = useState(false);
@@ -41,7 +41,7 @@ export function useEventRegistration() {
       // Verificar vagas disponíveis
       const { data: event, error: eventError } = await supabase
         .from("events")
-        .select("max_participants")
+        .select("max_participants, name")
         .eq("id", eventId)
         .single();
 
@@ -81,6 +81,22 @@ export function useEventRegistration() {
         description: "Você foi inscrito no evento com sucesso.",
         className: "bg-green-50 border-green-200"
       });
+
+      // NOVA NOTIFICAÇÃO - Inscrição em Evento
+      await createNotification({
+        userId: userId,
+        type: 'new_event',
+        title: '✅ Inscrição Confirmada!',
+        message: `Você foi inscrito no evento "${event.name}" com sucesso!`,
+        priority: 'high',
+        actionUrl: `/app/evento/${eventId}`,
+        actionLabel: 'Ver Evento',
+        metadata: {
+          event_id: eventId,
+          event_name: event.name
+        }
+      });
+      
       return true;
     } catch (error: any) {
       console.error("Erro ao inscrever no evento:", error);
@@ -98,6 +114,13 @@ export function useEventRegistration() {
   const unregisterFromEvent = useCallback(async (eventId: string, userId: string) => {
     setLoading(true);
     try {
+      // Buscar nome do evento antes de cancelar
+      const { data: event } = await supabase
+        .from("events")
+        .select("name")
+        .eq("id", eventId)
+        .single();
+
       const { error } = await supabase
         .from("event_registrations")
         .delete()
@@ -111,6 +134,22 @@ export function useEventRegistration() {
         title: "Inscrição cancelada",
         description: "Sua inscrição foi cancelada com sucesso."
       });
+
+      // NOVA NOTIFICAÇÃO - Cancelamento de Inscrição
+      await createNotification({
+        userId: userId,
+        type: 'reminder',
+        title: '❌ Inscrição Cancelada',
+        message: `Sua inscrição no evento "${event?.name || 'Evento'}" foi cancelada.`,
+        priority: 'medium',
+        actionUrl: '/app/eventos',
+        actionLabel: 'Ver Outros Eventos',
+        metadata: {
+          event_id: eventId,
+          event_name: event?.name || 'Evento'
+        }
+      });
+      
       return true;
     } catch (error: any) {
       console.error("Erro ao cancelar inscrição:", error);

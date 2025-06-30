@@ -1,8 +1,8 @@
-
 import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from '@/components/ui/use-toast';
+import { createNotification } from '@/utils/notifications';
 
 export function useProfileRewards() {
   const { user } = useAuth();
@@ -195,6 +195,22 @@ export function useProfileRewards() {
           duration: 3000,
         });
 
+        // NOVA NOTIFICAÇÃO - Recompensa de Perfil
+        await createNotification({
+          userId: user.id,
+          type: 'radcoin_reward',
+          title: '📝 Perfil Atualizado!',
+          message: `+${field.reward} RadCoins por ${field.description.toLowerCase()}`,
+          priority: 'medium',
+          actionUrl: '/app/estatisticas',
+          actionLabel: 'Ver Perfil',
+          metadata: {
+            field: field.key,
+            reward_amount: field.reward,
+            description: field.description
+          }
+        });
+
         console.log(`✅ Recompensa de ${field.reward} RadCoins dada com sucesso para ${field.key}`);
 
         // Pequena pausa para evitar concorrência
@@ -227,6 +243,21 @@ export function useProfileRewards() {
             title: '🏆 Bônus de Perfil Completo!',
             description: '+50 RadCoins por completar 100% do perfil!',
             duration: 4000,
+          });
+
+          // NOVA NOTIFICAÇÃO - Bônus de Perfil Completo
+          await createNotification({
+            userId: user.id,
+            type: 'achievement_unlocked',
+            title: '🏆 Perfil 100% Completo!',
+            message: '+50 RadCoins por completar todas as informações do perfil!',
+            priority: 'high',
+            actionUrl: '/app/estatisticas',
+            actionLabel: 'Ver Conquista',
+            metadata: {
+              achievement_type: 'profile_completion',
+              bonus_amount: 50
+            }
           });
 
           console.log('✅ Bônus de perfil completo dado com sucesso');

@@ -1,8 +1,8 @@
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { createNotification } from '@/utils/notifications';
 
 interface PurchaseItem {
   id: string;
@@ -93,11 +93,28 @@ export function useRadCoinPurchase() {
       
       return executePurchase(item, finalPrice);
     },
-    onSuccess: (_, item) => {
+    onSuccess: async (_, item) => {
       toast.success(`"${item.name}" adquirido com sucesso! 🎉`, {
         description: 'Seus benefícios foram adicionados à sua conta.',
         duration: 5000
       });
+      
+      // NOVA NOTIFICAÇÃO - Compra RadCoin
+      if (user?.id) {
+        await createNotification({
+          userId: user.id,
+          type: 'radcoin_reward',
+          title: '💰 Compra Realizada!',
+          message: `"${item.name}" foi adquirido com sucesso. Seus benefícios foram creditados!`,
+          priority: 'high',
+          actionUrl: '/app/estatisticas',
+          actionLabel: 'Ver Benefícios',
+          metadata: {
+            item_name: item.name,
+            benefits: item.benefits
+          }
+        });
+      }
       
       queryClient.invalidateQueries({ queryKey: ['user-profile'] });
       queryClient.invalidateQueries({ queryKey: ['user-help-aids'] });
