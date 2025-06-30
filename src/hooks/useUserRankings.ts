@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
@@ -163,36 +162,35 @@ export function useUserRankings() {
 
     let filtered = [...globalRankings];
 
+    // CORREÇÃO: Remover todos os .filter() que eliminam usuários
+    // Apenas alterar a ordenação baseada no filtro selecionado
     switch (filterType) {
       case 'global':
         // Já ordenado por total_points
         break;
       
       case 'weekly':
-        filtered = filtered
-          .filter(user => (user.weeklyPoints || 0) > 0)
-          .sort((a, b) => (b.weeklyPoints || 0) - (a.weeklyPoints || 0));
+        // Ordenar por weeklyPoints, mas manter todos os usuários
+        filtered = filtered.sort((a, b) => (b.weeklyPoints || 0) - (a.weeklyPoints || 0));
         break;
       
       case 'monthly':
-        filtered = filtered
-          .filter(user => (user.monthlyPoints || 0) > 0)
-          .sort((a, b) => (b.monthlyPoints || 0) - (a.monthlyPoints || 0));
+        // Ordenar por monthlyPoints, mas manter todos os usuários
+        filtered = filtered.sort((a, b) => (b.monthlyPoints || 0) - (a.monthlyPoints || 0));
         break;
       
       case 'accuracy':
-        filtered = filtered
-          .filter(user => (user.casesResolved || 0) >= 10) // Mínimo de 10 casos
-          .sort((a, b) => (b.accuracy || 0) - (a.accuracy || 0));
+        // Ordenar por accuracy, mas manter todos os usuários
+        filtered = filtered.sort((a, b) => (b.accuracy || 0) - (a.accuracy || 0));
         break;
       
       case 'cases':
-        filtered = filtered
-          .sort((a, b) => (b.casesResolved || 0) - (a.casesResolved || 0));
+        // Ordenar por casesResolved, mas manter todos os usuários
+        filtered = filtered.sort((a, b) => (b.casesResolved || 0) - (a.casesResolved || 0));
         break;
     }
 
-    // Recalcular ranks baseado no filtro
+    // Recalcular ranks baseado no filtro (todos os usuários sempre presentes)
     const rankedFiltered = filtered.map((user, index) => ({
       ...user,
       rank: index + 1
