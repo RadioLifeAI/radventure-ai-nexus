@@ -111,6 +111,121 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_chat_messages: {
+        Row: {
+          content: string
+          context_data: Json | null
+          created_at: string | null
+          id: string
+          message_type: string
+          radcoins_cost: number | null
+          session_id: string
+          tokens_used: number | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          context_data?: Json | null
+          created_at?: string | null
+          id?: string
+          message_type: string
+          radcoins_cost?: number | null
+          session_id: string
+          tokens_used?: number | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          context_data?: Json | null
+          created_at?: string | null
+          id?: string
+          message_type?: string
+          radcoins_cost?: number | null
+          session_id?: string
+          tokens_used?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_chat_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "ai_chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_chat_sessions: {
+        Row: {
+          created_at: string | null
+          id: string
+          session_name: string | null
+          total_messages: number | null
+          total_radcoins_spent: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          session_name?: string | null
+          total_messages?: number | null
+          total_radcoins_spent?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          session_name?: string | null
+          total_messages?: number | null
+          total_radcoins_spent?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_generated_reports: {
+        Row: {
+          chat_message_id: string | null
+          created_at: string | null
+          description: string
+          id: string
+          report_type: string | null
+          status: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          chat_message_id?: string | null
+          created_at?: string | null
+          description: string
+          id?: string
+          report_type?: string | null
+          status?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          chat_message_id?: string | null
+          created_at?: string | null
+          description?: string
+          id?: string
+          report_type?: string | null
+          status?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_generated_reports_chat_message_id_fkey"
+            columns: ["chat_message_id"]
+            isOneToOne: false
+            referencedRelation: "ai_chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_tutor_config: {
         Row: {
           api_provider: string
@@ -1558,6 +1673,10 @@ export type Database = {
           p_metadata?: Json
         }
         Returns: undefined
+      }
+      charge_radcoins_for_ai_chat: {
+        Args: { p_user_id: string; p_amount: number }
+        Returns: boolean
       }
       check_case_review_status: {
         Args: { p_user_id: string; p_case_id: string }

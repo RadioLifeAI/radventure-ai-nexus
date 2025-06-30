@@ -1,4 +1,3 @@
-
 import React from "react";
 import { HeaderNav } from "@/components/HeaderNav";
 import { UserProfile } from "@/components/UserProfile";
@@ -11,6 +10,9 @@ import { QuickActionsSection } from "@/components/dashboard/QuickActionsSection"
 import { SpecialtiesSection } from "@/components/dashboard/SpecialtiesSection";
 import { EmptySpecialtiesMessage } from "@/components/dashboard/EmptySpecialtiesMessage";
 import { DashboardFooter } from "@/components/dashboard/DashboardFooter";
+import { RadBotFloatingButton } from "@/components/radbot/RadBotFloatingButton";
+import { RadBotChat } from "@/components/radbot/RadBotChat";
+import { useState } from "react";
 
 export default function Dashboard() {
   const { specialties, events, profile, isLoading: dashboardLoading } = useDashboardData();
@@ -24,6 +26,9 @@ export default function Dashboard() {
   } = useDashboardHandlers();
 
   const isLoading = dashboardLoading || progressLoading;
+
+  // NOVA STATE APENAS PARA O CHAT - NÃO AFETA NADA EXISTENTE
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -64,6 +69,17 @@ export default function Dashboard() {
         specialties={specialties}
         events={events}
         profile={profile}
+      />
+
+      {/* RADBOT AI - BOTÃO FLUTUANTE POSICIONADO ACIMA DO FOOTER */}
+      <RadBotFloatingButton 
+        onClick={() => setIsChatOpen(true)} 
+      />
+      
+      {/* RADBOT AI - MODAL DE CHAT */}
+      <RadBotChat 
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
       />
     </div>
   );
