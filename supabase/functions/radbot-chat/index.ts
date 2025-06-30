@@ -53,6 +53,43 @@ serve(async (req) => {
       });
     }
 
+    // Buscar configuração de prompt ativa para RadBot
+    const { data: promptConfig, error: promptError } = await supabase
+      .rpc('get_active_prompt', {
+        p_function_type: 'radbot_chat',
+        p_category: 'main_chat'
+      });
+
+    if (promptError || !promptConfig || promptConfig.length === 0) {
+      console.error('Erro ao buscar configuração de prompt:', promptError);
+      // Fallback para prompt padrão se não encontrar
+      var systemPrompt = `Você é o RadBot AI, assistente especializado da plataforma RadVenture para estudantes de radiologia médica.
+
+🎯 SUAS 3 FUNÇÕES PRINCIPAIS:
+1. **EXPLICAR O FUNCIONAMENTO DO APP RADVENTURE**
+2. **ENSINAR CONCEITOS DE RADIOLOGIA MÉDICA** 
+3. **INTERAGIR COM O PROGRESSO DO USUÁRIO**
+
+💡 ESTILO DE COMUNICAÇÃO:
+- Use emojis médicos: 🩺🔬💊🧬⚡📋🏆
+- Linguagem técnica mas acessível
+- Respostas concisas e objetivas
+- Mantenha tom encorajador e educativo
+
+⚠️ DISCLAIMER OBRIGATÓRIO:
+Sempre lembre que suas informações são educacionais e não substituem consulta médica profissional.`;
+      var modelName = 'gpt-4o-mini';
+      var maxTokens = 1000;
+      var temperature = 0.7;
+      var configId = null;
+    } else {
+      var systemPrompt = promptConfig[0].prompt_template;
+      var modelName = promptConfig[0].model_name;
+      var maxTokens = promptConfig[0].max_tokens;
+      var temperature = promptConfig[0].temperature;
+      var configId = promptConfig[0].config_id;
+    }
+
     // CORREÇÃO CRÍTICA: Usar 'help_purchase' em vez de 'premium_service'
     const { error: debitError } = await supabase.rpc('award_radcoins', {
       p_user_id: userId,
@@ -133,65 +170,19 @@ CONQUISTAS RECENTES:
 ${achievements?.slice(0, 3).map(a => `- ${a.achievement_system?.name || 'Conquista'}`).join('\n') || '- Nenhuma conquista recente'}
 `;
 
-    // Prompt do sistema melhorado e mais contextual
-    const systemPrompt = `Você é o RadBot AI, assistente especializado da plataforma RadVenture para estudantes de radiologia médica.
-
-🎯 SUAS 3 FUNÇÕES PRINCIPAIS:
-
-1. **EXPLICAR O FUNCIONAMENTO DO APP RADVENTURE**
-   - Rankings, conquistas, pontuação, títulos e eventos
-   - Como jogar, enviar casos e ganhar RadCoins
-   - Sistema de progressão e recompensas
-   - Funcionalidades e navegação
-
-2. **ENSINAR CONCEITOS DE RADIOLOGIA MÉDICA**
-   - Base em fontes confiáveis: Radiopaedia.org, CBR, RSNA, ACR
-   - Explicações técnicas mas acessíveis
-   - Correlações clínico-radiológicas
-   - Casos práticos e diagnósticos diferenciais
-
-3. **INTERAGIR COM O PROGRESSO DO USUÁRIO**
-   - Análise personalizada do desempenho
-   - Sugestões de melhoria baseadas nos dados
-   - Incentivo e gamificação
-   - Recomendações de casos e especialidades
+    // Integrar contexto do usuário no prompt do sistema
+    const finalSystemPrompt = `${systemPrompt}
 
 📊 CONTEXTO ATUAL DO USUÁRIO:
 ${userContext}
 
-🤖 COMANDOS ESPECIAIS:
-- /meus-stats: Análise completa do progresso
-- /radcoins: Sistema de moeda virtual
-- /eventos: Competições e rankings
-- /conquistas: Sistema de badges e recompensas
-- /help: Ajuda e funcionalidades
-
-⚡ PERSONALIZAÇÃO INTELIGENTE:
-- Se accuracy < 70%: Ofereça dicas de estudo
-- Se streak >= 7: Parabenize pela consistência  
-- Se poucos RadCoins: Explique como ganhar mais
-- Se muitas conquistas: Desafie com casos avançados
-- Se eventos ativos: Incentive participação
-
-🔍 DETECÇÃO AUTOMÁTICA DE REPORTS:
-- Palavras-chave: "problema", "bug", "erro", "não funciona", "travou"
-- Se detectado: Sugira criar report automaticamente
-- Colete detalhes específicos do problema
-
-💡 ESTILO DE COMUNICAÇÃO:
-- Use emojis médicos: 🩺🔬💊🧬⚡📋🏆
-- Linguagem técnica mas acessível
-- Respostas concisas e objetivas
-- Cite fontes quando apropriado
-- Mantenha tom encorajador e educativo
-
-⚠️ DISCLAIMER OBRIGATÓRIO:
-Sempre lembre que suas informações são educacionais e não substituem consulta médica profissional.
-
 🎯 RESPOSTA CONTEXTUAL:
 Baseie suas respostas no progresso atual do usuário mostrado acima. Se ele tem poucos casos resolvidos, seja mais introdutório. Se tem muitas conquistas, seja mais avançado.`;
 
-    // Chamar OpenAI com modelo otimizado
+    // Registrar início da chamada para métricas
+    const startTime = Date.now();
+
+    // Chamar OpenAI com configuração do prompt
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -199,15 +190,17 @@ Baseie suas respostas no progresso atual do usuário mostrado acima. Se ele tem 
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: modelName,
         messages: [
-          { role: 'system', content: systemPrompt },
+          { role: 'system', content: finalSystemPrompt },
           { role: 'user', content: message }
         ],
-        max_tokens: 1000,
-        temperature: 0.7,
+        max_tokens: maxTokens,
+        temperature: temperature,
       }),
     });
+
+    const responseTime = Date.now() - startTime;
 
     if (!openAIResponse.ok) {
       throw new Error(`OpenAI API error: ${openAIResponse.status}`);
@@ -215,6 +208,18 @@ Baseie suas respostas no progresso atual do usuário mostrado acima. Se ele tem 
 
     const openAIData = await openAIResponse.json();
     const botResponse = openAIData.choices[0].message.content;
+    const tokensUsed = openAIData.usage?.total_tokens || 0;
+
+    // Registrar uso do prompt se temos um configId
+    if (configId) {
+      await supabase.rpc('log_ai_prompt_usage', {
+        p_config_id: configId,
+        p_tokens_used: tokensUsed,
+        p_response_time_ms: responseTime,
+        p_success: true,
+        p_cost_estimate: (tokensUsed * 0.00001) // Estimativa simples de custo
+      });
+    }
 
     // Salvar conversa no banco com mais metadados
     const sessionId = `session_${userId}_${Date.now()}`;
@@ -243,8 +248,10 @@ Baseie suas respostas no progresso atual do usuário mostrado acima. Se ele tem 
           message_type: 'assistant',
           radcoins_cost: 0,
           context_data: {
-            openai_model: 'gpt-4o-mini',
-            response_tokens: openAIData.usage?.completion_tokens || 0
+            openai_model: modelName,
+            response_tokens: openAIData.usage?.completion_tokens || 0,
+            config_id: configId,
+            response_time_ms: responseTime
           }
         }
       ]);
@@ -274,6 +281,12 @@ Baseie suas respostas no progresso atual do usuário mostrado acima. Se ele tem 
         accuracy: accuracy,
         achievements: achievementsCount,
         streak: fullProfile?.current_streak || 0
+      },
+      promptUsed: {
+        configId: configId,
+        modelName: modelName,
+        tokensUsed: tokensUsed,
+        responseTime: responseTime
       }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

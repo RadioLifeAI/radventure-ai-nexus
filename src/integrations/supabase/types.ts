@@ -228,40 +228,58 @@ export type Database = {
       }
       ai_tutor_config: {
         Row: {
+          ai_function_type: string
           api_provider: string
           config_name: string
           created_at: string
           id: string
           is_active: boolean
+          is_default: boolean | null
           max_tokens: number
           model_name: string
+          optimization_data: Json | null
+          prompt_category: string | null
           prompt_template: string | null
+          prompt_version: number | null
           temperature: number
           updated_at: string
+          usage_stats: Json | null
         }
         Insert: {
+          ai_function_type?: string
           api_provider?: string
           config_name: string
           created_at?: string
           id?: string
           is_active?: boolean
+          is_default?: boolean | null
           max_tokens?: number
           model_name?: string
+          optimization_data?: Json | null
+          prompt_category?: string | null
           prompt_template?: string | null
+          prompt_version?: number | null
           temperature?: number
           updated_at?: string
+          usage_stats?: Json | null
         }
         Update: {
+          ai_function_type?: string
           api_provider?: string
           config_name?: string
           created_at?: string
           id?: string
           is_active?: boolean
+          is_default?: boolean | null
           max_tokens?: number
           model_name?: string
+          optimization_data?: Json | null
+          prompt_category?: string | null
           prompt_template?: string | null
+          prompt_version?: number | null
           temperature?: number
           updated_at?: string
+          usage_stats?: Json | null
         }
         Relationships: []
       }
@@ -1737,6 +1755,16 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_active_prompt: {
+        Args: { p_function_type: string; p_category?: string }
+        Returns: {
+          prompt_template: string
+          model_name: string
+          max_tokens: number
+          temperature: number
+          config_id: string
+        }[]
+      }
       get_case_images_unified: {
         Args: { p_case_id: string }
         Returns: Json
@@ -1760,6 +1788,16 @@ export type Database = {
       is_permanent_admin: {
         Args: { user_id?: string }
         Returns: boolean
+      }
+      log_ai_prompt_usage: {
+        Args: {
+          p_config_id: string
+          p_tokens_used: number
+          p_response_time_ms: number
+          p_success?: boolean
+          p_cost_estimate?: number
+        }
+        Returns: undefined
       }
       log_signup_event: {
         Args: {
@@ -1821,6 +1859,12 @@ export type Database = {
     }
     Enums: {
       academic_stage: "Student" | "Intern" | "Resident" | "Specialist"
+      ai_function_type:
+        | "ai_tutor"
+        | "case_autofill"
+        | "event_ai_suggestions"
+        | "journey_ai_suggestions"
+        | "radbot_chat"
       event_status: "SCHEDULED" | "ACTIVE" | "FINISHED"
       profile_type: "USER" | "ADMIN"
       radcoin_tx_type:
@@ -1949,6 +1993,13 @@ export const Constants = {
   public: {
     Enums: {
       academic_stage: ["Student", "Intern", "Resident", "Specialist"],
+      ai_function_type: [
+        "ai_tutor",
+        "case_autofill",
+        "event_ai_suggestions",
+        "journey_ai_suggestions",
+        "radbot_chat",
+      ],
       event_status: ["SCHEDULED", "ACTIVE", "FINISHED"],
       profile_type: ["USER", "ADMIN"],
       radcoin_tx_type: [
