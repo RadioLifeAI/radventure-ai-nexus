@@ -31,8 +31,8 @@ export function useUserReportsAdmin() {
         .from("user_reports")
         .select(`
           *,
-          profiles!user_reports_user_id_fkey(email, full_name),
-          medical_cases!user_reports_case_id_fkey(title)
+          profiles!user_id(email, full_name),
+          medical_cases!case_id(title)
         `)
         .order("created_at", { ascending: false });
 
