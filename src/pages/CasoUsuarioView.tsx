@@ -63,6 +63,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+import { ReportCaseButton } from "@/components/cases/ReportCaseButton";
+import { ReportCaseModal } from "@/components/cases/ReportCaseModal";
+
 // FEEDBACKS GAMIFICADOS
 const FEEDBACKS = [
   { title: "Muito Bem! 🎉", icon: <Sparkles className="text-lg text-green-500 inline ml-1" /> },
@@ -100,6 +103,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
   const [tutorHintText, setTutorHintText] = useState("");
   const [showHelpConfirm, setShowHelpConfirm] = useState<string | null>(null);
   const [caseImages, setCaseImages] = useState<Array<{ url: string; legend?: string }>>([]);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
 
   const {
     helpUsed,
@@ -376,6 +380,14 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
       </div>
     );
   }
+
+  const handleOpenReport = () => {
+    setReportModalOpen(true);
+  };
+
+  const handleCloseReport = () => {
+    setReportModalOpen(false);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -837,6 +849,19 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
               </Button>
             </div>
 
+            {/* INSERÇÃO CIRÚRGICA: Report Case */}
+            <div className="bg-white rounded-lg p-3 border border-gray-200 hover:shadow-md transition-shadow">
+              <ReportCaseButton
+                onClick={handleOpenReport}
+                variant="outline"
+                size="sm"
+                className="w-full justify-start gap-2 border-gray-300 hover:bg-gray-50"
+              />
+              <p className="text-xs text-gray-600 mt-2">
+                Reportar problema ou sugerir melhoria neste caso
+              </p>
+            </div>
+
             {/* Status - Atualizado para revisão */}
             <div className="bg-gray-100 rounded-lg p-3 border border-gray-200 mt-6">
               <div className="text-xs text-gray-600 text-center">
@@ -904,6 +929,14 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* INSERÇÃO CIRÚRGICA: Report Modal */}
+      <ReportCaseModal
+        open={reportModalOpen}
+        onClose={handleCloseReport}
+        caseId={caso?.id || ''}
+        caseName={caso?.title}
+      />
     </div>
   );
 }
