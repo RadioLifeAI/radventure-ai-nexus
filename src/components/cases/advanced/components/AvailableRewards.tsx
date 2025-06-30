@@ -12,12 +12,18 @@ interface Props {
 }
 
 export function AvailableRewards({ stats }: Props) {
+  // Converter Record para array para poder usar find
+  const specialtyEntries = Object.entries(stats.specialtyBreakdown);
+  const radiologyEntry = specialtyEntries.find(([specialty]) => 
+    specialty.toLowerCase().includes('radiologia')
+  );
+  
   const availableRewards = [
     {
       id: 1,
       name: "Especialista Radiológico",
       description: "Complete 100 casos de radiologia",
-      progress: Math.min((stats.specialtyBreakdown.find(s => s.specialty.toLowerCase().includes('radiologia'))?.cases || 0) / 100 * 100, 100),
+      progress: Math.min((radiologyEntry?.[1].total || 0) / 100 * 100, 100),
       icon: Crown,
       rarity: "legendary",
       reward: "500 RadCoins + Título Especial"

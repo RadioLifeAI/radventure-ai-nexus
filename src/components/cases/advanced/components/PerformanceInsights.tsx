@@ -10,6 +10,75 @@ interface Props {
 }
 
 export function PerformanceInsights({ stats }: Props) {
+  // Gerar insights baseados nos dados reais disponíveis
+  const generateInsights = () => {
+    const insights = [];
+    
+    // Insight de precisão
+    if (stats.accuracy >= 90) {
+      insights.push({
+        type: 'strength',
+        title: 'Excelente Precisão',
+        description: `Mantendo ${stats.accuracy}% de acertos - performance excepcional!`,
+        trend: 'up',
+        value: stats.accuracy
+      });
+    } else if (stats.accuracy >= 70) {
+      insights.push({
+        type: 'improvement',
+        title: 'Boa Precisão',
+        description: `${stats.accuracy}% de acertos - continue assim para melhorar ainda mais!`,
+        trend: 'stable',
+        value: stats.accuracy
+      });
+    } else {
+      insights.push({
+        type: 'improvement',
+        title: 'Foco na Precisão',
+        description: `${stats.accuracy}% de acertos - revisite os casos para melhorar!`,
+        trend: 'down',
+        value: stats.accuracy
+      });
+    }
+    
+    // Insight de atividade
+    if (stats.currentStreak >= 7) {
+      insights.push({
+        type: 'streak',
+        title: `Streak Incrível!`,
+        description: `${stats.currentStreak} dias consecutivos de estudos!`,
+        trend: 'up',
+        value: stats.currentStreak
+      });
+    }
+    
+    // Insight de pontos
+    if (stats.totalPoints >= 1000) {
+      insights.push({
+        type: 'milestone',
+        title: 'Marco de Pontos',
+        description: `${stats.totalPoints.toLocaleString()} pontos conquistados!`,
+        trend: 'up',
+        value: stats.totalPoints
+      });
+    }
+    
+    // Insight de revisões
+    if (stats.reviewCases > 0) {
+      insights.push({
+        type: 'improvement',
+        title: 'Estudos de Revisão',
+        description: `${stats.reviewCases} casos revisados para reforçar o aprendizado`,
+        trend: 'stable',
+        value: stats.reviewCases
+      });
+    }
+    
+    return insights;
+  };
+
+  const performanceInsights = generateInsights();
+
   const getTrendIcon = (trend: string) => {
     switch (trend) {
       case 'up': return <ArrowUp className="h-4 w-4 text-green-400" />;
@@ -48,7 +117,7 @@ export function PerformanceInsights({ stats }: Props) {
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {stats.performanceInsights.map((insight, index) => {
+          {performanceInsights.map((insight, index) => {
             const IconComponent = getInsightIcon(insight.type);
             return (
               <div key={index} className="flex items-start gap-3 p-3 bg-white/5 rounded-lg border border-white/10">

@@ -8,10 +8,38 @@ interface Props {
 }
 
 export function WeeklyActivityChart({ stats }: Props) {
+  // Gerar dados de atividade semanal baseados na atividade recente
+  const generateWeeklyActivity = () => {
+    const weeklyData = [];
+    const today = new Date();
+    
+    // Criar dados dos últimos 7 dias
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      
+      // Filtrar atividade recente para o dia específico
+      const dayActivity = stats.recentActivity.filter(activity => 
+        activity.answeredAt.startsWith(dateStr)
+      );
+      
+      weeklyData.push({
+        date: dateStr,
+        cases: dayActivity.length,
+        points: dayActivity.reduce((sum, activity) => sum + activity.points, 0)
+      });
+    }
+    
+    return weeklyData;
+  };
+
+  const weeklyActivity = generateWeeklyActivity();
+
   return (
     <div className="h-64">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={stats.weeklyActivity}>
+        <LineChart data={weeklyActivity}>
           <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
           <XAxis 
             dataKey="date" 

@@ -17,9 +17,9 @@ export function RecentAchievements({ stats }: Props) {
           </div>
           <div className="flex-1">
             <h4 className="font-semibold text-white">{achievement.name}</h4>
-            <p className="text-sm text-cyan-200">{achievement.description}</p>
+            <p className="text-sm text-cyan-200">+{achievement.points} pontos conquistados</p>
             <p className="text-xs text-cyan-300 mt-1 opacity-80">
-              {new Date(achievement.earnedAt).toLocaleDateString('pt-BR')}
+              {new Date(achievement.unlockedAt).toLocaleDateString('pt-BR')}
             </p>
           </div>
         </div>
