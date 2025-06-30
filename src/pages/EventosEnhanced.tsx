@@ -9,6 +9,7 @@ import { EventMetricsCards } from "@/components/eventos/EventMetricsCards";
 import { UpcomingEventsSlider } from "@/components/eventos/UpcomingEventsSlider";
 import { EventosHeader } from "@/components/eventos/EventosHeader";
 import { EventosTabs } from "@/components/eventos/EventosTabs";
+import { EventRankingsAccessButton } from "@/components/eventos/EventRankingsAccessButton";
 
 export default function EventosEnhanced() {
   const { events, loading } = useActiveEvents();
@@ -34,6 +35,10 @@ export default function EventosEnhanced() {
       <main className="flex-1 flex flex-col px-2 md:px-16 pt-4 pb-10">
         <EventosHeader />
         <EventMetricsCards metrics={metrics} loading={metricsLoading} />
+        
+        {/* Botão de Acesso aos Rankings de Eventos */}
+        <EventRankingsAccessButton className="mb-6 animate-fade-in" />
+        
         <UpcomingEventsSlider highlights={highlights} />
         
         <EventosTabs
