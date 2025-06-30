@@ -2,12 +2,15 @@
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Settings, History, Crown } from "lucide-react";
+import { Users, Settings, History, Crown, Flag } from "lucide-react";
 import { UserFilters } from "./UserFilters";
 import { UsersTable } from "./UsersTable";
 import { UserBenefitsVerification } from "./UserBenefitsVerification";
 import { AdminRoleAuditLog } from "./AdminRoleAuditLog";
 import { UserManagementAdvanced } from "./UserManagementAdvanced";
+import { ReportsManagementTable } from "../reports/ReportsManagementTable";
+import { ReportsStats } from "../reports/ReportsStats";
+import { useUserReportsAdmin } from "@/hooks/useUserReportsAdmin";
 import type { UserProfile } from "@/types/admin";
 
 interface UserManagementTabsProps {
@@ -33,12 +36,18 @@ export function UserManagementTabs({
   onBanUser,
   onPromoteUser
 }: UserManagementTabsProps) {
+  const { stats } = useUserReportsAdmin();
+
   return (
     <Tabs defaultValue="users" className="space-y-6">
-      <TabsList className="grid w-full grid-cols-4 bg-gradient-to-r from-blue-50 to-purple-50 p-1 rounded-xl">
+      <TabsList className="grid w-full grid-cols-5 bg-gradient-to-r from-blue-50 to-purple-50 p-1 rounded-xl">
         <TabsTrigger value="users" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
           <Users className="h-4 w-4" />
           Lista de Usuários
+        </TabsTrigger>
+        <TabsTrigger value="reports" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
+          <Flag className="h-4 w-4" />
+          Reports
         </TabsTrigger>
         <TabsTrigger value="advanced" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
           <Crown className="h-4 w-4" />
@@ -80,6 +89,24 @@ export function UserManagementTabs({
               onBanUser={onBanUser}
               onPromoteUser={onPromoteUser}
             />
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="reports" className="space-y-6">
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-red-50/30">
+          <CardHeader className="bg-gradient-to-r from-red-50 to-orange-50 rounded-t-lg">
+            <CardTitle className="flex items-center gap-2 text-red-900">
+              <Flag className="h-5 w-5" />
+              Reports dos Usuários
+            </CardTitle>
+            <CardDescription className="text-red-700">
+              Visualize e gerencie todos os reports enviados pelos usuários
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-6">
+            <ReportsStats stats={stats} />
+            <ReportsManagementTable />
           </CardContent>
         </Card>
       </TabsContent>
