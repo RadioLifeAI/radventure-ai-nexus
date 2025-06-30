@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -18,7 +17,7 @@ export function useRadBotChat() {
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
-  const { profile, refetch: refetchProfile } = useUserProfile();
+  const { profile, refreshProfile } = useUserProfile();
 
   const sendMessage = useCallback(async (message: string) => {
     if (!user || !message.trim()) return;
@@ -66,7 +65,7 @@ export function useRadBotChat() {
       setMessages(prev => [...prev, assistantMessage]);
 
       // Atualizar perfil para refletir novo saldo
-      await refetchProfile();
+      refreshProfile();
 
       // Criar report se necessário
       if (data.shouldCreateReport) {
@@ -98,7 +97,7 @@ export function useRadBotChat() {
     } finally {
       setIsLoading(false);
     }
-  }, [user, profile, refetchProfile]);
+  }, [user, profile, refreshProfile]);
 
   const processCommand = useCallback((command: string) => {
     let response = '';
