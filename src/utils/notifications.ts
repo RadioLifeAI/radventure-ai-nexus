@@ -1,7 +1,24 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-export type NotificationType = 'event_starting' | 'achievement_unlocked' | 'ranking_update' | 'new_event' | 'reminder' | 'radcoin_reward' | 'streak_milestone' | 'daily_login_bonus' | 'case_milestone';
+export type NotificationType = 
+  | 'event_starting' 
+  | 'achievement_unlocked' 
+  | 'ranking_update' 
+  | 'new_event' 
+  | 'reminder' 
+  | 'radcoin_reward' 
+  | 'streak_milestone' 
+  | 'daily_login_bonus' 
+  | 'case_milestone'
+  | 'report_update'
+  | 'points_milestone'
+  | 'first_achievement'
+  | 'event_registration'
+  | 'first_event'
+  | 'first_purchase'
+  | 'admin_notice';
+
 export type NotificationPriority = 'low' | 'medium' | 'high';
 
 interface CreateNotificationProps {
@@ -140,4 +157,31 @@ export async function getNotificationStats() {
     console.error('Erro ao obter estatísticas:', error);
     return { success: false, error };
   }
+}
+
+// Função para criar notificação de registro em evento
+export async function createEventRegistrationNotification(userId: string, eventName: string, eventId: string) {
+  return createNotification({
+    userId,
+    type: 'event_registration',
+    title: '🎯 Inscrição Confirmada!',
+    message: `Sua inscrição no evento "${eventName}" foi confirmada. Boa sorte!`,
+    priority: 'high',
+    actionUrl: `/app/evento/${eventId}`,
+    actionLabel: 'Ver Evento',
+    metadata: { event_id: eventId, event_name: eventName }
+  });
+}
+
+// Função para criar notificação administrativa
+export async function createAdminNotice(title: string, message: string, actionUrl?: string, actionLabel?: string) {
+  return createNotificationForAllUsers({
+    type: 'admin_notice',
+    title,
+    message,
+    priority: 'high',
+    actionUrl,
+    actionLabel,
+    metadata: { admin_broadcast: true, sent_at: new Date().toISOString() }
+  });
 }

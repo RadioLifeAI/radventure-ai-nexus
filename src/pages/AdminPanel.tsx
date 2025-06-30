@@ -19,6 +19,7 @@ import { RewardManagement } from "@/components/admin/RewardManagement";
 import { APIKeyManagement } from "@/components/admin/APIKeyManagement";
 import { StripeManagement } from "@/components/admin/StripeManagement";
 import { NotificationManagement } from "@/components/admin/NotificationManagement";
+import { ReportsManagement } from "@/components/admin/ReportsManagement";
 import { Crown, Sparkles, Shield, Zap } from "lucide-react";
 
 export default function AdminPanel() {
@@ -73,6 +74,7 @@ export default function AdminPanel() {
             <Route path="tutor-ia" element={<AITutorManagement />} />
             <Route path="conquistas" element={<AchievementManagement />} />
             <Route path="notificacoes" element={<NotificationManagement />} />
+            <Route path="reports" element={<ReportsManagement />} />
             <Route path="monitoramento" element={<SystemMonitoringIntegrated />} />
             <Route path="recompensas" element={<RewardManagement />} />
             <Route path="chaves-api" element={<APIKeyManagement />} />

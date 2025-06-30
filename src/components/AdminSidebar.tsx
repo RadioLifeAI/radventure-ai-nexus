@@ -15,6 +15,7 @@ import {
   Trophy,
   Brain,
   Bell,
+  AlertTriangle,
 } from "lucide-react";
 
 // Menu admin - links relativos para rotas aninhadas
@@ -25,6 +26,7 @@ const adminMenu = [
   { label: "Casos Médicos", icon: <FileText size={20} />, to: "/admin/casos-medicos" },
   { label: "Gestão de Casos", icon: <Settings size={20} />, to: "/admin/gestao-casos" },
   { label: "Usuários", icon: <Users size={20} />, to: "/admin/usuarios" },
+  { label: "Reports", icon: <AlertTriangle size={20} />, to: "/admin/reports" },
   { label: "Assinaturas", icon: <CreditCard size={20} />, to: "/admin/assinaturas" },
   { label: "Tutor IA", icon: <Brain size={20} />, to: "/admin/tutor-ia" },
   { label: "Conquistas", icon: <Trophy size={20} />, to: "/admin/conquistas" },
