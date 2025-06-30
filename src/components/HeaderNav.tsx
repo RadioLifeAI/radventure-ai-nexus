@@ -26,7 +26,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
-import { useFirstTimeNotifications } from "@/hooks/useFirstTimeNotifications";
 import { ProfileSettingsModal } from "@/components/profile/ProfileSettingsModal";
 import { RadCoinStoreModal } from "@/components/radcoin-shop/RadCoinStoreModal";
 import { EventsNotificationSystem } from "@/components/eventos/EventsNotificationSystem";
@@ -38,9 +37,6 @@ export function HeaderNav() {
   const { profile, isLoading: profileLoading } = useUserProfile();
   const [showProfileSettings, setShowProfileSettings] = useState(false);
   const [showRadCoinShop, setShowRadCoinShop] = useState(false);
-
-  // Hook para notificações de primeira vez
-  useFirstTimeNotifications();
 
   const handleSignOut = async () => {
     await signOut();
@@ -105,7 +101,7 @@ export function HeaderNav() {
 
             {/* User Menu */}
             <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
-              {/* Sistema de Notificações */}
+              {/* Sistema de Notificações - NOVO */}
               {user && <EventsNotificationSystem />}
 
               {/* RadCoins Display - AGORA CLICÁVEL */}
@@ -165,10 +161,6 @@ export function HeaderNav() {
                   <DropdownMenuItem onClick={() => navigate('/app/estatisticas')}>
                     <User className="mr-2 h-4 w-4" />
                     <span>Meu Perfil</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/app/reports')}>
-                    <FileText className="mr-2 h-4 w-4" />
-                    <span>Meus Reports</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut}>

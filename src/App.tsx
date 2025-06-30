@@ -1,8 +1,13 @@
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as SonnerToaster } from "@/components/ui/sonner";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { ProtectedRouteRedirect } from "@/components/auth/ProtectedRouteRedirect";
+import { useAuth } from "@/hooks/useAuth";
+
+// Imports for all pages
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -10,149 +15,157 @@ import Casos from "./pages/Casos";
 import CasoUsuarioView from "./pages/CasoUsuarioView";
 import EventosEnhanced from "./pages/EventosEnhanced";
 import EventoDetalhes from "./pages/EventoDetalhes";
-import Rankings from "./pages/Rankings";
 import RankingEventos from "./pages/RankingEventos";
+import Rankings from "./pages/Rankings";
 import Estatisticas from "./pages/Estatisticas";
-import Conquistas from "./pages/Conquistas";
-import CreateJourney from "./pages/CreateJourney";
 import AdminPanel from "./pages/AdminPanel";
-import UserReports from "./pages/UserReports";
-import NotFound from "./pages/NotFound";
-import Contato from "./pages/Contato";
+import CreateJourney from "./pages/CreateJourney";
+import Conquistas from "./pages/Conquistas";
 import Sobre from "./pages/Sobre";
 import Funcionalidades from "./pages/Funcionalidades";
+import Contato from "./pages/Contato";
 import TermosDeUso from "./pages/TermosDeUso";
 import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
 import PoliticaCookies from "./pages/PoliticaCookies";
-import { ProtectedRoute } from "./components/auth/ProtectedRoute";
-import { AdminProtectedRoute } from "./components/auth/AdminProtectedRoute";
-import { HeaderNav } from "./components/HeaderNav";
-import { useLocation } from "react-router-dom";
-import "./App.css";
+import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      retry: 1,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
-function AppContent() {
-  const location = useLocation();
+// Componente para redirecionamento inteligente
+function AuthRedirect() {
+  const { isAuthenticated, loading } = useAuth();
   
-  // Páginas que não devem mostrar o header
-  const hideHeaderRoutes = ['/login', '/admin', '/'];
-  const shouldHideHeader = hideHeaderRoutes.some(route => 
-    location.pathname === route || location.pathname.startsWith('/admin')
-  );
-
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Header condicional */}
-      {!shouldHideHeader && <HeaderNav />}
-      
-      <Routes>
-        {/* Páginas públicas */}
-        <Route path="/" element={<Index />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/contato" element={<Contato />} />
-        <Route path="/sobre" element={<Sobre />} />
-        <Route path="/funcionalidades" element={<Funcionalidades />} />
-        <Route path="/termos-de-uso" element={<TermosDeUso />} />
-        <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
-        <Route path="/politica-cookies" element={<PoliticaCookies />} />
-        
-        {/* Páginas protegidas */}
-        <Route path="/dashboard" element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/app/casos" element={
-          <ProtectedRoute>
-            <Casos />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/app/caso/:caseId" element={
-          <ProtectedRoute>
-            <CasoUsuarioView />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/app/eventos" element={
-          <ProtectedRoute>
-            <EventosEnhanced />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/app/evento/:eventId" element={
-          <ProtectedRoute>
-            <EventoDetalhes />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/app/rankings" element={
-          <ProtectedRoute>
-            <Rankings />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/app/ranking-eventos" element={
-          <ProtectedRoute>
-            <RankingEventos />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/app/estatisticas" element={
-          <ProtectedRoute>
-            <Estatisticas />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/app/conquistas" element={
-          <ProtectedRoute>
-            <Conquistas />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/app/create-journey" element={
-          <ProtectedRoute>
-            <CreateJourney />
-          </ProtectedRoute>
-        } />
-
-        <Route path="/app/reports" element={
-          <ProtectedRoute>
-            <UserReports />
-          </ProtectedRoute>
-        } />
-        
-        {/* Área administrativa */}
-        <Route path="/admin/*" element={
-          <AdminProtectedRoute>
-            <AdminPanel />
-          </AdminProtectedRoute>
-        } />
-        
-        {/* 404 */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </div>
-  );
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+  }
+  
+  return <Navigate to={isAuthenticated ? "/app/dashboard" : "/login"} replace />;
 }
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router>
-        <AppContent />
+      <TooltipProvider>
         <Toaster />
-        <SonnerToaster />
-      </Router>
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            {/* Rotas Públicas */}
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/sobre" element={<Sobre />} />
+            <Route path="/funcionalidades" element={<Funcionalidades />} />
+            <Route path="/contato" element={<Contato />} />
+            <Route path="/termos" element={<TermosDeUso />} />
+            <Route path="/privacidade" element={<PoliticaPrivacidade />} />
+            <Route path="/cookies" element={<PoliticaCookies />} />
+            
+            {/* Redirecionamento para /app */}
+            <Route path="/app" element={<AuthRedirect />} />
+            
+            {/* Rotas Protegidas - Dashboard (rota legacy mantida por compatibilidade) */}
+            <Route 
+              path="/dashboard" 
+              element={<Navigate to="/app/dashboard" replace />}
+            />
+            
+            <Route 
+              path="/app/dashboard" 
+              element={
+                <ProtectedRouteRedirect>
+                  <Dashboard />
+                </ProtectedRouteRedirect>
+              } 
+            />
+            
+            <Route 
+              path="/app/casos" 
+              element={
+                <ProtectedRouteRedirect>
+                  <Casos />
+                </ProtectedRouteRedirect>
+              } 
+            />
+            <Route 
+              path="/app/caso/:id" 
+              element={
+                <ProtectedRouteRedirect>
+                  <CasoUsuarioView />
+                </ProtectedRouteRedirect>
+              } 
+            />
+            <Route 
+              path="/app/eventos" 
+              element={
+                <ProtectedRouteRedirect>
+                  <EventosEnhanced />
+                </ProtectedRouteRedirect>
+              } 
+            />
+            <Route 
+              path="/app/evento/:id" 
+              element={
+                <ProtectedRouteRedirect>
+                  <EventoDetalhes />
+                </ProtectedRouteRedirect>
+              } 
+            />
+            <Route 
+              path="/app/ranking-eventos" 
+              element={
+                <ProtectedRouteRedirect>
+                  <RankingEventos />
+                </ProtectedRouteRedirect>
+              } 
+            />
+            <Route 
+              path="/app/rankings" 
+              element={
+                <ProtectedRouteRedirect>
+                  <Rankings />
+                </ProtectedRouteRedirect>
+              } 
+            />
+            <Route 
+              path="/app/estatisticas" 
+              element={
+                <ProtectedRouteRedirect>
+                  <Estatisticas />
+                </ProtectedRouteRedirect>
+              } 
+            />
+            <Route 
+              path="/app/conquistas" 
+              element={
+                <ProtectedRouteRedirect>
+                  <Conquistas />
+                </ProtectedRouteRedirect>
+              } 
+            />
+            <Route 
+              path="/app/jornada/criar" 
+              element={
+                <ProtectedRouteRedirect>
+                  <CreateJourney />
+                </ProtectedRouteRedirect>
+              } 
+            />
+
+            {/* Rota Admin - Usar wildcard para capturar todas as sub-rotas */}
+            <Route 
+              path="/admin/*" 
+              element={
+                <ProtectedRouteRedirect>
+                  <AdminPanel />
+                </ProtectedRouteRedirect>
+              } 
+            />
+
+            {/* 404 */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }
