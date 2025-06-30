@@ -52,51 +52,86 @@ export function useEventRankingsEnhanced() {
     try {
       setLoading(true);
       
-      // Buscar rankings de eventos ativos
-      const { data: activeRankings, error: activeError } = await supabase
-        .from("event_rankings")
-        .select(`
-          *,
-          events!inner(*),
-          profiles!inner(full_name, username, avatar_url, medical_specialty)
-        `)
-        .eq("events.status", "ACTIVE")
-        .order("rank", { ascending: true });
+      // Buscar eventos ativos primeiro
+      const { data: activeEvents, error: eventsError } = await supabase
+        .from("events")
+        .select("*")
+        .eq("status", "ACTIVE");
 
-      if (activeError) throw activeError;
+      if (eventsError) throw eventsError;
 
-      // Transformar dados para o formato esperado
-      const formattedActiveRankings = (activeRankings || []).map(ranking => ({
-        id: ranking.id,
-        event_id: ranking.event_id,
-        user_id: ranking.user_id,
-        score: ranking.score,
-        rank: ranking.rank,
-        event: {
-          id: ranking.events.id,
-          name: ranking.events.name,
-          status: ranking.events.status,
-          scheduled_start: ranking.events.scheduled_start,
-          scheduled_end: ranking.events.scheduled_end,
-          prize_radcoins: ranking.events.prize_radcoins,
-          banner_url: ranking.events.banner_url
-        },
-        user: {
-          full_name: ranking.profiles.full_name,
-          username: ranking.profiles.username,
-          avatar_url: ranking.profiles.avatar_url,
-          medical_specialty: ranking.profiles.medical_specialty
-        }
-      }));
+      if (activeEvents && activeEvents.length > 0) {
+        // Buscar rankings para eventos ativos
+        const { data: rankings, error: rankingsError } = await supabase
+          .from("event_rankings")
+          .select("*")
+          .in("event_id", activeEvents.map(e => e.id))
+          .order("rank", { ascending: true });
 
-      setActiveEventRankings(formattedActiveRankings);
+        if (rankingsError) throw rankingsError;
+
+        // Buscar perfis dos usuários únicos
+        const userIds = [...new Set(rankings?.map(r => r.user_id) || [])];
+        const { data: profiles, error: profilesError } = await supabase
+          .from("profiles")
+          .select("id, full_name, username, avatar_url, medical_specialty")
+          .in("id", userIds);
+
+        if (profilesError) throw profilesError;
+
+        // Criar mapa de perfis para lookup rápido
+        const profilesMap = new Map(profiles?.map(p => [p.id, p]) || []);
+
+        // Combinar dados
+        const formattedActiveRankings = (rankings || []).map(ranking => {
+          const event = activeEvents.find(e => e.id === ranking.event_id);
+          const profile = profilesMap.get(ranking.user_id);
+          
+          return {
+            id: ranking.id,
+            event_id: ranking.event_id,
+            user_id: ranking.user_id,
+            score: ranking.score,
+            rank: ranking.rank,
+            event: event ? {
+              id: event.id,
+              name: event.name,
+              status: event.status,
+              scheduled_start: event.scheduled_start,
+              scheduled_end: event.scheduled_end,
+              prize_radcoins: event.prize_radcoins,
+              banner_url: event.banner_url
+            } : {
+              id: ranking.event_id,
+              name: "Evento não encontrado",
+              status: "UNKNOWN",
+              scheduled_start: new Date().toISOString(),
+              scheduled_end: new Date().toISOString(),
+              prize_radcoins: 0
+            },
+            user: profile ? {
+              full_name: profile.full_name || profile.username || "Usuário",
+              username: profile.username || "user",
+              avatar_url: profile.avatar_url || "",
+              medical_specialty: profile.medical_specialty || "Não informado"
+            } : {
+              full_name: "Usuário não encontrado",
+              username: "unknown",
+              avatar_url: "",
+              medical_specialty: "Não informado"
+            }
+          };
+        });
+
+        setActiveEventRankings(formattedActiveRankings);
+      }
 
       // Buscar estatísticas pessoais se usuário logado
       if (user) {
         await fetchPersonalStats(user.id);
       }
 
-      // Buscar Hall of Fame (top performers históricos)
+      // Buscar Hall of Fame
       await fetchHallOfFame();
 
     } catch (error) {
@@ -109,55 +144,83 @@ export function useEventRankingsEnhanced() {
   const fetchPersonalStats = async (userId: string) => {
     try {
       // Buscar todas as participações do usuário
-      const { data: userRankings, error } = await supabase
+      const { data: userRankings, error: rankingsError } = await supabase
         .from("event_rankings")
-        .select(`
-          *,
-          events(*),
-          profiles(full_name, username, avatar_url, medical_specialty)
-        `)
+        .select("*")
         .eq("user_id", userId)
-        .order("events.scheduled_start", { ascending: false });
+        .order("created_at", { ascending: false });
 
-      if (error) throw error;
-
-      // Buscar RadCoins ganhos em eventos
-      const { data: finalRankings } = await supabase
-        .from("event_final_rankings")
-        .select("radcoins_awarded")
-        .eq("user_id", userId);
-
-      const totalRadCoinsEarned = finalRankings?.reduce((sum, r) => sum + (r.radcoins_awarded || 0), 0) || 0;
+      if (rankingsError) throw rankingsError;
 
       if (userRankings && userRankings.length > 0) {
+        // Buscar eventos relacionados
+        const eventIds = [...new Set(userRankings.map(r => r.event_id))];
+        const { data: events, error: eventsError } = await supabase
+          .from("events")
+          .select("*")
+          .in("id", eventIds);
+
+        if (eventsError) throw eventsError;
+
+        // Buscar perfil do usuário
+        const { data: userProfile, error: profileError } = await supabase
+          .from("profiles")
+          .select("full_name, username, avatar_url, medical_specialty")
+          .eq("id", userId)
+          .single();
+
+        if (profileError) throw profileError;
+
+        // Buscar RadCoins ganhos em eventos
+        const { data: finalRankings } = await supabase
+          .from("event_final_rankings")
+          .select("radcoins_awarded")
+          .eq("user_id", userId);
+
+        const totalRadCoinsEarned = finalRankings?.reduce((sum, r) => sum + (r.radcoins_awarded || 0), 0) || 0;
+
+        // Criar mapa de eventos
+        const eventsMap = new Map(events?.map(e => [e.id, e]) || []);
+
         const ranks = userRankings.map(r => r.rank || 999);
         const bestRank = Math.min(...ranks);
         const averageRank = ranks.reduce((sum, rank) => sum + rank, 0) / ranks.length;
         const winCount = userRankings.filter(r => r.rank === 1).length;
         const topThreeCount = userRankings.filter(r => r.rank <= 3).length;
 
-        const formattedUserRankings = userRankings.slice(0, 5).map(ranking => ({
-          id: ranking.id,
-          event_id: ranking.event_id,
-          user_id: ranking.user_id,
-          score: ranking.score,
-          rank: ranking.rank,
-          event: {
-            id: ranking.events.id,
-            name: ranking.events.name,
-            status: ranking.events.status,
-            scheduled_start: ranking.events.scheduled_start,
-            scheduled_end: ranking.events.scheduled_end,
-            prize_radcoins: ranking.events.prize_radcoins,
-            banner_url: ranking.events.banner_url
-          },
-          user: {
-            full_name: ranking.profiles.full_name,
-            username: ranking.profiles.username,
-            avatar_url: ranking.profiles.avatar_url,
-            medical_specialty: ranking.profiles.medical_specialty
-          }
-        }));
+        const formattedUserRankings = userRankings.slice(0, 5).map(ranking => {
+          const event = eventsMap.get(ranking.event_id);
+          
+          return {
+            id: ranking.id,
+            event_id: ranking.event_id,
+            user_id: ranking.user_id,
+            score: ranking.score,
+            rank: ranking.rank,
+            event: event ? {
+              id: event.id,
+              name: event.name,
+              status: event.status,
+              scheduled_start: event.scheduled_start,
+              scheduled_end: event.scheduled_end,
+              prize_radcoins: event.prize_radcoins,
+              banner_url: event.banner_url
+            } : {
+              id: ranking.event_id,
+              name: "Evento não encontrado",
+              status: "UNKNOWN",
+              scheduled_start: new Date().toISOString(),
+              scheduled_end: new Date().toISOString(),
+              prize_radcoins: 0
+            },
+            user: {
+              full_name: userProfile?.full_name || userProfile?.username || "Usuário",
+              username: userProfile?.username || "user",
+              avatar_url: userProfile?.avatar_url || "",
+              medical_specialty: userProfile?.medical_specialty || "Não informado"
+            }
+          };
+        });
 
         setPersonalStats({
           totalParticipations: userRankings.length,
@@ -176,44 +239,81 @@ export function useEventRankingsEnhanced() {
 
   const fetchHallOfFame = async () => {
     try {
-      // Buscar top performers (mais vitórias, melhor ranking médio, etc.)
-      const { data: topRankings, error } = await supabase
+      // Buscar top performers (mais vitórias)
+      const { data: topRankings, error: rankingsError } = await supabase
         .from("event_rankings")
-        .select(`
-          *,
-          events(*),
-          profiles(full_name, username, avatar_url, medical_specialty)
-        `)
+        .select("*")
         .eq("rank", 1)
         .limit(20)
-        .order("events.scheduled_start", { ascending: false });
+        .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (rankingsError) throw rankingsError;
 
-      const formattedHallOfFame = (topRankings || []).map(ranking => ({
-        id: ranking.id,
-        event_id: ranking.event_id,
-        user_id: ranking.user_id,
-        score: ranking.score,
-        rank: ranking.rank,
-        event: {
-          id: ranking.events.id,
-          name: ranking.events.name,
-          status: ranking.events.status,
-          scheduled_start: ranking.events.scheduled_start,
-          scheduled_end: ranking.events.scheduled_end,
-          prize_radcoins: ranking.events.prize_radcoins,
-          banner_url: ranking.events.banner_url
-        },
-        user: {
-          full_name: ranking.profiles.full_name,
-          username: ranking.profiles.username,
-          avatar_url: ranking.profiles.avatar_url,
-          medical_specialty: ranking.profiles.medical_specialty
-        }
-      }));
+      if (topRankings && topRankings.length > 0) {
+        // Buscar eventos relacionados
+        const eventIds = [...new Set(topRankings.map(r => r.event_id))];
+        const { data: events, error: eventsError } = await supabase
+          .from("events")
+          .select("*")
+          .in("id", eventIds);
 
-      setHallOfFameData(formattedHallOfFame);
+        if (eventsError) throw eventsError;
+
+        // Buscar perfis dos usuários
+        const userIds = [...new Set(topRankings.map(r => r.user_id))];
+        const { data: profiles, error: profilesError } = await supabase
+          .from("profiles")
+          .select("id, full_name, username, avatar_url, medical_specialty")
+          .in("id", userIds);
+
+        if (profilesError) throw profilesError;
+
+        // Criar mapas para lookup
+        const eventsMap = new Map(events?.map(e => [e.id, e]) || []);
+        const profilesMap = new Map(profiles?.map(p => [p.id, p]) || []);
+
+        const formattedHallOfFame = topRankings.map(ranking => {
+          const event = eventsMap.get(ranking.event_id);
+          const profile = profilesMap.get(ranking.user_id);
+
+          return {
+            id: ranking.id,
+            event_id: ranking.event_id,
+            user_id: ranking.user_id,
+            score: ranking.score,
+            rank: ranking.rank,
+            event: event ? {
+              id: event.id,
+              name: event.name,
+              status: event.status,
+              scheduled_start: event.scheduled_start,
+              scheduled_end: event.scheduled_end,
+              prize_radcoins: event.prize_radcoins,
+              banner_url: event.banner_url
+            } : {
+              id: ranking.event_id,
+              name: "Evento não encontrado",
+              status: "UNKNOWN",
+              scheduled_start: new Date().toISOString(),
+              scheduled_end: new Date().toISOString(),
+              prize_radcoins: 0
+            },
+            user: profile ? {
+              full_name: profile.full_name || profile.username || "Usuário",
+              username: profile.username || "user",
+              avatar_url: profile.avatar_url || "",
+              medical_specialty: profile.medical_specialty || "Não informado"
+            } : {
+              full_name: "Usuário não encontrado",
+              username: "unknown",
+              avatar_url: "",
+              medical_specialty: "Não informado"
+            }
+          };
+        });
+
+        setHallOfFameData(formattedHallOfFame);
+      }
     } catch (error) {
       console.error("Erro ao buscar Hall of Fame:", error);
     }
