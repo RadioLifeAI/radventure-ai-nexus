@@ -100,25 +100,25 @@ export function RadBotChat({ isOpen, onClose }: RadBotChatProps) {
               <Card className={`max-w-[85%] p-3 ${
                 message.type === 'user'
                   ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                  : 'bg-gray-100'
+                  : 'bg-gray-100 text-gray-900'
               }`}>
                 <div className="flex items-start space-x-2">
                   {message.type === 'assistant' && (
-                    <Bot className="h-4 w-4 mt-1 flex-shrink-0" />
+                    <Bot className="h-4 w-4 mt-1 flex-shrink-0 text-gray-700" />
                   )}
                   {message.type === 'user' && (
-                    <User className="h-4 w-4 mt-1 flex-shrink-0" />
+                    <User className="h-4 w-4 mt-1 flex-shrink-0 text-white" />
                   )}
                   <div className="flex-1">
                     <div className="text-sm whitespace-pre-wrap">
                       {message.content}
                     </div>
                     <div className="flex items-center justify-between mt-2">
-                      <div className="text-xs opacity-70">
+                      <div className={`text-xs ${message.type === 'user' ? 'text-white/70' : 'text-gray-500'}`}>
                         {message.timestamp.toLocaleTimeString()}
                       </div>
                       {message.cost && (
-                        <div className="text-xs bg-white/20 px-2 py-1 rounded">
+                        <div className="text-xs bg-white/20 px-2 py-1 rounded text-white">
                           -{message.cost} RC
                         </div>
                       )}
@@ -133,9 +133,9 @@ export function RadBotChat({ isOpen, onClose }: RadBotChatProps) {
             <div className="flex justify-start">
               <Card className="bg-gray-100 p-3">
                 <div className="flex items-center space-x-2">
-                  <Bot className="h-4 w-4" />
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span className="text-sm">RadBot AI está pensando...</span>
+                  <Bot className="h-4 w-4 text-gray-700" />
+                  <Loader2 className="h-4 w-4 animate-spin text-gray-700" />
+                  <span className="text-sm text-gray-700">RadBot AI está pensando...</span>
                 </div>
               </Card>
             </div>
@@ -162,12 +162,12 @@ export function RadBotChat({ isOpen, onClose }: RadBotChatProps) {
               onKeyPress={handleKeyPress}
               placeholder={hasEnoughCredits ? "Digite sua mensagem..." : "Sem créditos suficientes"}
               disabled={isLoading || !hasEnoughCredits}
-              className="flex-1"
+              className="flex-1 text-gray-900 placeholder:text-gray-500 bg-white border-gray-300 focus:border-purple-500 focus:ring-purple-500"
             />
             <Button
               onClick={handleSendMessage}
               disabled={isLoading || !inputMessage.trim() || !hasEnoughCredits}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
             >
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -177,7 +177,7 @@ export function RadBotChat({ isOpen, onClose }: RadBotChatProps) {
             </Button>
           </div>
           
-          {/* Comandos rápidos */}
+          {/* Comandos rápidos - CORRIGIDO CONTRASTE */}
           <div className="mt-2 flex flex-wrap gap-1">
             {['/meus-stats', '/radcoins', '/eventos', '/conquistas'].map((cmd) => (
               <Button
@@ -185,7 +185,7 @@ export function RadBotChat({ isOpen, onClose }: RadBotChatProps) {
                 variant="outline"
                 size="sm"
                 onClick={() => setInputMessage(cmd)}
-                className="text-xs h-6"
+                className="text-xs h-6 text-gray-700 border-gray-300 hover:bg-gray-100 hover:text-gray-900 bg-white"
                 disabled={!hasEnoughCredits}
               >
                 {cmd}

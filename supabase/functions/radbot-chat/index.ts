@@ -25,13 +25,26 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Verificar e cobrar 5 RadCoins
-    const { data: chargeResult, error: chargeError } = await supabase.rpc('charge_radcoins_for_ai_chat', {
-      p_user_id: userId,
-      p_amount: 5
-    });
+    // Verificar saldo atual primeiro
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('radcoin_balance')
+      .eq('id', userId)
+      .single();
 
-    if (chargeError || !chargeResult) {
+    if (profileError || !profile) {
+      return new Response(JSON.stringify({ 
+        error: 'Erro ao verificar saldo do usuário' 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const currentBalance = profile.radcoin_balance || 0;
+    const chatCost = 5;
+
+    if (currentBalance < chatCost) {
       return new Response(JSON.stringify({ 
         error: 'Saldo insuficiente. Você precisa de 5 RadCoins para enviar uma mensagem.' 
       }), {
@@ -40,8 +53,26 @@ serve(async (req) => {
       });
     }
 
+    // Debitar RadCoins usando a função award_radcoins com valor negativo
+    const { error: debitError } = await supabase.rpc('award_radcoins', {
+      p_user_id: userId,
+      p_amount: -chatCost,
+      p_transaction_type: 'premium_service',
+      p_metadata: { service: 'radbot_ai', cost_per_message: chatCost }
+    });
+
+    if (debitError) {
+      console.error('Erro ao debitar RadCoins:', debitError);
+      return new Response(JSON.stringify({ 
+        error: 'Erro ao processar pagamento' 
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Buscar dados do usuário para contexto
-    const { data: profile } = await supabase
+    const { data: fullProfile } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
@@ -58,12 +89,12 @@ serve(async (req) => {
     // Criar contexto personalizado
     const userContext = `
 Dados do usuário:
-- Nome: ${profile?.full_name || 'Usuário'}
-- Especialidade: ${profile?.medical_specialty || 'Não informada'}
-- Pontos totais: ${profile?.total_points || 0}
-- RadCoins: ${profile?.radcoin_balance || 0}
+- Nome: ${fullProfile?.full_name || 'Usuário'}
+- Especialidade: ${fullProfile?.medical_specialty || 'Não informada'}
+- Pontos totais: ${fullProfile?.total_points || 0}
+- RadCoins: ${(fullProfile?.radcoin_balance || 0) - chatCost}
 - Casos resolvidos: ${caseHistory?.length || 0}
-- Último acesso: ${profile?.updated_at || 'Não informado'}
+- Último acesso: ${fullProfile?.updated_at || 'Não informado'}
 `;
 
     // Preparar prompt do sistema
@@ -102,7 +133,7 @@ DISCLAIMER: Lembre sempre que suas informações são educacionais e não substi
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4.1-2025-04-14',
+        model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: message }
@@ -112,22 +143,27 @@ DISCLAIMER: Lembre sempre que suas informações são educacionais e não substi
       }),
     });
 
+    if (!openAIResponse.ok) {
+      throw new Error(`OpenAI API error: ${openAIResponse.status}`);
+    }
+
     const openAIData = await openAIResponse.json();
     const botResponse = openAIData.choices[0].message.content;
 
     // Salvar conversa no banco
+    const sessionId = `session_${userId}_${Date.now()}`;
     const { error: saveError } = await supabase
       .from('ai_chat_messages')
       .insert([
         {
-          session_id: `session_${userId}_${Date.now()}`,
+          session_id: sessionId,
           user_id: userId,
           content: message,
           message_type: 'user',
-          radcoins_cost: 5
+          radcoins_cost: chatCost
         },
         {
-          session_id: `session_${userId}_${Date.now()}`,
+          session_id: sessionId,
           user_id: userId,
           content: botResponse,
           message_type: 'assistant',
@@ -153,7 +189,8 @@ DISCLAIMER: Lembre sempre que suas informações são educacionais e não substi
     return new Response(JSON.stringify({ 
       response: botResponse,
       shouldCreateReport,
-      costPaid: 5
+      costPaid: chatCost,
+      newBalance: (fullProfile?.radcoin_balance || 0) - chatCost
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
