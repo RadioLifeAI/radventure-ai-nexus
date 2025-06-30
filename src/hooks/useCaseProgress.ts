@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "./useAuth";
@@ -20,7 +20,6 @@ export function useCaseProgress(caseId: string) {
     setHelpUsed(prev => [...prev, helpType]);
   };
 
-  // Função para eliminar opção - bloqueada em modo revisão se não for gratuita
   const eliminateOption = (correctAnswerIndex: number, isFreeReview: boolean = false) => {
     if (isReview && !isFreeReview) {
       toast({
@@ -173,30 +172,36 @@ export function useCaseProgress(caseId: string) {
 
     setIsAnswered(true);
 
-    console.log('Debug submitAnswer:', {
+    console.log('🎯 Submissão de resposta:', {
       selectedIndex,
       isCorrect,
       basePoints,
       penalties,
       finalPoints: points,
       helpUsed,
-      isReview
+      isReview: isReview ? 'SIM' : 'NÃO'
     });
 
     try {
-      // Usar a função RPC atualizada que trata revisões
-      await supabase.rpc('process_case_completion', {
+      // Usar a função RPC atualizada e limpa
+      const { error } = await supabase.rpc('process_case_completion', {
         p_user_id: user.id,
         p_case_id: caseId,
         p_points: points,
         p_is_correct: isCorrect
       });
 
-      console.log('✅ Resposta salva com sucesso:', { 
+      if (error) {
+        console.error('❌ Erro na função process_case_completion:', error);
+        throw error;
+      }
+
+      console.log('✅ Caso processado com sucesso:', { 
         isCorrect, 
         points, 
         penalties, 
-        isReview: isReview ? 'SIM' : 'NÃO' 
+        isReview: isReview ? 'SIM (0 pontos)' : 'NÃO',
+        message: isReview ? 'Revisão registrada para estudo' : 'Pontos creditados'
       });
 
       if (isReview) {
@@ -204,11 +209,27 @@ export function useCaseProgress(caseId: string) {
           title: "Modo Revisão",
           description: "Resposta registrada para estudo, sem pontuação adicional.",
         });
+      } else if (isCorrect && points > 0) {
+        toast({
+          title: "Parabéns!",
+          description: `Resposta correta! +${points} pontos creditados.`,
+        });
+      } else if (isCorrect && points === 0) {
+        toast({
+          title: "Resposta Correta",
+          description: "Acertou, mas sem pontos devido às penalidades.",
+        });
+      } else {
+        toast({
+          title: "Resposta Incorreta",
+          description: "Não desista! Revise e tente novamente.",
+          variant: "destructive"
+        });
       }
     } catch (error) {
-      console.error('❌ Erro ao salvar conclusão do caso:', error);
+      console.error('❌ Erro ao processar caso:', error);
       toast({
-        title: "Erro ao salvar resposta",
+        title: "Erro ao processar resposta",
         description: "Sua resposta pode não ter sido registrada. Tente novamente.",
         variant: "destructive"
       });
@@ -242,7 +263,6 @@ export function useCaseProgress(caseId: string) {
     submitAnswer,
     startTime,
     canEliminate: eliminationCount < 2,
-    // Novos campos para revisão
     isReview,
     reviewStatus,
     previousAnswer,

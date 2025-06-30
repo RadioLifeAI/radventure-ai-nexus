@@ -1810,7 +1810,6 @@ export type Database = {
       }
       process_case_completion: {
         Args:
-          | { p_case_id: string; p_points?: number; p_is_correct?: boolean }
           | { p_user_id: string; p_case_id: string; p_points?: number }
           | {
               p_user_id: string
@@ -1852,9 +1851,27 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: undefined
       }
+      sync_user_total_points: {
+        Args: { p_user_id?: string }
+        Returns: {
+          user_id: string
+          old_points: number
+          new_points: number
+          difference: number
+        }[]
+      }
       system_cleanup_maintenance: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      validate_points_system: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          check_name: string
+          status: string
+          details: string
+          count_affected: number
+        }[]
       }
     }
     Enums: {
@@ -1876,6 +1893,7 @@ export type Database = {
         | "profile_completion"
         | "profile_completion_bonus"
         | "daily_login"
+        | "ai_chat_usage"
       subscription_tier: "Free" | "Pro" | "Plus"
     }
     CompositeTypes: {
@@ -2011,6 +2029,7 @@ export const Constants = {
         "profile_completion",
         "profile_completion_bonus",
         "daily_login",
+        "ai_chat_usage",
       ],
       subscription_tier: ["Free", "Pro", "Plus"],
     },
