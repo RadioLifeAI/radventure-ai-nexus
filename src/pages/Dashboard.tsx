@@ -6,6 +6,7 @@ import { DashboardSkeleton } from "@/components/ui/skeleton-loader";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useDashboardHandlers } from "@/hooks/useDashboardHandlers";
 import { useSpecialtiesData } from "@/hooks/useSpecialtiesData";
+import { useLevelUpNotifications } from "@/hooks/useLevelUpNotifications";
 import { QuickActionsSection } from "@/components/dashboard/QuickActionsSection";
 import { SpecialtiesSection } from "@/components/dashboard/SpecialtiesSection";
 import { EmptySpecialtiesMessage } from "@/components/dashboard/EmptySpecialtiesMessage";
@@ -24,6 +25,9 @@ export default function Dashboard() {
     handleConquistas,
     handleEnterEvent
   } = useDashboardHandlers();
+
+  // Ativar sistema de notificações de level up
+  useLevelUpNotifications();
 
   const isLoading = dashboardLoading || progressLoading;
 

@@ -1,23 +1,32 @@
-
 import React, { useState, useEffect } from "react";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useUserRankings } from "@/hooks/useUserRankings";
+import { useUserLevel } from "@/hooks/useUserLevel";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Trophy, Zap, Target, Settings, Shield } from "lucide-react";
+import { MapPin, Trophy, Zap, Target, Settings, Shield, Crown } from "lucide-react";
 import { ProfileSettingsModal } from "./profile/ProfileSettingsModal";
 import { ProfileCompletionProgress } from "./profile/ProfileCompletionProgress";
 import { OnboardingWizard } from "./profile/OnboardingWizard";
+import { XPProgressBar } from "./profile/XPProgressBar";
+import { LevelUpModal } from "./profile/LevelUpModal";
 
 export function UserProfile() {
   const { profile, isLoading } = useUserProfile();
   const { userRank, loading: rankingsLoading } = useUserRankings();
+  const { levelData, loading: levelLoading } = useUserLevel();
   const { isAdmin } = useAdminAccess();
   const navigate = useNavigate();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [levelUpModal, setLevelUpModal] = useState<{
+    show: boolean;
+    newLevel: number;
+    newTitle: string;
+    radcoinReward: number;
+  }>({ show: false, newLevel: 0, newTitle: '', radcoinReward: 0 });
 
   // Verificar se é um perfil novo (para mostrar onboarding)
   useEffect(() => {
@@ -30,6 +39,31 @@ export function UserProfile() {
       }
     }
   }, [profile, isLoading]);
+
+  // Listener para notificações de level up
+  useEffect(() => {
+    if (!profile?.id) return;
+
+    const checkForLevelUpNotification = () => {
+      const levelUpData = localStorage.getItem(`levelup_${profile.id}`);
+      if (levelUpData) {
+        const data = JSON.parse(levelUpData);
+        setLevelUpModal({
+          show: true,
+          newLevel: data.new_level,
+          newTitle: data.title_unlocked,
+          radcoinReward: data.radcoin_reward
+        });
+        localStorage.removeItem(`levelup_${profile.id}`);
+      }
+    };
+
+    checkForLevelUpNotification();
+    
+    // Verificar a cada 3 segundos por novas notificações
+    const interval = setInterval(checkForLevelUpNotification, 3000);
+    return () => clearInterval(interval);
+  }, [profile?.id]);
 
   // Calcular se o perfil está completo (mesma lógica do ProfileCompletionProgress)
   const isProfileComplete = profile ? (() => {
@@ -53,7 +87,7 @@ export function UserProfile() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || levelLoading) {
     return (
       <section className="flex flex-col md:flex-row gap-6 items-center justify-between w-full rounded-xl px-6 md:px-10 py-7 bg-gradient-to-br from-[#232983] via-[#224ba7] to-[#25bfff] drop-shadow-lg mb-8 mt-3 animate-pulse">
         <div className="flex items-center gap-6">
@@ -120,6 +154,20 @@ export function UserProfile() {
                   </Badge>
                 )}
               </h2>
+              
+              {/* Barra de XP e Nível */}
+              {levelData && (
+                <div className="mt-2 mb-2">
+                  <XPProgressBar
+                    level={levelData.level}
+                    currentXP={totalPoints}
+                    nextLevelXP={levelData.next_level_xp}
+                    progress={levelData.progress_percentage}
+                    title={profile.active_title}
+                    compact={true}
+                  />
+                </div>
+              )}
               
               <div className="flex items-center gap-4 mt-1 text-cyan-50 font-medium text-base">
                 <div className="flex items-center gap-1">
@@ -212,6 +260,14 @@ export function UserProfile() {
       <OnboardingWizard
         isOpen={showOnboarding}
         onClose={handleOnboardingClose}
+      />
+
+      <LevelUpModal
+        isOpen={levelUpModal.show}
+        onClose={() => setLevelUpModal(prev => ({ ...prev, show: false }))}
+        newLevel={levelUpModal.newLevel}
+        newTitle={levelUpModal.newTitle}
+        radcoinReward={levelUpModal.radcoinReward}
       />
     </>
   );

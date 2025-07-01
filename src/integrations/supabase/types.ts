@@ -1095,6 +1095,7 @@ export type Database = {
         Row: {
           academic_specialty: string | null
           academic_stage: Database["public"]["Enums"]["academic_stage"] | null
+          active_title: string | null
           avatar_url: string | null
           bio: string | null
           birthdate: string | null
@@ -1103,6 +1104,7 @@ export type Database = {
           country_code: string | null
           created_at: string
           current_streak: number
+          current_xp: number | null
           email: string | null
           full_name: string | null
           id: string
@@ -1114,11 +1116,13 @@ export type Database = {
           total_points: number
           type: Database["public"]["Enums"]["profile_type"]
           updated_at: string
+          user_level: number | null
           username: string | null
         }
         Insert: {
           academic_specialty?: string | null
           academic_stage?: Database["public"]["Enums"]["academic_stage"] | null
+          active_title?: string | null
           avatar_url?: string | null
           bio?: string | null
           birthdate?: string | null
@@ -1127,6 +1131,7 @@ export type Database = {
           country_code?: string | null
           created_at?: string
           current_streak?: number
+          current_xp?: number | null
           email?: string | null
           full_name?: string | null
           id: string
@@ -1138,11 +1143,13 @@ export type Database = {
           total_points?: number
           type?: Database["public"]["Enums"]["profile_type"]
           updated_at?: string
+          user_level?: number | null
           username?: string | null
         }
         Update: {
           academic_specialty?: string | null
           academic_stage?: Database["public"]["Enums"]["academic_stage"] | null
+          active_title?: string | null
           avatar_url?: string | null
           bio?: string | null
           birthdate?: string | null
@@ -1151,6 +1158,7 @@ export type Database = {
           country_code?: string | null
           created_at?: string
           current_streak?: number
+          current_xp?: number | null
           email?: string | null
           full_name?: string | null
           id?: string
@@ -1162,6 +1170,7 @@ export type Database = {
           total_points?: number
           type?: Database["public"]["Enums"]["profile_type"]
           updated_at?: string
+          user_level?: number | null
           username?: string | null
         }
         Relationships: []
@@ -1617,6 +1626,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_levels: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: number
+          level: number
+          radcoin_reward: number | null
+          title_unlocked: string | null
+          xp_required: number
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: number
+          level: number
+          radcoin_reward?: number | null
+          title_unlocked?: string | null
+          xp_required: number
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: number
+          level?: number
+          radcoin_reward?: number | null
+          title_unlocked?: string | null
+          xp_required?: number
+        }
+        Relationships: []
+      }
       user_reports: {
         Row: {
           admin_id: string | null
@@ -1665,6 +1704,38 @@ export type Database = {
         }
         Relationships: []
       }
+      user_titles: {
+        Row: {
+          id: string
+          is_active: boolean | null
+          title: string
+          unlocked_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          is_active?: boolean | null
+          title: string
+          unlocked_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          is_active?: boolean | null
+          title?: string
+          unlocked_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_titles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1691,6 +1762,16 @@ export type Database = {
           p_metadata?: Json
         }
         Returns: undefined
+      }
+      calculate_user_level: {
+        Args: { p_total_points: number }
+        Returns: {
+          level: number
+          xp_required: number
+          next_level_xp: number
+          title: string
+          progress_percentage: number
+        }[]
       }
       charge_radcoins_for_ai_chat: {
         Args: { p_user_id: string; p_amount: number }
@@ -1818,6 +1899,10 @@ export type Database = {
               p_is_correct?: boolean
             }
         Returns: undefined
+      }
+      process_level_up: {
+        Args: { p_user_id: string }
+        Returns: Json
       }
       promote_to_permanent_admin: {
         Args: {
