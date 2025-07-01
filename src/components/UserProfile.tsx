@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { useUserRankings } from "@/hooks/useUserRankings";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import { OnboardingWizard } from "./profile/OnboardingWizard";
 
 export function UserProfile() {
   const { profile, isLoading } = useUserProfile();
+  const { userRank, loading: rankingsLoading } = useUserRankings();
   const { isAdmin } = useAdminAccess();
   const navigate = useNavigate();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -85,15 +87,8 @@ export function UserProfile() {
   const radcoins = profile.radcoin_balance || 0;
   const currentStreak = profile.current_streak || 0;
 
-  // Calcular ranking simples baseado em pontos reais
-  const calculateRanking = (points: number) => {
-    if (points >= 1000) return Math.floor(Math.random() * 10) + 1;
-    if (points >= 500) return Math.floor(Math.random() * 50) + 10;
-    if (points >= 100) return Math.floor(Math.random() * 100) + 50;
-    return Math.floor(Math.random() * 500) + 100;
-  };
-
-  const ranking = calculateRanking(totalPoints);
+  // Usar ranking real do sistema - com fallback suave para loading
+  const displayRank = rankingsLoading ? null : userRank;
 
   return (
     <>
@@ -146,7 +141,15 @@ export function UserProfile() {
               <div className="flex gap-4 mt-3 text-sm">
                 <Badge className="bg-cyan-600/70 px-4 py-1 rounded-2xl text-white font-medium flex items-center gap-2 hover:bg-cyan-600/80 transition-colors">
                   <Trophy className="h-4 w-4" />
-                  Ranking Nacional: <b>#{ranking}</b>
+                  {rankingsLoading ? (
+                    <span className="flex items-center gap-1">
+                      Ranking Nacional: <div className="w-8 h-4 bg-white/30 rounded animate-pulse"></div>
+                    </span>
+                  ) : displayRank ? (
+                    <span>Ranking Nacional: <b>#{displayRank}</b></span>
+                  ) : (
+                    <span>Ranking Nacional: <b>Calculando...</b></span>
+                  )}
                 </Badge>
                 
                 <Badge className="bg-gradient-to-r from-yellow-500/70 to-orange-500/70 px-4 py-1 rounded-2xl text-white font-medium flex items-center gap-2 hover:from-yellow-500/80 hover:to-orange-500/80 transition-colors">
