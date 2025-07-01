@@ -33,7 +33,7 @@ export function AdvancedAnalyticsTab() {
           .select("tx_type, amount")
           .then(res => {
             const byType = res.data?.reduce((acc: any, t) => {
-              acc[t.tx_type] = (acc[t.tx_type] || 0) + Math.abs(t.amount);
+              acc[t.tx_type] = (acc[t.tx_type] || 0) + Math.abs(Number(t.amount));
               return acc;
             }, {}) || {};
             return byType;
@@ -47,7 +47,7 @@ export function AdvancedAnalyticsTab() {
           .then(res => {
             const daily = res.data?.reduce((acc: any, t) => {
               const date = new Date(t.created_at).toLocaleDateString('pt-BR');
-              acc[date] = (acc[date] || 0) + Math.abs(t.amount);
+              acc[date] = (acc[date] || 0) + Math.abs(Number(t.amount));
               return acc;
             }, {}) || {};
             return daily;
@@ -67,7 +67,7 @@ export function AdvancedAnalyticsTab() {
           .select("radcoin_balance")
           .eq("type", "USER")
           .then(res => {
-            const balances = res.data?.map(p => p.radcoin_balance || 0) || [];
+            const balances = res.data?.map(p => Number(p.radcoin_balance || 0)) || [];
             const total = balances.reduce((sum, b) => sum + b, 0);
             const avg = balances.length ? total / balances.length : 0;
             const median = balances.length ? balances.sort()[Math.floor(balances.length / 2)] : 0;
@@ -175,25 +175,25 @@ export function AdvancedAnalyticsTab() {
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">
-                {distributionAnalytics?.economyHealth?.totalCirculation?.toLocaleString() || 0}
+                {Number(distributionAnalytics?.economyHealth?.totalCirculation || 0).toLocaleString()}
               </div>
               <div className="text-sm text-gray-600">RC Circulando</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">
-                {Math.round(distributionAnalytics?.economyHealth?.averageBalance || 0)}
+                {Math.round(Number(distributionAnalytics?.economyHealth?.averageBalance || 0))}
               </div>
               <div className="text-sm text-gray-600">RC Médio</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-purple-600">
-                {distributionAnalytics?.economyHealth?.medianBalance || 0}
+                {Number(distributionAnalytics?.economyHealth?.medianBalance || 0)}
               </div>
               <div className="text-sm text-gray-600">RC Mediano</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-orange-600">
-                {distributionAnalytics?.economyHealth?.activeWallets || 0}
+                {Number(distributionAnalytics?.economyHealth?.activeWallets || 0)}
               </div>
               <div className="text-sm text-gray-600">Carteiras Ativas</div>
             </div>
@@ -267,7 +267,7 @@ export function AdvancedAnalyticsTab() {
                   </div>
                   <div className="text-right">
                     <div className="font-bold text-yellow-600">
-                      {user.radcoin_balance?.toLocaleString() || 0} RC
+                      {Number(user.radcoin_balance || 0).toLocaleString()} RC
                     </div>
                   </div>
                 </div>
@@ -347,7 +347,7 @@ export function AdvancedAnalyticsTab() {
               <div className="text-sm text-gray-600">Prêmios concedidos</div>
               
               <div className="text-lg font-semibold text-gray-800">
-                {rewardAnalytics?.levelUps?.reduce((sum, l) => sum + l.amount, 0) || 0} RC
+                {rewardAnalytics?.levelUps?.reduce((sum, l) => sum + Number(l.amount), 0) || 0} RC
               </div>
               <div className="text-sm text-gray-600">Total distribuído</div>
             </div>
@@ -369,7 +369,7 @@ export function AdvancedAnalyticsTab() {
               <div className="text-sm text-gray-600">Logins premiados</div>
               
               <div className="text-lg font-semibold text-gray-800">
-                {rewardAnalytics?.dailyLogins?.reduce((sum, l) => sum + l.amount, 0) || 0} RC
+                {rewardAnalytics?.dailyLogins?.reduce((sum, l) => sum + Number(l.amount), 0) || 0} RC
               </div>
               <div className="text-sm text-gray-600">Total distribuído</div>
             </div>
