@@ -1175,6 +1175,202 @@ export type Database = {
         }
         Relationships: []
       }
+      radcoin_products: {
+        Row: {
+          benefits: Json
+          category: string
+          created_at: string
+          description: string | null
+          discount_percentage: number | null
+          id: string
+          is_active: boolean
+          is_popular: boolean | null
+          max_purchase_per_user: number | null
+          metadata: Json | null
+          name: string
+          price: number
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          benefits?: Json
+          category?: string
+          created_at?: string
+          description?: string | null
+          discount_percentage?: number | null
+          id?: string
+          is_active?: boolean
+          is_popular?: boolean | null
+          max_purchase_per_user?: number | null
+          metadata?: Json | null
+          name: string
+          price: number
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          benefits?: Json
+          category?: string
+          created_at?: string
+          description?: string | null
+          discount_percentage?: number | null
+          id?: string
+          is_active?: boolean
+          is_popular?: boolean | null
+          max_purchase_per_user?: number | null
+          metadata?: Json | null
+          name?: string
+          price?: number
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      radcoin_purchase_history: {
+        Row: {
+          benefits_received: Json
+          created_at: string
+          id: string
+          metadata: Json | null
+          product_id: string | null
+          purchase_type: string
+          radcoins_spent: number
+          special_offer_id: string | null
+          transaction_id: string | null
+          user_id: string
+        }
+        Insert: {
+          benefits_received?: Json
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          product_id?: string | null
+          purchase_type: string
+          radcoins_spent: number
+          special_offer_id?: string | null
+          transaction_id?: string | null
+          user_id: string
+        }
+        Update: {
+          benefits_received?: Json
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          product_id?: string | null
+          purchase_type?: string
+          radcoins_spent?: number
+          special_offer_id?: string | null
+          transaction_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "radcoin_purchase_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "radcoin_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "radcoin_purchase_history_special_offer_id_fkey"
+            columns: ["special_offer_id"]
+            isOneToOne: false
+            referencedRelation: "radcoin_special_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "radcoin_purchase_history_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "radcoin_transactions_log"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      radcoin_special_offers: {
+        Row: {
+          benefits: Json
+          created_at: string
+          current_redemptions: number | null
+          description: string | null
+          discount_percentage: number
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          is_limited: boolean | null
+          max_redemptions: number | null
+          metadata: Json | null
+          name: string
+          original_price: number
+          sale_price: number
+          starts_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          benefits?: Json
+          created_at?: string
+          current_redemptions?: number | null
+          description?: string | null
+          discount_percentage: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          is_limited?: boolean | null
+          max_redemptions?: number | null
+          metadata?: Json | null
+          name: string
+          original_price: number
+          sale_price: number
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          benefits?: Json
+          created_at?: string
+          current_redemptions?: number | null
+          description?: string | null
+          discount_percentage?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          is_limited?: boolean | null
+          max_redemptions?: number | null
+          metadata?: Json | null
+          name?: string
+          original_price?: number
+          sale_price?: number
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      radcoin_store_config: {
+        Row: {
+          description: string | null
+          is_public: boolean | null
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          description?: string | null
+          is_public?: boolean | null
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          description?: string | null
+          is_public?: boolean | null
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       radcoin_transactions_log: {
         Row: {
           amount: number
@@ -1911,6 +2107,14 @@ export type Database = {
           promotion_reason?: string
         }
         Returns: boolean
+      }
+      purchase_radcoin_product: {
+        Args: {
+          p_user_id: string
+          p_product_id?: string
+          p_special_offer_id?: string
+        }
+        Returns: Json
       }
       refill_daily_help_aids: {
         Args: Record<PropertyKey, never>
