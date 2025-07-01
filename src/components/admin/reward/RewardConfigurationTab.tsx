@@ -60,8 +60,9 @@ export function RewardConfigurationTab() {
       if (error && error.code !== 'PGRST116') throw error;
       
       if (data?.value) {
-        setConfig(data.value as RewardConfig);
-        return data.value as RewardConfig;
+        const configData = data.value as unknown as RewardConfig;
+        setConfig(configData);
+        return configData;
       }
       
       return config;
@@ -75,7 +76,7 @@ export function RewardConfigurationTab() {
         .from("system_settings")
         .upsert({
           key: "reward_config",
-          value: newConfig,
+          value: newConfig as any,
           updated_at: new Date().toISOString()
         });
 

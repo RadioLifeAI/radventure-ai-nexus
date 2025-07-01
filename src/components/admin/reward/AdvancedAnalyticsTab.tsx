@@ -22,10 +22,10 @@ export function AdvancedAnalyticsTab() {
     queryKey: ["distribution-analytics"],
     queryFn: async () => {
       const [
-        { data: transactionsByType },
-        { data: dailyDistribution },
-        { data: topUsers },
-        { data: economyHealth }
+        transactionsByTypeResult,
+        dailyDistributionResult,
+        topUsersResult,
+        economyHealthResult
       ] = await Promise.all([
         // Transações por tipo
         supabase
@@ -36,7 +36,7 @@ export function AdvancedAnalyticsTab() {
               acc[t.tx_type] = (acc[t.tx_type] || 0) + Math.abs(t.amount);
               return acc;
             }, {}) || {};
-            return { data: byType };
+            return byType;
           }),
         
         // Distribuição dos últimos 7 dias
@@ -50,7 +50,7 @@ export function AdvancedAnalyticsTab() {
               acc[date] = (acc[date] || 0) + Math.abs(t.amount);
               return acc;
             }, {}) || {};
-            return { data: daily };
+            return daily;
           }),
         
         // Top usuários por RadCoins
@@ -73,22 +73,20 @@ export function AdvancedAnalyticsTab() {
             const median = balances.length ? balances.sort()[Math.floor(balances.length / 2)] : 0;
             
             return {
-              data: {
-                totalCirculation: total,
-                averageBalance: avg,
-                medianBalance: median,
-                activeWallets: balances.filter(b => b > 0).length,
-                totalUsers: balances.length
-              }
+              totalCirculation: total,
+              averageBalance: avg,
+              medianBalance: median,
+              activeWallets: balances.filter(b => b > 0).length,
+              totalUsers: balances.length
             };
           })
       ]);
 
       return {
-        transactionsByType: transactionsByType.data,
-        dailyDistribution: dailyDistribution.data,
-        topUsers: topUsers.data || [],
-        economyHealth: economyHealth.data
+        transactionsByType: transactionsByTypeResult,
+        dailyDistribution: dailyDistributionResult,
+        topUsers: topUsersResult.data || [],
+        economyHealth: economyHealthResult
       };
     },
     refetchInterval: 60000
@@ -99,9 +97,9 @@ export function AdvancedAnalyticsTab() {
     queryKey: ["reward-analytics"],
     queryFn: async () => {
       const [
-        { data: achievements },
-        { data: levelUps },
-        { data: dailyLogins }
+        achievementsResult,
+        levelUpsResult,
+        dailyLoginsResult
       ] = await Promise.all([
         // Conquistas desbloqueadas
         supabase
@@ -113,7 +111,7 @@ export function AdvancedAnalyticsTab() {
         supabase
           .from("radcoin_transactions_log")
           .select("created_at, amount, metadata")
-          .eq("tx_type", "level_up")
+          .eq("tx_type", "profile_completion")
           .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
         
         // Logins diários
@@ -125,9 +123,9 @@ export function AdvancedAnalyticsTab() {
       ]);
 
       return {
-        achievements: achievements.data || [],
-        levelUps: levelUps.data || [],
-        dailyLogins: dailyLogins.data || []
+        achievements: achievementsResult.data || [],
+        levelUps: levelUpsResult.data || [],
+        dailyLogins: dailyLoginsResult.data || []
       };
     },
     refetchInterval: 60000
@@ -135,9 +133,9 @@ export function AdvancedAnalyticsTab() {
 
   const getTransactionTypeColor = (type: string) => {
     switch (type) {
-      case 'level_up': return 'bg-yellow-500';
+      case 'profile_completion': return 'bg-yellow-500';
       case 'daily_login': return 'bg-blue-500';
-      case 'manual_award': return 'bg-purple-500';
+      case 'admin_grant': return 'bg-purple-500';
       case 'ai_chat_usage': return 'bg-red-500';
       default: return 'bg-gray-500';
     }
@@ -145,9 +143,9 @@ export function AdvancedAnalyticsTab() {
 
   const getTransactionTypeLabel = (type: string) => {
     switch (type) {
-      case 'level_up': return 'Level Up';
+      case 'profile_completion': return 'Perfil Completo';
       case 'daily_login': return 'Login Diário';
-      case 'manual_award': return 'Prêmio Manual';
+      case 'admin_grant': return 'Prêmio Manual';
       case 'ai_chat_usage': return 'Uso de IA';
       default: return type;
     }
@@ -225,8 +223,8 @@ export function AdvancedAnalyticsTab() {
           <CardContent>
             <div className="space-y-3">
               {Object.entries(distributionAnalytics?.transactionsByType || {}).map(([type, amount]) => {
-                const total = Object.values(distributionAnalytics?.transactionsByType || {}).reduce((sum: number, val) => sum + (val as number), 0);
-                const percentage = total ? Math.round(((amount as number) / total) * 100) : 0;
+                const total = Object.values(distributionAnalytics?.transactionsByType || {}).reduce((sum: number, val) => sum + Number(val), 0);
+                const percentage = total ? Math.round((Number(amount) / total) * 100) : 0;
                 
                 return (
                   <div key={type} className="flex items-center justify-between">
@@ -235,7 +233,7 @@ export function AdvancedAnalyticsTab() {
                       <span className="font-medium">{getTransactionTypeLabel(type)}</span>
                     </div>
                     <div className="text-right">
-                      <div className="font-bold">{(amount as number).toLocaleString()} RC</div>
+                      <div className="font-bold">{Number(amount).toLocaleString()} RC</div>
                       <div className="text-sm text-gray-600">{percentage}%</div>
                     </div>
                   </div>
@@ -292,7 +290,7 @@ export function AdvancedAnalyticsTab() {
             {Object.entries(distributionAnalytics?.dailyDistribution || {}).map(([date, amount]) => (
               <div key={date} className="text-center p-3 bg-gray-50 rounded-lg">
                 <div className="text-xs text-gray-600 mb-1">{date}</div>
-                <div className="font-bold text-blue-600">{(amount as number).toLocaleString()}</div>
+                <div className="font-bold text-blue-600">{Number(amount).toLocaleString()}</div>
                 <div className="text-xs text-gray-500">RC</div>
               </div>
             ))}
@@ -338,7 +336,7 @@ export function AdvancedAnalyticsTab() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-green-600" />
-              Level Ups (30 dias)
+              Perfis Completos (30 dias)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -346,7 +344,7 @@ export function AdvancedAnalyticsTab() {
               <div className="text-2xl font-bold text-green-600">
                 {rewardAnalytics?.levelUps?.length || 0}
               </div>
-              <div className="text-sm text-gray-600">Level ups registrados</div>
+              <div className="text-sm text-gray-600">Perfis completados</div>
               
               <div className="text-lg font-semibold text-gray-800">
                 {rewardAnalytics?.levelUps?.reduce((sum, l) => sum + l.amount, 0) || 0} RC

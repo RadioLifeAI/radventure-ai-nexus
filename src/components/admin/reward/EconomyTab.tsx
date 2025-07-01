@@ -20,14 +20,15 @@ import {
   AlertCircle,
   RefreshCw,
   Award,
-  Zap
+  Zap,
+  Gift
 } from "lucide-react";
 
 export function EconomyTab() {
   const [showDistributeModal, setShowDistributeModal] = useState(false);
   const [distributionData, setDistributionData] = useState({
     amount: 0,
-    type: 'manual_award',
+    type: 'admin_grant',
     target: 'all_users',
     reason: ''
   });
@@ -39,34 +40,34 @@ export function EconomyTab() {
     queryKey: ["economy-stats"],
     queryFn: async () => {
       const [
-        { data: totalBalance },
-        { data: recentTransactions },
-        { data: activeUsers },
-        { data: dailyDistribution }
+        totalBalanceResult,
+        recentTransactionsResult,
+        activeUsersResult,
+        dailyDistributionResult
       ] = await Promise.all([
-        supabase.from("profiles").select("radcoin_balance").then(res => ({
-          data: res.data?.reduce((sum, p) => sum + (p.radcoin_balance || 0), 0) || 0
-        })),
+        supabase.from("profiles").select("radcoin_balance").then(res => 
+          res.data?.reduce((sum, p) => sum + (p.radcoin_balance || 0), 0) || 0
+        ),
         supabase.from("radcoin_transactions_log")
           .select("*")
           .order("created_at", { ascending: false })
           .limit(10),
-        supabase.from("profiles").select("id").eq("type", "USER").then(res => ({
-          data: res.data?.length || 0
-        })),
+        supabase.from("profiles").select("id").eq("type", "USER").then(res => 
+          res.data?.length || 0
+        ),
         supabase.from("radcoin_transactions_log")
           .select("amount")
           .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-          .then(res => ({
-            data: res.data?.reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0
-          }))
+          .then(res => 
+            res.data?.reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0
+          )
       ]);
 
       return {
-        totalCirculation: totalBalance.data,
-        recentTransactions: recentTransactions.data || [],
-        activeUsers: activeUsers.data,
-        dailyDistribution: dailyDistribution.data
+        totalCirculation: totalBalanceResult,
+        recentTransactions: recentTransactionsResult.data || [],
+        activeUsers: activeUsersResult,
+        dailyDistribution: dailyDistributionResult
       };
     },
     refetchInterval: 30000
@@ -78,15 +79,24 @@ export function EconomyTab() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("radcoin_transactions_log")
-        .select(`
-          *,
-          profiles(full_name, username)
-        `)
+        .select("*")
         .order("created_at", { ascending: false })
         .limit(50);
 
       if (error) throw error;
-      return data;
+      
+      // Buscar dados dos usuários separadamente
+      const userIds = [...new Set(data.map(t => t.user_id))];
+      const { data: users } = await supabase
+        .from("profiles")
+        .select("id, full_name, username")
+        .in("id", userIds);
+
+      // Combinar dados
+      return data.map(transaction => ({
+        ...transaction,
+        user_profile: users?.find(u => u.id === transaction.user_id)
+      }));
     },
     refetchInterval: 15000
   });
@@ -120,7 +130,7 @@ export function EconomyTab() {
       queryClient.invalidateQueries({ queryKey: ["recent-transactions-detailed"] });
       toast.success("RadCoins distribuídos com sucesso!");
       setShowDistributeModal(false);
-      setDistributionData({ amount: 0, type: 'manual_award', target: 'all_users', reason: '' });
+      setDistributionData({ amount: 0, type: 'admin_grant', target: 'all_users', reason: '' });
     },
     onError: (error: any) => {
       toast.error(`Erro na distribuição: ${error.message}`);
@@ -129,9 +139,9 @@ export function EconomyTab() {
 
   const getTransactionIcon = (type: string) => {
     switch (type) {
-      case 'level_up': return <Award className="h-4 w-4 text-yellow-500" />;
+      case 'profile_completion': return <Award className="h-4 w-4 text-yellow-500" />;
       case 'daily_login': return <Zap className="h-4 w-4 text-blue-500" />;
-      case 'manual_award': return <Gift className="h-4 w-4 text-purple-500" />;
+      case 'admin_grant': return <Gift className="h-4 w-4 text-purple-500" />;
       case 'ai_chat_usage': return <AlertCircle className="h-4 w-4 text-red-500" />;
       default: return <Coins className="h-4 w-4 text-gray-500" />;
     }
@@ -258,7 +268,7 @@ export function EconomyTab() {
                     {getTransactionIcon(transaction.tx_type)}
                     <div>
                       <div className="text-sm font-medium">
-                        {transaction.profiles?.full_name || transaction.profiles?.username || 'Usuário'}
+                        {transaction.user_profile?.full_name || transaction.user_profile?.username || 'Usuário'}
                       </div>
                       <div className="text-xs text-gray-600">{transaction.tx_type}</div>
                     </div>
@@ -302,7 +312,7 @@ export function EconomyTab() {
                     {new Date(transaction.created_at).toLocaleDateString('pt-BR')}
                   </TableCell>
                   <TableCell>
-                    {transaction.profiles?.full_name || transaction.profiles?.username || 'N/A'}
+                    {transaction.user_profile?.full_name || transaction.user_profile?.username || 'N/A'}
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className="flex items-center gap-1 w-fit">
@@ -318,7 +328,9 @@ export function EconomyTab() {
                   <TableCell>{transaction.balance_after} RC</TableCell>
                   <TableCell>
                     <div className="text-xs text-gray-600">
-                      {transaction.metadata?.reason || 'N/A'}
+                      {transaction.metadata && typeof transaction.metadata === 'object' && 'reason' in transaction.metadata
+                        ? String(transaction.metadata.reason) 
+                        : 'N/A'}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -362,9 +374,9 @@ export function EconomyTab() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="manual_award">Prêmio Manual</SelectItem>
-                  <SelectItem value="bonus_event">Evento Bônus</SelectItem>
-                  <SelectItem value="compensation">Compensação</SelectItem>
+                  <SelectItem value="admin_grant">Prêmio Manual</SelectItem>
+                  <SelectItem value="event_reward">Evento Bônus</SelectItem>
+                  <SelectItem value="subscription_purchase">Compensação</SelectItem>
                 </SelectContent>
               </Select>
             </div>
