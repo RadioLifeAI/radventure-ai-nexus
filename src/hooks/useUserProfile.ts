@@ -26,6 +26,7 @@ export interface UserProfile {
   college?: string;
   birthdate?: string;
   preferences?: any;
+  active_title?: string;
   created_at: string;
   updated_at: string;
 }
