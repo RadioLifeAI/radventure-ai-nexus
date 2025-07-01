@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -36,153 +36,137 @@ export function useUserProfile() {
   const queryClient = useQueryClient();
   const { checkAndAwardProfileRewards } = useProfileRewards();
   
-  // Controles super rigorosos para evitar execução múltipla
+  // Controles para evitar execução múltipla das recompensas
   const hasCheckedRewardsRef = useRef(false);
   const processingRewardsRef = useRef(false);
   const sessionKeyRef = useRef(`profile_rewards_${Date.now()}_${Math.random()}`);
 
+  // Função de busca memoizada
+  const fetchProfile = useCallback(async () => {
+    console.log('👤 Buscando perfil para usuário:', user?.id?.slice(0, 8) + '...');
+    
+    if (!user?.id) {
+      console.log('❌ No user ID available');
+      throw new Error('No user ID');
+    }
+    
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    if (error) {
+      console.log('⚠️ Profile fetch error:', error);
+      
+      if (error.code === 'PGRST116') {
+        console.log('🔧 Perfil não encontrado, aguardando criação automática...');
+        
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        const { data: retryData, error: retryError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+          
+        if (retryError && retryError.code === 'PGRST116') {
+          console.log('🛠️ Criando perfil manualmente...');
+          
+          const newProfileData = {
+            id: user.id,
+            email: user.email || '',
+            username: user.email?.split('@')[0] || `user_${user.id.slice(0, 8)}`,
+            full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
+            type: 'USER' as const,
+            radcoin_balance: 0,
+            total_points: 0,
+            current_streak: 0,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+
+          const { data: newProfile, error: createError } = await supabase
+            .from('profiles')
+            .insert(newProfileData)
+            .select()
+            .single();
+
+          if (createError) {
+            console.error('❌ Error creating profile:', createError);
+            throw createError;
+          }
+
+          console.log('✅ Perfil criado manualmente:', newProfile.email);
+          return newProfile as UserProfile;
+        } else if (retryData) {
+          console.log('✅ Perfil encontrado na segunda tentativa:', retryData.email);
+          return retryData as UserProfile;
+        } else {
+          throw retryError;
+        }
+      }
+      throw error;
+    }
+    
+    console.log('✅ Perfil carregado:', data.email);
+    return data as UserProfile;
+  }, [user?.id, user?.email, user?.user_metadata]);
+
   const { data: profile, isLoading, error } = useQuery({
     queryKey: ['user-profile', user?.id],
-    queryFn: async () => {
-      console.log('👤 Buscando perfil para usuário:', user?.id?.slice(0, 8) + '...');
-      
-      if (!user?.id) {
-        console.log('❌ No user ID available');
-        throw new Error('No user ID');
-      }
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (error) {
-        console.log('⚠️ Profile fetch error:', error);
-        
-        if (error.code === 'PGRST116') {
-          console.log('🔧 Perfil não encontrado, aguardando criação automática...');
-          
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          
-          const { data: retryData, error: retryError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-            
-          if (retryError && retryError.code === 'PGRST116') {
-            console.log('🛠️ Criando perfil manualmente...');
-            
-            const newProfileData = {
-              id: user.id,
-              email: user.email || '',
-              username: user.email?.split('@')[0] || `user_${user.id.slice(0, 8)}`,
-              full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
-              type: 'USER' as const,
-              radcoin_balance: 0,
-              total_points: 0,
-              current_streak: 0,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            };
-
-            const { data: newProfile, error: createError } = await supabase
-              .from('profiles')
-              .insert(newProfileData)
-              .select()
-              .single();
-
-            if (createError) {
-              console.error('❌ Error creating profile:', createError);
-              throw createError;
-            }
-
-            console.log('✅ Perfil criado manualmente:', newProfile.email);
-            return newProfile as UserProfile;
-          } else if (retryData) {
-            console.log('✅ Perfil encontrado na segunda tentativa:', retryData.email);
-            return retryData as UserProfile;
-          } else {
-            throw retryError;
-          }
-        }
-        throw error;
-      }
-      
-      console.log('✅ Perfil carregado:', data.email);
-      return data as UserProfile;
-    },
+    queryFn: fetchProfile,
     enabled: !!user?.id && isAuthenticated,
     refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 5, // Aumentado para 5 minutos
+    staleTime: 1000 * 60 * 5,
     retry: (failureCount, error: any) => {
       return failureCount < 2 && error?.code !== 'PGRST116';
     },
   });
 
-  // Controle SUPER RIGOROSO para verificar recompensas apenas UMA vez
-  useEffect(() => {
-    const executeRewards = async () => {
-      // Múltiplas verificações de segurança
-      if (!profile || !user) {
-        console.log('❌ Sem perfil ou usuário para recompensas');
-        return;
-      }
+  // Processo de recompensas otimizado
+  const processRewards = useCallback(async (profile: UserProfile) => {
+    if (hasCheckedRewardsRef.current || processingRewardsRef.current) {
+      return;
+    }
 
-      if (hasCheckedRewardsRef.current) {
-        console.log('🔒 Recompensas já verificadas - bloqueando execução');
-        return;
-      }
+    const sessionKey = sessionKeyRef.current;
+    const sessionCheck = sessionStorage.getItem(`profile_rewards_${user?.id}`);
+    
+    if (sessionCheck) {
+      hasCheckedRewardsRef.current = true;
+      return;
+    }
 
-      if (processingRewardsRef.current) {
-        console.log('⏳ Já processando recompensas - bloqueando execução');
-        return;
-      }
-
-      // Verificar session storage para evitar execução dupla
-      const sessionKey = sessionKeyRef.current;
-      const sessionCheck = sessionStorage.getItem(`profile_rewards_${user.id}`);
+    try {
+      processingRewardsRef.current = true;
+      hasCheckedRewardsRef.current = true;
+      sessionStorage.setItem(`profile_rewards_${user?.id}`, sessionKey);
       
-      if (sessionCheck) {
-        console.log('🔒 Session storage indica recompensas já processadas');
-        hasCheckedRewardsRef.current = true;
-        return;
-      }
+      console.log('🎯 Iniciando verificação ÚNICA de recompensas...');
+      await checkAndAwardProfileRewards(profile);
+      console.log('✅ Verificação de recompensas concluída');
+      
+    } catch (error) {
+      console.error('❌ Erro ao verificar recompensas:', error);
+      hasCheckedRewardsRef.current = false;
+      processingRewardsRef.current = false;
+      sessionStorage.removeItem(`profile_rewards_${user?.id}`);
+    } finally {
+      processingRewardsRef.current = false;
+    }
+  }, [user?.id, checkAndAwardProfileRewards]);
 
-      try {
-        // Marcar como processando IMEDIATAMENTE
-        processingRewardsRef.current = true;
-        hasCheckedRewardsRef.current = true;
-        
-        // Salvar no session storage
-        sessionStorage.setItem(`profile_rewards_${user.id}`, sessionKey);
-        
-        console.log('🎯 Iniciando verificação ÚNICA de recompensas...');
-        
-        // Executar verificação de recompensas
-        await checkAndAwardProfileRewards(profile);
-        
-        console.log('✅ Verificação de recompensas concluída');
-        
-      } catch (error) {
-        console.error('❌ Erro ao verificar recompensas:', error);
-        // Em caso de erro, resetar controles para permitir nova tentativa
-        hasCheckedRewardsRef.current = false;
-        processingRewardsRef.current = false;
-        sessionStorage.removeItem(`profile_rewards_${user.id}`);
-      } finally {
-        processingRewardsRef.current = false;
-      }
-    };
-
-    executeRewards();
-  }, [profile?.id, user?.id]); // Dependências mínimas e estáveis
+  // Execução das recompensas
+  useEffect(() => {
+    if (profile && user) {
+      processRewards(profile);
+    }
+  }, [profile?.id, user?.id, processRewards]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (updates: Partial<UserProfile>) => {
       if (!user?.id) {
-        console.error('❌ No user ID for profile update');
         throw new Error('No user ID');
       }
       
@@ -204,7 +188,6 @@ export function useUserProfile() {
       return data;
     },
     onSuccess: (updatedProfile) => {
-      // Usar apenas setQueryData para atualizar o cache - SEM invalidateQueries
       queryClient.setQueryData(['user-profile', user?.id], updatedProfile);
       
       toast({
@@ -224,17 +207,17 @@ export function useUserProfile() {
     }
   });
 
-  const refreshProfile = () => {
+  const refreshProfile = useCallback(() => {
     console.log('🔄 Atualizando perfil manualmente...');
     queryClient.invalidateQueries({ queryKey: ['user-profile', user?.id] });
-  };
+  }, [queryClient, user?.id]);
 
-  return {
+  return useMemo(() => ({
     profile,
     isLoading,
     error,
     updateProfile: updateProfileMutation.mutate,
     isUpdating: updateProfileMutation.isPending,
     refreshProfile
-  };
+  }), [profile, isLoading, error, updateProfileMutation.mutate, updateProfileMutation.isPending, refreshProfile]);
 }

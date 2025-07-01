@@ -38,7 +38,12 @@ export function LevelUpModal({
       <DialogContent className="max-w-md p-0 overflow-hidden bg-gradient-to-br from-purple-900 via-blue-900 to-purple-800 border-none">
         {/* Efeitos de Fundo */}
         <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-blue-600/20 animate-pulse"></div>
-        <div className="absolute top-0 left-0 w-full h-full bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="4"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-30"></div>
+        <div className="absolute top-0 left-0 w-full h-full opacity-30">
+          <div className="w-full h-full bg-white/10 rounded-full" style={{
+            backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1) 4px, transparent 4px)',
+            backgroundSize: '60px 60px'
+          }}></div>
+        </div>
         
         <div className="relative z-10 p-8 text-center text-white">
           {/* Ícone Principal com Animação */}
@@ -65,7 +70,7 @@ export function LevelUpModal({
           {/* Novo Título */}
           <div className="mb-6">
             <p className="text-white/80 text-sm mb-2">Título Desbloqueado:</p>
-            <Badge className="bg-gradient-to-r from-gold-500 to-yellow-600 text-white font-bold text-base px-4 py-2">
+            <Badge className="bg-gradient-to-r from-yellow-500 to-orange-600 text-white font-bold text-base px-4 py-2">
               <Trophy className="h-4 w-4 mr-2" />
               {newTitle}
             </Badge>

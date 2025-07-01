@@ -1,12 +1,17 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState } from "react";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useUserRankings } from "@/hooks/useUserRankings";
 import { useUserLevel } from "@/hooks/useUserLevel";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
+import { useLevelUpNotifications } from "@/hooks/useLevelUpNotifications";
+import { useLevelUpModal } from "@/hooks/useLevelUpModal";
+import { useProfileCompletion } from "@/hooks/useProfileCompletion";
+import { useOnboardingFlow } from "@/hooks/useOnboardingFlow";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Trophy, Zap, Target, Settings, Shield, Crown } from "lucide-react";
+import { MapPin, Trophy, Zap, Target, Settings, Shield } from "lucide-react";
 import { ProfileSettingsModal } from "./profile/ProfileSettingsModal";
 import { ProfileCompletionProgress } from "./profile/ProfileCompletionProgress";
 import { OnboardingWizard } from "./profile/OnboardingWizard";
@@ -20,72 +25,14 @@ export function UserProfile() {
   const { isAdmin } = useAdminAccess();
   const navigate = useNavigate();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [levelUpModal, setLevelUpModal] = useState<{
-    show: boolean;
-    newLevel: number;
-    newTitle: string;
-    radcoinReward: number;
-  }>({ show: false, newLevel: 0, newTitle: '', radcoinReward: 0 });
 
-  // Verificar se é um perfil novo (para mostrar onboarding)
-  useEffect(() => {
-    if (profile && !isLoading) {
-      const isNewProfile = !profile.full_name || (!profile.city && !profile.state);
-      const hasSeenOnboarding = localStorage.getItem(`onboarding_${profile.id}`);
-      
-      if (isNewProfile && !hasSeenOnboarding) {
-        setShowOnboarding(true);
-      }
-    }
-  }, [profile, isLoading]);
+  // Ativar sistema de notificações de level up
+  useLevelUpNotifications();
 
-  // Listener para notificações de level up
-  useEffect(() => {
-    if (!profile?.id) return;
-
-    const checkForLevelUpNotification = () => {
-      const levelUpData = localStorage.getItem(`levelup_${profile.id}`);
-      if (levelUpData) {
-        const data = JSON.parse(levelUpData);
-        setLevelUpModal({
-          show: true,
-          newLevel: data.new_level,
-          newTitle: data.title_unlocked,
-          radcoinReward: data.radcoin_reward
-        });
-        localStorage.removeItem(`levelup_${profile.id}`);
-      }
-    };
-
-    checkForLevelUpNotification();
-    
-    // Verificar a cada 3 segundos por novas notificações
-    const interval = setInterval(checkForLevelUpNotification, 3000);
-    return () => clearInterval(interval);
-  }, [profile?.id]);
-
-  // Calcular se o perfil está completo (mesma lógica do ProfileCompletionProgress)
-  const isProfileComplete = profile ? (() => {
-    const completionFields = [
-      { completed: !!(profile.full_name && profile.full_name.trim().length > 0) },
-      { completed: !!(profile.city && profile.state) },
-      { completed: !!(profile.medical_specialty && profile.medical_specialty.trim().length > 0) },
-      { completed: !!(profile.academic_stage && profile.college) },
-      { completed: !!profile.birthdate },
-      { completed: !!(profile.bio && profile.bio.trim().length > 20) }
-    ];
-    
-    const completedCount = completionFields.filter(field => field.completed).length;
-    return completedCount === completionFields.length;
-  })() : false;
-
-  const handleOnboardingClose = () => {
-    setShowOnboarding(false);
-    if (profile) {
-      localStorage.setItem(`onboarding_${profile.id}`, 'completed');
-    }
-  };
+  // Hooks para funcionalidades específicas
+  const { levelUpModal, closeLevelUpModal } = useLevelUpModal(profile?.id);
+  const { isProfileComplete } = useProfileCompletion(profile);
+  const { showOnboarding, handleOnboardingClose } = useOnboardingFlow(profile, isLoading);
 
   if (isLoading || levelLoading) {
     return (
@@ -120,8 +67,6 @@ export function UserProfile() {
   const totalPoints = profile.total_points || 0;
   const radcoins = profile.radcoin_balance || 0;
   const currentStreak = profile.current_streak || 0;
-
-  // Usar ranking real do sistema - com fallback suave para loading
   const displayRank = rankingsLoading ? null : userRank;
 
   return (
@@ -264,7 +209,7 @@ export function UserProfile() {
 
       <LevelUpModal
         isOpen={levelUpModal.show}
-        onClose={() => setLevelUpModal(prev => ({ ...prev, show: false }))}
+        onClose={closeLevelUpModal}
         newLevel={levelUpModal.newLevel}
         newTitle={levelUpModal.newTitle}
         radcoinReward={levelUpModal.radcoinReward}
