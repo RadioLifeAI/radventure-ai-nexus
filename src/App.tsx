@@ -15,7 +15,7 @@ import Casos from "./pages/Casos";
 import CasoUsuarioView from "./pages/CasoUsuarioView";
 import EventosEnhanced from "./pages/EventosEnhanced";
 import EventoDetalhes from "./pages/EventoDetalhes";
-import RankingEventos from "./pages/RankingEventos";
+import EventRankingsEnhanced from "./pages/EventRankingsEnhanced";
 import Rankings from "./pages/Rankings";
 import Estatisticas from "./pages/Estatisticas";
 import AdminPanel from "./pages/AdminPanel";
@@ -114,7 +114,7 @@ function App() {
               path="/app/ranking-eventos" 
               element={
                 <ProtectedRouteRedirect>
-                  <RankingEventos />
+                  <EventRankingsEnhanced />
                 </ProtectedRouteRedirect>
               } 
             />
