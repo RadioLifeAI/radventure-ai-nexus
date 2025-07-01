@@ -111,7 +111,7 @@ export function AdvancedAnalyticsTab() {
         supabase
           .from("radcoin_transactions_log")
           .select("created_at, amount, metadata")
-          .eq("tx_type", "profile_completion")
+          .eq("tx_type", "admin_grant")
           .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
         
         // Logins diários
@@ -133,9 +133,8 @@ export function AdvancedAnalyticsTab() {
 
   const getTransactionTypeColor = (type: string) => {
     switch (type) {
-      case 'profile_completion': return 'bg-yellow-500';
+      case 'admin_grant': return 'bg-yellow-500';
       case 'daily_login': return 'bg-blue-500';
-      case 'admin_grant': return 'bg-purple-500';
       case 'ai_chat_usage': return 'bg-red-500';
       default: return 'bg-gray-500';
     }
@@ -143,9 +142,8 @@ export function AdvancedAnalyticsTab() {
 
   const getTransactionTypeLabel = (type: string) => {
     switch (type) {
-      case 'profile_completion': return 'Perfil Completo';
-      case 'daily_login': return 'Login Diário';
       case 'admin_grant': return 'Prêmio Manual';
+      case 'daily_login': return 'Login Diário';
       case 'ai_chat_usage': return 'Uso de IA';
       default: return type;
     }
@@ -201,9 +199,11 @@ export function AdvancedAnalyticsTab() {
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-red-600">
-                {distributionAnalytics?.economyHealth?.totalUsers 
-                  ? Math.round((distributionAnalytics.economyHealth.activeWallets / distributionAnalytics.economyHealth.totalUsers) * 100)
-                  : 0}%
+                {(() => {
+                  const activeWallets = Number(distributionAnalytics?.economyHealth?.activeWallets || 0);
+                  const totalUsers = Number(distributionAnalytics?.economyHealth?.totalUsers || 0);
+                  return totalUsers > 0 ? Math.round((activeWallets / totalUsers) * 100) : 0;
+                })()}%
               </div>
               <div className="text-sm text-gray-600">Taxa Ativação</div>
             </div>
@@ -336,7 +336,7 @@ export function AdvancedAnalyticsTab() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-green-600" />
-              Perfis Completos (30 dias)
+              Prêmios Manuais (30 dias)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -344,7 +344,7 @@ export function AdvancedAnalyticsTab() {
               <div className="text-2xl font-bold text-green-600">
                 {rewardAnalytics?.levelUps?.length || 0}
               </div>
-              <div className="text-sm text-gray-600">Perfis completados</div>
+              <div className="text-sm text-gray-600">Prêmios concedidos</div>
               
               <div className="text-lg font-semibold text-gray-800">
                 {rewardAnalytics?.levelUps?.reduce((sum, l) => sum + l.amount, 0) || 0} RC
