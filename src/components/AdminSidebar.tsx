@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
@@ -15,6 +14,7 @@ import {
   Trophy,
   Brain,
   Bell,
+  Coins,
 } from "lucide-react";
 
 // Menu admin - links relativos para rotas aninhadas
@@ -31,6 +31,7 @@ const adminMenu = [
   { label: "Notificações", icon: <Bell size={20} />, to: "/admin/notificacoes" },
   { label: "Monitoramento", icon: <Monitor size={20} />, to: "/admin/monitoramento" },
   { label: "Recompensas", icon: <Gift size={20} />, to: "/admin/recompensas" },
+  { label: "Loja RadCoin", icon: <Coins size={20} />, to: "/admin/radcoin-loja" },
   { label: "Configurações", icon: <Settings size={20} />, to: "/admin/configuracoes" },
   { label: "Chaves API", icon: <KeyRound size={20} />, to: "/admin/chaves-api" },
   { label: "Config. Stripe", icon: <CreditCard size={20} />, to: "/admin/config-stripe" },
