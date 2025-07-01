@@ -1,6 +1,7 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useRadCoinAnalytics } from "@/components/radcoin-shop/hooks/useRadCoinAnalytics";
 import { Badge } from "@/components/ui/badge";
 import { 
   TrendingUp, 
@@ -14,12 +15,14 @@ import {
 } from "lucide-react";
 
 export function AnalyticsTab() {
-  // Dados simulados para demonstração
+  // Dados reais do Supabase
+  const { analytics, isLoading, metrics } = useRadCoinAnalytics();
+  
   const salesData = {
-    totalSales: 1250,
-    totalRevenue: 8500,
-    averageOrderValue: 68,
-    conversionRate: 15.3,
+    totalSales: metrics?.totalSales || 0,
+    totalRevenue: metrics?.totalRevenue || 0,
+    averageOrderValue: metrics?.averageOrderValue || 0,
+    conversionRate: metrics?.conversionRate || 0,
     topProducts: [
       { name: "Pacote Avançado", sales: 450, revenue: 3150 },
       { name: "Pacote Básico", sales: 380, revenue: 2280 },

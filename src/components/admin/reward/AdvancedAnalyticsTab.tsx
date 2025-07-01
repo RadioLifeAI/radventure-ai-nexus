@@ -224,7 +224,7 @@ export function AdvancedAnalyticsTab() {
             <div className="space-y-3">
               {Object.entries(distributionAnalytics?.transactionsByType || {}).map(([type, amount]) => {
                 const total = Object.values(distributionAnalytics?.transactionsByType || {}).reduce((sum: number, val) => sum + Number(val), 0);
-                const percentage = total ? Math.round((Number(amount) / total) * 100) : 0;
+                const percentage = total ? Math.round((Number(amount) / Number(total)) * 100) : 0;
                 
                 return (
                   <div key={type} className="flex items-center justify-between">

@@ -2183,6 +2183,8 @@ export type Database = {
         | "profile_completion_bonus"
         | "daily_login"
         | "ai_chat_usage"
+        | "store_purchase"
+        | "store_welcome_bonus"
       subscription_tier: "Free" | "Pro" | "Plus"
     }
     CompositeTypes: {
@@ -2319,6 +2321,8 @@ export const Constants = {
         "profile_completion_bonus",
         "daily_login",
         "ai_chat_usage",
+        "store_purchase",
+        "store_welcome_bonus",
       ],
       subscription_tier: ["Free", "Pro", "Plus"],
     },
