@@ -2,10 +2,11 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { createNotification } from "@/utils/notifications";
 
 export interface Notification {
   id: string;
-  type: 'event_starting' | 'achievement_unlocked' | 'ranking_update' | 'new_event' | 'reminder' | 'report_update';
+  type: 'event_starting' | 'achievement_unlocked' | 'ranking_update' | 'new_event' | 'reminder' | 'report_update' | 'educational_alert' | 'abuse_warning' | 'study_recommendation';
   title: string;
   message: string;
   timestamp: Date;
@@ -15,6 +16,11 @@ export interface Notification {
   actionLabel?: string;
   metadata?: any;
 }
+
+// Cache para notificações excluídas localmente
+const excludedNotifications = new Set<string>();
+let lastFetchTime = 0;
+const FETCH_DEBOUNCE = 2000; // 2 segundos de debounce
 
 export function useRealNotifications() {
   const { user } = useAuth();
@@ -30,7 +36,7 @@ export function useRealNotifications() {
 
     fetchNotifications();
     
-    // Real-time subscription para novas notificações
+    // Real-time subscription com debounce e cache
     const channel = supabase
       .channel('notifications-realtime')
       .on(
@@ -41,8 +47,12 @@ export function useRealNotifications() {
           table: 'notifications',
           filter: `user_id=eq.${user.id}`
         },
-        () => {
-          fetchNotifications();
+        (payload) => {
+          const now = Date.now();
+          if (now - lastFetchTime > FETCH_DEBOUNCE) {
+            lastFetchTime = now;
+            fetchNotifications();
+          }
         }
       )
       .subscribe();
@@ -65,18 +75,20 @@ export function useRealNotifications() {
 
       if (error) throw error;
 
-      const formattedNotifications: Notification[] = (data || []).map(notif => ({
-        id: notif.id,
-        type: notif.type as Notification['type'],
-        title: notif.title,
-        message: notif.message,
-        timestamp: new Date(notif.created_at),
-        isRead: notif.is_read,
-        priority: notif.priority as Notification['priority'],
-        actionUrl: notif.action_url,
-        actionLabel: notif.action_label,
-        metadata: notif.metadata
-      }));
+      const formattedNotifications: Notification[] = (data || [])
+        .filter(notif => !excludedNotifications.has(notif.id)) // Respeitar exclusões locais
+        .map(notif => ({
+          id: notif.id,
+          type: notif.type as Notification['type'],
+          title: notif.title,
+          message: notif.message,
+          timestamp: new Date(notif.created_at),
+          isRead: notif.is_read,
+          priority: notif.priority as Notification['priority'],
+          actionUrl: notif.action_url,
+          actionLabel: notif.action_label,
+          metadata: notif.metadata
+        }));
 
       setNotifications(formattedNotifications);
     } catch (error) {
@@ -128,15 +140,23 @@ export function useRealNotifications() {
 
   const removeNotification = async (notificationId: string) => {
     try {
+      // Adicionar ao cache local PRIMEIRO
+      excludedNotifications.add(notificationId);
+      
+      // Remover da UI imediatamente
+      setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
+
+      // Depois tentar remover do banco
       const { error } = await supabase
         .from('notifications')
         .delete()
         .eq('id', notificationId)
         .eq('user_id', user?.id);
 
-      if (error) throw error;
-
-      setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
+      if (error) {
+        console.error('Erro ao remover notificação:', error);
+        // Não reverter a remoção local para evitar reaparecer
+      }
     } catch (error) {
       console.error('Erro ao remover notificação:', error);
     }

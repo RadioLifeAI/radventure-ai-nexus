@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,9 +11,12 @@ import {
   Zap,
   Star,
   Gift,
-  CheckCircle
+  CheckCircle,
+  Brain,
+  AlertTriangle
 } from "lucide-react";
 import { useRealNotifications } from "@/hooks/useRealNotifications";
+import { useEducationalProtections } from "@/hooks/useEducationalProtections";
 import { useNavigate } from "react-router-dom";
 
 export function EventsNotificationSystem() {
@@ -27,6 +31,9 @@ export function EventsNotificationSystem() {
     unreadCount 
   } = useRealNotifications();
 
+  // Inicializar proteções educacionais
+  useEducationalProtections();
+
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'event_starting': return <Zap className="h-4 w-4 text-red-500" />;
@@ -35,11 +42,19 @@ export function EventsNotificationSystem() {
       case 'new_event': return <Gift className="h-4 w-4 text-purple-500" />;
       case 'reminder': return <Clock className="h-4 w-4 text-gray-500" />;
       case 'report_update': return <Bell className="h-4 w-4 text-blue-500" />;
+      case 'educational_alert': return <Brain className="h-4 w-4 text-green-500" />;
+      case 'abuse_warning': return <AlertTriangle className="h-4 w-4 text-orange-500" />;
+      case 'study_recommendation': return <Star className="h-4 w-4 text-purple-500" />;
       default: return <Bell className="h-4 w-4 text-gray-500" />;
     }
   };
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityColor = (priority: string, type: string) => {
+    // Cores especiais para notificações educacionais
+    if (type === 'educational_alert') return 'border-l-green-500 bg-green-50';
+    if (type === 'abuse_warning') return 'border-l-orange-500 bg-orange-50';
+    if (type === 'study_recommendation') return 'border-l-purple-500 bg-purple-50';
+    
     switch (priority) {
       case 'high': return 'border-l-red-500 bg-red-50';
       case 'medium': return 'border-l-yellow-500 bg-yellow-50';
@@ -53,9 +68,8 @@ export function EventsNotificationSystem() {
       markAsRead(notification.id);
     }
     
-    // Se for notificação de report, abrir modal
+    // Para notificações de report, abrir modal
     if (notification.type === 'report_update' && notification.metadata?.report_id) {
-      // Usar a função global para abrir o modal
       if ((window as any).openReportModal) {
         (window as any).openReportModal(notification.metadata.report_id);
       }
@@ -87,7 +101,7 @@ export function EventsNotificationSystem() {
         )}
       </Button>
 
-      {/* Panel de notificações */}
+      {/* Panel de notificações - CORRIGIDO para não reaparecer notificações excluídas */}
       {isOpen && (
         <Card className="absolute right-0 top-12 w-80 max-h-96 overflow-y-auto z-50 shadow-xl">
           <CardContent className="p-0">
@@ -118,7 +132,7 @@ export function EventsNotificationSystem() {
                   <div
                     key={notification.id}
                     className={`border-l-4 p-4 border-b hover:bg-gray-50 cursor-pointer ${
-                      getPriorityColor(notification.priority)
+                      getPriorityColor(notification.priority, notification.type)
                     } ${!notification.isRead ? 'bg-opacity-50' : ''}`}
                     onClick={() => handleNotificationClick(notification)}
                   >
@@ -165,7 +179,7 @@ export function EventsNotificationSystem() {
                                 e.stopPropagation();
                                 removeNotification(notification.id);
                               }}
-                              className="text-xs px-2 py-1"
+                              className="text-xs px-2 py-1 hover:text-red-500"
                             >
                               <X className="h-3 w-3" />
                             </Button>

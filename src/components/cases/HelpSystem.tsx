@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Lightbulb, Zap, SkipForward, X, Sparkles } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useUserHelpAids } from "@/hooks/useUserHelpAids";
+import { useEducationalProtections } from "@/hooks/useEducationalProtections";
 
 type Props = {
   maxElimination: number;
@@ -35,6 +35,7 @@ export function HelpSystem({
   const { toast } = useToast();
   const [showConfirm, setShowConfirm] = useState<string | null>(null);
   const { helpAids, consumeHelp } = useUserHelpAids();
+  const { checkHelpAidUsage, checkAITutorLimit } = useEducationalProtections();
 
   const handleElimination = () => {
     if (eliminatedOptions.length >= maxElimination) {
@@ -53,6 +54,17 @@ export function HelpSystem({
         variant: "destructive"
       });
       return;
+    }
+
+    // Verificação educacional invisível
+    const limitCheck = checkHelpAidUsage();
+    if (!limitCheck.allowed && limitCheck.reason) {
+      toast({
+        title: "Sugestão educacional",
+        description: limitCheck.reason,
+        variant: "default"
+      });
+      // Permite usar, mas com aviso educacional
     }
 
     setShowConfirm("elimination");
@@ -77,6 +89,17 @@ export function HelpSystem({
       return;
     }
 
+    // Verificação educacional invisível
+    const limitCheck = checkHelpAidUsage();
+    if (!limitCheck.allowed && limitCheck.reason) {
+      toast({
+        title: "Sugestão educacional",
+        description: limitCheck.reason,
+        variant: "default"
+      });
+      // Permite usar, mas com aviso educacional
+    }
+
     setShowConfirm("skip");
   };
 
@@ -99,13 +122,23 @@ export function HelpSystem({
       return;
     }
 
+    // Verificação educacional com rate limiting
+    const limitCheck = checkAITutorLimit();
+    if (!limitCheck.allowed) {
+      toast({
+        title: "Aguarde um momento",
+        description: limitCheck.reason || "Aguarde antes de usar novamente.",
+        variant: "default"
+      });
+      return;
+    }
+
     setShowConfirm("aiHint");
   };
 
   const confirmAction = () => {
     switch (showConfirm) {
       case "elimination":
-        // CORREÇÃO CRÍTICA: Passar o índice correto para não eliminar a resposta correta
         onEliminateOption(correctAnswerIndex);
         consumeHelp({ aidType: 'elimination' });
         break;

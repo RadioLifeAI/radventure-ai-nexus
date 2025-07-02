@@ -1,204 +1,188 @@
 
-import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Loader2, Bot, User, Trash2, Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
-import { useRadBotChat } from '@/hooks/useRadBotChat';
-import { useUserProfile } from '@/hooks/useUserProfile';
+import React, { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { Bot, User, Send, Sparkles, AlertCircle } from "lucide-react";
+import { useRadBotChat } from "@/hooks/useRadBotChat";
+import { useEducationalProtections } from "@/hooks/useEducationalProtections";
+import { useToast } from "@/components/ui/use-toast";
 
-interface RadBotChatProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-export function RadBotChat({ isOpen, onClose }: RadBotChatProps) {
-  const [inputMessage, setInputMessage] = useState('');
+export function RadBotChat() {
+  const [input, setInput] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { messages, isLoading, sendMessage, processCommand, clearChat, hasEnoughCredits } = useRadBotChat();
-  const { profile } = useUserProfile();
+  const { messages, isLoading, sendMessage, balance } = useRadBotChat();
+  const { checkRadBotLimit } = useEducationalProtections();
+  const { toast } = useToast();
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim() || isLoading) return;
+  const handleSend = () => {
+    if (!input.trim() || isLoading) return;
 
-    // Processar comandos primeiro
-    if (inputMessage.startsWith('/')) {
-      const processed = processCommand(inputMessage);
-      if (processed) {
-        setInputMessage('');
-        return;
-      }
+    // Verificação educacional invisível
+    const limitCheck = checkRadBotLimit();
+    if (!limitCheck.allowed) {
+      toast({
+        title: "Pausa recomendada",
+        description: limitCheck.reason || "Você já usou o RadBot bastante hoje. Que tal praticar casos médicos?",
+        variant: "default"
+      });
+      return;
     }
 
-    await sendMessage(inputMessage);
-    setInputMessage('');
+    sendMessage(input.trim());
+    setInput("");
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      handleSend();
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return (
+      <Button
+        onClick={() => setIsOpen(true)}
+        className="fixed bottom-4 right-4 rounded-full w-14 h-14 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg"
+        size="sm"
+      >
+        <Bot className="h-6 w-6" />
+      </Button>
+    );
+  }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-end justify-end p-4 z-50">
-      <div className="w-full max-w-md h-[600px] bg-white rounded-lg shadow-2xl flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-4 text-white">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="relative">
-                <Bot className="h-6 w-6" />
-                <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-yellow-300 animate-pulse" />
-              </div>
-              <div>
-                <h3 className="font-bold">RadBot AI</h3>
-                <p className="text-xs opacity-90">
-                  Saldo: {profile?.radcoin_balance || 0} RadCoins • 5 RC/msg
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearChat}
-                className="text-white hover:bg-white/20"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClose}
-                className="text-white hover:bg-white/20"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
+    <Card className="fixed bottom-4 right-4 w-96 h-[500px] flex flex-col shadow-2xl border-purple-200 bg-gradient-to-br from-white to-purple-50">
+      <CardHeader className="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-t-lg pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Bot className="h-5 w-5" />
+            RadBot IA
+            <Sparkles className="h-4 w-4" />
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="bg-white/20 text-white">
+              💰 {balance}
+            </Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsOpen(false)}
+              className="text-white hover:bg-white/20 h-6 w-6 p-0"
+            >
+              ×
+            </Button>
           </div>
         </div>
+      </CardHeader>
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <Card className={`max-w-[85%] p-3 ${
-                message.type === 'user'
-                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                  : 'bg-gray-100 text-gray-900'
-              }`}>
-                <div className="flex items-start space-x-2">
-                  {message.type === 'assistant' && (
-                    <Bot className="h-4 w-4 mt-1 flex-shrink-0 text-gray-700" />
-                  )}
-                  {message.type === 'user' && (
-                    <User className="h-4 w-4 mt-1 flex-shrink-0 text-white" />
-                  )}
-                  <div className="flex-1">
-                    <div className="text-sm whitespace-pre-wrap">
-                      {message.content}
+      <CardContent className="flex-1 p-0 flex flex-col">
+        <ScrollArea className="flex-1 p-4">
+          <div className="space-y-4">
+            {messages.length === 0 && (
+              <div className="text-center text-gray-500 py-8">
+                <Bot className="h-12 w-12 mx-auto mb-4 text-purple-400" />
+                <p className="text-sm">
+                  Olá! Sou o RadBot, seu assistente médico IA.
+                  <br />
+                  Como posso ajudar com seus estudos hoje?
+                </p>
+              </div>
+            )}
+            
+            {messages.map((message, index) => (
+              <div
+                key={index}
+                className={`flex gap-3 ${
+                  message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
+                }`}
+              >
+                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                  message.role === 'user' 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-purple-500 text-white'
+                }`}>
+                  {message.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+                </div>
+                <div className={`flex-1 max-w-[80%] ${
+                  message.role === 'user' ? 'text-right' : 'text-left'
+                }`}>
+                  <div className={`inline-block p-3 rounded-lg text-sm ${
+                    message.role === 'user'
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-100 text-gray-800'
+                  }`}>
+                    {message.content}
+                  </div>
+                  {message.radcoins_cost && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      Custo: {message.radcoins_cost} RadCoins
                     </div>
-                    <div className="flex items-center justify-between mt-2">
-                      <div className={`text-xs ${message.type === 'user' ? 'text-white/70' : 'text-gray-500'}`}>
-                        {message.timestamp.toLocaleTimeString()}
-                      </div>
-                      {message.cost && (
-                        <div className="text-xs bg-white/20 px-2 py-1 rounded text-white">
-                          -{message.cost} RC
-                        </div>
-                      )}
+                  )}
+                </div>
+              </div>
+            ))}
+            
+            {isLoading && (
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500 text-white flex items-center justify-center">
+                  <Bot className="h-4 w-4" />
+                </div>
+                <div className="flex-1">
+                  <div className="inline-block p-3 rounded-lg bg-gray-100">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                     </div>
                   </div>
                 </div>
-              </Card>
-            </div>
-          ))}
-          
-          {isLoading && (
-            <div className="flex justify-start">
-              <Card className="bg-gray-100 p-3">
-                <div className="flex items-center space-x-2">
-                  <Bot className="h-4 w-4 text-gray-700" />
-                  <Loader2 className="h-4 w-4 animate-spin text-gray-700" />
-                  <span className="text-sm text-gray-700">RadBot AI está pensando...</span>
-                </div>
-              </Card>
-            </div>
-          )}
-          
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Warning sem créditos */}
-        {!hasEnoughCredits && (
-          <div className="px-4 py-2 bg-red-50 border-t border-red-200">
-            <p className="text-red-600 text-sm text-center">
-              ⚠️ Saldo insuficiente! Você precisa de 5 RadCoins para enviar mensagens.
-            </p>
+              </div>
+            )}
           </div>
-        )}
+          <div ref={messagesEndRef} />
+        </ScrollArea>
 
-        {/* Input */}
         <div className="p-4 border-t bg-gray-50">
-          <div className="flex space-x-2">
-            <Input
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
+          <div className="flex gap-2">
+            <Textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder={hasEnoughCredits ? "Digite sua mensagem..." : "Sem créditos suficientes"}
-              disabled={isLoading || !hasEnoughCredits}
-              className="flex-1 text-gray-900 placeholder:text-gray-500 bg-white border-gray-300 focus:border-purple-500 focus:ring-purple-500"
+              placeholder="Digite sua pergunta médica..."
+              className="resize-none min-h-[40px] max-h-[100px]"
+              disabled={isLoading}
             />
             <Button
-              onClick={handleSendMessage}
-              disabled={isLoading || !inputMessage.trim() || !hasEnoughCredits}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+              onClick={handleSend}
+              disabled={!input.trim() || isLoading}
+              size="sm"
+              className="bg-purple-500 hover:bg-purple-600"
             >
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
+              <Send className="h-4 w-4" />
             </Button>
           </div>
-          
-          {/* Comandos rápidos - CORRIGIDO CONTRASTE */}
-          <div className="mt-2 flex flex-wrap gap-1">
-            {['/meus-stats', '/radcoins', '/eventos', '/conquistas'].map((cmd) => (
-              <Button
-                key={cmd}
-                variant="outline"
-                size="sm"
-                onClick={() => setInputMessage(cmd)}
-                className="text-xs h-6 text-gray-700 border-gray-300 hover:bg-gray-100 hover:text-gray-900 bg-white"
-                disabled={!hasEnoughCredits}
-              >
-                {cmd}
-              </Button>
-            ))}
+          <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
+            <span>💰 Custo: ~5 RadCoins por mensagem</span>
+            <span className="flex items-center gap-1">
+              <AlertCircle className="h-3 w-3" />
+              Use com moderação
+            </span>
           </div>
         </div>
-
-        {/* Disclaimer */}
-        <div className="px-4 py-2 bg-yellow-50 text-xs text-center text-yellow-800">
-          ⚠️ Informações educacionais. Não substitui consulta médica profissional.
-        </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
