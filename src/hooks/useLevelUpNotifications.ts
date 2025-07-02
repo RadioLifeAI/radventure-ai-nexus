@@ -34,11 +34,11 @@ export function useLevelUpNotifications() {
               .single();
 
             if (levelData) {
-              // Salvar dados do level up no localStorage para mostrar modal
+              // CORREÇÃO: Remover radcoin_reward que foi removido da tabela
               const levelUpData = {
                 new_level: newData.user_level,
                 title_unlocked: levelData.title_unlocked,
-                radcoin_reward: levelData.radcoin_reward
+                description: levelData.description
               };
               
               localStorage.setItem(`levelup_${user.id}`, JSON.stringify(levelUpData));

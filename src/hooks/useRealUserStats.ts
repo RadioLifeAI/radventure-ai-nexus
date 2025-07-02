@@ -60,8 +60,8 @@ export function useRealUserStats() {
         throw profileError;
       }
 
-      // 2. Buscar histórico completo de casos com informações dos casos
-      const { data: history, error: historyError } = await supabase
+      // 2. CORREÇÃO CRÍTICA: Buscar histórico com separação entre primeiras tentativas e revisões
+      const { data: allHistory, error: historyError } = await supabase
         .from('user_case_history')
         .select(`
           case_id,
@@ -83,7 +83,7 @@ export function useRealUserStats() {
         throw historyError;
       }
 
-      if (!history || history.length === 0) {
+      if (!allHistory || allHistory.length === 0) {
         return {
           totalCases: 0,
           correctAnswers: 0,
@@ -99,14 +99,26 @@ export function useRealUserStats() {
         };
       }
 
-      // 3. Calcular estatísticas
-      const totalCases = history.length;
-      const correctAnswers = history.filter(h => h.is_correct).length;
-      const accuracy = totalCases > 0 ? Math.round((correctAnswers / totalCases) * 100) : 0;
-      const reviewCases = history.filter(h => (h.review_count || 0) > 0).length;
+      // 3. CORREÇÃO PRINCIPAL: Separar primeiras tentativas de revisões
+      // Filtrar apenas primeiras tentativas (review_count = 0 ou null) para cálculos de precisão
+      const firstAttempts = allHistory.filter(h => (h.review_count || 0) === 0);
+      const reviews = allHistory.filter(h => (h.review_count || 0) > 0);
 
-      // 4. Atividade recente (últimos 10)
-      const recentActivity = history.slice(0, 10).map(h => ({
+      // Estatísticas baseadas APENAS em primeiras tentativas
+      const totalCases = firstAttempts.length;
+      const correctAnswers = firstAttempts.filter(h => h.is_correct).length;
+      const accuracy = totalCases > 0 ? Math.round((correctAnswers / totalCases) * 100) : 0;
+      const reviewCases = reviews.length;
+
+      console.log('📊 Estatísticas corrigidas:', {
+        totalHistory: allHistory.length,
+        firstAttempts: firstAttempts.length,
+        reviews: reviews.length,
+        accuracy: `${accuracy}% (${correctAnswers}/${totalCases})`
+      });
+
+      // 4. Atividade recente (todos os 10 mais recentes incluindo revisões)
+      const recentActivity = allHistory.slice(0, 10).map(h => ({
         caseId: h.case_id,
         isCorrect: h.is_correct,
         points: h.points || 0,
@@ -115,8 +127,8 @@ export function useRealUserStats() {
         isReview: (h.review_count || 0) > 0
       }));
 
-      // 5. Breakdown por especialidade
-      const specialtyBreakdown = history
+      // 5. CORREÇÃO: Breakdown por especialidade baseado APENAS em primeiras tentativas
+      const specialtyBreakdown = firstAttempts
         .reduce((acc, h) => {
           const specialty = h.medical_cases?.specialty || 'Outros';
           if (!acc[specialty]) {
@@ -129,8 +141,8 @@ export function useRealUserStats() {
           return acc;
         }, {} as Record<string, { total: number; correct: number; accuracy: number; points: number }>);
 
-      // 6. Breakdown por dificuldade
-      const difficultyBreakdown = history
+      // 6. CORREÇÃO: Breakdown por dificuldade baseado APENAS em primeiras tentativas
+      const difficultyBreakdown = firstAttempts
         .reduce((acc, h) => {
           const difficulty = h.medical_cases?.difficulty_level || 1;
           if (!acc[difficulty]) {
