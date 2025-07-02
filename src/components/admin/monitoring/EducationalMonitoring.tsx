@@ -65,7 +65,8 @@ export function EducationalMonitoring() {
 
       const totalActiveUsers = activeUsersData?.filter(user => 
         user.preferences && 
-        user.preferences.last_login_date === today.toISOString().split('T')[0]
+        typeof user.preferences === 'object' &&
+        (user.preferences as any)?.last_login_date === today.toISOString().split('T')[0]
       ).length || 0;
 
       // 2. Uso de ajudas hoje

@@ -10,6 +10,7 @@ import { useSpecialtiesData } from "@/hooks/useSpecialtiesData";
 import { useLevelUpNotifications } from "@/hooks/useLevelUpNotifications";
 import { useAutomaticRewards } from "@/hooks/useAutomaticRewards";
 import { useSubscriptionRewards } from "@/hooks/useSubscriptionRewards";
+import { useRewardsTest } from "@/hooks/useRewardsTest";
 import { QuickActionsSection } from "@/components/dashboard/QuickActionsSection";
 import { SpecialtiesSection } from "@/components/dashboard/SpecialtiesSection";
 import { EmptySpecialtiesMessage } from "@/components/dashboard/EmptySpecialtiesMessage";
@@ -33,6 +34,9 @@ export default function Dashboard() {
   useLevelUpNotifications();
   useAutomaticRewards();
   useSubscriptionRewards();
+  
+  // Sistema de teste de recompensas (remover em produção)
+  useRewardsTest();
 
   const isLoading = dashboardLoading || progressLoading;
   const [isChatOpen, setIsChatOpen] = useState(false);

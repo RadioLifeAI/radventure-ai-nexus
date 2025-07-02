@@ -33,7 +33,7 @@ export function useAutomaticRewards() {
 
         if (!loginError && loginBonusData) {
           // Type casting seguro para a resposta
-          const loginBonus = loginBonusData as DailyLoginBonusResponse;
+          const loginBonus = loginBonusData as unknown as DailyLoginBonusResponse;
           
           if (loginBonus.awarded) {
             toast({
