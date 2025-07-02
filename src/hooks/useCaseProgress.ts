@@ -266,7 +266,7 @@ export function useCaseProgress(caseId: string) {
             selectedAnswerText: selectedText,
             correctAnswerText: correctText,
             hasError: true
-          });
+          };
         } else {
           // Notice/Warning - considerar como sucesso
           console.log('⚠️ Notice/Warning ignorado, processamento considerado bem-sucedido');

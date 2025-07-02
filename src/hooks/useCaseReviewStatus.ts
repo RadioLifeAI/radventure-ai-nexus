@@ -54,8 +54,8 @@ export function useCaseReviewStatus(caseId: string | null) {
         }
         
         console.log('✅ Status de revisão obtido:', {
-          isReview: data?.is_review || false,
-          reviewCount: data?.review_count || 0
+          isReview: (data as any)?.is_review || false,
+          reviewCount: (data as any)?.review_count || 0
         });
         
         // Converter explicitamente o tipo Json para CaseReviewStatus
