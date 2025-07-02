@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Routes, Route } from "react-router-dom";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import { DashboardAnalyticsIntegrated } from "./DashboardAnalyticsIntegrated";
@@ -14,14 +14,9 @@ import { StripeManagement } from "./StripeManagement";
 import { APIKeyManagement } from "./APIKeyManagement";
 
 export function AdminDashboardComplete() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
   return (
     <div className="flex h-screen bg-gray-50">
-      <AdminSidebar 
-        isOpen={sidebarOpen} 
-        onToggle={() => setSidebarOpen(!sidebarOpen)} 
-      />
+      <AdminSidebar />
       <main className="flex-1 overflow-auto">
         <div className="container mx-auto px-6 py-8">
           <Routes>

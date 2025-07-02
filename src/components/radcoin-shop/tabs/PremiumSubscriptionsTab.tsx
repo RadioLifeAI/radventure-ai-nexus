@@ -3,22 +3,26 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Crown, Star, Award, Check, Zap } from "lucide-react";
+import { 
+  Crown, 
+  Star, 
+  Zap, 
+  Shield, 
+  Sparkles,
+  CheckCircle,
+  Diamond,
+  Award,
+  TrendingUp
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
 
 interface PremiumSubscriptionsTabProps {
   currentBalance: number;
 }
 
 export function PremiumSubscriptionsTab({ currentBalance }: PremiumSubscriptionsTabProps) {
-  const { user } = useAuth();
-  const { toast } = useToast();
-
-  // Buscar planos de assinatura ativos
-  const { data: subscriptionPlans, isLoading } = useQuery({
+  const { data: subscriptionPlans = [], isLoading } = useQuery({
     queryKey: ["subscription-plans"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -28,264 +32,231 @@ export function PremiumSubscriptionsTab({ currentBalance }: PremiumSubscriptions
         .order("sort_order", { ascending: true });
 
       if (error) throw error;
-      return data;
+      return data || [];
     }
   });
 
-  // Buscar assinatura atual do usuário
-  const { data: userSubscription } = useQuery({
-    queryKey: ["user-subscription", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      
-      const { data, error } = await supabase
-        .from("subscriptions")
-        .select(`
-          *,
-          subscription_plans (*)
-        `)
-        .eq("user_id", user.id)
-        .eq("status", "active")
-        .single();
-
-      if (error && error.code !== 'PGRST116') throw error;
-      return data;
-    },
-    enabled: !!user?.id
-  });
-
-  const handleSubscribe = async (planId: string, planName: string) => {
-    if (!user) {
-      toast({
-        title: "Login necessário",
-        description: "Você precisa estar logado para assinar um plano.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    toast({
-      title: "🚧 Em breve!",
-      description: `A assinatura ${planName} estará disponível em breve! Aguarde a integração com Stripe.`,
-      variant: "default"
-    });
+  const handleSubscribe = (planId: string, planName: string) => {
+    console.log("Subscribing to plan:", planId, planName);
+    // TODO: Implementar lógica de assinatura via Stripe
   };
 
   const getPlanIcon = (planName: string) => {
-    if (planName.includes('Bronze')) return Award;
-    if (planName.includes('Prata')) return Star;
-    if (planName.includes('Ouro')) return Crown;
-    return Crown;
+    if (planName.includes('5') || planName.toLowerCase().includes('bronze')) return Award;
+    if (planName.includes('10') || planName.toLowerCase().includes('prata')) return Star;
+    if (planName.includes('15') || planName.toLowerCase().includes('ouro')) return Crown;
+    return Diamond;
   };
 
   const getPlanColor = (planName: string) => {
-    if (planName.includes('Bronze')) return "from-orange-500 to-amber-600";
-    if (planName.includes('Prata')) return "from-gray-400 to-slate-500";
-    if (planName.includes('Ouro')) return "from-yellow-400 to-yellow-500";
-    return "from-purple-500 to-indigo-600";
+    if (planName.includes('5') || planName.toLowerCase().includes('bronze')) 
+      return "from-orange-600 to-amber-700";
+    if (planName.includes('10') || planName.toLowerCase().includes('prata')) 
+      return "from-gray-500 to-slate-600";
+    if (planName.includes('15') || planName.toLowerCase().includes('ouro')) 
+      return "from-yellow-500 to-yellow-600";
+    return "from-purple-500 to-pink-600";
+  };
+
+  const getPlanBadge = (planName: string) => {
+    if (planName.includes('5') || planName.toLowerCase().includes('bronze')) 
+      return { text: "BRONZE", color: "bg-orange-500 text-orange-900", icon: Award };
+    if (planName.includes('10') || planName.toLowerCase().includes('prata')) 
+      return { text: "POPULAR", color: "bg-blue-500 text-blue-900", icon: Star };
+    if (planName.includes('15') || planName.toLowerCase().includes('ouro')) 
+      return { text: "OURO", color: "bg-yellow-500 text-yellow-900", icon: Crown };
+    return { text: "PREMIUM", color: "bg-purple-500 text-purple-900", icon: Diamond };
   };
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="text-gray-400 mt-2">Carregando planos...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!subscriptionPlans || subscriptionPlans.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <Crown className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-xl font-semibold text-gray-700 mb-2">
-          Planos em Preparação
-        </h3>
-        <p className="text-gray-500">
-          Os planos educacionais RadSupport estarão disponíveis em breve!
-        </p>
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-4 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Header da seção */}
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-white mb-2 flex items-center justify-center gap-2">
-          <Crown className="h-6 w-6 text-yellow-400" />
-          Planos RadSupport Educacionais
+        <h2 className="text-3xl font-bold text-white mb-2 flex items-center justify-center gap-3">
+          <Crown className="h-8 w-8 text-yellow-400" />
+          Assinaturas Educacionais
         </h2>
-        <p className="text-blue-200">
-          Apoie o projeto educacional e ganhe benefícios exclusivos para acelerar seus estudos!
+        <p className="text-purple-200 text-lg">
+          Apoie o projeto educacional e ganhe benefícios exclusivos!
         </p>
-        {userSubscription && (
-          <Badge className="mt-3 bg-green-600 text-white px-4 py-2">
-            ✓ Plano Ativo: {userSubscription.subscription_plans?.display_name}
-          </Badge>
-        )}
       </div>
 
-      {/* Grid de planos */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {subscriptionPlans.map((plan) => {
-          const Icon = getPlanIcon(plan.display_name);
-          const colorClass = getPlanColor(plan.display_name);
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {subscriptionPlans.map((plan, index) => {
           const features = (plan.features as Record<string, any>) || {};
           const limits = (plan.limits as Record<string, any>) || {};
-          const isCurrentPlan = userSubscription?.plan_id === plan.id;
-          const isPopular = plan.display_name.includes('Prata');
+          const Icon = getPlanIcon(plan.name);
+          const badge = getPlanBadge(plan.name);
+          const BadgeIcon = badge.icon;
 
           return (
             <Card 
-              key={plan.id} 
-              className={`relative overflow-hidden transition-all duration-300 hover:scale-105 border-2 ${
-                isCurrentPlan 
-                  ? 'border-green-500 bg-green-50' 
-                  : isPopular 
-                    ? 'border-purple-400 bg-gradient-to-br from-purple-50 to-blue-50' 
-                    : 'border-gray-200 hover:border-blue-300'
-              }`}
+              key={plan.id}
+              className={`relative overflow-hidden bg-gradient-to-br ${getPlanColor(plan.name)} border-2 ${
+                plan.name.includes('10') ? 'border-blue-400 shadow-2xl scale-105' : 'border-white/20'
+              } hover:scale-105 transition-all duration-300`}
             >
-              {isPopular && (
-                <div className="absolute top-0 right-0 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1 text-xs font-bold">
-                  MAIS POPULAR
-                </div>
-              )}
-              
-              <CardHeader className="text-center">
-                <div className={`w-16 h-16 mx-auto rounded-full bg-gradient-to-r ${colorClass} flex items-center justify-center mb-4`}>
+              {/* Badge do Plano */}
+              <div className="absolute top-4 right-4">
+                <Badge className={`${badge.color} font-bold animate-pulse`}>
+                  <BadgeIcon className="h-3 w-3 mr-1" />
+                  {badge.text}
+                </Badge>
+              </div>
+
+              <CardHeader className="text-center pb-4">
+                <div className="mx-auto mb-4 p-4 bg-white/20 rounded-full backdrop-blur-sm w-fit">
                   <Icon className="h-8 w-8 text-white" />
                 </div>
-                
-                <CardTitle className="text-xl font-bold text-gray-800">
-                  {plan.display_name}
+                <CardTitle className="text-2xl font-bold text-white">
+                  {plan.display_name || plan.name}
                 </CardTitle>
-                
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-gray-900">
-                    R$ {plan.price_monthly.toFixed(2)}
-                  </div>
-                  <div className="text-sm text-gray-500">por mês</div>
-                  {plan.price_yearly > 0 && (
-                    <div className="text-sm text-green-600 font-medium">
-                      ou R$ {plan.price_yearly.toFixed(2)}/ano (economize 17%)
-                    </div>
-                  )}
-                </div>
+                <p className="text-blue-100">{plan.description}</p>
               </CardHeader>
 
-              <CardContent>
-                <p className="text-gray-600 text-sm mb-6">
-                  {plan.description}
-                </p>
-
-                {/* Benefícios principais */}
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">
-                      <strong>{limits.radcoins_monthly || 0} RadCoins</strong> mensais
+              <CardContent className="space-y-4">
+                {/* Preço */}
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <span className="text-3xl font-bold text-white">
+                      R$ {plan.price_monthly}
                     </span>
+                    <span className="text-blue-200">/mês</span>
                   </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">
-                      Selo <strong>{features.colaborator_badge}</strong>
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">
-                      <strong>{features.elimination_aids || 0}</strong> eliminações por caso
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">
-                      <strong>{features.skip_aids || 0}</strong> pulos por sessão
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">
-                      <strong>{features.ai_tutor_credits || 0}</strong> créditos IA Tutor/dia
-                    </span>
-                  </div>
-                  
-                  {features.xp_multiplier > 1 && (
-                    <div className="flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-yellow-500" />
-                      <span className="text-sm">
-                        <strong>+{((features.xp_multiplier - 1) * 100).toFixed(0)}%</strong> bônus XP
-                      </span>
-                    </div>
-                  )}
-                  
-                  {features.priority_support && (
-                    <div className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-500" />
-                      <span className="text-sm">Suporte prioritário</span>
-                    </div>
-                  )}
-                  
-                  {features.early_access && (
-                    <div className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-500" />
-                      <span className="text-sm">Acesso antecipado</span>
+                  {plan.price_yearly > 0 && (
+                    <div className="text-sm text-green-300">
+                      ou R$ {plan.price_yearly}/ano (economize 20%)
                     </div>
                   )}
                 </div>
 
-                <Button 
-                  onClick={() => handleSubscribe(plan.id, plan.display_name)}
-                  disabled={isCurrentPlan}
-                  className={`w-full ${
-                    isCurrentPlan 
-                      ? 'bg-green-600 hover:bg-green-700' 
-                      : `bg-gradient-to-r ${colorClass} hover:opacity-90`
-                  } text-white font-bold py-3 transition-all duration-300`}
+                {/* Recursos Inclusos */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-white text-center">Benefícios Inclusos:</h4>
+                  <div className="space-y-2">
+                    {limits.radcoins_monthly && (
+                      <div className="flex items-center gap-3 bg-white/10 rounded-lg p-3">
+                        <Zap className="h-5 w-5 text-orange-400" />
+                        <span className="text-white font-medium">{limits.radcoins_monthly} RadCoins/mês</span>
+                      </div>
+                    )}
+                    
+                    {features.colaborator_badge && (
+                      <div className="flex items-center gap-3 bg-white/10 rounded-lg p-3">
+                        <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black text-xs">
+                          Selo: {features.colaborator_badge}
+                        </Badge>
+                      </div>
+                    )}
+
+                    {features.elimination_aids && (
+                      <div className="flex items-center gap-3 bg-white/10 rounded-lg p-3">
+                        <Shield className="h-5 w-5 text-blue-400" />
+                        <span className="text-white">+{features.elimination_aids} Eliminações extras</span>
+                      </div>
+                    )}
+
+                    {features.skip_aids && (
+                      <div className="flex items-center gap-3 bg-white/10 rounded-lg p-3">
+                        <TrendingUp className="h-5 w-5 text-green-400" />
+                        <span className="text-white">+{features.skip_aids} Pulos extras</span>
+                      </div>
+                    )}
+
+                    {features.ai_tutor_credits && (
+                      <div className="flex items-center gap-3 bg-white/10 rounded-lg p-3">
+                        <Sparkles className="h-5 w-5 text-purple-400" />
+                        <span className="text-white">+{features.ai_tutor_credits} Créditos IA Tutor</span>
+                      </div>
+                    )}
+
+                    {features.xp_multiplier && (
+                      <div className="flex items-center gap-3 bg-white/10 rounded-lg p-3">
+                        <Star className="h-5 w-5 text-yellow-400" />
+                        <span className="text-white">+{((features.xp_multiplier - 1) * 100).toFixed(0)}% Bônus XP</span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-3 bg-white/10 rounded-lg p-3">
+                      <CheckCircle className="h-5 w-5 text-green-400" />
+                      <span className="text-white text-sm">Suporte ao projeto educacional</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Botão de Assinatura */}
+                <Button
+                  className="w-full py-3 text-lg font-bold bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black shadow-lg hover:shadow-xl transition-all duration-300"
+                  onClick={() => handleSubscribe(plan.id, plan.name)}
                 >
-                  {isCurrentPlan ? '✓ Plano Ativo' : `Assinar ${plan.display_name}`}
+                  <Crown className="h-5 w-5 mr-2" />
+                  Assinar {plan.display_name}
                 </Button>
-                
-                {!isCurrentPlan && (
-                  <p className="text-xs text-gray-500 text-center mt-2">
-                    * Integração Stripe em breve
-                  </p>
-                )}
+
+                {/* Garantia */}
+                <div className="text-center text-xs text-blue-200">
+                  ⚡ Via Stripe • Cancele a qualquer momento<br />
+                  🛡️ Contribua com a educação médica
+                </div>
               </CardContent>
             </Card>
           );
         })}
       </div>
 
-      {/* Informações adicionais */}
-      <div className="bg-blue-900/30 rounded-lg p-6 mt-8">
-        <h3 className="text-lg font-bold text-white mb-3">
-          💡 Por que apoiar o RadVenture?
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-blue-200 text-sm">
-          <div>
-            <strong>🎓 Educação Médica:</strong> Apoie o desenvolvimento de uma plataforma educacional de qualidade para estudantes de medicina.
+      {/* Mensagem se não há planos */}
+      {subscriptionPlans.length === 0 && (
+        <Card className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 border-purple-400/30">
+          <CardContent className="p-8 text-center">
+            <Crown className="h-16 w-16 text-purple-400 mx-auto mb-4" />
+            <h3 className="text-2xl font-bold text-white mb-2">
+              Planos Educacionais em Breve
+            </h3>
+            <p className="text-purple-200 mb-4">
+              Estamos preparando planos de apoio ao projeto educacional com benefícios incríveis!
+            </p>
+            <Badge className="bg-purple-500/20 text-purple-300 border-purple-400/30 px-4 py-2">
+              🎓 Sistema educacional em desenvolvimento
+            </Badge>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Sobre o Projeto Educacional */}
+      <Card className="bg-gradient-to-r from-green-600/20 to-blue-600/20 border-green-400/30">
+        <CardContent className="p-6">
+          <h3 className="text-xl font-bold text-white mb-4 text-center">
+            🎓 Por que apoiar nosso projeto educacional?
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-3">
+              <h4 className="font-semibold text-green-300">💡 Missão Educacional</h4>
+              <ul className="space-y-2 text-sm text-green-200">
+                <li>• Democratizar o ensino de radiologia</li>
+                <li>• Casos clínicos reais e educativos</li>
+                <li>• IA para personalizar o aprendizado</li>
+                <li>• Plataforma 100% brasileira</li>
+              </ul>
+            </div>
+            <div className="space-y-3">
+              <h4 className="font-semibold text-blue-300">🏆 Seu Apoio Faz a Diferença</h4>
+              <ul className="space-y-2 text-sm text-blue-200">
+                <li>• Selo de colaborador no seu perfil</li>
+                <li>• Benefícios exclusivos na plataforma</li>
+                <li>• Ajuda a manter o projeto gratuito para estudantes</li>
+                <li>• Contribui para a educação médica no Brasil</li>
+              </ul>
+            </div>
           </div>
-          <div>
-            <strong>🚀 Inovação:</strong> Contribua para o futuro da educação médica com tecnologia de ponta.
-          </div>
-          <div>
-            <strong>🤝 Comunidade:</strong> Faça parte de uma comunidade engajada de futuros profissionais da saúde.
-          </div>
-          <div>
-            <strong>📈 Crescimento:</strong> Acelere seus estudos com ferramentas exclusivas e conteúdo premium.
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

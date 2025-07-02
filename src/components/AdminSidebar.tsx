@@ -1,187 +1,88 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
-  LayoutDashboard,
-  FileText,
   Calendar,
   Users,
-  Crown,
-  Coins,
+  FileText,
   Settings,
-  Flag,
-  Menu,
-  X,
-  ChevronRight
+  Gift,
+  CreditCard,
+  KeyRound,
+  BarChart3,
+  Monitor,
+  BookOpen,
+  Trophy,
+  Brain,
+  Bell,
+  Coins,
 } from "lucide-react";
 
-interface AdminSidebarProps {
-  isOpen: boolean;
-  onToggle: () => void;
-}
+// Menu admin - links relativos para rotas aninhadas
+const adminMenu = [
+  { label: "Analytics", icon: <BarChart3 size={20} />, to: "/admin/analytics" },
+  { label: "Criar Eventos", icon: <Calendar size={20} />, to: "/admin/create-event" },
+  { label: "Gestão de Eventos", icon: <BookOpen size={20} />, to: "/admin/events" },
+  { label: "Casos Médicos", icon: <FileText size={20} />, to: "/admin/casos-medicos" },
+  { label: "Gestão de Casos", icon: <Settings size={20} />, to: "/admin/gestao-casos" },
+  { label: "Usuários & Reports", icon: <Users size={20} />, to: "/admin/usuarios" },
+  { label: "Assinaturas", icon: <CreditCard size={20} />, to: "/admin/assinaturas" },
+  { label: "Tutor IA", icon: <Brain size={20} />, to: "/admin/tutor-ia" },
+  { label: "Conquistas", icon: <Trophy size={20} />, to: "/admin/conquistas" },
+  { label: "Notificações", icon: <Bell size={20} />, to: "/admin/notificacoes" },
+  { label: "Monitoramento", icon: <Monitor size={20} />, to: "/admin/monitoramento" },
+  { label: "Recompensas", icon: <Gift size={20} />, to: "/admin/recompensas" },
+  { label: "Loja RadCoin", icon: <Coins size={20} />, to: "/admin/radcoin-loja" },
+  { label: "Configurações", icon: <Settings size={20} />, to: "/admin/configuracoes" },
+  { label: "Chaves API", icon: <KeyRound size={20} />, to: "/admin/chaves-api" },
+  { label: "Config. Stripe", icon: <CreditCard size={20} />, to: "/admin/config-stripe" },
+];
 
-export function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
+export function AdminSidebar() {
   const location = useLocation();
-
-  const menuItems = [
-    {
-      title: "Dashboard",
-      href: "/admin",
-      icon: LayoutDashboard,
-      exact: true
-    },
-    {
-      title: "Casos Médicos",
-      href: "/admin/cases",
-      icon: FileText,
-    },
-    {
-      title: "Eventos",
-      href: "/admin/events",
-      icon: Calendar,
-    },
-    {
-      title: "Usuários",
-      href: "/admin/users",
-      icon: Users,
-    },
-    {
-      title: "Assinaturas",
-      href: "/admin/subscriptions",
-      icon: Crown,
-      badge: "NOVO"
-    },
-    {
-      title: "Loja RadCoin",
-      href: "/admin/radcoin-store",
-      icon: Coins,
-    },
-    {
-      title: "Configurações",
-      href: "/admin/settings",
-      icon: Settings,
-    },
-    {
-      title: "Reports",
-      href: "/admin/reports",
-      icon: Flag,
-    }
-  ];
-
-  const isActiveRoute = (href: string, exact = false) => {
-    if (exact) {
-      return location.pathname === href;
-    }
-    return location.pathname.startsWith(href);
+  
+  // Função para verificar se a rota está ativa considerando rotas aninhadas
+  const isActiveRoute = (to: string) => {
+    return location.pathname === to || location.pathname.startsWith(`${to}/`);
   };
 
   return (
-    <>
-      {/* Mobile backdrop */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={onToggle}
-        />
-      )}
-
-      {/* Sidebar */}
-      <div
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out ${
-          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        }`}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <LayoutDashboard className="h-5 w-5 text-white" />
-            </div>
-            <h1 className="text-xl font-bold text-gray-900">Admin Panel</h1>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggle}
-            className="lg:hidden"
+    <aside className="h-screen bg-white shadow-lg border-r border-gray-200 w-[235px] flex flex-col fixed top-0 left-0 z-30">
+      <div className="flex items-center px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <ShieldIcon />
+        <span className="ml-2 font-bold text-lg text-gray-800">Admin Panel</span>
+      </div>
+      <nav className="flex-1 flex flex-col px-2 py-4 gap-1 overflow-y-auto bg-gradient-to-b from-gray-50 to-white">
+        {adminMenu.map((item) => (
+          <Link
+            to={item.to}
+            key={item.label}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
+              isActiveRoute(item.to)
+                ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md"
+                : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+            }`}
           >
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
-
-        {/* Menu Toggle for Desktop */}
-        <div className="hidden lg:block absolute -right-3 top-20 z-10">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onToggle}
-            className="h-6 w-6 p-0 rounded-full bg-white shadow-md"
-          >
-            <ChevronRight
-              className={`h-3 w-3 transition-transform ${
-                isOpen ? "rotate-180" : ""
-              }`}
-            />
-          </Button>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-1">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = isActiveRoute(item.href, item.exact);
-
-            return (
-              <Link
-                key={item.href}
-                to={item.href}
-                className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors group ${
-                  isActive
-                    ? "bg-blue-100 text-blue-700 border-r-2 border-blue-700"
-                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                }`}
-              >
-                <div className="flex items-center space-x-3">
-                  <Icon
-                    className={`h-5 w-5 ${
-                      isActive ? "text-blue-700" : "text-gray-400 group-hover:text-gray-600"
-                    }`}
-                  />
-                  <span>{item.title}</span>
-                </div>
-                {item.badge && (
-                  <Badge className="bg-green-500 text-white text-xs px-2 py-0.5">
-                    {item.badge}
-                  </Badge>
-                )}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* Footer */}
-        <div className="p-4 border-t">
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-3 rounded-lg">
-            <p className="text-xs text-gray-600">
-              <strong>RadCoin System:</strong> Gerenciamento completo com dados reais do Supabase
-            </p>
-          </div>
+            <span className={`${isActiveRoute(item.to) ? "text-white" : "text-gray-500"}`}>
+              {item.icon}
+            </span>
+            {item.label}
+          </Link>
+        ))}
+      </nav>
+      <div className="p-4 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-blue-50">
+        <div className="text-xs text-gray-500 text-center">
+          RadVenture Admin v2.0
         </div>
       </div>
-
-      {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-4 left-4 z-40">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onToggle}
-          className="bg-white shadow-md"
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
-      </div>
-    </>
+    </aside>
   );
+}
+
+// Shield Icon para o admin
+function ShieldIcon() {
+  return (
+    <svg width="26" height="26" fill="none" viewBox="0 0 24 24">
+      <path fill="#3b82f6" d="M12 2l7 4v6c0 4.97-3.13 9.35-7 10-3.87-.65-7-5.03-7-10V6l7-4z"/>
+    </svg>
+  )
 }
