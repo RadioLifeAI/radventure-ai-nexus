@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { 
@@ -28,7 +29,7 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import { useUserOwnReports } from "@/hooks/useUserOwnReports";
 import { ProfileSettingsModal } from "@/components/profile/ProfileSettingsModal";
 import { UserReportsModal } from "@/components/profile/UserReportsModal";
-import { RadCoinStoreModal } from "@/components/radcoin-shop/RadCoinStoreModal";
+import { RadCoinStoreModal } from "@/components/RadCoinStoreModal";
 import { EventsNotificationSystem } from "@/components/eventos/EventsNotificationSystem";
 
 export function HeaderNav() {
@@ -82,7 +83,8 @@ export function HeaderNav() {
     avatar: profile?.avatar_url,
     email: profile?.email || user?.email || '',
     points: profile?.total_points || 0,
-    radcoins: profile?.radcoin_balance || 0
+    radcoins: profile?.radcoin_balance || 0,
+    collaboratorBadge: profile?.active_title || null // Para exibir selo de colaborador
   };
 
   return (
@@ -122,7 +124,7 @@ export function HeaderNav() {
 
             {/* User Menu */}
             <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
-              {/* Sistema de Notificações - NOVO */}
+              {/* Sistema de Notificações */}
               {user && <EventsNotificationSystem />}
 
               {/* RadCoins Display - AGORA CLICÁVEL */}
@@ -157,8 +159,14 @@ export function HeaderNav() {
                       </Avatar>
                     )}
                     <div className="hidden sm:block text-left">
-                      <div className="text-sm font-medium text-white">
+                      <div className="text-sm font-medium text-white flex items-center gap-2">
                         {userData.name}
+                        {/* Exibir selo de colaborador se existir */}
+                        {userData.collaboratorBadge && userData.collaboratorBadge.includes('Colaborador') && (
+                          <span className="text-xs bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-2 py-0.5 rounded-full font-bold">
+                            {userData.collaboratorBadge.replace('Colaborador ', '').charAt(0)}
+                          </span>
+                        )}
                       </div>
                       <div className="text-xs text-cyan-200">
                         {userData.points.toLocaleString()} pts
@@ -172,6 +180,12 @@ export function HeaderNav() {
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium">{userData.name}</p>
                       <p className="text-xs text-muted-foreground">{userData.email}</p>
+                      {/* Selo completo no dropdown */}
+                      {userData.collaboratorBadge && userData.collaboratorBadge.includes('Colaborador') && (
+                        <p className="text-xs text-orange-600 font-semibold">
+                          🏆 {userData.collaboratorBadge}
+                        </p>
+                      )}
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -205,6 +219,7 @@ export function HeaderNav() {
       <RadCoinStoreModal 
         isOpen={showRadCoinShop}
         onClose={() => setShowRadCoinShop(false)}
+        currentBalance={userData.radcoins}
       />
 
       {/* User Reports Modal */}

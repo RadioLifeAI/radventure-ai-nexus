@@ -8,6 +8,7 @@ import { useLevelUpNotifications } from "@/hooks/useLevelUpNotifications";
 import { useLevelUpModal } from "@/hooks/useLevelUpModal";
 import { useProfileCompletion } from "@/hooks/useProfileCompletion";
 import { useOnboardingFlow } from "@/hooks/useOnboardingFlow";
+import { useSubscriptionBenefits } from "@/hooks/useSubscriptionBenefits";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,12 +18,14 @@ import { ProfileCompletionProgress } from "./profile/ProfileCompletionProgress";
 import { OnboardingWizard } from "./profile/OnboardingWizard";
 import { XPProgressBar } from "./profile/XPProgressBar";
 import { LevelUpModal } from "./profile/LevelUpModal";
+import { CollaboratorBadge } from "./profile/CollaboratorBadge";
 
 export function UserProfile() {
   const { profile, isLoading } = useUserProfile();
   const { userRank, loading: rankingsLoading } = useUserRankings();
   const { levelData, loading: levelLoading } = useUserLevel();
   const { isAdmin } = useAdminAccess();
+  const { benefits } = useSubscriptionBenefits();
   const navigate = useNavigate();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -98,6 +101,8 @@ export function UserProfile() {
                     ADMIN
                   </Badge>
                 )}
+                {/* Exibir selo de colaborador */}
+                <CollaboratorBadge badge={benefits.collaboratorBadge} size="md" />
               </h2>
               
               {/* Barra de XP e Nível */}
@@ -155,6 +160,13 @@ export function UserProfile() {
                     {profile.medical_specialty}
                   </Badge>
                 )}
+
+                {/* Exibir plano ativo se houver */}
+                {benefits.hasActivePlan && benefits.planName && (
+                  <Badge className="bg-green-600/70 px-4 py-1 rounded-2xl text-white font-medium hover:bg-green-600/80 transition-colors">
+                    📋 {benefits.planName}
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
@@ -194,6 +206,33 @@ export function UserProfile() {
             profile={profile} 
             onOpenSettings={() => setIsSettingsOpen(true)} 
           />
+        )}
+
+        {/* Benefícios da Assinatura - Exibir se tiver plano ativo */}
+        {benefits.hasActivePlan && (
+          <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-xl p-6">
+            <h3 className="text-lg font-bold text-green-800 mb-4 flex items-center gap-2">
+              🎯 Benefícios do Seu Plano {benefits.planName}
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">{benefits.monthlyRadcoins}</div>
+                <div className="text-sm text-gray-600">RadCoins/mês</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-red-600">+{benefits.eliminationAids - 3}</div>
+                <div className="text-sm text-gray-600">Eliminações extras</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-orange-600">+{benefits.skipAids - 1}</div>
+                <div className="text-sm text-gray-600">Pulos extras</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-purple-600">+{((benefits.xpMultiplier - 1) * 100).toFixed(0)}%</div>
+                <div className="text-sm text-gray-600">Bônus XP</div>
+              </div>
+            </div>
+          </div>
         )}
       </section>
 
