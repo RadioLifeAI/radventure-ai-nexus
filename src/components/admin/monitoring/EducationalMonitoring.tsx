@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -62,16 +63,10 @@ export function EducationalMonitoring() {
         .select('id, preferences')
         .gte('updated_at', today.toISOString());
 
-      const totalActiveUsers = activeUsersData?.filter(user => {
-        if (!user.preferences || typeof user.preferences !== 'object') {
-          return false;
-        }
-        
-        const preferences = user.preferences as Record<string, any>;
-        const lastLoginDate = preferences.last_login_date;
-        
-        return lastLoginDate === today.toISOString().split('T')[0];
-      }).length || 0;
+      const totalActiveUsers = activeUsersData?.filter(user => 
+        user.preferences && 
+        user.preferences.last_login_date === today.toISOString().split('T')[0]
+      ).length || 0;
 
       // 2. Uso de ajudas hoje
       const { data: helpAidsData } = await supabase
@@ -119,7 +114,7 @@ export function EducationalMonitoring() {
       // 7. Tempo médio de estudo (baseado em atividade real)
       const averageStudyTimeMinutes = Math.max(
         Math.round((casesCompletedToday * 3) + (aiTutorInteractions * 2)),
-        totalActiveUsers > 0 ? 15 : 0 // Mínimo de 15 minutos se houver atividade
+        15 // Mínimo de 15 minutos se houver atividade
       );
 
       const newMetrics: EducationalMetrics = {

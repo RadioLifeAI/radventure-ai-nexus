@@ -33,9 +33,9 @@ export function useAutomaticRewards() {
 
         if (!loginError && loginBonusData) {
           // Type casting seguro para a resposta
-          const loginBonus = loginBonusData as unknown as DailyLoginBonusResponse;
+          const loginBonus = loginBonusData as DailyLoginBonusResponse;
           
-          if (loginBonus && typeof loginBonus === 'object' && loginBonus.awarded) {
+          if (loginBonus.awarded) {
             toast({
               title: '🎉 Bônus de Login Diário!',
               description: `+${loginBonus.radcoins || 0} RadCoins | Streak: ${loginBonus.streak || 0} dias`,
@@ -59,68 +59,13 @@ export function useAutomaticRewards() {
           console.error('Erro ao recarregar ajudas diárias:', refillError);
         }
 
-        // 4. PROCESSAR RECOMPENSAS DE COMPLETUDE DO PERFIL
-        await processProfileCompletionRewards();
-
-        // 5. ATUALIZAR PERFIL
+        // 4. ATUALIZAR PERFIL
         setTimeout(() => {
           refreshProfile();
         }, 1000);
 
       } catch (error) {
         console.error('Erro no processamento automático de recompensas:', error);
-      }
-    };
-
-    const processProfileCompletionRewards = async () => {
-      try {
-        // Verificar campos obrigatórios preenchidos
-        const requiredFields = [
-          { field: 'full_name', value: profile.full_name, reward: 10 },
-          { field: 'medical_specialty', value: profile.medical_specialty, reward: 15 },
-          { field: 'academic_stage', value: profile.academic_stage, reward: 10 },
-          { field: 'city', value: profile.city, reward: 5 },
-          { field: 'state', value: profile.state, reward: 5 }
-        ];
-
-        for (const fieldInfo of requiredFields) {
-          if (fieldInfo.value && fieldInfo.value.trim() !== '') {
-            // Verificar se já foi recompensado por este campo
-            const rewardKey = `profile_${fieldInfo.field}_rewarded`;
-            const alreadyRewarded = profile.preferences?.[rewardKey] === true;
-
-            if (!alreadyRewarded) {
-              // Creditar RadCoins
-              const { error: rewardError } = await supabase.rpc('award_radcoins', {
-                p_user_id: user.id,
-                p_amount: fieldInfo.reward,
-                p_transaction_type: 'profile_completion',
-                p_metadata: { field: fieldInfo.field, reward_amount: fieldInfo.reward }
-              });
-
-              if (!rewardError) {
-                // Marcar como recompensado
-                const updatedPreferences = {
-                  ...profile.preferences,
-                  [rewardKey]: true
-                };
-
-                await supabase
-                  .from('profiles')
-                  .update({ preferences: updatedPreferences })
-                  .eq('id', user.id);
-
-                toast({
-                  title: '🎯 Perfil Completo!',
-                  description: `+${fieldInfo.reward} RadCoins por preencher ${fieldInfo.field.replace('_', ' ')}`,
-                  duration: 3000,
-                });
-              }
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Erro ao processar recompensas de perfil:', error);
       }
     };
 
