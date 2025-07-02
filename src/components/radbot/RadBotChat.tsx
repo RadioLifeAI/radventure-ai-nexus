@@ -9,14 +9,20 @@ import { Bot, User, Send, Sparkles, AlertCircle } from "lucide-react";
 import { useRadBotChat } from "@/hooks/useRadBotChat";
 import { useEducationalProtections } from "@/hooks/useEducationalProtections";
 import { useToast } from "@/components/ui/use-toast";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
-export function RadBotChat() {
+interface RadBotChatProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function RadBotChat({ isOpen, onClose }: RadBotChatProps) {
   const [input, setInput] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { messages, isLoading, sendMessage, balance } = useRadBotChat();
+  const { messages, isLoading, sendMessage } = useRadBotChat();
   const { checkRadBotLimit } = useEducationalProtections();
   const { toast } = useToast();
+  const { profile } = useUserProfile();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -52,15 +58,7 @@ export function RadBotChat() {
   };
 
   if (!isOpen) {
-    return (
-      <Button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 rounded-full w-14 h-14 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg"
-        size="sm"
-      >
-        <Bot className="h-6 w-6" />
-      </Button>
-    );
+    return null;
   }
 
   return (
@@ -74,12 +72,12 @@ export function RadBotChat() {
           </CardTitle>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="bg-white/20 text-white">
-              💰 {balance}
+              💰 {profile?.radcoin_balance || 0}
             </Badge>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setIsOpen(false)}
+              onClick={onClose}
               className="text-white hover:bg-white/20 h-6 w-6 p-0"
             >
               ×
@@ -106,29 +104,29 @@ export function RadBotChat() {
               <div
                 key={index}
                 className={`flex gap-3 ${
-                  message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
+                  message.type === 'user' ? 'flex-row-reverse' : 'flex-row'
                 }`}
               >
                 <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                  message.role === 'user' 
+                  message.type === 'user' 
                     ? 'bg-blue-500 text-white' 
                     : 'bg-purple-500 text-white'
                 }`}>
-                  {message.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+                  {message.type === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
                 </div>
                 <div className={`flex-1 max-w-[80%] ${
-                  message.role === 'user' ? 'text-right' : 'text-left'
+                  message.type === 'user' ? 'text-right' : 'text-left'
                 }`}>
                   <div className={`inline-block p-3 rounded-lg text-sm ${
-                    message.role === 'user'
+                    message.type === 'user'
                       ? 'bg-blue-500 text-white'
                       : 'bg-gray-100 text-gray-800'
                   }`}>
                     {message.content}
                   </div>
-                  {message.radcoins_cost && (
+                  {message.cost && (
                     <div className="text-xs text-gray-500 mt-1">
-                      Custo: {message.radcoins_cost} RadCoins
+                      Custo: {message.cost} RadCoins
                     </div>
                   )}
                 </div>

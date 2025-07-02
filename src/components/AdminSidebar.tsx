@@ -34,6 +34,7 @@ const adminMenu = [
   { label: "Monitoramento", icon: <Monitor size={20} />, to: "/admin/monitoramento" },
   { label: "Monitor Educacional", icon: <Shield size={20} />, to: "/admin/monitor-educacional" },
   { label: "Recompensas", icon: <Gift size={20} />, to: "/admin/recompensas" },
+  { label: "Sistema de Recompensas", icon: <Coins size={20} />, to: "/admin/sistema-recompensas" },
   { label: "Loja RadCoin", icon: <Coins size={20} />, to: "/admin/radcoin-loja" },
   { label: "Configurações", icon: <Settings size={20} />, to: "/admin/configuracoes" },
   { label: "Chaves API", icon: <KeyRound size={20} />, to: "/admin/chaves-api" },

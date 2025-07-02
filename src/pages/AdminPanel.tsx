@@ -7,6 +7,7 @@ import GestaoCasos from "./admin/GestaoCasos";
 import CreateEvent from "./admin/CreateEvent";
 import EventsManagement from "./admin/EventsManagement";
 import RadCoinStoreManagement from "./admin/RadCoinStoreManagement";
+import RewardsSystemManagement from "./admin/RewardsSystemManagement";
 import { DashboardAnalyticsIntegrated } from "@/components/admin/DashboardAnalyticsIntegrated";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { UserManagementAdvanced } from "@/components/admin/users/UserManagementAdvanced";
@@ -78,6 +79,7 @@ export default function AdminPanel() {
             <Route path="monitoramento" element={<SystemMonitoringIntegrated />} />
             <Route path="monitor-educacional" element={<EducationalMonitoring />} />
             <Route path="recompensas" element={<RewardManagement />} />
+            <Route path="sistema-recompensas" element={<RewardsSystemManagement />} />
             <Route path="radcoin-loja" element={<RadCoinStoreManagement />} />
             <Route path="chaves-api" element={<APIKeyManagement />} />
             <Route path="config-stripe" element={<StripeManagement />} />

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { HeaderNav } from "@/components/HeaderNav";
 import { UserProfile } from "@/components/UserProfile";
@@ -7,6 +8,8 @@ import { useDashboardData } from "@/hooks/useDashboardData";
 import { useDashboardHandlers } from "@/hooks/useDashboardHandlers";
 import { useSpecialtiesData } from "@/hooks/useSpecialtiesData";
 import { useLevelUpNotifications } from "@/hooks/useLevelUpNotifications";
+import { useAutomaticRewards } from "@/hooks/useAutomaticRewards";
+import { useSubscriptionRewards } from "@/hooks/useSubscriptionRewards";
 import { QuickActionsSection } from "@/components/dashboard/QuickActionsSection";
 import { SpecialtiesSection } from "@/components/dashboard/SpecialtiesSection";
 import { EmptySpecialtiesMessage } from "@/components/dashboard/EmptySpecialtiesMessage";
@@ -26,12 +29,12 @@ export default function Dashboard() {
     handleEnterEvent
   } = useDashboardHandlers();
 
-  // Ativar sistema de notificações de level up
+  // Ativar sistemas automáticos
   useLevelUpNotifications();
+  useAutomaticRewards();
+  useSubscriptionRewards();
 
   const isLoading = dashboardLoading || progressLoading;
-
-  // NOVA STATE APENAS PARA O CHAT - NÃO AFETA NADA EXISTENTE
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   if (isLoading) {
@@ -75,12 +78,10 @@ export default function Dashboard() {
         profile={profile}
       />
 
-      {/* RADBOT AI - BOTÃO FLUTUANTE POSICIONADO ACIMA DO FOOTER */}
       <RadBotFloatingButton 
         onClick={() => setIsChatOpen(true)} 
       />
       
-      {/* RADBOT AI - MODAL DE CHAT */}
       <RadBotChat 
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}
