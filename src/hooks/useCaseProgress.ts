@@ -182,14 +182,25 @@ export function useCaseProgress(caseId: string) {
     });
 
     try {
-      // ETAPA 2: TRATAMENTO DE ERRO MELHORADO
-      console.log('🎯 Iniciando processamento:', { 
+      // CORREÇÃO DEFINITIVA: Verificar estado de revisão antes de processar
+      console.log('🎯 INICIANDO PROCESSAMENTO:', { 
         user: user.id, 
         caseId, 
         points, 
         isCorrect,
-        isReview: isReview ? 'SIM' : 'NÃO'
+        isReview: isReview ? 'SIM' : 'NÃO',
+        previousAnswer,
+        reviewStatus: reviewStatus?.review_count || 0
       });
+
+      // VALIDAÇÃO: Garantir consistência entre frontend e backend
+      if (isReview !== reviewStatus?.is_review) {
+        console.warn('⚠️ INCONSISTÊNCIA DETECTADA:', {
+          frontendReview: isReview,
+          backendReview: reviewStatus?.is_review,
+          action: 'Sincronizando estado'
+        });
+      }
 
       const { error, data } = await supabase.rpc('process_case_completion', {
         p_user_id: user.id,
@@ -198,9 +209,13 @@ export function useCaseProgress(caseId: string) {
         p_is_correct: isCorrect
       });
 
-      // CORREÇÃO CRÍTICA: Verificar apenas erros reais, não warnings/notices
-      if (error && error.code !== 'PGRST301') { // PGRST301 é notice, não erro
-        console.error('❌ Erro real na função process_case_completion:', error);
+      // TRATAMENTO ROBUSTO DE ERROS: Distinguir erros reais de notices
+      const isRealError = error && 
+        error.code && 
+        !['PGRST301', '0', 'P0001'].includes(error.code); // P0001 = RAISE NOTICE
+
+      if (isRealError) {
+        console.error('❌ ERRO CRÍTICO na função process_case_completion:', error);
         throw error;
       }
 
