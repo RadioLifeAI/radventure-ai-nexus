@@ -17,10 +17,12 @@ interface RadCoinStoreModalProps {
 
 export function RadCoinStoreModal({ isOpen, onClose, currentBalance }: RadCoinStoreModalProps) {
   const [activeTab, setActiveTab] = useState("packages");
-  const { storeConfig, isStoreEnabled } = useRadCoinStore();
+  const { storeConfig, isStoreEnabled, maintenanceMode } = useRadCoinStore();
 
-  // Verificar se a loja está em manutenção - CONECTADO AO ADMIN
-  if (storeConfig.maintenance_mode === 'true' || storeConfig.maintenance_mode === true) {
+  console.log('Modal state:', { isStoreEnabled, maintenanceMode, storeConfig }); // Debug log
+
+  // Verificar se a loja está em manutenção - CORRIGIDO
+  if (maintenanceMode) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-md bg-gradient-to-br from-red-900 to-red-800 border-red-600">
@@ -40,8 +42,8 @@ export function RadCoinStoreModal({ isOpen, onClose, currentBalance }: RadCoinSt
     );
   }
 
-  // Verificar se a loja está desabilitada - CONECTADO AO ADMIN
-  if (!isStoreEnabled || storeConfig.store_enabled === 'false' || storeConfig.store_enabled === false) {
+  // Verificar se a loja está desabilitada - CORRIGIDO
+  if (!isStoreEnabled) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-md bg-gradient-to-br from-gray-900 to-gray-800 border-gray-600">

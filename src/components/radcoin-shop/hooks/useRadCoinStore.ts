@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -132,14 +133,13 @@ export function useRadCoinStore() {
     refetchInterval: 60000 // Atualizar a cada minuto para tempo restante
   });
 
-  // Hook para configurações da loja
+  // Hook para configurações da loja - CORRIGIDO para incluir maintenance_mode
   const { data: storeConfig = {} } = useQuery({
     queryKey: ["store-config"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("radcoin_store_config")
-        .select("*")
-        .eq("is_public", true);
+        .select("*");
 
       if (error) throw error;
 
@@ -149,8 +149,10 @@ export function useRadCoinStore() {
         configObj[config.key] = config.value;
       });
 
+      console.log('Store config loaded:', configObj); // Debug log
       return configObj;
-    }
+    },
+    refetchInterval: 5000 // Atualizar a cada 5 segundos para configs críticas
   });
 
   // Hook para histórico de compras do usuário
@@ -243,10 +245,11 @@ export function useRadCoinStore() {
     // Dados processados para compatibilidade
     helpPackages: products.filter(p => p.category === 'help_package'),
     
-    // Configurações específicas
-    isStoreEnabled: storeConfig.store_enabled === 'true',
+    // Configurações específicas - CORRIGIDAS para incluir maintenance_mode
+    isStoreEnabled: storeConfig.store_enabled === 'true' || storeConfig.store_enabled === true,
     storeAnnouncement: storeConfig.store_announcement,
-    dailyDealsEnabled: storeConfig.daily_deals_enabled === 'true'
+    dailyDealsEnabled: storeConfig.daily_deals_enabled === 'true' || storeConfig.daily_deals_enabled === true,
+    maintenanceMode: storeConfig.maintenance_mode === 'true' || storeConfig.maintenance_mode === true
   };
 }
 
