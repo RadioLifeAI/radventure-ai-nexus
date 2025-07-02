@@ -10,9 +10,11 @@ import { useSpecialtiesData } from "@/hooks/useSpecialtiesData";
 import { useLevelUpNotifications } from "@/hooks/useLevelUpNotifications";
 import { useAutomaticRewards } from "@/hooks/useAutomaticRewards";
 import { useSubscriptionRewards } from "@/hooks/useSubscriptionRewards";
+import { useProfileRewards } from "@/hooks/useProfileRewards";
 import { QuickActionsSection } from "@/components/dashboard/QuickActionsSection";
 import { SpecialtiesSection } from "@/components/dashboard/SpecialtiesSection";
 import { EmptySpecialtiesMessage } from "@/components/dashboard/EmptySpecialtiesMessage";
+import { ProfileCompletionRewards } from "@/components/dashboard/ProfileCompletionRewards";
 import { DashboardFooter } from "@/components/dashboard/DashboardFooter";
 import { RadBotFloatingButton } from "@/components/radbot/RadBotFloatingButton";
 import { RadBotChat } from "@/components/radbot/RadBotChat";
@@ -33,6 +35,7 @@ export default function Dashboard() {
   useLevelUpNotifications();
   useAutomaticRewards();
   useSubscriptionRewards();
+  useProfileRewards(); // Nova integração de recompensas de perfil
 
   const isLoading = dashboardLoading || progressLoading;
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -53,6 +56,10 @@ export default function Dashboard() {
       <HeaderNav />
       <main className="flex-1 w-full flex flex-col gap-4 px-2 md:px-4 lg:px-8 xl:px-16 pt-4 pb-10 overflow-x-hidden">
         <UserProfile />
+        
+        {/* Sistema de Recompensas por Completude do Perfil */}
+        <ProfileCompletionRewards />
+        
         <EventsSectionPlayer onEnterEvent={handleEnterEvent} />
         
         <QuickActionsSection
