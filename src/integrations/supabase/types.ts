@@ -2136,6 +2136,10 @@ export type Database = {
         Args: { p_case_id: string }
         Returns: boolean
       }
+      sync_subscription_benefits: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
       sync_user_benefits: {
         Args: { p_user_id: string }
         Returns: undefined
