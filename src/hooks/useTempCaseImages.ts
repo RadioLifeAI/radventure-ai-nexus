@@ -150,98 +150,64 @@ export function useTempCaseImages() {
   }, [tempImages]);
 
   const associateWithCase = useCallback(async (caseId: string) => {
-    console.log('🔄 Iniciando associação com caso:', caseId, '- Imagens temporárias:', tempImages.length);
-    
-    if (tempImages.length === 0) {
-      console.log('⚠️ Nenhuma imagem temporária para associar');
-      return [];
-    }
+    if (tempImages.length === 0) return [];
 
     const associatedImages = [];
 
     for (const tempImage of tempImages) {
-      if (!tempImage.uploadedUrl) {
-        console.log('⚠️ Imagem sem URL válida:', tempImage.id);
-        continue;
-      }
+      if (!tempImage.uploadedUrl) continue;
 
       try {
-        console.log('📂 Processando imagem:', tempImage.originalFilename);
-        
-        // Extrair nome do arquivo da URL
+        // Mover arquivo de temp/ para case-id/
         const urlParts = tempImage.uploadedUrl.split('/');
         const fileName = urlParts[urlParts.length - 1];
-        const oldPath = `case-images/temp/${fileName}`;
-        const newPath = `case-images/${caseId}/${fileName}`;
+        const oldPath = `temp/${fileName}`;
+        const newPath = `${caseId}/${fileName}`;
 
-        console.log('📋 Movendo de:', oldPath, 'para:', newPath);
-
-        // Baixar arquivo temporário
-        const { data: fileData, error: downloadError } = await supabase.storage
+        // Copiar arquivo para nova localização
+        const { data: fileData } = await supabase.storage
           .from('case-images')
-          .download(`temp/${fileName}`);
-
-        if (downloadError) {
-          console.error('❌ Erro ao baixar arquivo temporário:', downloadError);
-          continue;
-        }
+          .download(oldPath);
 
         if (fileData) {
-          // Upload para nova localização
           const { data: newUpload, error: uploadError } = await supabase.storage
             .from('case-images')
-            .upload(`${caseId}/${fileName}`, fileData);
+            .upload(newPath, fileData);
 
-          if (uploadError) {
-            console.error('❌ Erro ao fazer upload para nova localização:', uploadError);
-            continue;
-          }
+          if (!uploadError) {
+            // Deletar arquivo temporário
+            await supabase.storage
+              .from('case-images')
+              .remove([oldPath]);
 
-          console.log('✅ Arquivo movido com sucesso');
+            // Obter nova URL
+            const { data: { publicUrl } } = supabase.storage
+              .from('case-images')
+              .getPublicUrl(newPath);
 
-          // Deletar arquivo temporário
-          const { error: deleteError } = await supabase.storage
-            .from('case-images')
-            .remove([`temp/${fileName}`]);
+            // Inserir na tabela case_images
+            const { data: caseImageData, error: insertError } = await supabase
+              .from('case_images')
+              .insert({
+                case_id: caseId,
+                original_filename: tempImage.originalFilename,
+                original_url: publicUrl,
+                legend: tempImage.legend,
+                sequence_order: tempImage.sequenceOrder,
+                processing_status: 'completed'
+              })
+              .select()
+              .single();
 
-          if (deleteError) {
-            console.warn('⚠️ Erro ao deletar arquivo temporário:', deleteError);
-          }
-
-          // Obter nova URL pública
-          const { data: { publicUrl } } = supabase.storage
-            .from('case-images')
-            .getPublicUrl(`${caseId}/${fileName}`);
-
-          console.log('🔗 URL final:', publicUrl);
-
-          // Inserir registro na tabela case_images
-          const { data: caseImageData, error: insertError } = await supabase
-            .from('case_images')
-            .insert({
-              case_id: caseId,
-              original_filename: tempImage.originalFilename,
-              original_url: publicUrl,
-              legend: tempImage.legend || '',
-              sequence_order: tempImage.sequenceOrder,
-              processing_status: 'completed'
-            })
-            .select()
-            .single();
-
-          if (insertError) {
-            console.error('❌ Erro ao inserir na tabela case_images:', insertError);
-          } else {
-            console.log('✅ Imagem associada na tabela:', caseImageData.id);
-            associatedImages.push(caseImageData);
+            if (!insertError && caseImageData) {
+              associatedImages.push(caseImageData);
+            }
           }
         }
       } catch (error) {
-        console.error('❌ Erro geral ao associar imagem:', tempImage.originalFilename, error);
+        console.error('Erro ao associar imagem ao caso:', error);
       }
     }
-
-    console.log('🎯 Resultado final: ', associatedImages.length, 'imagens associadas de', tempImages.length);
 
     // Limpar imagens temporárias após associação
     clearTempImages();
