@@ -76,21 +76,22 @@ export function CaseProfileForm({ editingCase, onCreated }: CaseProfileFormProps
         return dateValue;
       };
 
-      // Preparar dados do caso com conversões de tipo necessárias e tratamento de datas
+      // CORREÇÃO: Preparar dados do caso SEM campo image_url - usar apenas sistema novo
       const caseData = {
         ...form,
-        image_url: Array.isArray(form.image_url) ? form.image_url : [],
+        // REMOVER: image_url: Array.isArray(form.image_url) ? form.image_url : [],
         category_id: form.category_id ? parseInt(form.category_id) : null,
         difficulty_level: form.difficulty_level ? parseInt(form.difficulty_level) : null,
         points: form.points ? parseInt(form.points) : null,
         created_by: (await supabase.auth.getUser()).data.user?.id,
         updated_at: new Date().toISOString(),
-        // CORREÇÃO PRINCIPAL: Tratar campo access_date corretamente
         access_date: sanitizeDateField(form.access_date),
-        // Tratar outros campos que possam ser problemáticos
         reference_citation: form.is_radiopaedia_case ? (form.reference_citation || null) : null,
         reference_url: form.is_radiopaedia_case ? (form.reference_url || null) : null
       };
+      
+      // REMOVER campo image_url do caseData para evitar salvamento duplo
+      delete caseData.image_url;
 
       // Validação específica para casos do Radiopaedia
       if (form.is_radiopaedia_case) {
@@ -144,21 +145,23 @@ export function CaseProfileForm({ editingCase, onCreated }: CaseProfileFormProps
 
       console.log('✅ Caso salvo:', savedCase.id);
       
-      // FASE 2: Associar imagens temporárias ao caso salvo
-      if (!editingCase && form.image_url?.length > 0) {
+      // FASE 2: Associar imagens temporárias ao caso salvo (apenas para casos novos)
+      if (!editingCase) {
         setFeedback("Processando imagens...");
         
         try {
+          console.log('🔄 Iniciando associação de imagens temporárias ao caso:', savedCase.id);
           const associatedImages = await associateWithCase(savedCase.id);
-          console.log('🖼️ Imagens associadas:', associatedImages.length);
-          
-          // Limpar imagens temporárias após associação
-          clearTempImages();
+          console.log('✅ Imagens associadas com sucesso:', associatedImages.length);
           
           setFeedback("Imagens processadas com sucesso!");
         } catch (imageError) {
-          console.warn('⚠️ Erro ao associar imagens:', imageError);
-          // Não falhar o salvamento por erro de imagem
+          console.error('❌ Erro ao associar imagens:', imageError);
+          toast({
+            title: "Aviso",
+            description: "Caso salvo, mas houve erro no processamento das imagens.",
+            variant: "destructive",
+          });
         }
       }
 

@@ -174,19 +174,11 @@ export function CaseCreationWizard({
     }
   ];
 
-  // FASE 1: Sincronizar form.image_url com imagens temporárias
+  // CORREÇÃO: Não sincronizar com form.image_url - usar apenas sistema temporário
   const handleTempImagesChange = (images: any[]) => {
-    const imageUrls = images
-      .filter(img => img.uploadedUrl || img.tempUrl)
-      .map(img => img.uploadedUrl || img.tempUrl);
-    
-    // Sincronizar com form.image_url
-    setForm((prev: any) => ({
-      ...prev,
-      image_url: imageUrls
-    }));
-    
-    console.log('🔄 Form.image_url sincronizado:', imageUrls.length, 'imagens');
+    setTempImageCount(images.length);
+    console.log('🔄 Imagens temporárias atualizadas:', images.length, 'imagens');
+    // REMOVIDO: Sincronização com form.image_url para evitar dupla salvamento
   };
 
   // Validação automática de cada etapa
