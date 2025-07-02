@@ -61,15 +61,51 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
 
       console.log('✅ CaseEditFormModal: Caso carregado com sucesso:', data?.title);
 
+      // CORREÇÃO: Carregar imagens usando get_case_images_unified
+      let imageUrls: string[] = [];
+      try {
+        const { data: imagesData, error: imagesError } = await supabase
+          .rpc('get_case_images_unified', { p_case_id: caseId });
+        
+        if (!imagesError && imagesData) {
+          // Garantir que é um array e mapear corretamente
+          const imagesArray = Array.isArray(imagesData) ? imagesData : [];
+          imageUrls = imagesArray
+            .map((img: any) => typeof img === 'object' && img?.url ? String(img.url) : String(img))
+            .filter((url: string) => url && url.trim() !== '');
+          console.log('✅ CaseEditFormModal: Imagens carregadas via função:', imageUrls.length);
+        } else {
+          console.warn('⚠️ CaseEditFormModal: Fallback para image_url do caso');
+          // Garantir que data.image_url é tratado como array de strings
+          const legacyUrls = Array.isArray(data.image_url) ? data.image_url : [];
+          imageUrls = legacyUrls
+            .map((url: any) => String(url))
+            .filter((url: string) => url && url.trim() !== '');
+        }
+      } catch (imageLoadError) {
+        console.error('❌ CaseEditFormModal: Erro ao carregar imagens:', imageLoadError);
+        // Fallback seguro
+        const legacyUrls = Array.isArray(data.image_url) ? data.image_url : [];
+        imageUrls = legacyUrls
+          .map((url: any) => String(url))
+          .filter((url: string) => url && url.trim() !== '');
+      }
+
       // Transform data to match form structure
       const transformedData = {
         ...data,
-        image_url: Array.isArray(data.image_url) ? data.image_url : [],
+        image_url: imageUrls,
         answer_options: data.answer_options || ["", "", "", ""],
         answer_feedbacks: data.answer_feedbacks || ["", "", "", ""],
         answer_short_tips: data.answer_short_tips || ["", "", "", ""],
         correct_answer_index: data.correct_answer_index || 0,
       };
+
+      console.log('📊 CaseEditFormModal: Dados transformados:', {
+        title: transformedData.title,
+        imageCount: transformedData.image_url.length,
+        hasImages: transformedData.image_url.length > 0
+      });
 
       setEditingCase(transformedData);
     } catch (error: any) {

@@ -76,11 +76,11 @@ export function CaseProfileForm({ editingCase, onCreated }: CaseProfileFormProps
         return dateValue;
       };
 
-      // SISTEMA UNIFICADO: Preparar dados SEM campo image_url legado
+      // SISTEMA UNIFICADO: Preparar dados mantendo image_url para compatibilidade
       const caseData = {
         ...form,
-        // REMOVIDO: image_url (usar apenas sistema novo case_images)
-        image_url: [], // Limpar campo legado para forçar uso do sistema novo
+        // MANTER: image_url para compatibilidade (será sincronizado posteriormente)
+        image_url: form.image_url || [],
         category_id: form.category_id ? parseInt(form.category_id) : null,
         difficulty_level: form.difficulty_level ? parseInt(form.difficulty_level) : null,
         points: form.points ? parseInt(form.points) : null,

@@ -35,6 +35,7 @@ import { CaseProfileAdvancedConfigContainer } from "./CaseProfileAdvancedConfigC
 import { CaseReferenceSection } from "./CaseReferenceSection";
 import { CaseAdvancedImageManagement } from "./CaseAdvancedImageManagement";
 import { TempImageUpload } from "./TempImageUpload";
+import { ImageUploader } from "@/components/common/ImageUploader";
 import { AdvancedImageManagerModal } from "./AdvancedImageManagerModal";
 import { CaseFormPreviewModal } from "./CaseFormPreviewModal";
 import { CaseProgressDashboard } from "./CaseProgressDashboard";
@@ -448,9 +449,9 @@ export function CaseCreationWizard({
                     <ImageIcon className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-purple-800">Sistema Profissional de Imagens</h3>
+                    <h3 className="text-xl font-bold text-purple-800">Sistema Unificado de Imagens</h3>
                     <p className="text-purple-600 text-sm">
-                      Upload avançado, editor profissional, processador ZIP e visualizador stack
+                      Upload direto para Supabase Storage com organização automática
                     </p>
                   </div>
                 </div>
@@ -472,23 +473,23 @@ export function CaseCreationWizard({
                 <div className="flex items-center gap-2 bg-white/70 px-3 py-1 rounded-full">
                   <ImageIcon className="h-4 w-4 text-purple-600" />
                   <span className="text-purple-700 font-medium">
-                    {tempImageCount} imagem(ns) carregada(s)
+                    Sistema Supabase Storage
                   </span>
                 </div>
                 <div className="flex items-center gap-2 bg-green-100 px-3 py-1 rounded-full">
                   <CheckCircle className="h-4 w-4 text-green-600" />
                   <span className="text-green-700 font-medium">
-                    Sistema unificado ativo
+                    Upload direto e organizado
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Sistema de Upload Padrão */}
+            {/* Sistema de Upload Unificado */}
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
               <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
                 <ImageIcon className="h-4 w-4" />
-                Upload Básico de Imagens
+                Upload de Imagens
               </h4>
               {isEditMode ? (
                 <CaseAdvancedImageManagement 
@@ -503,10 +504,20 @@ export function CaseCreationWizard({
                   }}
                 />
               ) : (
-                <TempImageUpload 
-                  onChange={handleTempImagesChange} // FASE 1: Usar nova função de sincronização
-                  onImageCountChange={setTempImageCount}
+                <ImageUploader
+                  caseId={form.id || 'temp'}
+                  onUpload={(url) => {
+                    console.log('✅ Imagem carregada:', url);
+                    // Manter compatibilidade com contagem de imagens
+                    setTempImageCount(prev => prev + 1);
+                  }}
+                  disabled={!form.id}
                 />
+              )}
+              {!isEditMode && !form.id && (
+                <p className="text-sm text-amber-600 mt-2 p-2 bg-amber-50 rounded border">
+                  ℹ️ Salve o caso primeiro para habilitar o upload de imagens
+                </p>
               )}
             </div>
           </div>
