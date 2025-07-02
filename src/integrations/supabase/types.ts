@@ -1828,7 +1828,6 @@ export type Database = {
           description: string | null
           id: number
           level: number
-          radcoin_reward: number | null
           title_unlocked: string | null
           xp_required: number
         }
@@ -1837,7 +1836,6 @@ export type Database = {
           description?: string | null
           id?: number
           level: number
-          radcoin_reward?: number | null
           title_unlocked?: string | null
           xp_required: number
         }
@@ -1846,7 +1844,6 @@ export type Database = {
           description?: string | null
           id?: number
           level?: number
-          radcoin_reward?: number | null
           title_unlocked?: string | null
           xp_required?: number
         }
