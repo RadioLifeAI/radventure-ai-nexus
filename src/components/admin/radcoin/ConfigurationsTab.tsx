@@ -16,7 +16,8 @@ import {
   Shield,
   Zap,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  Crown
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,7 +42,8 @@ export function ConfigurationsTab() {
     featured_products_limit: 6,
     notifications_enabled: true,
     maintenance_mode: false,
-    auto_approve_purchases: true
+    auto_approve_purchases: true,
+    subscriptions_enabled: true
   });
 
   // Buscar configurações atuais
@@ -117,7 +119,8 @@ export function ConfigurationsTab() {
       { key: 'featured_products_limit', value: configs.featured_products_limit, description: 'Limite de produtos em destaque', is_public: false },
       { key: 'notifications_enabled', value: configs.notifications_enabled, description: 'Habilitar notificações', is_public: false },
       { key: 'maintenance_mode', value: configs.maintenance_mode, description: 'Modo manutenção', is_public: true },
-      { key: 'auto_approve_purchases', value: configs.auto_approve_purchases, description: 'Aprovar compras automaticamente', is_public: false }
+      { key: 'auto_approve_purchases', value: configs.auto_approve_purchases, description: 'Aprovar compras automaticamente', is_public: false },
+      { key: 'subscriptions_enabled', value: configs.subscriptions_enabled, description: 'Habilitar sistema de assinaturas', is_public: true }
     ];
 
     // Salvar todas as configurações
@@ -201,6 +204,47 @@ export function ConfigurationsTab() {
               placeholder="Digite um anúncio para exibir na loja..."
               rows={3}
             />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Sistema de Assinaturas */}
+      <Card className={`border-2 ${configs.subscriptions_enabled ? 'border-purple-200 bg-purple-50' : 'border-gray-200 bg-gray-50'}`}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Crown className="h-5 w-5" />
+            Sistema de Assinaturas
+            {configs.subscriptions_enabled ? (
+              <Badge className="bg-purple-500 text-white">Ativo</Badge>
+            ) : (
+              <Badge className="bg-gray-500 text-white">Inativo</Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="subscriptions_enabled">Assinaturas Habilitadas</Label>
+              <p className="text-sm text-gray-600">Permite que usuários vejam e assinem planos premium</p>
+            </div>
+            <Switch
+              id="subscriptions_enabled"
+              checked={configs.subscriptions_enabled}
+              onCheckedChange={(checked) => setConfigs(prev => ({ ...prev, subscriptions_enabled: checked }))}
+            />
+          </div>
+          
+          <div className="bg-purple-100 border border-purple-300 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-purple-600 mt-0.5" />
+              <div>
+                <h4 className="font-medium text-purple-800">Configuração de Assinaturas</h4>
+                <p className="text-sm text-purple-700 mt-1">
+                  Quando desabilitado, a aba "Premium" ficará oculta na loja RadCoin. 
+                  Os usuários não conseguirão ver ou assinar planos premium.
+                </p>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -311,7 +355,7 @@ export function ConfigurationsTab() {
         </CardContent>
       </Card>
 
-      {/* Estatísticas das Configurações */}
+      {/* Status das Configurações */}
       <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-blue-900">
@@ -328,6 +372,12 @@ export function ConfigurationsTab() {
                   <div className="flex items-center gap-2 text-green-700">
                     <CheckCircle className="h-4 w-4" />
                     <span>Loja habilitada</span>
+                  </div>
+                )}
+                {configs.subscriptions_enabled && (
+                  <div className="flex items-center gap-2 text-green-700">
+                    <CheckCircle className="h-4 w-4" />
+                    <span>Assinaturas habilitadas</span>
                   </div>
                 )}
                 {configs.daily_deals_enabled && (
@@ -363,6 +413,12 @@ export function ConfigurationsTab() {
                   <div className="flex items-center gap-2 text-red-700">
                     <AlertCircle className="h-4 w-4" />
                     <span>Loja desabilitada</span>
+                  </div>
+                )}
+                {!configs.subscriptions_enabled && (
+                  <div className="flex items-center gap-2 text-orange-700">
+                    <AlertCircle className="h-4 w-4" />
+                    <span>Assinaturas desabilitadas</span>
                   </div>
                 )}
                 {configs.min_purchase_amount > 100 && (

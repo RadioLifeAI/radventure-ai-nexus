@@ -76,8 +76,9 @@ export function PremiumSubscriptionsTab({ currentBalance }: PremiumSubscriptions
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {subscriptionPlans.map((plan, index) => {
-          const features = plan.features || {};
-          const limits = plan.limits || {};
+          // Safe type casting for features and limits
+          const features = (plan.features as Record<string, any>) || {};
+          const limits = (plan.limits as Record<string, any>) || {};
 
           return (
             <Card 
