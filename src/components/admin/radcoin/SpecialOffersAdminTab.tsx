@@ -3,8 +3,6 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { 
   Plus, 
   Edit, 
@@ -13,21 +11,67 @@ import {
   Flame, 
   Percent,
   Eye,
-  Calendar,
   Timer
 } from "lucide-react";
 import { useRadCoinStore } from "@/components/radcoin-shop/hooks/useRadCoinStore";
 import { useOfferMutations } from "./hooks/useOfferMutations";
+import { OfferEditor } from "./OfferEditor";
 
 export function SpecialOffersAdminTab() {
   const { specialOffers, isLoadingOffers } = useRadCoinStore();
-  const { deleteOffer, isLoading: isMutating } = useOfferMutations();
+  const { createOffer, updateOffer, deleteOffer, isLoading: isMutating } = useOfferMutations();
   const [selectedOffer, setSelectedOffer] = useState(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [editingOffer, setEditingOffer] = useState(null);
+
+  const handleEditOffer = (offer: any) => {
+    setEditingOffer(offer);
+    setIsEditorOpen(true);
+  };
+
+  const handleCreateOffer = () => {
+    setEditingOffer(null);
+    setIsEditorOpen(true);
+  };
 
   const handleDeleteOffer = (offerId: string) => {
     if (confirm('Tem certeza que deseja excluir esta oferta?')) {
       deleteOffer(offerId);
     }
+  };
+
+  const handleSaveOffer = (offerData: any) => {
+    if (editingOffer) {
+      // Update existing offer
+      updateOffer({
+        id: editingOffer.id,
+        name: offerData.name,
+        description: offerData.description,
+        original_price: offerData.original_price,
+        sale_price: offerData.sale_price,
+        discount_percentage: offerData.discount_percentage,
+        benefits: offerData.benefits,
+        is_active: offerData.is_active,
+        is_limited: offerData.is_limited,
+        max_redemptions: offerData.max_redemptions,
+        expires_at: offerData.expires_at
+      });
+    } else {
+      // Create new offer
+      createOffer({
+        name: offerData.name,
+        description: offerData.description,
+        original_price: offerData.original_price,
+        sale_price: offerData.sale_price,
+        discount_percentage: offerData.discount_percentage,
+        benefits: offerData.benefits,
+        is_active: offerData.is_active,
+        is_limited: offerData.is_limited,
+        max_redemptions: offerData.max_redemptions,
+        expires_at: offerData.expires_at
+      });
+    }
+    setIsEditorOpen(false);
   };
 
   const getOfferStatus = (offer: any) => {
@@ -38,7 +82,8 @@ export function SpecialOffersAdminTab() {
   };
 
   const parseTimeLeft = (timeLeft: string) => {
-    // Parse "2d 14h 23m" format
+    if (!timeLeft || timeLeft === 'Expirado') return 0;
+    
     const parts = timeLeft.split(' ');
     let totalMinutes = 0;
     
@@ -63,7 +108,10 @@ export function SpecialOffersAdminTab() {
           <h2 className="text-2xl font-bold text-gray-900">Ofertas Especiais</h2>
           <p className="text-gray-600">Gerencie promoções e ofertas limitadas</p>
         </div>
-        <Button className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white">
+        <Button 
+          onClick={handleCreateOffer}
+          className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white"
+        >
           <Plus className="h-4 w-4 mr-2" />
           Nova Oferta
         </Button>
@@ -156,7 +204,7 @@ export function SpecialOffersAdminTab() {
               <div className="flex items-center gap-2 text-sm">
                 <Clock className="h-4 w-4 text-red-500" />
                 <span className="font-medium text-red-600">
-                  Resta: {offer.timeLeft}
+                  Resta: {offer.timeLeft || 'Sem expiração'}
                 </span>
               </div>
 
@@ -176,7 +224,7 @@ export function SpecialOffersAdminTab() {
                     <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
                     <span>{offer.benefits.ai_tutor_credits} Tutor IA</span>
                   </div>
-                  {offer.benefits.bonus_points_multiplier && (
+                  {offer.benefits.bonus_points_multiplier && offer.benefits.bonus_points_multiplier > 1 && (
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
                       <span>{offer.benefits.bonus_points_multiplier}x Pontos</span>
@@ -189,7 +237,7 @@ export function SpecialOffersAdminTab() {
               <div className="bg-gray-50 p-3 rounded-lg space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Tempo restante:</span>
-                  <span className="font-medium">{parseTimeLeft(offer.timeLeft)} min</span>
+                  <span className="font-medium">{parseTimeLeft(offer.timeLeft || '')} min</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Desconto máximo:</span>
@@ -201,6 +249,14 @@ export function SpecialOffersAdminTab() {
                     {offer.original_price - offer.sale_price} RC
                   </span>
                 </div>
+                {offer.is_limited && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Resgates:</span>
+                    <span className="font-medium">
+                      {offer.current_redemptions || 0} / {offer.max_redemptions || 0}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Ações */}
@@ -217,6 +273,7 @@ export function SpecialOffersAdminTab() {
                 <Button 
                   variant="outline" 
                   size="sm" 
+                  onClick={() => handleEditOffer(offer)}
                   className="flex-1"
                 >
                   <Edit className="h-4 w-4 mr-1" />
@@ -238,24 +295,38 @@ export function SpecialOffersAdminTab() {
         </div>
       )}
 
-      {/* Criar Nova Oferta */}
-      <Card className="border-2 border-dashed border-gray-300 hover:border-orange-400 transition-colors">
-        <CardContent className="p-8 text-center">
-          <div className="space-y-4">
-            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto">
-              <Plus className="h-8 w-8 text-orange-500" />
+      {/* Criar Nova Oferta - só mostrar se não há ofertas */}
+      {!isLoadingOffers && specialOffers.length === 0 && (
+        <Card className="border-2 border-dashed border-gray-300 hover:border-orange-400 transition-colors">
+          <CardContent className="p-8 text-center">
+            <div className="space-y-4">
+              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto">
+                <Plus className="h-8 w-8 text-orange-500" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Criar Nova Oferta</h3>
+                <p className="text-gray-600">Configure uma nova promoção especial</p>
+              </div>
+              <Button 
+                onClick={handleCreateOffer}
+                className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700"
+              >
+                <Flame className="h-4 w-4 mr-2" />
+                Criar Oferta Especial
+              </Button>
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Criar Nova Oferta</h3>
-              <p className="text-gray-600">Configure uma nova promoção especial</p>
-            </div>
-            <Button className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700">
-              <Flame className="h-4 w-4 mr-2" />
-              Criar Oferta Especial
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Editor de Oferta */}
+      <OfferEditor
+        isOpen={isEditorOpen}
+        onClose={() => setIsEditorOpen(false)}
+        offer={editingOffer}
+        onSave={handleSaveOffer}
+        isLoading={isMutating}
+      />
     </div>
   );
 }

@@ -12,17 +12,17 @@ import {
   Flame,
   Crown
 } from "lucide-react";
-import { useRadCoinShop } from "../hooks/useRadCoinShop";
+import { useRadCoinStore } from "../hooks/useRadCoinStore";
 
 interface HelpPackagesTabProps {
   currentBalance: number;
 }
 
 export function HelpPackagesTab({ currentBalance }: HelpPackagesTabProps) {
-  const { helpPackages, purchaseHelpPackage, isPurchasing } = useRadCoinShop();
+  const { products, purchaseProduct, isPurchasing } = useRadCoinStore();
 
-  const handlePurchase = (packageData: any) => {
-    purchaseHelpPackage(packageData);
+  const handlePurchase = (productId: string) => {
+    purchaseProduct(productId);
   };
 
   const getPackageIcon = (index: number) => {
@@ -53,20 +53,20 @@ export function HelpPackagesTab({ currentBalance }: HelpPackagesTabProps) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {helpPackages.map((pkg, index) => {
+        {products.map((pkg, index) => {
           const canAfford = currentBalance >= pkg.price;
-          const discountedPrice = pkg.discount 
-            ? Math.floor(pkg.price * (1 - pkg.discount / 100))
+          const discountedPrice = pkg.discount_percentage 
+            ? Math.floor(pkg.price * (1 - pkg.discount_percentage / 100))
             : pkg.price;
 
           return (
             <Card 
               key={pkg.id} 
               className={`relative overflow-hidden bg-gradient-to-br ${getPackageColor(index)} border-2 ${
-                pkg.popular ? 'border-yellow-400 shadow-2xl scale-105' : 'border-white/20'
+                pkg.is_popular ? 'border-yellow-400 shadow-2xl scale-105' : 'border-white/20'
               } hover:scale-105 transition-all duration-300`}
             >
-              {pkg.popular && (
+              {pkg.is_popular && (
                 <div className="absolute top-4 right-4">
                   <Badge className="bg-yellow-500 text-yellow-900 font-bold animate-pulse">
                     <Star className="h-3 w-3 mr-1" />
@@ -75,11 +75,11 @@ export function HelpPackagesTab({ currentBalance }: HelpPackagesTabProps) {
                 </div>
               )}
 
-              {pkg.discount && (
+              {pkg.discount_percentage > 0 && (
                 <div className="absolute top-4 left-4">
                   <Badge className="bg-red-500 text-white font-bold">
                     <Flame className="h-3 w-3 mr-1" />
-                    -{pkg.discount}%
+                    -{pkg.discount_percentage}%
                   </Badge>
                 </div>
               )}
@@ -97,14 +97,14 @@ export function HelpPackagesTab({ currentBalance }: HelpPackagesTabProps) {
               <CardContent className="space-y-4">
                 {/* Preço */}
                 <div className="text-center">
-                  {pkg.discount ? (
+                  {pkg.discount_percentage > 0 ? (
                     <div className="space-y-1">
                       <div className="flex items-center justify-center gap-2">
                         <span className="text-2xl text-gray-300 line-through">
                           {pkg.price.toLocaleString()}
                         </span>
                         <Badge className="bg-red-500 text-white">
-                          -{pkg.discount}%
+                          -{pkg.discount_percentage}%
                         </Badge>
                       </div>
                       <div className="flex items-center justify-center gap-2">
@@ -164,7 +164,7 @@ export function HelpPackagesTab({ currentBalance }: HelpPackagesTabProps) {
                       ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl'
                       : 'bg-gray-600 text-gray-300 cursor-not-allowed'
                   }`}
-                  onClick={() => handlePurchase(pkg)}
+                  onClick={() => handlePurchase(pkg.id)}
                   disabled={!canAfford || isPurchasing}
                 >
                   {isPurchasing ? (
