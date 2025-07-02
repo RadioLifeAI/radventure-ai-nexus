@@ -42,7 +42,7 @@ export function useUserProfile() {
   const processingRewardsRef = useRef(false);
   const sessionKeyRef = useRef(`profile_rewards_${Date.now()}_${Math.random()}`);
 
-  // Função de busca memoizada com correções de compatibilidade
+  // Função de busca memoizada
   const fetchProfile = useCallback(async () => {
     console.log('👤 Buscando perfil para usuário:', user?.id?.slice(0, 8) + '...');
     
@@ -51,99 +51,67 @@ export function useUserProfile() {
       throw new Error('No user ID');
     }
     
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
 
-      if (error) {
-        console.log('⚠️ Profile fetch error:', {
-          code: error.code,
-          message: error.message,
-          details: error.details
-        });
+    if (error) {
+      console.log('⚠️ Profile fetch error:', error);
+      
+      if (error.code === 'PGRST116') {
+        console.log('🔧 Perfil não encontrado, aguardando criação automática...');
         
-        if (error.code === 'PGRST116') {
-          console.log('🔧 Perfil não encontrado, aguardando criação automática...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        const { data: retryData, error: retryError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
           
-          await new Promise(resolve => setTimeout(resolve, 2000));
+        if (retryError && retryError.code === 'PGRST116') {
+          console.log('🛠️ Criando perfil manualmente...');
           
-          const { data: retryData, error: retryError } = await supabase
+          const newProfileData = {
+            id: user.id,
+            email: user.email || '',
+            username: user.email?.split('@')[0] || `user_${user.id.slice(0, 8)}`,
+            full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
+            type: 'USER' as const,
+            radcoin_balance: 0,
+            total_points: 0,
+            current_streak: 0,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+
+          const { data: newProfile, error: createError } = await supabase
             .from('profiles')
-            .select('*')
-            .eq('id', user.id)
+            .insert(newProfileData)
+            .select()
             .single();
-            
-          if (retryError && retryError.code === 'PGRST116') {
-            console.log('🛠️ Criando perfil manualmente...');
-            
-            const newProfileData = {
-              id: user.id,
-              email: user.email || '',
-              username: user.email?.split('@')[0] || `user_${user.id.slice(0, 8)}`,
-              full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
-              type: 'USER' as const,
-              radcoin_balance: 0,
-              total_points: 0,
-              current_streak: 0,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            };
 
-            const { data: newProfile, error: createError } = await supabase
-              .from('profiles')
-              .insert(newProfileData)
-              .select()
-              .single();
-
-            if (createError) {
-              console.error('❌ Error creating profile:', createError);
-              throw createError;
-            }
-
-            console.log('✅ Perfil criado manualmente:', newProfile.email);
-            return newProfile as UserProfile;
-          } else if (retryData) {
-            console.log('✅ Perfil encontrado na segunda tentativa:', retryData.email);
-            return retryData as UserProfile;
-          } else {
-            throw retryError;
+          if (createError) {
+            console.error('❌ Error creating profile:', createError);
+            throw createError;
           }
-        }
-        throw error;
-      }
-      
-      console.log('✅ Perfil carregado:', data.email);
-      
-      // CORREÇÃO DE COMPATIBILIDADE: Verificar se o perfil tem campos obrigatórios
-      const profileData = data as UserProfile;
-      
-      // Se não tem active_title definido mas deveria ter, definir um padrão
-      if (!profileData.active_title && profileData.total_points >= 100) {
-        console.log('🔧 Adicionando título padrão para perfil antigo');
-        
-        try {
-          await supabase
-            .from('profiles')
-            .update({ 
-              active_title: 'Estudante de Radiologia',
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', user.id);
-          
-          profileData.active_title = 'Estudante de Radiologia';
-        } catch (updateError) {
-          console.warn('⚠️ Não foi possível atualizar título:', updateError);
+
+          console.log('✅ Perfil criado manualmente:', newProfile.email);
+          return newProfile as UserProfile;
+        } else if (retryData) {
+          console.log('✅ Perfil encontrado na segunda tentativa:', retryData.email);
+          return retryData as UserProfile;
+        } else {
+          throw retryError;
         }
       }
-      
-      return profileData;
-    } catch (fetchError) {
-      console.error('❌ Erro geral ao buscar perfil:', fetchError);
-      throw fetchError;
+      throw error;
     }
+    
+    console.log('✅ Perfil carregado:', data.email);
+    return data as UserProfile;
   }, [user?.id, user?.email, user?.user_metadata]);
 
   const { data: profile, isLoading, error } = useQuery({
@@ -157,7 +125,7 @@ export function useUserProfile() {
     },
   });
 
-  // Processo de recompensas otimizado com melhor tratamento de erros
+  // Processo de recompensas otimizado
   const processRewards = useCallback(async (profile: UserProfile) => {
     if (hasCheckedRewardsRef.current || processingRewardsRef.current) {
       return;
@@ -205,17 +173,9 @@ export function useUserProfile() {
       
       console.log('📝 Atualizando perfil:', Object.keys(updates));
       
-      // CORREÇÃO DE COMPATIBILIDADE: Filtrar campos que podem não existir
-      const safeUpdates = { ...updates };
-      
-      // Garantir que active_title seja tratado corretamente
-      if ('active_title' in safeUpdates && !safeUpdates.active_title) {
-        delete safeUpdates.active_title;
-      }
-      
       const { data, error } = await supabase
         .from('profiles')
-        .update({ ...safeUpdates, updated_at: new Date().toISOString() })
+        .update({ ...updates, updated_at: new Date().toISOString() })
         .eq('id', user.id)
         .select()
         .single();
