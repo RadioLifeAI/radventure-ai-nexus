@@ -19,8 +19,8 @@ export function RadCoinStoreModal({ isOpen, onClose, currentBalance }: RadCoinSt
   const [activeTab, setActiveTab] = useState("packages");
   const { storeConfig, isStoreEnabled } = useRadCoinStore();
 
-  // Verificar se a loja está em manutenção
-  if (storeConfig.maintenance_mode) {
+  // Verificar se a loja está em manutenção - CONECTADO AO ADMIN
+  if (storeConfig.maintenance_mode === 'true' || storeConfig.maintenance_mode === true) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-md bg-gradient-to-br from-red-900 to-red-800 border-red-600">
@@ -40,8 +40,8 @@ export function RadCoinStoreModal({ isOpen, onClose, currentBalance }: RadCoinSt
     );
   }
 
-  // Verificar se a loja está desabilitada
-  if (!isStoreEnabled) {
+  // Verificar se a loja está desabilitada - CONECTADO AO ADMIN
+  if (!isStoreEnabled || storeConfig.store_enabled === 'false' || storeConfig.store_enabled === false) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-md bg-gradient-to-br from-gray-900 to-gray-800 border-gray-600">
@@ -77,11 +77,14 @@ export function RadCoinStoreModal({ isOpen, onClose, currentBalance }: RadCoinSt
             </Badge>
           </div>
           
-          {/* Anúncio da loja se configurado */}
+          {/* Anúncio da loja CONECTADO AO ADMIN */}
           {storeConfig.store_announcement && (
             <div className="bg-blue-600/30 border border-blue-400/50 rounded-lg p-3 mt-2">
               <p className="text-blue-200 text-center text-sm">
-                {storeConfig.store_announcement}
+                {typeof storeConfig.store_announcement === 'string' 
+                  ? storeConfig.store_announcement 
+                  : storeConfig.store_announcement?.message || storeConfig.store_announcement?.title
+                }
               </p>
             </div>
           )}
@@ -104,13 +107,16 @@ export function RadCoinStoreModal({ isOpen, onClose, currentBalance }: RadCoinSt
                 <Flame className="h-4 w-4" />
                 <span className="hidden sm:inline">Ofertas</span>
               </TabsTrigger>
-              <TabsTrigger 
-                value="subscriptions" 
-                className="data-[state=active]:bg-purple-600 data-[state=active]:text-white flex items-center gap-2"
-              >
-                <Crown className="h-4 w-4" />
-                <span className="hidden sm:inline">Premium</span>
-              </TabsTrigger>
+              {/* Tab Premium só aparece se assinaturas estiverem habilitadas - CONECTADO AO ADMIN */}
+              {(storeConfig.subscriptions_enabled === 'true' || storeConfig.subscriptions_enabled === true) && (
+                <TabsTrigger 
+                  value="subscriptions" 
+                  className="data-[state=active]:bg-purple-600 data-[state=active]:text-white flex items-center gap-2"
+                >
+                  <Crown className="h-4 w-4" />
+                  <span className="hidden sm:inline">Premium</span>
+                </TabsTrigger>
+              )}
             </TabsList>
 
             <div className="flex-1 overflow-y-auto">
@@ -122,9 +128,11 @@ export function RadCoinStoreModal({ isOpen, onClose, currentBalance }: RadCoinSt
                 <SpecialOffersTab currentBalance={currentBalance} />
               </TabsContent>
 
-              <TabsContent value="subscriptions" className="mt-0 h-full">
-                <PremiumSubscriptionsTab currentBalance={currentBalance} />
-              </TabsContent>
+              {(storeConfig.subscriptions_enabled === 'true' || storeConfig.subscriptions_enabled === true) && (
+                <TabsContent value="subscriptions" className="mt-0 h-full">
+                  <PremiumSubscriptionsTab currentBalance={currentBalance} />
+                </TabsContent>
+              )}
             </div>
           </Tabs>
         </div>

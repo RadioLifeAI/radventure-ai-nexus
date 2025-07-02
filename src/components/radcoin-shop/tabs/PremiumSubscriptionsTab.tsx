@@ -10,7 +10,9 @@ import {
   Shield, 
   Sparkles,
   CheckCircle,
-  Diamond
+  Diamond,
+  Award,
+  TrendingUp
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,24 +36,36 @@ export function PremiumSubscriptionsTab({ currentBalance }: PremiumSubscriptions
     }
   });
 
-  const handleSubscribe = (planId: string) => {
-    console.log("Subscribing to plan:", planId);
-    // TODO: Implementar lógica de assinatura
+  const handleSubscribe = (planId: string, planName: string) => {
+    console.log("Subscribing to plan:", planId, planName);
+    // TODO: Implementar lógica de assinatura via Stripe
   };
 
-  const getPlanIcon = (index: number) => {
-    const icons = [Star, Crown, Diamond];
-    const Icon = icons[index] || Crown;
-    return <Icon className="h-8 w-8" />;
+  const getPlanIcon = (planName: string) => {
+    if (planName.includes('5') || planName.toLowerCase().includes('bronze')) return Award;
+    if (planName.includes('10') || planName.toLowerCase().includes('prata')) return Star;
+    if (planName.includes('15') || planName.toLowerCase().includes('ouro')) return Crown;
+    return Diamond;
   };
 
-  const getPlanColor = (index: number) => {
-    const colors = [
-      "from-blue-500 to-cyan-600",
-      "from-purple-500 to-pink-600", 
-      "from-yellow-500 to-orange-600"
-    ];
-    return colors[index] || colors[1];
+  const getPlanColor = (planName: string) => {
+    if (planName.includes('5') || planName.toLowerCase().includes('bronze')) 
+      return "from-orange-600 to-amber-700";
+    if (planName.includes('10') || planName.toLowerCase().includes('prata')) 
+      return "from-gray-500 to-slate-600";
+    if (planName.includes('15') || planName.toLowerCase().includes('ouro')) 
+      return "from-yellow-500 to-yellow-600";
+    return "from-purple-500 to-pink-600";
+  };
+
+  const getPlanBadge = (planName: string) => {
+    if (planName.includes('5') || planName.toLowerCase().includes('bronze')) 
+      return { text: "BRONZE", color: "bg-orange-500 text-orange-900", icon: Award };
+    if (planName.includes('10') || planName.toLowerCase().includes('prata')) 
+      return { text: "POPULAR", color: "bg-blue-500 text-blue-900", icon: Star };
+    if (planName.includes('15') || planName.toLowerCase().includes('ouro')) 
+      return { text: "OURO", color: "bg-yellow-500 text-yellow-900", icon: Crown };
+    return { text: "PREMIUM", color: "bg-purple-500 text-purple-900", icon: Diamond };
   };
 
   if (isLoading) {
@@ -67,38 +81,39 @@ export function PremiumSubscriptionsTab({ currentBalance }: PremiumSubscriptions
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-white mb-2 flex items-center justify-center gap-3">
           <Crown className="h-8 w-8 text-yellow-400" />
-          Assinaturas Premium
+          Assinaturas Educacionais
         </h2>
         <p className="text-purple-200 text-lg">
-          Desbloqueie todo o potencial da plataforma com benefícios exclusivos
+          Apoie o projeto educacional e ganhe benefícios exclusivos!
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {subscriptionPlans.map((plan, index) => {
-          // Safe type casting for features and limits
           const features = (plan.features as Record<string, any>) || {};
           const limits = (plan.limits as Record<string, any>) || {};
+          const Icon = getPlanIcon(plan.name);
+          const badge = getPlanBadge(plan.name);
+          const BadgeIcon = badge.icon;
 
           return (
             <Card 
               key={plan.id}
-              className={`relative overflow-hidden bg-gradient-to-br ${getPlanColor(index)} border-2 ${
-                index === 1 ? 'border-yellow-400 shadow-2xl scale-105' : 'border-white/20'
+              className={`relative overflow-hidden bg-gradient-to-br ${getPlanColor(plan.name)} border-2 ${
+                plan.name.includes('10') ? 'border-blue-400 shadow-2xl scale-105' : 'border-white/20'
               } hover:scale-105 transition-all duration-300`}
             >
-              {index === 1 && (
-                <div className="absolute top-4 right-4">
-                  <Badge className="bg-yellow-500 text-yellow-900 font-bold animate-pulse">
-                    <Star className="h-3 w-3 mr-1" />
-                    POPULAR
-                  </Badge>
-                </div>
-              )}
+              {/* Badge do Plano */}
+              <div className="absolute top-4 right-4">
+                <Badge className={`${badge.color} font-bold animate-pulse`}>
+                  <BadgeIcon className="h-3 w-3 mr-1" />
+                  {badge.text}
+                </Badge>
+              </div>
 
               <CardHeader className="text-center pb-4">
                 <div className="mx-auto mb-4 p-4 bg-white/20 rounded-full backdrop-blur-sm w-fit">
-                  {getPlanIcon(index)}
+                  <Icon className="h-8 w-8 text-white" />
                 </div>
                 <CardTitle className="text-2xl font-bold text-white">
                   {plan.display_name || plan.name}
@@ -124,45 +139,62 @@ export function PremiumSubscriptionsTab({ currentBalance }: PremiumSubscriptions
 
                 {/* Recursos Inclusos */}
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-white text-center">Recursos Inclusos:</h4>
+                  <h4 className="font-semibold text-white text-center">Benefícios Inclusos:</h4>
                   <div className="space-y-2">
-                    {features.unlimited_cases && (
-                      <div className="flex items-center gap-3 bg-white/10 rounded-lg p-3">
-                        <CheckCircle className="h-5 w-5 text-green-400" />
-                        <span className="text-white">Casos Ilimitados</span>
-                      </div>
-                    )}
-                    {features.ai_tutor && (
-                      <div className="flex items-center gap-3 bg-white/10 rounded-lg p-3">
-                        <Sparkles className="h-5 w-5 text-purple-400" />
-                        <span className="text-white">IA Tutor Avançado</span>
-                      </div>
-                    )}
-                    {features.priority_support && (
-                      <div className="flex items-center gap-3 bg-white/10 rounded-lg p-3">
-                        <Shield className="h-5 w-5 text-blue-400" />
-                        <span className="text-white">Suporte Prioritário</span>
-                      </div>
-                    )}
-                    {features.exclusive_content && (
-                      <div className="flex items-center gap-3 bg-white/10 rounded-lg p-3">
-                        <Crown className="h-5 w-5 text-yellow-400" />
-                        <span className="text-white">Conteúdo Exclusivo</span>
-                      </div>
-                    )}
                     {limits.radcoins_monthly && (
                       <div className="flex items-center gap-3 bg-white/10 rounded-lg p-3">
                         <Zap className="h-5 w-5 text-orange-400" />
-                        <span className="text-white">{limits.radcoins_monthly} RadCoins/mês</span>
+                        <span className="text-white font-medium">{limits.radcoins_monthly} RadCoins/mês</span>
                       </div>
                     )}
+                    
+                    {features.colaborator_badge && (
+                      <div className="flex items-center gap-3 bg-white/10 rounded-lg p-3">
+                        <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black text-xs">
+                          Selo: {features.colaborator_badge}
+                        </Badge>
+                      </div>
+                    )}
+
+                    {features.elimination_aids && (
+                      <div className="flex items-center gap-3 bg-white/10 rounded-lg p-3">
+                        <Shield className="h-5 w-5 text-blue-400" />
+                        <span className="text-white">+{features.elimination_aids} Eliminações extras</span>
+                      </div>
+                    )}
+
+                    {features.skip_aids && (
+                      <div className="flex items-center gap-3 bg-white/10 rounded-lg p-3">
+                        <TrendingUp className="h-5 w-5 text-green-400" />
+                        <span className="text-white">+{features.skip_aids} Pulos extras</span>
+                      </div>
+                    )}
+
+                    {features.ai_tutor_credits && (
+                      <div className="flex items-center gap-3 bg-white/10 rounded-lg p-3">
+                        <Sparkles className="h-5 w-5 text-purple-400" />
+                        <span className="text-white">+{features.ai_tutor_credits} Créditos IA Tutor</span>
+                      </div>
+                    )}
+
+                    {features.xp_multiplier && (
+                      <div className="flex items-center gap-3 bg-white/10 rounded-lg p-3">
+                        <Star className="h-5 w-5 text-yellow-400" />
+                        <span className="text-white">+{((features.xp_multiplier - 1) * 100).toFixed(0)}% Bônus XP</span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-3 bg-white/10 rounded-lg p-3">
+                      <CheckCircle className="h-5 w-5 text-green-400" />
+                      <span className="text-white text-sm">Suporte ao projeto educacional</span>
+                    </div>
                   </div>
                 </div>
 
                 {/* Botão de Assinatura */}
                 <Button
                   className="w-full py-3 text-lg font-bold bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black shadow-lg hover:shadow-xl transition-all duration-300"
-                  onClick={() => handleSubscribe(plan.id)}
+                  onClick={() => handleSubscribe(plan.id, plan.name)}
                 >
                   <Crown className="h-5 w-5 mr-2" />
                   Assinar {plan.display_name}
@@ -170,8 +202,8 @@ export function PremiumSubscriptionsTab({ currentBalance }: PremiumSubscriptions
 
                 {/* Garantia */}
                 <div className="text-center text-xs text-blue-200">
-                  ⚡ Cancele a qualquer momento<br />
-                  🛡️ Garantia de 7 dias
+                  ⚡ Via Stripe • Cancele a qualquer momento<br />
+                  🛡️ Contribua com a educação médica
                 </div>
               </CardContent>
             </Card>
@@ -185,41 +217,41 @@ export function PremiumSubscriptionsTab({ currentBalance }: PremiumSubscriptions
           <CardContent className="p-8 text-center">
             <Crown className="h-16 w-16 text-purple-400 mx-auto mb-4" />
             <h3 className="text-2xl font-bold text-white mb-2">
-              Planos Premium em Breve
+              Planos Educacionais em Breve
             </h3>
             <p className="text-purple-200 mb-4">
-              Estamos preparando planos exclusivos com benefícios incríveis para você!
+              Estamos preparando planos de apoio ao projeto educacional com benefícios incríveis!
             </p>
             <Badge className="bg-purple-500/20 text-purple-300 border-purple-400/30 px-4 py-2">
-              👑 Em desenvolvimento
+              🎓 Sistema educacional em desenvolvimento
             </Badge>
           </CardContent>
         </Card>
       )}
 
-      {/* Comparação de Benefícios */}
-      <Card className="bg-gradient-to-r from-cyan-600/20 to-blue-600/20 border-cyan-400/30">
+      {/* Sobre o Projeto Educacional */}
+      <Card className="bg-gradient-to-r from-green-600/20 to-blue-600/20 border-green-400/30">
         <CardContent className="p-6">
           <h3 className="text-xl font-bold text-white mb-4 text-center">
-            Por que escolher Premium?
+            🎓 Por que apoiar nosso projeto educacional?
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-3">
-              <h4 className="font-semibold text-cyan-300">✨ Recursos Exclusivos</h4>
-              <ul className="space-y-2 text-sm text-cyan-200">
-                <li>• Acesso a casos premium exclusivos</li>
-                <li>• IA Tutor com explicações detalhadas</li>
-                <li>• Estatísticas avançadas de performance</li>
-                <li>• Simulados personalizados</li>
+              <h4 className="font-semibold text-green-300">💡 Missão Educacional</h4>
+              <ul className="space-y-2 text-sm text-green-200">
+                <li>• Democratizar o ensino de radiologia</li>
+                <li>• Casos clínicos reais e educativos</li>
+                <li>• IA para personalizar o aprendizado</li>
+                <li>• Plataforma 100% brasileira</li>
               </ul>
             </div>
             <div className="space-y-3">
-              <h4 className="font-semibold text-purple-300">🎯 Vantagens Premium</h4>
-              <ul className="space-y-2 text-sm text-purple-200">
-                <li>• Suporte prioritário 24/7</li>
-                <li>• Sem limites de uso</li>
-                <li>• Acesso antecipado a novos recursos</li>
-                <li>• Desconto em eventos exclusivos</li>
+              <h4 className="font-semibold text-blue-300">🏆 Seu Apoio Faz a Diferença</h4>
+              <ul className="space-y-2 text-sm text-blue-200">
+                <li>• Selo de colaborador no seu perfil</li>
+                <li>• Benefícios exclusivos na plataforma</li>
+                <li>• Ajuda a manter o projeto gratuito para estudantes</li>
+                <li>• Contribui para a educação médica no Brasil</li>
               </ul>
             </div>
           </div>

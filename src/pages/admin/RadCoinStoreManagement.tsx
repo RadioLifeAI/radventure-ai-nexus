@@ -24,7 +24,7 @@ export default function RadCoinStoreManagement() {
   const [activeTab, setActiveTab] = useState("products");
   const { analytics, isLoading } = useRadCoinAnalytics();
 
-  // Usar dados reais ou fallback
+  // Usar dados reais do Supabase - ZERO MOCK
   const metrics = {
     totalSales: analytics?.totalSales || 0,
     totalRevenue: analytics?.totalRevenue || 0,
@@ -44,29 +44,33 @@ export default function RadCoinStoreManagement() {
             Gestão da Loja RadCoin
           </h1>
           <p className="text-gray-600 mt-1">
-            Controle total sobre produtos, preços e promoções da loja virtual
+            Controle total sobre produtos, preços e promoções da loja virtual - Dados 100% reais
           </p>
         </div>
         <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2">
-          Sistema Ativo
+          🔄 Sincronizado com Loja
         </Badge>
       </div>
 
-      {/* Métricas Rápidas */}
+      {/* Métricas Rápidas - DADOS REAIS DO SUPABASE */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-blue-800">
-              Total de Vendas
+              Total de Vendas (Real)
             </CardTitle>
             <ShoppingCart className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-900">
-              {metrics.totalSales.toLocaleString()}
+              {isLoading ? (
+                <div className="w-8 h-6 bg-blue-200 animate-pulse rounded"></div>
+              ) : (
+                metrics.totalSales.toLocaleString()
+              )}
             </div>
             <p className="text-xs text-blue-600">
-              +12% desde o mês passado
+              {metrics.totalSales > 0 ? "Baseado em compras reais" : "Nenhuma venda ainda"}
             </p>
           </CardContent>
         </Card>
@@ -74,16 +78,20 @@ export default function RadCoinStoreManagement() {
         <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-green-800">
-              Receita Total
+              Receita Total (Real)
             </CardTitle>
             <TrendingUp className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-900">
-              {metrics.totalRevenue.toLocaleString()} RC
+              {isLoading ? (
+                <div className="w-12 h-6 bg-green-200 animate-pulse rounded"></div>
+              ) : (
+                `${metrics.totalRevenue.toLocaleString()} RC`
+              )}
             </div>
             <p className="text-xs text-green-600">
-              +8% desde o mês passado
+              {metrics.totalRevenue > 0 ? "RadCoins gastos reais" : "Aguardando primeiras compras"}
             </p>
           </CardContent>
         </Card>
@@ -91,16 +99,20 @@ export default function RadCoinStoreManagement() {
         <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-purple-800">
-              Produtos Ativos
+              Produtos Ativos (Real)
             </CardTitle>
             <Package className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-900">
-              {metrics.activeProducts}
+              {isLoading ? (
+                <div className="w-6 h-6 bg-purple-200 animate-pulse rounded"></div>
+              ) : (
+                metrics.activeProducts
+              )}
             </div>
             <p className="text-xs text-purple-600">
-              3 novos este mês
+              Produtos + ofertas ativas
             </p>
           </CardContent>
         </Card>
@@ -108,16 +120,20 @@ export default function RadCoinStoreManagement() {
         <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-orange-800">
-              Taxa de Conversão
+              Taxa Conversão (Real)
             </CardTitle>
             <Star className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-900">
-              {metrics.conversionRate}%
+              {isLoading ? (
+                <div className="w-8 h-6 bg-orange-200 animate-pulse rounded"></div>
+              ) : (
+                `${metrics.conversionRate}%`
+              )}
             </div>
             <p className="text-xs text-orange-600">
-              +2.3% desde o mês passado
+              Usuários que compraram
             </p>
           </CardContent>
         </Card>

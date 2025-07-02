@@ -81,10 +81,10 @@ export function ConfigurationsTab() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["store-configs-admin"] });
       queryClient.invalidateQueries({ queryKey: ["store-config"] });
-      toast.success("Configuração salva com sucesso!");
+      toast.success("✅ Configuração salva e aplicada na loja!");
     },
     onError: (error: any) => {
-      toast.error(`Erro ao salvar configuração: ${error.message}`);
+      toast.error(`❌ Erro ao salvar configuração: ${error.message}`);
     }
   });
 
@@ -127,6 +127,8 @@ export function ConfigurationsTab() {
     configsToSave.forEach(config => {
       saveConfigMutation.mutate(config);
     });
+
+    toast.success("🎯 Todas as configurações foram aplicadas na loja!");
   };
 
   return (
@@ -135,7 +137,7 @@ export function ConfigurationsTab() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Configurações da Loja</h2>
-          <p className="text-gray-600">Gerencie configurações globais da loja RadCoin</p>
+          <p className="text-gray-600">Gerencie configurações globais da loja RadCoin - Alterações refletem imediatamente na loja</p>
         </div>
         <div className="flex gap-2">
           <Button 
@@ -152,10 +154,26 @@ export function ConfigurationsTab() {
             disabled={saveConfigMutation.isPending}
           >
             <Save className="h-4 w-4 mr-2" />
-            {saveConfigMutation.isPending ? 'Salvando...' : 'Salvar Tudo'}
+            {saveConfigMutation.isPending ? 'Aplicando...' : 'Aplicar Tudo'}
           </Button>
         </div>
       </div>
+
+      {/* ALERTA DE SINCRONIZAÇÃO */}
+      <Card className="border-2 border-blue-200 bg-blue-50">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <CheckCircle className="h-5 w-5 text-blue-600 mt-1" />
+            <div>
+              <h4 className="font-medium text-blue-800">🔄 Sincronização Ativa</h4>
+              <p className="text-sm text-blue-700 mt-1">
+                Todas as alterações feitas aqui são aplicadas <strong>imediatamente na loja do usuário</strong>. 
+                O modo manutenção, anúncios e configurações de assinaturas funcionam em tempo real.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Status da Loja */}
       <Card className={`border-2 ${configs.store_enabled ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
@@ -179,19 +197,25 @@ export function ConfigurationsTab() {
             <Switch
               id="store_enabled"
               checked={configs.store_enabled}
-              onCheckedChange={(checked) => setConfigs(prev => ({ ...prev, store_enabled: checked }))}
+              onCheckedChange={(checked) => {
+                setConfigs(prev => ({ ...prev, store_enabled: checked }));
+                handleSaveConfig('store_enabled', checked, 'Habilitar/desabilitar loja RadCoin', true);
+              }}
             />
           </div>
 
           <div className="flex items-center justify-between">
             <div>
               <Label htmlFor="maintenance_mode">Modo Manutenção</Label>
-              <p className="text-sm text-gray-600">Exibe mensagem de manutenção na loja</p>
+              <p className="text-sm text-gray-600">Exibe mensagem de manutenção na loja (funciona imediatamente)</p>
             </div>
             <Switch
               id="maintenance_mode"
               checked={configs.maintenance_mode}
-              onCheckedChange={(checked) => setConfigs(prev => ({ ...prev, maintenance_mode: checked }))}
+              onCheckedChange={(checked) => {
+                setConfigs(prev => ({ ...prev, maintenance_mode: checked }));
+                handleSaveConfig('maintenance_mode', checked, 'Modo manutenção', true);
+              }}
             />
           </div>
 
@@ -201,19 +225,20 @@ export function ConfigurationsTab() {
               id="store_announcement"
               value={configs.store_announcement}
               onChange={(e) => setConfigs(prev => ({ ...prev, store_announcement: e.target.value }))}
-              placeholder="Digite um anúncio para exibir na loja..."
+              onBlur={() => handleSaveConfig('store_announcement', configs.store_announcement, 'Anúncio da loja', true)}
+              placeholder="Digite um anúncio para exibir na loja... (aparecer imediatamente)"
               rows={3}
             />
           </div>
         </CardContent>
       </Card>
 
-      {/* Sistema de Assinaturas */}
+      {/* Sistema de Assinaturas Educacionais */}
       <Card className={`border-2 ${configs.subscriptions_enabled ? 'border-purple-200 bg-purple-50' : 'border-gray-200 bg-gray-50'}`}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Crown className="h-5 w-5" />
-            Sistema de Assinaturas
+            Sistema de Assinaturas Educacionais
             {configs.subscriptions_enabled ? (
               <Badge className="bg-purple-500 text-white">Ativo</Badge>
             ) : (
@@ -225,23 +250,26 @@ export function ConfigurationsTab() {
           <div className="flex items-center justify-between">
             <div>
               <Label htmlFor="subscriptions_enabled">Assinaturas Habilitadas</Label>
-              <p className="text-sm text-gray-600">Permite que usuários vejam e assinem planos premium</p>
+              <p className="text-sm text-gray-600">Permite que usuários vejam e assinem planos educacionais (RadSupport)</p>
             </div>
             <Switch
               id="subscriptions_enabled"
               checked={configs.subscriptions_enabled}
-              onCheckedChange={(checked) => setConfigs(prev => ({ ...prev, subscriptions_enabled: checked }))}
+              onCheckedChange={(checked) => {
+                setConfigs(prev => ({ ...prev, subscriptions_enabled: checked }));
+                handleSaveConfig('subscriptions_enabled', checked, 'Habilitar sistema de assinaturas', true);
+              }}
             />
           </div>
           
           <div className="bg-purple-100 border border-purple-300 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-purple-600 mt-0.5" />
+              <Crown className="h-5 w-5 text-purple-600 mt-0.5" />
               <div>
-                <h4 className="font-medium text-purple-800">Configuração de Assinaturas</h4>
+                <h4 className="font-medium text-purple-800">Sistema Educacional RadSupport</h4>
                 <p className="text-sm text-purple-700 mt-1">
-                  Quando desabilitado, a aba "Premium" ficará oculta na loja RadCoin. 
-                  Os usuários não conseguirão ver ou assinar planos premium.
+                  Quando desabilitado, a aba "Premium" fica oculta na loja RadCoin. 
+                  Os planos educacionais RadSupport (Bronze/Prata/Ouro) ficam indisponíveis para assinatura.
                 </p>
               </div>
             </div>
@@ -266,6 +294,7 @@ export function ConfigurationsTab() {
                 type="number"
                 value={configs.min_purchase_amount}
                 onChange={(e) => setConfigs(prev => ({ ...prev, min_purchase_amount: parseInt(e.target.value) }))}
+                onBlur={() => handleSaveConfig('min_purchase_amount', configs.min_purchase_amount, 'Valor mínimo de compra', false)}
                 min="1"
               />
             </div>
@@ -276,6 +305,7 @@ export function ConfigurationsTab() {
                 type="number"
                 value={configs.max_purchase_amount}
                 onChange={(e) => setConfigs(prev => ({ ...prev, max_purchase_amount: parseInt(e.target.value) }))}
+                onBlur={() => handleSaveConfig('max_purchase_amount', configs.max_purchase_amount, 'Valor máximo de compra', false)}
                 min="1"
               />
             </div>
@@ -289,6 +319,7 @@ export function ConfigurationsTab() {
                 type="number"
                 value={configs.default_discount_percentage}
                 onChange={(e) => setConfigs(prev => ({ ...prev, default_discount_percentage: parseInt(e.target.value) }))}
+                onBlur={() => handleSaveConfig('default_discount_percentage', configs.default_discount_percentage, 'Desconto padrão (%)', false)}
                 min="0"
                 max="90"
               />
@@ -300,6 +331,7 @@ export function ConfigurationsTab() {
                 type="number"
                 value={configs.featured_products_limit}
                 onChange={(e) => setConfigs(prev => ({ ...prev, featured_products_limit: parseInt(e.target.value) }))}
+                onBlur={() => handleSaveConfig('featured_products_limit', configs.featured_products_limit, 'Limite de produtos em destaque', false)}
                 min="1"
                 max="20"
               />
@@ -314,7 +346,10 @@ export function ConfigurationsTab() {
             <Switch
               id="daily_deals"
               checked={configs.daily_deals_enabled}
-              onCheckedChange={(checked) => setConfigs(prev => ({ ...prev, daily_deals_enabled: checked }))}
+              onCheckedChange={(checked) => {
+                setConfigs(prev => ({ ...prev, daily_deals_enabled: checked }));
+                handleSaveConfig('daily_deals_enabled', checked, 'Habilitar ofertas diárias', true);
+              }}
             />
           </div>
         </CardContent>
@@ -337,7 +372,10 @@ export function ConfigurationsTab() {
             <Switch
               id="notifications"
               checked={configs.notifications_enabled}
-              onCheckedChange={(checked) => setConfigs(prev => ({ ...prev, notifications_enabled: checked }))}
+              onCheckedChange={(checked) => {
+                setConfigs(prev => ({ ...prev, notifications_enabled: checked }));
+                handleSaveConfig('notifications_enabled', checked, 'Habilitar notificações', false);
+              }}
             />
           </div>
 
@@ -349,7 +387,10 @@ export function ConfigurationsTab() {
             <Switch
               id="auto_approve"
               checked={configs.auto_approve_purchases}
-              onCheckedChange={(checked) => setConfigs(prev => ({ ...prev, auto_approve_purchases: checked }))}
+              onCheckedChange={(checked) => {
+                setConfigs(prev => ({ ...prev, auto_approve_purchases: checked }));
+                handleSaveConfig('auto_approve_purchases', checked, 'Aprovar compras automaticamente', false);
+              }}
             />
           </div>
         </CardContent>
@@ -360,7 +401,7 @@ export function ConfigurationsTab() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-blue-900">
             <Shield className="h-5 w-5" />
-            Status das Configurações
+            Status das Configurações - TEMPO REAL
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -371,31 +412,31 @@ export function ConfigurationsTab() {
                 {configs.store_enabled && (
                   <div className="flex items-center gap-2 text-green-700">
                     <CheckCircle className="h-4 w-4" />
-                    <span>Loja habilitada</span>
+                    <span>Loja habilitada ✅</span>
                   </div>
                 )}
                 {configs.subscriptions_enabled && (
                   <div className="flex items-center gap-2 text-green-700">
                     <CheckCircle className="h-4 w-4" />
-                    <span>Assinaturas habilitadas</span>
+                    <span>Assinaturas educacionais ativas ✅</span>
                   </div>
                 )}
                 {configs.daily_deals_enabled && (
                   <div className="flex items-center gap-2 text-green-700">
                     <CheckCircle className="h-4 w-4" />
-                    <span>Ofertas diárias ativas</span>
+                    <span>Ofertas diárias ativas ✅</span>
                   </div>
                 )}
                 {configs.notifications_enabled && (
                   <div className="flex items-center gap-2 text-green-700">
                     <CheckCircle className="h-4 w-4" />
-                    <span>Notificações habilitadas</span>
+                    <span>Notificações habilitadas ✅</span>
                   </div>
                 )}
                 {configs.auto_approve_purchases && (
                   <div className="flex items-center gap-2 text-green-700">
                     <CheckCircle className="h-4 w-4" />
-                    <span>Aprovação automática ativa</span>
+                    <span>Aprovação automática ativa ✅</span>
                   </div>
                 )}
               </div>
@@ -406,25 +447,25 @@ export function ConfigurationsTab() {
                 {configs.maintenance_mode && (
                   <div className="flex items-center gap-2 text-orange-700">
                     <AlertCircle className="h-4 w-4" />
-                    <span>Modo manutenção ativo</span>
+                    <span>🔧 Modo manutenção ATIVO - Loja indisponível</span>
                   </div>
                 )}
                 {!configs.store_enabled && (
                   <div className="flex items-center gap-2 text-red-700">
                     <AlertCircle className="h-4 w-4" />
-                    <span>Loja desabilitada</span>
+                    <span>🚫 Loja desabilitada - Usuários não conseguem acessar</span>
                   </div>
                 )}
                 {!configs.subscriptions_enabled && (
                   <div className="flex items-center gap-2 text-orange-700">
                     <AlertCircle className="h-4 w-4" />
-                    <span>Assinaturas desabilitadas</span>
+                    <span>⏸ Assinaturas desabilitadas - Aba Premium oculta</span>
                   </div>
                 )}
                 {configs.min_purchase_amount > 100 && (
                   <div className="flex items-center gap-2 text-orange-700">
                     <AlertCircle className="h-4 w-4" />
-                    <span>Valor mínimo alto ({configs.min_purchase_amount} RC)</span>
+                    <span>💰 Valor mínimo alto ({configs.min_purchase_amount} RC)</span>
                   </div>
                 )}
               </div>
