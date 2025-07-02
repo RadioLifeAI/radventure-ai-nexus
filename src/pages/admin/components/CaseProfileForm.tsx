@@ -76,10 +76,10 @@ export function CaseProfileForm({ editingCase, onCreated }: CaseProfileFormProps
         return dateValue;
       };
 
-      // Preparar dados do caso com conversões de tipo necessárias e tratamento de datas
+      // CORREÇÃO: Não salvar no campo image_url legado - usar apenas sistema novo
       const caseData = {
         ...form,
-        image_url: Array.isArray(form.image_url) ? form.image_url : [],
+        image_url: [], // SEMPRE vazio - usar apenas case_images
         category_id: form.category_id ? parseInt(form.category_id) : null,
         difficulty_level: form.difficulty_level ? parseInt(form.difficulty_level) : null,
         points: form.points ? parseInt(form.points) : null,
@@ -144,8 +144,8 @@ export function CaseProfileForm({ editingCase, onCreated }: CaseProfileFormProps
 
       console.log('✅ Caso salvo:', savedCase.id);
       
-      // FASE 2: Associar imagens temporárias ao caso salvo
-      if (!editingCase && form.image_url?.length > 0) {
+      // FASE 2: Associar imagens temporárias ao caso salvo  
+      if (!editingCase) {
         setFeedback("Processando imagens...");
         
         try {

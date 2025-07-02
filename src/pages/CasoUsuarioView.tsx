@@ -139,15 +139,29 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
         return [];
       }
 
-      console.log('✅ Imagens encontradas:', Array.isArray(data) ? data.length : 0);
+      console.log('✅ Função SQL executada com sucesso');
+      console.log('📊 Dados brutos retornados:', data);
+      console.log('🔍 Tipo dos dados:', typeof data);
       
       // CORREÇÃO: Validação e casting seguro de tipos
       if (Array.isArray(data)) {
-        return data.filter((item: any): item is { url: string; legend?: string } => {
-          return item && typeof item === 'object' && typeof item.url === 'string';
+        const validImages = data.filter((item: any): item is { url: string; legend?: string } => {
+          const isValid = item && typeof item === 'object' && typeof item.url === 'string';
+          if (!isValid) {
+            console.warn('⚠️ Item inválido encontrado:', item);
+          }
+          return isValid;
         });
+        
+        console.log('✅ Imagens válidas processadas:', validImages.length);
+        validImages.forEach((img, index) => {
+          console.log(`📸 Imagem ${index + 1}:`, { url: img.url, legend: img.legend });
+        });
+        
+        return validImages;
       }
       
+      console.warn('⚠️ Dados não são array:', data);
       return [];
     } catch (error) {
       console.error('❌ Erro na busca híbrida de imagens:', error);
