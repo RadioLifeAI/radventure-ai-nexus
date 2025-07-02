@@ -1,9 +1,11 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Crown, Settings, ExternalLink } from "lucide-react";
+import { Shield, Crown, Settings, ExternalLink, Key, Trash2, Monitor } from "lucide-react";
+import { PasswordChangeModal } from "./PasswordChangeModal";
+import { DeleteAccountModal } from "./DeleteAccountModal";
 
 interface SecurityTabProps {
   isAdmin: boolean;
@@ -11,6 +13,9 @@ interface SecurityTabProps {
 }
 
 export function SecurityTab({ isAdmin, onNavigateToAdmin }: SecurityTabProps) {
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -88,12 +93,28 @@ export function SecurityTab({ isAdmin, onNavigateToAdmin }: SecurityTabProps) {
               <h4 className="font-medium">Senha</h4>
               <p className="text-sm text-gray-600">Alterar sua senha atual</p>
             </div>
-            <Button variant="outline" size="sm" disabled>
-              Em breve
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setIsPasswordModalOpen(true)}
+            >
+              <Key className="h-4 w-4 mr-2" />
+              Alterar
             </Button>
           </div>
           
           <div className="flex items-center justify-between py-3 border-b">
+            <div>
+              <h4 className="font-medium">Sessões Ativas</h4>
+              <p className="text-sm text-gray-600">Dispositivo atual ativo</p>
+            </div>
+            <Badge variant="outline" className="text-green-600 border-green-600">
+              <Monitor className="h-3 w-3 mr-1" />
+              1 sessão
+            </Badge>
+          </div>
+          
+          <div className="flex items-center justify-between py-3">
             <div>
               <h4 className="font-medium">Autenticação de Dois Fatores</h4>
               <p className="text-sm text-gray-600">Adicione uma camada extra de segurança</p>
@@ -102,15 +123,33 @@ export function SecurityTab({ isAdmin, onNavigateToAdmin }: SecurityTabProps) {
               Em breve
             </Button>
           </div>
-          
-          <div className="flex items-center justify-between py-3">
+        </CardContent>
+      </Card>
+
+      {/* Zona de Perigo */}
+      <Card className="border-red-200 bg-red-50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-red-700">
+            <Trash2 className="h-5 w-5" />
+            Zona de Perigo
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
             <div>
-              <h4 className="font-medium">Sessões Ativas</h4>
-              <p className="text-sm text-gray-600">Gerencie seus dispositivos conectados</p>
+              <h4 className="font-medium text-red-800">Excluir Conta</h4>
+              <p className="text-sm text-red-600 mb-3">
+                Esta ação é irreversível. Todos os seus dados serão perdidos permanentemente.
+              </p>
+              <Button 
+                variant="destructive" 
+                size="sm"
+                onClick={() => setIsDeleteModalOpen(true)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Excluir Conta
+              </Button>
             </div>
-            <Button variant="outline" size="sm" disabled>
-              Em breve
-            </Button>
           </div>
         </CardContent>
       </Card>
@@ -131,6 +170,16 @@ export function SecurityTab({ isAdmin, onNavigateToAdmin }: SecurityTabProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Modais */}
+      <PasswordChangeModal 
+        isOpen={isPasswordModalOpen} 
+        onClose={() => setIsPasswordModalOpen(false)} 
+      />
+      <DeleteAccountModal 
+        isOpen={isDeleteModalOpen} 
+        onClose={() => setIsDeleteModalOpen(false)} 
+      />
     </div>
   );
 }

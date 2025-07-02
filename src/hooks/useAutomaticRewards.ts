@@ -26,12 +26,17 @@ export function useAutomaticRewards() {
       try {
         hasProcessedRewardsRef.current = true;
 
-        // 1. BÔNUS DE LOGIN DIÁRIO
+        // 1. BÔNUS DE LOGIN DIÁRIO - COM DIAGNÓSTICO
+        console.log('🔍 Verificando bônus de login diário...');
         const { data: loginBonusData, error: loginError } = await supabase.rpc('award_daily_login_bonus', {
           p_user_id: user.id
         });
 
-        if (!loginError && loginBonusData) {
+        console.log('📊 Resultado bônus diário:', { data: loginBonusData, error: loginError });
+
+        if (loginError) {
+          console.error('❌ Erro no bônus diário:', loginError);
+        } else if (loginBonusData) {
           // Type casting seguro para a resposta
           const loginBonus = loginBonusData as unknown as DailyLoginBonusResponse;
           
@@ -41,6 +46,9 @@ export function useAutomaticRewards() {
               description: `+${loginBonus.radcoins || 0} RadCoins | Streak: ${loginBonus.streak || 0} dias`,
               duration: 4000,
             });
+            console.log('✅ Bônus diário creditado:', loginBonus);
+          } else {
+            console.log('ℹ️ Bônus diário não creditado:', loginBonus.message);
           }
         }
 

@@ -56,13 +56,12 @@ export function useProfileRewards() {
       
       console.log('🔍 Iniciando verificação DEFINITIVA de recompensas...');
 
-      // ETAPA 1: Verificar transações existentes no banco
+      // ETAPA 1: Verificar transações existentes no banco - TODAS AS TRANSAÇÕES
       const { data: existingTransactions, error: transactionError } = await supabase
         .from('radcoin_transactions_log')
         .select('tx_type, metadata, created_at')
         .eq('user_id', user.id)
-        .in('tx_type', ['profile_completion', 'profile_completion_bonus'])
-        .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()); // Últimas 24h
+        .in('tx_type', ['profile_completion', 'profile_completion_bonus']); // SEM LIMITAÇÃO DE TEMPO
 
       if (transactionError) {
         console.error('❌ Erro ao buscar transações:', transactionError);
