@@ -15,16 +15,24 @@ export function useDashboardData() {
 
       if (specialtiesError) throw specialtiesError;
 
-      // Buscar contagem de casos por especialidade
+      // CORREÇÃO: Buscar casos com fallback robusto para categorização
       const { data: cases, error: casesError } = await supabase
         .from('medical_cases')
-        .select('specialty, id');
+        .select(`
+          specialty, 
+          id,
+          category_id,
+          medical_specialties!category_id(name)
+        `);
 
       if (casesError) throw casesError;
 
-      // Contar casos por especialidade
+      // CORREÇÃO: Contar casos por especialidade com fallback
       const casesBySpecialty = cases?.reduce((acc, case_item) => {
-        const specialty = case_item.specialty || 'Outros';
+        // Usar specialty se disponível, senão usar nome da categoria
+        const specialty = case_item.specialty || 
+                         case_item.medical_specialties?.name || 
+                         'Outros';
         acc[specialty] = (acc[specialty] || 0) + 1;
         return acc;
       }, {} as Record<string, number>) || {};

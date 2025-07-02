@@ -9,14 +9,17 @@ interface SpecialtiesSectionProps {
 }
 
 export function SpecialtiesSection({ specialties, specialtiesWithProgress }: SpecialtiesSectionProps) {
+  // CORREÇÃO: Filtrar apenas especialidades com casos disponíveis
+  const availableSpecialties = specialties.filter(spec => spec.cases > 0);
+  
   // Separar especialidades por tipo
-  const imagingSpecialties = specialties.filter(spec => 
+  const imagingSpecialties = availableSpecialties.filter(spec => 
     spec.name.includes('Radiologia') || 
     spec.name.includes('Neurorradiologia') ||
     spec.name.includes('Imagem')
   );
 
-  const medicalSpecialties = specialties.filter(spec => 
+  const medicalSpecialties = availableSpecialties.filter(spec => 
     !imagingSpecialties.some(img => img.name === spec.name)
   );
 
