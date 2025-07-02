@@ -17,8 +17,59 @@ export interface Notification {
   metadata?: any;
 }
 
-// Cache para notificações excluídas localmente
-const excludedNotifications = new Set<string>();
+// Cache persistente para notificações excluídas com TTL
+const EXCLUDED_NOTIFICATIONS_KEY = 'excluded_notifications';
+const CACHE_TTL_HOURS = 24; // Cache por 24 horas
+
+class NotificationCache {
+  private static getExcludedNotifications(): Set<string> {
+    try {
+      const stored = localStorage.getItem(EXCLUDED_NOTIFICATIONS_KEY);
+      if (!stored) return new Set();
+      
+      const parsed = JSON.parse(stored);
+      const now = Date.now();
+      
+      // Limpar entradas expiradas
+      const filtered = parsed.filter((item: any) => 
+        now - item.timestamp < CACHE_TTL_HOURS * 60 * 60 * 1000
+      );
+      
+      if (filtered.length !== parsed.length) {
+        localStorage.setItem(EXCLUDED_NOTIFICATIONS_KEY, JSON.stringify(filtered));
+      }
+      
+      return new Set(filtered.map((item: any) => item.id));
+    } catch {
+      return new Set();
+    }
+  }
+
+  static addExcluded(notificationId: string): void {
+    try {
+      const existing = this.getExcludedNotifications();
+      existing.add(notificationId);
+      
+      const toStore = Array.from(existing).map(id => ({
+        id,
+        timestamp: Date.now()
+      }));
+      
+      localStorage.setItem(EXCLUDED_NOTIFICATIONS_KEY, JSON.stringify(toStore));
+    } catch (error) {
+      console.error('Erro ao salvar notificação excluída:', error);
+    }
+  }
+
+  static isExcluded(notificationId: string): boolean {
+    return this.getExcludedNotifications().has(notificationId);
+  }
+
+  static clearExpired(): void {
+    this.getExcludedNotifications(); // Limpa automaticamente
+  }
+}
+
 let lastFetchTime = 0;
 const FETCH_DEBOUNCE = 2000; // 2 segundos de debounce
 
@@ -34,6 +85,9 @@ export function useRealNotifications() {
       return;
     }
 
+    // Limpar cache expirado na inicialização
+    NotificationCache.clearExpired();
+    
     fetchNotifications();
     
     // Real-time subscription com debounce e cache
@@ -76,7 +130,7 @@ export function useRealNotifications() {
       if (error) throw error;
 
       const formattedNotifications: Notification[] = (data || [])
-        .filter(notif => !excludedNotifications.has(notif.id)) // Respeitar exclusões locais
+        .filter(notif => !NotificationCache.isExcluded(notif.id)) // Filtrar excluídas persistentemente
         .map(notif => ({
           id: notif.id,
           type: notif.type as Notification['type'],
@@ -140,23 +194,44 @@ export function useRealNotifications() {
 
   const removeNotification = async (notificationId: string) => {
     try {
-      // Adicionar ao cache local PRIMEIRO
-      excludedNotifications.add(notificationId);
+      // 1. Adicionar ao cache persistente PRIMEIRO
+      NotificationCache.addExcluded(notificationId);
       
-      // Remover da UI imediatamente
+      // 2. Remover da UI imediatamente
       setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
 
-      // Depois tentar remover do banco
-      const { error } = await supabase
-        .from('notifications')
-        .delete()
-        .eq('id', notificationId)
-        .eq('user_id', user?.id);
+      // 3. Tentar remover do banco com retry
+      let attempts = 0;
+      const maxAttempts = 3;
+      
+      while (attempts < maxAttempts) {
+        try {
+          const { error } = await supabase
+            .from('notifications')
+            .delete()
+            .eq('id', notificationId)
+            .eq('user_id', user?.id);
 
-      if (error) {
-        console.error('Erro ao remover notificação:', error);
-        // Não reverter a remoção local para evitar reaparecer
+          if (!error) {
+            console.log('Notificação removida do banco com sucesso');
+            break;
+          }
+          
+          throw error;
+        } catch (dbError) {
+          attempts++;
+          console.error(`Tentativa ${attempts} de remoção falhou:`, dbError);
+          
+          if (attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+          }
+        }
       }
+      
+      if (attempts === maxAttempts) {
+        console.warn('Falha ao remover notificação do banco após várias tentativas. Mantendo exclusão apenas local.');
+      }
+
     } catch (error) {
       console.error('Erro ao remover notificação:', error);
     }

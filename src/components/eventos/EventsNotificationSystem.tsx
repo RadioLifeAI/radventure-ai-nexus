@@ -101,7 +101,7 @@ export function EventsNotificationSystem() {
         )}
       </Button>
 
-      {/* Panel de notificações - CORRIGIDO para não reaparecer notificações excluídas */}
+      {/* Panel de notificações - Sistema aprimorado sem reaparecer notificações excluídas */}
       {isOpen && (
         <Card className="absolute right-0 top-12 w-80 max-h-96 overflow-y-auto z-50 shadow-xl">
           <CardContent className="p-0">

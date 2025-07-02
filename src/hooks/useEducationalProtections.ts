@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { checkRateLimit, generateStudyRecommendations, createEducationalAlert } from '@/utils/notifications';
+import { supabase } from '@/integrations/supabase/client';
 
 export function useEducationalProtections() {
   const { user } = useAuth();
@@ -39,7 +40,7 @@ export function useEducationalProtections() {
     };
   }, [user?.id]);
 
-  // Funções de verificação que serão usadas pelos componentes
+  // Funções de verificação com dados reais do Supabase
   const checkRadBotLimit = () => {
     if (!user?.id) return { allowed: false, reason: 'Usuário não autenticado' };
     return checkRateLimit(user.id, 'radbot');

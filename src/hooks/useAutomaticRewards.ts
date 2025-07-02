@@ -5,6 +5,14 @@ import { useUserProfile } from './useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
+// Interface para tipagem da resposta do RPC
+interface DailyLoginBonusResponse {
+  awarded: boolean;
+  radcoins?: number;
+  streak?: number;
+  message?: string;
+}
+
 export function useAutomaticRewards() {
   const { user } = useAuth();
   const { profile, refreshProfile } = useUserProfile();
@@ -19,16 +27,21 @@ export function useAutomaticRewards() {
         hasProcessedRewardsRef.current = true;
 
         // 1. BÔNUS DE LOGIN DIÁRIO
-        const { data: loginBonus, error: loginError } = await supabase.rpc('award_daily_login_bonus', {
+        const { data: loginBonusData, error: loginError } = await supabase.rpc('award_daily_login_bonus', {
           p_user_id: user.id
         });
 
-        if (!loginError && loginBonus?.awarded) {
-          toast({
-            title: '🎉 Bônus de Login Diário!',
-            description: `+${loginBonus.radcoins} RadCoins | Streak: ${loginBonus.streak} dias`,
-            duration: 4000,
-          });
+        if (!loginError && loginBonusData) {
+          // Type casting seguro para a resposta
+          const loginBonus = loginBonusData as DailyLoginBonusResponse;
+          
+          if (loginBonus.awarded) {
+            toast({
+              title: '🎉 Bônus de Login Diário!',
+              description: `+${loginBonus.radcoins || 0} RadCoins | Streak: ${loginBonus.streak || 0} dias`,
+              duration: 4000,
+            });
+          }
         }
 
         // 2. SINCRONIZAR BENEFÍCIOS DE ASSINATURA
