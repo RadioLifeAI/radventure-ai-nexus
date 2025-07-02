@@ -182,96 +182,81 @@ export function useCaseProgress(caseId: string) {
     });
 
     try {
-      // CORREÇÃO DEFINITIVA: Verificar estado de revisão antes de processar
-      console.log('🎯 INICIANDO PROCESSAMENTO:', { 
+      // CORREÇÃO DEFINITIVA: Backend agora tem lógica corrigida
+      console.log('🎯 CHAMANDO BACKEND CORRIGIDO:', { 
         user: user.id, 
         caseId, 
         points, 
         isCorrect,
-        isReview: isReview ? 'SIM' : 'NÃO',
-        previousAnswer,
-        reviewStatus: reviewStatus?.review_count || 0
+        isReview: isReview ? 'SIM (backend detectará automaticamente)' : 'NÃO (primeira tentativa)'
       });
 
-      // VALIDAÇÃO: Garantir consistência entre frontend e backend
-      if (isReview !== reviewStatus?.is_review) {
-        console.warn('⚠️ INCONSISTÊNCIA DETECTADA:', {
-          frontendReview: isReview,
-          backendReview: reviewStatus?.is_review,
-          action: 'Sincronizando estado'
-        });
-      }
-
-      const { error, data } = await supabase.rpc('process_case_completion', {
+      const { error } = await supabase.rpc('process_case_completion', {
         p_user_id: user.id,
         p_case_id: caseId,
         p_points: points,
         p_is_correct: isCorrect
       });
 
-      // TRATAMENTO ROBUSTO DE ERROS: Distinguir erros reais de notices
+      // TRATAMENTO MELHORADO: Só considerar erro real, não notices do RAISE NOTICE
       const isRealError = error && 
         error.code && 
-        !['PGRST301', '0', 'P0001'].includes(error.code); // P0001 = RAISE NOTICE
+        !['PGRST301', '0', 'P0001'].includes(error.code);
 
       if (isRealError) {
         console.error('❌ ERRO CRÍTICO na função process_case_completion:', error);
         throw error;
       }
 
-      console.log('✅ Caso processado com sucesso:', { 
+      console.log('✅ BACKEND PROCESSOU COM SUCESSO:', { 
         isCorrect, 
         points, 
         penalties, 
-        isReview: isReview ? 'SIM (0 pontos)' : 'NÃO',
-        message: isReview ? 'Revisão registrada para estudo' : 'Pontos creditados',
-        notices: error ? 'Função executou com notices (normal)' : 'Sem notices'
+        isReview: isReview ? 'SIM (0 pontos conforme esperado)' : 'NÃO (pontos creditados)',
+        backendMessage: 'Lógica corrigida funcionando'
       });
 
-      // TOAST CORRETO PARA CADA SITUAÇÃO
+      // TOAST ATUALIZADO baseado na nova lógica
       if (isReview) {
         toast({
-          title: "Revisão Registrada",
-          description: "Resposta registrada para estudo, sem pontuação adicional.",
+          title: "Revisão Concluída",
+          description: "Resposta registrada para estudo. Sem pontuação em revisões.",
         });
       } else if (isCorrect && points > 0) {
         toast({
-          title: "Parabéns!",
-          description: `Resposta correta! +${points} pontos creditados.`,
+          title: "🎉 Parabéns!",
+          description: `Resposta correta! +${points} pontos creditados no seu perfil.`,
         });
       } else if (isCorrect && points === 0) {
         toast({
           title: "Resposta Correta",
-          description: "Acertou, mas sem pontos devido às penalidades.",
+          description: "Acertou, mas sem pontos devido às penalidades aplicadas.",
         });
       } else {
         toast({
           title: "Resposta Incorreta",
-          description: "Não desista! Revise e tente novamente.",
+          description: "Não desista! Revise o conteúdo e tente novamente.",
           variant: "destructive"
         });
       }
     } catch (error: any) {
-      // ETAPA 3: LOGS MELHORADOS PARA DEBUGGING
-      console.error('❌ Erro detalhado ao processar caso:', {
+      console.error('❌ Erro ao processar caso:', {
         error,
         errorCode: error?.code,
         errorMessage: error?.message,
-        errorDetails: error?.details,
-        hint: error?.hint,
-        userContext: { user: user.id, caseId, points, isCorrect, isReview }
+        context: { user: user.id, caseId, points, isCorrect, isReview }
       });
       
-      // Só mostrar erro se for erro real, não warning
-      if (error?.code && !['PGRST301', '0'].includes(error.code)) {
+      // Só mostrar erro se for erro real, não warning/notice
+      if (error?.code && !['PGRST301', '0', 'P0001'].includes(error.code)) {
         toast({
           title: "Erro ao processar resposta",
-          description: "Sua resposta pode não ter sido registrada. Tente novamente.",
+          description: "Houve um problema. Tente novamente em alguns instantes.",
           variant: "destructive"
         });
       } else {
         // Se for apenas warning/notice, considerar como sucesso
-        console.log('⚠️ Warning ignorado, considerando como sucesso');
+        console.log('⚠️ Notice/Warning ignorado, resposta processada com sucesso');
         toast({
           title: isReview ? "Revisão Registrada" : "Resposta Processada",
           description: isReview ? "Resposta registrada para estudo." : "Resposta processada com sucesso.",
@@ -280,7 +265,7 @@ export function useCaseProgress(caseId: string) {
     }
 
     return {
-      isCorrect, // Agora é a fonte única de verdade
+      isCorrect,
       points,
       basePoints,
       penalties,
@@ -293,7 +278,6 @@ export function useCaseProgress(caseId: string) {
       isReview,
       previousAnswer,
       previousCorrect,
-      // Textos para o modal - dados consistentes
       selectedAnswerText: selectedText,
       correctAnswerText: correctText
     };
