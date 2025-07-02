@@ -174,19 +174,13 @@ export function CaseCreationWizard({
     }
   ];
 
-  // FASE 1: Sincronizar form.image_url com imagens temporárias
+  // SISTEMA UNIFICADO: Não sincronizar form.image_url (será feito via associateWithCase)
   const handleTempImagesChange = (images: any[]) => {
-    const imageUrls = images
-      .filter(img => img.uploadedUrl || img.tempUrl)
-      .map(img => img.uploadedUrl || img.tempUrl);
+    // Apenas atualizar contador para feedback visual - NÃO sincronizar form.image_url
+    setTempImageCount(images.length);
     
-    // Sincronizar com form.image_url
-    setForm((prev: any) => ({
-      ...prev,
-      image_url: imageUrls
-    }));
-    
-    console.log('🔄 Form.image_url sincronizado:', imageUrls.length, 'imagens');
+    console.log('🔄 SISTEMA UNIFICADO: Imagens temporárias carregadas:', images.length);
+    console.log('📝 Form.image_url permanece limpo para uso do sistema novo');
   };
 
   // Validação automática de cada etapa
@@ -484,7 +478,7 @@ export function CaseCreationWizard({
                 <div className="flex items-center gap-2 bg-green-100 px-3 py-1 rounded-full">
                   <CheckCircle className="h-4 w-4 text-green-600" />
                   <span className="text-green-700 font-medium">
-                    {form.image_url?.length || 0} imagem(ns) no formulário
+                    Sistema unificado ativo
                   </span>
                 </div>
               </div>
@@ -542,7 +536,7 @@ export function CaseCreationWizard({
                   <strong>Alternativas:</strong> {form.answer_options.filter((opt: string) => opt.trim()).length}
                 </div>
                 <div>
-                  <strong>Imagens:</strong> {form.image_url?.length || 0} (sincronizadas)
+                  <strong>Imagens:</strong> {tempImageCount} imagem(ns) temporária(s)
                 </div>
               </div>
               <Button

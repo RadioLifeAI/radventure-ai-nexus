@@ -150,64 +150,107 @@ export function useTempCaseImages() {
   }, [tempImages]);
 
   const associateWithCase = useCallback(async (caseId: string) => {
-    if (tempImages.length === 0) return [];
+    console.log('🚀 SISTEMA UNIFICADO: Iniciando associateWithCase para caso:', caseId);
+    console.log('📊 SISTEMA UNIFICADO: Imagens temporárias disponíveis:', tempImages.length);
+
+    if (tempImages.length === 0) {
+      console.log('⚠️ SISTEMA UNIFICADO: Nenhuma imagem temporária encontrada');
+      return [];
+    }
 
     const associatedImages = [];
+    let processedCount = 0;
 
     for (const tempImage of tempImages) {
-      if (!tempImage.uploadedUrl) continue;
+      processedCount++;
+      console.log(`🔄 SISTEMA UNIFICADO: Processando imagem ${processedCount}/${tempImages.length}:`, tempImage.originalFilename);
+
+      if (!tempImage.uploadedUrl) {
+        console.log('⚠️ SISTEMA UNIFICADO: Imagem sem URL válida, pulando:', tempImage.originalFilename);
+        continue;
+      }
 
       try {
-        // Mover arquivo de temp/ para case-id/
+        // Extrair nome do arquivo da URL
         const urlParts = tempImage.uploadedUrl.split('/');
         const fileName = urlParts[urlParts.length - 1];
-        const oldPath = `temp/${fileName}`;
-        const newPath = `${caseId}/${fileName}`;
+        const oldPath = `case-images/temp/${fileName}`;
+        const newPath = `case-images/${caseId}/${fileName}`;
+
+        console.log('📁 SISTEMA UNIFICADO: Movendo arquivo:', { oldPath, newPath });
 
         // Copiar arquivo para nova localização
-        const { data: fileData } = await supabase.storage
+        const { data: fileData, error: downloadError } = await supabase.storage
           .from('case-images')
           .download(oldPath);
+
+        if (downloadError) {
+          console.error('❌ SISTEMA UNIFICADO: Erro no download:', downloadError);
+          continue;
+        }
 
         if (fileData) {
           const { data: newUpload, error: uploadError } = await supabase.storage
             .from('case-images')
             .upload(newPath, fileData);
 
-          if (!uploadError) {
-            // Deletar arquivo temporário
-            await supabase.storage
-              .from('case-images')
-              .remove([oldPath]);
+          if (uploadError) {
+            console.error('❌ SISTEMA UNIFICADO: Erro no upload:', uploadError);
+            continue;
+          }
 
-            // Obter nova URL
-            const { data: { publicUrl } } = supabase.storage
-              .from('case-images')
-              .getPublicUrl(newPath);
+          console.log('✅ SISTEMA UNIFICADO: Arquivo movido com sucesso');
 
-            // Inserir na tabela case_images
-            const { data: caseImageData, error: insertError } = await supabase
-              .from('case_images')
-              .insert({
-                case_id: caseId,
-                original_filename: tempImage.originalFilename,
-                original_url: publicUrl,
-                legend: tempImage.legend,
-                sequence_order: tempImage.sequenceOrder,
-                processing_status: 'completed'
-              })
-              .select()
-              .single();
+          // Deletar arquivo temporário
+          const { error: deleteError } = await supabase.storage
+            .from('case-images')
+            .remove([oldPath]);
 
-            if (!insertError && caseImageData) {
-              associatedImages.push(caseImageData);
-            }
+          if (deleteError) {
+            console.warn('⚠️ SISTEMA UNIFICADO: Erro ao deletar temp:', deleteError);
+          }
+
+          // Obter nova URL
+          const { data: { publicUrl } } = supabase.storage
+            .from('case-images')
+            .getPublicUrl(newPath);
+
+          console.log('🔗 SISTEMA UNIFICADO: Nova URL gerada:', publicUrl);
+
+          // Inserir na tabela case_images
+          const insertData = {
+            case_id: caseId,
+            original_filename: tempImage.originalFilename,
+            original_url: publicUrl,
+            legend: tempImage.legend || '',
+            sequence_order: tempImage.sequenceOrder,
+            processing_status: 'completed'
+          };
+
+          console.log('💾 SISTEMA UNIFICADO: Inserindo no banco:', insertData);
+
+          const { data: caseImageData, error: insertError } = await supabase
+            .from('case_images')
+            .insert(insertData)
+            .select()
+            .single();
+
+          if (insertError) {
+            console.error('❌ SISTEMA UNIFICADO: Erro na inserção no banco:', insertError);
+            continue;
+          }
+
+          if (caseImageData) {
+            console.log('✅ SISTEMA UNIFICADO: Imagem salva no banco:', caseImageData.id);
+            associatedImages.push(caseImageData);
           }
         }
       } catch (error) {
-        console.error('Erro ao associar imagem ao caso:', error);
+        console.error('❌ SISTEMA UNIFICADO: Erro geral ao associar imagem:', error);
       }
     }
+
+    console.log(`🎉 SISTEMA UNIFICADO: Processo concluído! ${associatedImages.length}/${tempImages.length} imagens associadas`);
 
     // Limpar imagens temporárias após associação
     clearTempImages();
