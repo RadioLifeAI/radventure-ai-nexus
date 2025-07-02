@@ -22,7 +22,7 @@ import {
 type Props = {
   open: boolean;
   onClose: () => void;
-  isCorrect: boolean;
+  isCorrect: boolean; // Fonte única de verdade vinda do useCaseProgress
   correctAnswer: string;
   selectedAnswer: string;
   explanation: string;
@@ -58,18 +58,8 @@ export function FeedbackModal({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Função para normalizar texto para comparação visual
-  const normalizeText = (text: string) => {
-    return text
-      .toLowerCase()
-      .trim()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^\w\s]/g, '')
-      .replace(/\s+/g, ' ');
-  };
-
-  const actuallyCorrect = isCorrect || normalizeText(selectedAnswer) === normalizeText(correctAnswer);
+  // Usar o isCorrect como fonte única de verdade (já validado no useCaseProgress)
+  const actuallyCorrect = isCorrect;
 
   let selectedFeedback = '';
   if (performance.answerFeedbacks && performance.selectedIndex !== undefined) {

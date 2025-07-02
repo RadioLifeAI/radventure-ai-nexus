@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "./useAuth";
 import { useCaseReviewStatus } from "./useCaseReviewStatus";
+import { validateAnswer } from "@/utils/answerValidation";
 
 export function useCaseProgress(caseId: string) {
   const [startTime] = useState(Date.now());
@@ -137,34 +138,22 @@ export function useCaseProgress(caseId: string) {
     return finalPoints;
   };
 
-  const normalizeText = (text: string) => {
-    return text
-      .toLowerCase()
-      .trim()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^\w\s]/g, '')
-      .replace(/\s+/g, ' ');
-  };
-
   const submitAnswer = async (selectedIndex: number, case_: any) => {
     if (isAnswered || !user) return;
     
     const endTime = Date.now();
     const timeSpent = Math.floor((endTime - startTime) / 1000);
     
-    let isCorrect = false;
+    // Usar a função utilitária compartilhada para validação
+    const selectedText = case_.answer_options?.[selectedIndex] || '';
+    const correctText = case_.answer_options?.[case_.correct_answer_index] || '';
     
-    if (selectedIndex === case_.correct_answer_index) {
-      isCorrect = true;
-    } else {
-      const selectedText = case_.answer_options?.[selectedIndex] || '';
-      const correctText = case_.answer_options?.[case_.correct_answer_index] || '';
-      
-      if (selectedText && correctText && normalizeText(selectedText) === normalizeText(correctText)) {
-        isCorrect = true;
-      }
-    }
+    const isCorrect = validateAnswer(
+      selectedIndex,
+      selectedText,
+      case_.correct_answer_index,
+      correctText
+    );
     
     const basePoints = case_.points || 10;
     const points = calculatePoints(basePoints, isCorrect);
@@ -236,7 +225,7 @@ export function useCaseProgress(caseId: string) {
     }
 
     return {
-      isCorrect,
+      isCorrect, // Agora é a fonte única de verdade
       points,
       basePoints,
       penalties,
