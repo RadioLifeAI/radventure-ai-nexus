@@ -2086,14 +2086,12 @@ export type Database = {
         Returns: undefined
       }
       process_case_completion: {
-        Args:
-          | { p_user_id: string; p_case_id: string; p_points?: number }
-          | {
-              p_user_id: string
-              p_case_id: string
-              p_points?: number
-              p_is_correct?: boolean
-            }
+        Args: {
+          p_user_id: string
+          p_case_id: string
+          p_points?: number
+          p_is_correct?: boolean
+        }
         Returns: undefined
       }
       process_level_up: {
