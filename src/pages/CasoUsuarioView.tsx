@@ -195,17 +195,25 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
   const handleAnswerSubmit = async () => {
     if (selected === null || isAnswered) return;
     
-    // CORREÇÃO CRÍTICA: Passar dados completos para validação correta
+    // CORREÇÃO CRÍTICA: Validação baseada em texto, não índices
     const selectedText = shuffled?.options?.[selected] || caso?.answer_options?.[selected] || '';
-    const correctText = shuffled?.options?.[correctIdx] || caso?.answer_options?.[correctIdx] || '';
+    const originalCorrectText = caso?.answer_options?.[caso?.correct_answer_index] || '';
+    
+    console.log('🎯 Dados para validação:', {
+      selectedIndex: selected,
+      selectedText,
+      originalCorrectText,
+      isShuffled: !!shuffled,
+      correctIdx
+    });
     
     const result = await submitAnswer(selected, {
       ...caso,
-      // Dados para validação correta
-      shuffled_selected_text: selectedText,
-      shuffled_correct_text: correctText,
-      shuffled_correct_index: correctIdx
+      // Passar textos para validação correta
+      user_selected_text: selectedText,
+      original_correct_text: originalCorrectText
     });
+    
     setPerformance(result);
     setShowFeedback(true);
   };
@@ -905,8 +913,8 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
           open={showFeedback}
           onClose={() => setShowFeedback(false)}
           isCorrect={performance.isCorrect}
-          correctAnswer={shuffled?.options?.[correctIdx] || caso?.answer_options?.[caso?.correct_answer_index] || ''}
-          selectedAnswer={shuffled?.options?.[selected!] || caso?.answer_options?.[selected!] || ''}
+          correctAnswer={performance.correctAnswerText || caso?.answer_options?.[caso?.correct_answer_index] || ''}
+          selectedAnswer={performance.selectedAnswerText || (shuffled?.options?.[selected!]) || caso?.answer_options?.[selected!] || ''}
           explanation={caso?.explanation || 'Explicação não disponível.'}
           performance={performance}
           onNextCase={handleNextCase}
