@@ -144,16 +144,48 @@ export function useCaseProgress(caseId: string) {
     const endTime = Date.now();
     const timeSpent = Math.floor((endTime - startTime) / 1000);
     
-    // Usar a função utilitária compartilhada para validação
-    const selectedText = case_.answer_options?.[selectedIndex] || '';
-    const correctText = case_.answer_options?.[case_.correct_answer_index] || '';
+    // CORREÇÃO CRÍTICA: Validação baseada em texto quando há embaralhamento
+    let isCorrect = false;
+    let selectedText = '';
+    let correctText = '';
     
-    const isCorrect = validateAnswer(
-      selectedIndex,
-      selectedText,
-      case_.correct_answer_index,
-      correctText
-    );
+    if (case_.shuffled_selected_text && case_.shuffled_correct_text) {
+      // Caso embaralhado: usar textos das alternativas embaralhadas
+      selectedText = case_.shuffled_selected_text;
+      correctText = case_.shuffled_correct_text;
+      isCorrect = validateAnswer(
+        selectedIndex,
+        selectedText,
+        case_.shuffled_correct_index || 0,
+        correctText
+      );
+      
+      console.log('🔄 Validação embaralhada:', {
+        selectedIndex,
+        selectedText,
+        correctText,
+        shuffledCorrectIndex: case_.shuffled_correct_index,
+        isCorrect
+      });
+    } else {
+      // Caso não embaralhado: usar validação normal
+      selectedText = case_.answer_options?.[selectedIndex] || '';
+      correctText = case_.answer_options?.[case_.correct_answer_index] || '';
+      isCorrect = validateAnswer(
+        selectedIndex,
+        selectedText,
+        case_.correct_answer_index,
+        correctText
+      );
+      
+      console.log('📝 Validação normal:', {
+        selectedIndex,
+        selectedText,
+        correctIndex: case_.correct_answer_index,
+        correctText,
+        isCorrect
+      });
+    }
     
     const basePoints = case_.points || 10;
     const points = calculatePoints(basePoints, isCorrect);

@@ -195,7 +195,17 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
   const handleAnswerSubmit = async () => {
     if (selected === null || isAnswered) return;
     
-    const result = await submitAnswer(selected, caso);
+    // CORREÇÃO CRÍTICA: Passar dados completos para validação correta
+    const selectedText = shuffled?.options?.[selected] || caso?.answer_options?.[selected] || '';
+    const correctText = shuffled?.options?.[correctIdx] || caso?.answer_options?.[correctIdx] || '';
+    
+    const result = await submitAnswer(selected, {
+      ...caso,
+      // Dados para validação correta
+      shuffled_selected_text: selectedText,
+      shuffled_correct_text: correctText,
+      shuffled_correct_index: correctIdx
+    });
     setPerformance(result);
     setShowFeedback(true);
   };
@@ -895,7 +905,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
           open={showFeedback}
           onClose={() => setShowFeedback(false)}
           isCorrect={performance.isCorrect}
-          correctAnswer={shuffled?.options?.[correctIdx] || caso?.answer_options?.[correctIdx] || ''}
+          correctAnswer={shuffled?.options?.[correctIdx] || caso?.answer_options?.[caso?.correct_answer_index] || ''}
           selectedAnswer={shuffled?.options?.[selected!] || caso?.answer_options?.[selected!] || ''}
           explanation={caso?.explanation || 'Explicação não disponível.'}
           performance={performance}
