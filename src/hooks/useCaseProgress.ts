@@ -178,90 +178,147 @@ export function useCaseProgress(caseId: string) {
       penalties,
       finalPoints: points,
       helpUsed,
-      isReview: isReview ? 'SIM' : 'NÃO'
+      isReview: isReview ? 'SIM' : 'NÃO',
+      userId: user.id?.slice(0, 8) + '...',
+      caseId: caseId?.slice(0, 8) + '...'
     });
 
     try {
-      // CORREÇÃO DEFINITIVA: Backend agora tem lógica corrigida
-      console.log('🎯 CHAMANDO BACKEND CORRIGIDO:', { 
-        user: user.id, 
-        caseId, 
+      // CORREÇÃO MELHORADA: Verificar user e validar dados antes de chamar backend
+      if (!user?.id || !caseId) {
+        throw new Error('Dados de usuário ou caso inválidos');
+      }
+
+      console.log('🎯 CHAMANDO BACKEND com validação:', { 
+        user: user.id?.slice(0, 8) + '...', 
+        caseId: caseId?.slice(0, 8) + '...', 
         points, 
         isCorrect,
-        isReview: isReview ? 'SIM (backend detectará automaticamente)' : 'NÃO (primeira tentativa)'
+        isReview: isReview ? 'SIM (0 pontos esperados)' : 'NÃO (pontos esperados)'
       });
 
-      const { error } = await supabase.rpc('process_case_completion', {
+      const { data, error } = await supabase.rpc('process_case_completion', {
         p_user_id: user.id,
         p_case_id: caseId,
         p_points: points,
         p_is_correct: isCorrect
       });
 
-      // TRATAMENTO MELHORADO: Só considerar erro real, não notices do RAISE NOTICE
-      const isRealError = error && 
-        error.code && 
-        !['PGRST301', '0', 'P0001'].includes(error.code);
+      // CORREÇÃO CRÍTICA: Melhor tratamento de erros específicos
+      if (error) {
+        console.error('❌ ERRO DETALHADO da função process_case_completion:', {
+          error,
+          code: error.code,
+          message: error.message,
+          hint: error.hint,
+          details: error.details,
+          context: { user: user.id?.slice(0, 8) + '...', caseId: caseId?.slice(0, 8) + '...', points, isCorrect }
+        });
 
-      if (isRealError) {
-        console.error('❌ ERRO CRÍTICO na função process_case_completion:', error);
-        throw error;
+        // Verificar se é erro crítico ou apenas notice/warning
+        const isCriticalError = error.code && 
+          !['PGRST301', '0', 'P0001', '23505'].includes(error.code) &&
+          !error.message?.includes('RAISE NOTICE') &&
+          !error.message?.includes('PROCESSAMENTO CONCLUÍDO');
+
+        if (isCriticalError) {
+          // Erro crítico - mostrar ao usuário
+          toast({
+            title: "Erro ao processar resposta",
+            description: "Houve um problema técnico. Sua resposta pode não ter sido registrada corretamente.",
+            variant: "destructive"
+          });
+          
+          // Tentar registrar manualmente no histórico como fallback
+          try {
+            await supabase.from('user_case_history').insert({
+              user_id: user.id,
+              case_id: caseId,
+              is_correct: isCorrect,
+              points: isReview ? 0 : points,
+              details: {
+                selected_index: selectedIndex,
+                help_used: helpUsed,
+                penalties,
+                error_fallback: true,
+                timestamp: new Date().toISOString()
+              }
+            });
+            console.log('✅ Fallback: Resposta registrada diretamente no histórico');
+          } catch (fallbackError) {
+            console.error('❌ Falha no fallback:', fallbackError);
+          }
+          
+          return {
+            isCorrect,
+            points: 0, // Zero pontos em caso de erro
+            basePoints,
+            penalties,
+            timeSpent,
+            helpUsed,
+            selectedIndex,
+            answerFeedbacks: case_.answer_feedbacks,
+            eliminatedOptions,
+            eliminationCount,
+            isReview,
+            previousAnswer,
+            previousCorrect,
+            selectedAnswerText: selectedText,
+            correctAnswerText: correctText,
+            hasError: true
+          });
+        } else {
+          // Notice/Warning - considerar como sucesso
+          console.log('⚠️ Notice/Warning ignorado, processamento considerado bem-sucedido');
+        }
       }
 
-      console.log('✅ BACKEND PROCESSOU COM SUCESSO:', { 
+      console.log('✅ BACKEND PROCESSOU:', { 
         isCorrect, 
         points, 
         penalties, 
         isReview: isReview ? 'SIM (0 pontos conforme esperado)' : 'NÃO (pontos creditados)',
-        backendMessage: 'Lógica corrigida funcionando'
+        data: data ? 'dados retornados' : 'sem dados específicos'
       });
 
-      // TOAST ATUALIZADO baseado na nova lógica
+      // TOASTS MELHORADOS com informações mais claras
       if (isReview) {
         toast({
-          title: "Revisão Concluída",
-          description: "Resposta registrada para estudo. Sem pontuação em revisões.",
+          title: "✅ Revisão Concluída",
+          description: "Resposta registrada para estudo. Revisões não pontuam.",
         });
       } else if (isCorrect && points > 0) {
         toast({
           title: "🎉 Parabéns!",
-          description: `Resposta correta! +${points} pontos creditados no seu perfil.`,
+          description: `Resposta correta! +${points} pontos creditados.`,
         });
       } else if (isCorrect && points === 0) {
         toast({
-          title: "Resposta Correta",
+          title: "✅ Resposta Correta",
           description: "Acertou, mas sem pontos devido às penalidades aplicadas.",
         });
       } else {
         toast({
-          title: "Resposta Incorreta",
-          description: "Não desista! Revise o conteúdo e tente novamente.",
+          title: "❌ Resposta Incorreta",
+          description: "Não desista! Revise o material e tente novamente.",
           variant: "destructive"
         });
       }
     } catch (error: any) {
-      console.error('❌ Erro ao processar caso:', {
+      console.error('❌ Erro GERAL ao processar caso:', {
         error,
         errorCode: error?.code,
         errorMessage: error?.message,
-        context: { user: user.id, caseId, points, isCorrect, isReview }
+        stack: error?.stack,
+        context: { user: user.id?.slice(0, 8) + '...', caseId: caseId?.slice(0, 8) + '...', points, isCorrect, isReview }
       });
       
-      // Só mostrar erro se for erro real, não warning/notice
-      if (error?.code && !['PGRST301', '0', 'P0001'].includes(error.code)) {
-        toast({
-          title: "Erro ao processar resposta",
-          description: "Houve um problema. Tente novamente em alguns instantes.",
-          variant: "destructive"
-        });
-      } else {
-        // Se for apenas warning/notice, considerar como sucesso
-        console.log('⚠️ Notice/Warning ignorado, resposta processada com sucesso');
-        toast({
-          title: isReview ? "Revisão Registrada" : "Resposta Processada",
-          description: isReview ? "Resposta registrada para estudo." : "Resposta processada com sucesso.",
-        });
-      }
+      // Erro de rede ou conexão
+      toast({
+        title: "Erro de Conexão",
+        description: "Problema de conectividade. Verifique sua internet e tente novamente.",
+        variant: "destructive"
+      });
     }
 
     return {
