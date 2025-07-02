@@ -26,9 +26,10 @@ interface ProductEditorProps {
   onClose: () => void;
   product?: any;
   onSave: (product: any) => void;
+  isLoading?: boolean;
 }
 
-export function ProductEditor({ isOpen, onClose, product, onSave }: ProductEditorProps) {
+export function ProductEditor({ isOpen, onClose, product, onSave, isLoading = false }: ProductEditorProps) {
   const [formData, setFormData] = useState({
     id: '',
     name: '',
@@ -58,8 +59,8 @@ export function ProductEditor({ isOpen, onClose, product, onSave }: ProductEdito
           skip_aids: 0,
           ai_tutor_credits: 0
         },
-        popular: product.popular || false,
-        discount: product.discount || 0,
+        popular: product.is_popular || false,
+        discount: product.discount_percentage || 0,
         isActive: true
       });
     } else {
@@ -343,12 +344,12 @@ export function ProductEditor({ isOpen, onClose, product, onSave }: ProductEdito
 
         {/* Ações */}
         <div className="flex items-center justify-end gap-2 pt-4 border-t">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={isLoading}>
             Cancelar
           </Button>
-          <Button onClick={handleSave} className="bg-gradient-to-r from-green-600 to-blue-600">
+          <Button onClick={handleSave} className="bg-gradient-to-r from-green-600 to-blue-600" disabled={isLoading}>
             <Save className="h-4 w-4 mr-2" />
-            Salvar Produto
+            {isLoading ? 'Salvando...' : 'Salvar Produto'}
           </Button>
         </div>
       </DialogContent>

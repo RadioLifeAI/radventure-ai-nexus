@@ -17,11 +17,13 @@ import {
   Star,
   Percent
 } from "lucide-react";
-import { useRadCoinShop } from "@/components/radcoin-shop/hooks/useRadCoinShop";
+import { useRadCoinStore } from "@/components/radcoin-shop/hooks/useRadCoinStore";
+import { useProductMutations } from "./hooks/useProductMutations";
 import { ProductEditor } from "./ProductEditor";
 
 export function ProductsManagementTab() {
-  const { helpPackages } = useRadCoinShop();
+  const { products, isLoadingProducts } = useRadCoinStore();
+  const { createProduct, updateProduct, deleteProduct, isLoading: isMutating } = useProductMutations();
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -36,6 +38,44 @@ export function ProductsManagementTab() {
     setIsEditorOpen(true);
   };
 
+  const handleDeleteProduct = (productId: string) => {
+    if (confirm('Tem certeza que deseja excluir este produto?')) {
+      deleteProduct(productId);
+    }
+  };
+
+  const handleSaveProduct = (productData: any) => {
+    if (editingProduct) {
+      // Update existing product
+      updateProduct({
+        id: editingProduct.id,
+        name: productData.name,
+        description: productData.description,
+        price: productData.price,
+        category: 'help_package',
+        benefits: productData.benefits,
+        is_popular: productData.popular,
+        discount_percentage: productData.discount,
+        is_active: productData.isActive,
+        sort_order: 0
+      });
+    } else {
+      // Create new product
+      createProduct({
+        name: productData.name,
+        description: productData.description,
+        price: productData.price,
+        category: 'help_package',
+        benefits: productData.benefits,
+        is_popular: productData.popular,
+        discount_percentage: productData.discount,
+        is_active: productData.isActive,
+        sort_order: products.length
+      });
+    }
+    setIsEditorOpen(false);
+  };
+
   const getProductIcon = (type: string) => {
     switch (type) {
       case 'basic': return <Gift className="h-5 w-5 text-blue-500" />;
@@ -46,11 +86,11 @@ export function ProductsManagementTab() {
   };
 
   const getStatusBadge = (product: any) => {
-    if (product.popular) {
+    if (product.is_popular) {
       return <Badge className="bg-purple-500 text-white">Popular</Badge>;
     }
-    if (product.discount) {
-      return <Badge className="bg-orange-500 text-white">-{product.discount}%</Badge>;
+    if (product.discount_percentage > 0) {
+      return <Badge className="bg-orange-500 text-white">-{product.discount_percentage}%</Badge>;
     }
     return <Badge className="bg-green-500 text-white">Ativo</Badge>;
   };
@@ -73,17 +113,25 @@ export function ProductsManagementTab() {
       </div>
 
       {/* Lista de Produtos */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {helpPackages.map((product) => (
+      {isLoadingProducts ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="animate-pulse">
+              <div className="h-48 bg-gray-200 rounded-lg"></div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {products.map((product) => (
           <Card key={product.id} className="hover:shadow-lg transition-shadow border-2 hover:border-blue-200">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {getProductIcon(product.id.includes('basic') ? 'basic' : 
-                                  product.id.includes('advanced') ? 'advanced' : 'premium')}
-                  <CardTitle className="text-lg">{product.name}</CardTitle>
-                </div>
-                {getStatusBadge(product)}
+                  <div className="flex items-center gap-2">
+                    {getProductIcon(product.category)}
+                    <CardTitle className="text-lg">{product.name}</CardTitle>
+                  </div>
+                  {getStatusBadge(product)}
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -94,10 +142,10 @@ export function ProductsManagementTab() {
                 <div className="text-2xl font-bold text-blue-600">
                   {product.price} RC
                 </div>
-                {product.discount && (
+                {product.discount_percentage > 0 && (
                   <div className="flex items-center gap-1 text-orange-600">
                     <Percent className="h-4 w-4" />
-                    <span className="text-sm font-medium">-{product.discount}%</span>
+                    <span className="text-sm font-medium">-{product.discount_percentage}%</span>
                   </div>
                 )}
               </div>
@@ -145,14 +193,17 @@ export function ProductsManagementTab() {
                   variant="outline" 
                   size="sm" 
                   className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => handleDeleteProduct(product.id)}
+                  disabled={isMutating}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Estatísticas dos Produtos */}
       <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
@@ -162,24 +213,24 @@ export function ProductsManagementTab() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{helpPackages.length}</div>
+              <div className="text-2xl font-bold text-blue-600">{products.length}</div>
               <div className="text-sm text-gray-600">Total de Produtos</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-purple-600">
-                {helpPackages.filter(p => p.popular).length}
+                {products.filter(p => p.is_popular).length}
               </div>
               <div className="text-sm text-gray-600">Produtos Populares</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-orange-600">
-                {helpPackages.filter(p => p.discount).length}
+                {products.filter(p => p.discount_percentage > 0).length}
               </div>
               <div className="text-sm text-gray-600">Com Desconto</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">
-                {Math.round(helpPackages.reduce((acc, p) => acc + p.price, 0) / helpPackages.length)}
+                {products.length > 0 ? Math.round(products.reduce((acc, p) => acc + p.price, 0) / products.length) : 0}
               </div>
               <div className="text-sm text-gray-600">Preço Médio (RC)</div>
             </div>
@@ -192,10 +243,8 @@ export function ProductsManagementTab() {
         isOpen={isEditorOpen}
         onClose={() => setIsEditorOpen(false)}
         product={editingProduct}
-        onSave={(product) => {
-          console.log('Produto salvo:', product);
-          setIsEditorOpen(false);
-        }}
+        onSave={handleSaveProduct}
+        isLoading={isMutating}
       />
     </div>
   );

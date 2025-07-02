@@ -18,16 +18,18 @@ import { ProductsManagementTab } from "@/components/admin/radcoin/ProductsManage
 import { SpecialOffersAdminTab } from "@/components/admin/radcoin/SpecialOffersAdminTab";
 import { AnalyticsTab } from "@/components/admin/radcoin/AnalyticsTab";
 import { ConfigurationsTab } from "@/components/admin/radcoin/ConfigurationsTab";
+import { useRadCoinAnalytics } from "@/components/radcoin-shop/hooks/useRadCoinAnalytics";
 
 export default function RadCoinStoreManagement() {
   const [activeTab, setActiveTab] = useState("products");
+  const { analytics, isLoading } = useRadCoinAnalytics();
 
-  // Dados simulados para as métricas
+  // Usar dados reais ou fallback
   const metrics = {
-    totalSales: 1250,
-    totalRevenue: 8500,
-    activeProducts: 12,
-    conversionRate: 15.3
+    totalSales: analytics?.totalSales || 0,
+    totalRevenue: analytics?.totalRevenue || 0,
+    activeProducts: analytics?.activeProducts || 0,
+    conversionRate: analytics?.conversionRate || 0
   };
 
   return (

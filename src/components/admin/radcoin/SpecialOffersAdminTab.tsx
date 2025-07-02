@@ -16,14 +16,22 @@ import {
   Calendar,
   Timer
 } from "lucide-react";
-import { useRadCoinShop } from "@/components/radcoin-shop/hooks/useRadCoinShop";
+import { useRadCoinStore } from "@/components/radcoin-shop/hooks/useRadCoinStore";
+import { useOfferMutations } from "./hooks/useOfferMutations";
 
 export function SpecialOffersAdminTab() {
-  const { specialOffers } = useRadCoinShop();
+  const { specialOffers, isLoadingOffers } = useRadCoinStore();
+  const { deleteOffer, isLoading: isMutating } = useOfferMutations();
   const [selectedOffer, setSelectedOffer] = useState(null);
 
+  const handleDeleteOffer = (offerId: string) => {
+    if (confirm('Tem certeza que deseja excluir esta oferta?')) {
+      deleteOffer(offerId);
+    }
+  };
+
   const getOfferStatus = (offer: any) => {
-    if (offer.limited) {
+    if (offer.is_limited) {
       return <Badge className="bg-red-500 text-white">Limitada</Badge>;
     }
     return <Badge className="bg-green-500 text-white">Ativa</Badge>;
@@ -83,7 +91,7 @@ export function SpecialOffersAdminTab() {
               <Percent className="h-8 w-8 text-green-500" />
               <div>
                 <div className="text-2xl font-bold text-green-600">
-                  {Math.round(specialOffers.reduce((acc, o) => acc + o.discount, 0) / specialOffers.length)}%
+                  {specialOffers.length > 0 ? Math.round(specialOffers.reduce((acc, o) => acc + o.discount_percentage, 0) / specialOffers.length) : 0}%
                 </div>
                 <div className="text-sm text-gray-600">Desconto Médio</div>
               </div>
@@ -97,7 +105,7 @@ export function SpecialOffersAdminTab() {
               <Timer className="h-8 w-8 text-blue-500" />
               <div>
                 <div className="text-2xl font-bold text-blue-600">
-                  {specialOffers.filter(o => o.limited).length}
+                  {specialOffers.filter(o => o.is_limited).length}
                 </div>
                 <div className="text-sm text-gray-600">Limitadas</div>
               </div>
@@ -107,8 +115,17 @@ export function SpecialOffersAdminTab() {
       </div>
 
       {/* Lista de Ofertas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {specialOffers.map((offer) => (
+      {isLoadingOffers ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[1, 2].map((i) => (
+            <div key={i} className="animate-pulse">
+              <div className="h-64 bg-gray-200 rounded-lg"></div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {specialOffers.map((offer) => (
           <Card key={offer.id} className="hover:shadow-lg transition-shadow border-2 hover:border-orange-200">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
@@ -125,13 +142,13 @@ export function SpecialOffersAdminTab() {
               {/* Preços */}
               <div className="flex items-center gap-3">
                 <div className="text-sm text-gray-500 line-through">
-                  {offer.originalPrice} RC
+                  {offer.original_price} RC
                 </div>
                 <div className="text-2xl font-bold text-green-600">
-                  {offer.salePrice} RC
+                  {offer.sale_price} RC
                 </div>
                 <Badge className="bg-orange-500 text-white">
-                  -{offer.discount}%
+                  -{offer.discount_percentage}%
                 </Badge>
               </div>
 
@@ -176,12 +193,12 @@ export function SpecialOffersAdminTab() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Desconto máximo:</span>
-                  <span className="font-medium">{offer.discount}%</span>
+                  <span className="font-medium">{offer.discount_percentage}%</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Economia:</span>
                   <span className="font-medium text-green-600">
-                    {offer.originalPrice - offer.salePrice} RC
+                    {offer.original_price - offer.sale_price} RC
                   </span>
                 </div>
               </div>
@@ -209,14 +226,17 @@ export function SpecialOffersAdminTab() {
                   variant="outline" 
                   size="sm" 
                   className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => handleDeleteOffer(offer.id)}
+                  disabled={isMutating}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Criar Nova Oferta */}
       <Card className="border-2 border-dashed border-gray-300 hover:border-orange-400 transition-colors">

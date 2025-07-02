@@ -23,21 +23,8 @@ export function AnalyticsTab() {
     totalRevenue: metrics?.totalRevenue || 0,
     averageOrderValue: metrics?.averageOrderValue || 0,
     conversionRate: metrics?.conversionRate || 0,
-    topProducts: [
-      { name: "Pacote Avançado", sales: 450, revenue: 3150 },
-      { name: "Pacote Básico", sales: 380, revenue: 2280 },
-      { name: "Pacote Premium", sales: 220, revenue: 2200 },
-      { name: "Oferta Weekend", sales: 200, revenue: 870 }
-    ],
-    salesByMonth: [
-      { month: "Jan", sales: 120, revenue: 840 },
-      { month: "Fev", sales: 150, revenue: 1050 },
-      { month: "Mar", sales: 180, revenue: 1260 },
-      { month: "Abr", sales: 200, revenue: 1400 },
-      { month: "Mai", sales: 220, revenue: 1540 },
-      { month: "Jun", sales: 250, revenue: 1750 },
-      { month: "Jul", sales: 280, revenue: 1960 }
-    ]
+    topProducts: analytics?.topProducts || [],
+    salesByMonth: analytics?.dailyStats || []
   };
 
   return (
@@ -171,18 +158,18 @@ export function AnalyticsTab() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {salesData.salesByMonth.map((month) => (
-                <div key={month.month} className="flex items-center justify-between">
+              {salesData.salesByMonth.map((day, index) => (
+                <div key={day.date || index} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded flex items-center justify-center text-white text-xs font-bold">
-                      {month.month}
+                      {new Date(day.date).getDate()}/{new Date(day.date).getMonth() + 1}
                     </div>
                     <div>
                       <div className="font-medium text-gray-900">
-                        {month.sales} vendas
+                        {day.sales} vendas
                       </div>
                       <div className="text-sm text-gray-600">
-                        {month.revenue} RC
+                        {day.revenue} RC
                       </div>
                     </div>
                   </div>
@@ -190,12 +177,17 @@ export function AnalyticsTab() {
                     <div 
                       className="h-full bg-gradient-to-r from-green-500 to-blue-500 rounded-full"
                       style={{ 
-                        width: `${(month.sales / Math.max(...salesData.salesByMonth.map(m => m.sales))) * 100}%` 
+                        width: salesData.salesByMonth.length > 0 ? `${(day.sales / Math.max(...salesData.salesByMonth.map(m => m.sales))) * 100}%` : '0%'
                       }}
                     />
                   </div>
                 </div>
               ))}
+              {salesData.salesByMonth.length === 0 && (
+                <div className="text-center text-gray-500 py-8">
+                  Nenhum dado de vendas disponível ainda
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
