@@ -31,17 +31,12 @@ export function CasesGrid({ filters }: Props) {
     queryFn: async () => {
       let query = supabase
         .from('medical_cases')
-        .select(`
-          id, title, specialty, modality, difficulty_level, points, image_url, created_at,
-          category_id,
-          medical_specialties!category_id(name)
-        `)
+        .select('id, title, specialty, modality, difficulty_level, points, image_url, created_at')
         .order('created_at', { ascending: false });
 
-      // CORREÇÃO: Aplicar filtros com fallback robusto
-      if (filters.specialty && filters.specialty !== 'all') {
-        // Filtrar por specialty OU por nome da categoria
-        query = query.or(`specialty.eq.${filters.specialty},medical_specialties.name.eq.${filters.specialty}`);
+      // Aplicar filtros
+      if (filters.specialty) {
+        query = query.eq('specialty', filters.specialty);
       }
       if (filters.modality) {
         query = query.eq('modality', filters.modality);
