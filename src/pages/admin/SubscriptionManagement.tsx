@@ -67,27 +67,44 @@ export default function SubscriptionManagement() {
     }
   });
 
-  // Buscar todas as assinaturas para a tabela
+  // Buscar todas as assinaturas para a tabela (separadamente)
   const { data: allSubscriptions, isLoading: subscriptionsLoading } = useQuery({
     queryKey: ["all-subscriptions"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Buscar assinaturas com planos
+      const { data: subscriptions, error: subError } = await supabase
         .from("subscriptions")
         .select(`
           *,
           subscription_plans (
             display_name,
             price_monthly
-          ),
-          profiles (
-            full_name,
-            email
           )
         `)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      return data;
+      if (subError) throw subError;
+
+      // Buscar perfis de usuários separadamente
+      if (subscriptions && subscriptions.length > 0) {
+        const userIds = subscriptions.map(sub => sub.user_id);
+        const { data: profiles, error: profileError } = await supabase
+          .from("profiles")
+          .select("id, full_name, email")
+          .in("id", userIds);
+
+        if (profileError) throw profileError;
+
+        // Combinar dados
+        const subscriptionsWithProfiles = subscriptions.map(sub => ({
+          ...sub,
+          profiles: profiles?.find(profile => profile.id === sub.user_id) || null
+        }));
+
+        return subscriptionsWithProfiles;
+      }
+
+      return subscriptions || [];
     }
   });
 
@@ -338,7 +355,7 @@ export default function SubscriptionManagement() {
                                   {subscription.profiles?.full_name || 'Nome não informado'}
                                 </div>
                                 <div className="text-sm text-gray-500">
-                                  {subscription.profiles?.email}
+                                  {subscription.profiles?.email || 'Email não disponível'}
                                 </div>
                               </div>
                             </TableCell>
