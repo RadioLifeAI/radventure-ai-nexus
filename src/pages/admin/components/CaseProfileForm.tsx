@@ -153,16 +153,35 @@ export function CaseProfileForm({ editingCase, onCreated }: CaseProfileFormProps
         const associatedImages = await associateWithCase(savedCase.id);
         console.log('✅ SISTEMA UNIFICADO: Imagens associadas:', associatedImages.length);
         
-        // Limpar imagens temporárias após associação bem-sucedida
-        clearTempImages();
-        
         if (associatedImages.length > 0) {
           setFeedback(`${associatedImages.length} imagem(ns) processada(s) com sucesso!`);
+          
+          // CORREÇÃO: Sincronizar URLs das imagens com o form para compatibilidade
+          const imageUrls = associatedImages.map(img => img.original_url);
+          setForm(prev => ({
+            ...prev,
+            image_url: imageUrls
+          }));
+          
+          // Toast de confirmação específico para imagens
+          toast({
+            title: "🖼️ Imagens processadas!",
+            description: `${associatedImages.length} imagem(ns) disponível(is) no caso.`,
+            className: "bg-blue-50 border-blue-200",
+          });
+        } else {
+          console.log('ℹ️ SISTEMA UNIFICADO: Nenhuma imagem temporária para processar');
         }
       } catch (imageError) {
         console.error('❌ SISTEMA UNIFICADO: Erro ao associar imagens:', imageError);
         setFeedback("Caso salvo, mas houve erro no processamento de imagens.");
-        // Não falhar o salvamento por erro de imagem
+        
+        // Toast de aviso para o usuário
+        toast({
+          title: "⚠️ Aviso sobre imagens",
+          description: "Caso salvo com sucesso, mas algumas imagens podem não estar disponíveis. Tente editar o caso novamente.",
+          variant: "destructive"
+        });
       }
 
       // Feedback de sucesso

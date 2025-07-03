@@ -51,7 +51,7 @@ export function useTempCaseImages() {
       // Upload para o storage temporário
       const fileExt = file.name.split('.').pop();
       const fileName = `temp/${tempId}.${fileExt}`;
-      const filePath = `case-images/${fileName}`;
+      const filePath = fileName; // O bucket já é case-images, não duplicar
 
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('case-images')
@@ -171,13 +171,18 @@ export function useTempCaseImages() {
       }
 
       try {
-        // Extrair nome do arquivo da URL
-        const urlParts = tempImage.uploadedUrl.split('/');
-        const fileName = urlParts[urlParts.length - 1];
-        const oldPath = `case-images/temp/${fileName}`;
-        const newPath = `case-images/${caseId}/${fileName}`;
+        // CORREÇÃO: Usar tempId para construir o path correto
+        const fileExt = tempImage.originalFilename.split('.').pop();
+        const tempFileName = `${tempImage.id}.${fileExt}`;
+        const oldPath = `temp/${tempFileName}`;
+        const newFileName = `${Date.now()}_${tempImage.originalFilename}`;
+        const newPath = `${caseId}/${newFileName}`;
 
-        console.log('📁 SISTEMA UNIFICADO: Movendo arquivo:', { oldPath, newPath });
+        console.log('📁 SISTEMA UNIFICADO: Movendo arquivo:', { 
+          tempId: tempImage.id,
+          oldPath: `case-images/${oldPath}`, 
+          newPath: `case-images/${newPath}` 
+        });
 
         // Copiar arquivo para nova localização
         const { data: fileData, error: downloadError } = await supabase.storage
@@ -192,7 +197,7 @@ export function useTempCaseImages() {
         if (fileData) {
           const { data: newUpload, error: uploadError } = await supabase.storage
             .from('case-images')
-            .upload(newPath, fileData);
+            .upload(newPath, fileData, { upsert: true });
 
           if (uploadError) {
             console.error('❌ SISTEMA UNIFICADO: Erro no upload:', uploadError);

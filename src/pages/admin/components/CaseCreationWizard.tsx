@@ -558,7 +558,7 @@ export function CaseCreationWizard({
                   <strong>Alternativas:</strong> {form.answer_options.filter((opt: string) => opt.trim()).length}
                 </div>
                 <div>
-                  <strong>Imagens:</strong> {tempImageCount} imagem(ns) temporária(s)
+                  <strong>Imagens:</strong> {tempImageCount} imagem(ns) {tempImageCount > 0 ? "pronta(s) para sincronização" : "temporária(s)"}
                 </div>
               </div>
               <Button
