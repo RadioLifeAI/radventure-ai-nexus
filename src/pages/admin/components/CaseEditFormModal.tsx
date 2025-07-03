@@ -60,15 +60,15 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
 
       console.log('✅ CaseEditFormModal: Caso carregado com sucesso:', data?.title);
 
-      // CORREÇÃO: Carregar imagens com função unificada robusta
+      // SISTEMA UNIFICADO: Carregar imagens usando função unificada
       let imageUrls: string[] = [];
       try {
-        console.log('🖼️ CaseEditFormModal: Carregando imagens via função unificada');
         const { data: imagesData, error: imagesError } = await supabase
           .rpc('get_case_images_unified', { p_case_id: caseId });
         
-        if (!imagesError && imagesData && Array.isArray(imagesData)) {
-          imageUrls = imagesData
+        if (!imagesError && imagesData) {
+          const imagesArray = Array.isArray(imagesData) ? imagesData : [];
+          imageUrls = imagesArray
             .map((img: any) => {
               if (typeof img === 'object' && img?.url) {
                 return String(img.url);
@@ -76,30 +76,19 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
               return String(img);
             })
             .filter((url: string) => url && url.trim() !== '');
-          console.log('✅ CaseEditFormModal: Imagens carregadas via função unificada:', imageUrls.length);
+          console.log('✅ CaseEditFormModal: Imagens carregadas via sistema unificado:', imageUrls.length);
         } else {
-          console.log('🔄 CaseEditFormModal: Fallback para image_url do caso');
+          console.warn('⚠️ CaseEditFormModal: Fallback para image_url do caso');
           const legacyUrls = Array.isArray(data.image_url) ? data.image_url : [];
           imageUrls = legacyUrls
-            .map((url: any) => {
-              if (typeof url === 'object' && url?.url) {
-                return String(url.url);
-              }
-              return String(url);
-            })
+            .map((url: any) => String(url))
             .filter((url: string) => url && url.trim() !== '');
-          console.log('✅ CaseEditFormModal: Imagens do fallback:', imageUrls.length);
         }
       } catch (imageLoadError) {
         console.error('❌ CaseEditFormModal: Erro ao carregar imagens:', imageLoadError);
         const legacyUrls = Array.isArray(data.image_url) ? data.image_url : [];
         imageUrls = legacyUrls
-          .map((url: any) => {
-            if (typeof url === 'object' && url?.url) {
-              return String(url.url);
-            }
-            return String(url);
-          })
+          .map((url: any) => String(url))
           .filter((url: string) => url && url.trim() !== '');
       }
 
@@ -139,7 +128,7 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
       setEditingCase(prev => ({ ...prev, image_url: images }));
       toast({ 
         title: "🎉 Imagens Atualizadas!", 
-        description: `${images.length} imagem(ns) processada(s) com sistema unificado.` 
+        description: `${images.length} imagem(ns) processada(s) com sistema simplificado.` 
       });
     }
   };
@@ -156,7 +145,7 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
                 Editar Caso Médico - Sistema Unificado
               </DialogTitle>
               
-              {/* Botão de Gestão Avançada */}
+              {/* Botão de Gestão Simplificada */}
               {editingCase && (
                 <div className="flex items-center gap-3">
                   <Button
@@ -166,7 +155,7 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
                     className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold px-6 py-2 shadow-lg"
                   >
                     <Settings className="h-5 w-5 mr-2" />
-                    Gestão Avançada
+                    Gestão Simplificada
                     <Badge variant="secondary" className="ml-2 bg-green-300 text-blue-800 font-bold text-xs">
                       UNIFICADO
                     </Badge>
@@ -198,7 +187,7 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Gestão Avançada */}
+      {/* Modal de Gestão Simplificada */}
       <AdvancedImageManagerModal
         open={showAdvancedImageModal}
         onClose={() => setShowAdvancedImageModal(false)}
