@@ -31,14 +31,21 @@ export function DirectImageUpload({
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [uploading, setUploading] = useState(false);
 
-  // Sistema unificado: usar caseId real (edição) ou gerar temporário (criação)
-  const effectiveCaseId = caseId || `temp_${Date.now()}`;
+  // CORREÇÃO: Path definitivo consistente
+  const getStoragePath = () => {
+    if (caseId && isEditMode) {
+      return caseId; // Caso em edição: path definitivo
+    }
+    return `temp_${Date.now()}`; // Novo caso: path temporário
+  };
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
     setUploading(true);
+    const storagePath = getStoragePath();
+    console.log('📤 Upload unificado - Path:', storagePath);
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -76,10 +83,10 @@ export function DirectImageUpload({
         const fileExt = file.name.split('.').pop();
         const filename = `${Date.now()}_${file.name}`;
         
-        // CORREÇÃO: Path unificado simples sem duplicação
-        const filePath = `${effectiveCaseId}/${filename}`;
+        // CORREÇÃO: Path limpo e consistente
+        const filePath = `${storagePath}/${filename}`;
 
-        console.log('📤 Upload unificado para:', filePath);
+        console.log('📤 Upload para:', filePath);
 
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('case-images')
@@ -96,8 +103,9 @@ export function DirectImageUpload({
 
         console.log('✅ URL gerada:', publicUrl);
 
-        // Sistema unificado: sempre registrar na tabela case_images quando há caseId real
-        if (caseId && caseId !== effectiveCaseId) {
+        // CORREÇÃO CRÍTICA: Inserção garantida na tabela case_images para casos em edição
+        if (caseId && isEditMode) {
+          console.log('💾 Inserindo registro na tabela case_images');
           const { error: insertError } = await supabase
             .from('case_images')
             .insert({
@@ -105,11 +113,13 @@ export function DirectImageUpload({
               original_filename: file.name,
               original_url: publicUrl,
               processing_status: 'completed',
-              sequence_order: images.length
+              sequence_order: currentImages.length + images.length
             });
 
           if (insertError) {
             console.warn('Erro ao registrar na tabela:', insertError);
+          } else {
+            console.log('✅ Registro inserido na case_images');
           }
         }
 
@@ -155,11 +165,21 @@ export function DirectImageUpload({
       if (imageToRemove.url) {
         const urlParts = imageToRemove.url.split('/');
         const fileName = urlParts[urlParts.length - 1];
-        const filePath = `${effectiveCaseId}/${fileName}`;
+        const storagePath = getStoragePath();
+        const filePath = `${storagePath}/${fileName}`;
         
         await supabase.storage
           .from('case-images')
           .remove([filePath]);
+
+        // Se é caso em edição, remover da tabela case_images também
+        if (caseId && isEditMode) {
+          await supabase
+            .from('case_images')
+            .delete()
+            .eq('case_id', caseId)
+            .eq('original_url', imageToRemove.url);
+        }
       }
 
       // Remover do estado
@@ -178,18 +198,6 @@ export function DirectImageUpload({
     }
   };
 
-  const replaceImage = async (imageId: string, event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Remover imagem atual
-    await removeImage(imageId);
-    
-    // Fazer upload da nova
-    const fakeEvent = { target: { files: [file] } } as any;
-    handleFileSelect(fakeEvent);
-  };
-
   return (
     <div className="space-y-4">
       {/* Upload Area */}
@@ -201,7 +209,7 @@ export function DirectImageUpload({
               {isEditMode ? 'Gerenciar Imagens do Caso' : 'Upload de Imagens'}
             </h3>
             <p className="text-blue-600 mb-4">
-              Sistema unificado para criação e edição de casos
+              Sistema unificado - {isEditMode ? 'Modo Edição' : 'Criação de Caso'}
             </p>
             
             <div className="relative">
@@ -228,7 +236,7 @@ export function DirectImageUpload({
       {/* Lista de Imagens Existentes (modo edição) */}
       {isEditMode && currentImages.length > 0 && (
         <div className="space-y-2">
-          <h4 className="font-semibold text-gray-700">Imagens Atuais:</h4>
+          <h4 className="font-semibold text-gray-700">Imagens Atuais ({currentImages.length}):</h4>
           {currentImages.map((url, index) => (
             <div key={`current-${index}`} className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
               <div className="flex items-center gap-3">
@@ -239,30 +247,17 @@ export function DirectImageUpload({
                 </Badge>
               </div>
               
-              <div className="flex gap-2">
-                <div className="relative">
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => replaceImage(`current-${index}`, e)}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  />
-                  <Button variant="outline" size="sm">
-                    Substituir
-                  </Button>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    const newUrls = currentImages.filter((_, i) => i !== index);
-                    onImagesChange(newUrls);
-                  }}
-                  className="text-red-600 hover:text-red-700"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  const newUrls = currentImages.filter((_, i) => i !== index);
+                  onImagesChange(newUrls);
+                }}
+                className="text-red-600 hover:text-red-700"
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </div>
           ))}
         </div>
@@ -307,8 +302,8 @@ export function DirectImageUpload({
 
       {/* Status Unificado */}
       <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
-        💡 <strong>Sistema Unificado:</strong> Upload para case-images/{effectiveCaseId}/
-        {isEditMode && <span className="ml-2 text-green-600">• Modo Edição Ativo</span>}
+        💡 <strong>Sistema Unificado:</strong> Upload para case-images/{getStoragePath()}/
+        {isEditMode && <span className="ml-2 text-green-600">• Inserção automática em case_images</span>}
       </div>
     </div>
   );
