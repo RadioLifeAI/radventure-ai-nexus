@@ -175,98 +175,13 @@ export function CaseProfileForm({ editingCase, onCreated }: CaseProfileFormProps
     }
   };
 
-  // FUNÇÃO DE SINCRONIZAÇÃO UNIFICADA
+  // SISTEMA DEFINITIVO: Sincronização automática via trigger
+  // A função sync_case_images_to_legacy é chamada automaticamente
+  // Não precisamos mais de lógica manual de sincronização
   const syncCaseImages = async (caseId: string, imageUrls: string[]) => {
-    try {
-      console.log('🔄 Sincronizando imagens do sistema unificado para caso:', caseId);
-      
-      if (!imageUrls || imageUrls.length === 0) {
-        console.log('⚠️ Nenhuma imagem para sincronizar');
-        return;
-      }
-
-      // 1. Mover imagens temporárias para path definitivo (se necessário)
-      const finalImageUrls: string[] = [];
-      for (let i = 0; i < imageUrls.length; i++) {
-        const imageUrl = imageUrls[i];
-        
-        // Se a URL contém "temp_", mover para path definitivo
-        if (imageUrl.includes('temp_')) {
-          try {
-            const urlParts = imageUrl.split('/');
-            const fileName = urlParts[urlParts.length - 1];
-            const tempPath = `temp_${Date.now()}/${fileName}`;
-            const finalPath = `${caseId}/${fileName}`;
-            
-            // Copiar arquivo
-            const { data: fileData } = await supabase.storage
-              .from('case-images')
-              .download(tempPath);
-            
-            if (fileData) {
-              const { data: uploadData, error: uploadError } = await supabase.storage
-                .from('case-images')
-                .upload(finalPath, fileData, { upsert: true });
-              
-              if (!uploadError) {
-                // Obter nova URL
-                const { data: { publicUrl }} = supabase.storage
-                  .from('case-images')
-                  .getPublicUrl(finalPath);
-                
-                finalImageUrls.push(publicUrl);
-                
-                // Remover arquivo temporário
-                await supabase.storage
-                  .from('case-images')
-                  .remove([tempPath]);
-              }
-            }
-          } catch (moveError) {
-            console.warn('Erro ao mover imagem temporária:', moveError);
-            // Manter URL original se não conseguir mover
-            finalImageUrls.push(imageUrl);
-          }
-        } else {
-          finalImageUrls.push(imageUrl);
-        }
-      }
-
-      // 2. Inserir registros na tabela case_images
-      const imageRecords = finalImageUrls.map((url, index) => ({
-        case_id: caseId,
-        original_filename: `image_${index + 1}.jpg`,
-        original_url: url,
-        processing_status: 'completed',
-        sequence_order: index
-      }));
-
-      const { error: insertError } = await supabase
-        .from('case_images')
-        .upsert(imageRecords, { 
-          onConflict: 'case_id,original_url',
-          ignoreDuplicates: false 
-        });
-
-      if (insertError) {
-        console.warn('Erro ao inserir registros case_images:', insertError);
-      }
-
-      // 3. Atualizar campo image_url no caso
-      const { error: updateError } = await supabase
-        .from('medical_cases')
-        .update({ image_url: finalImageUrls })
-        .eq('id', caseId);
-
-      if (updateError) {
-        console.warn('Erro ao atualizar image_url:', updateError);
-      }
-
-      console.log('✅ Sincronização de imagens concluída:', finalImageUrls.length);
-      
-    } catch (error) {
-      console.error('❌ Erro na sincronização de imagens:', error);
-    }
+    console.log('ℹ️ Sistema definitivo: Sincronização automática via trigger SQL ativada');
+    console.log('📊 Caso:', caseId, '| URLs legacy:', imageUrls.length);
+    // O trigger sync_case_images_trigger cuida de tudo automaticamente
   };
 
   return (

@@ -2041,7 +2041,7 @@ export type Database = {
       }
       get_case_images_unified: {
         Args: { p_case_id: string }
-        Returns: Json
+        Returns: Json[]
       }
       get_system_status: {
         Args: Record<PropertyKey, never>
