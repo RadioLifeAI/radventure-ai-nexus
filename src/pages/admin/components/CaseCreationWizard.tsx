@@ -294,15 +294,18 @@ export function CaseCreationWizard({
     setCurrentStep(stepIndex);
   };
 
-  // CORREÇÃO DEFINITIVA: Recarregar imagens após upload no wizard
+  // CORREÇÃO DEFINITIVA: Funciona exatamente igual ao editor
   const reloadCaseImages = async (caseId: string) => {
     if (!caseId) return;
     
     try {
+      console.log('🔄 Wizard: Recarregando imagens para caso:', caseId);
+      
       const { data: imagesData, error } = await supabase
         .rpc('get_case_images_unified', { p_case_id: caseId });
       
       if (!error && imagesData && Array.isArray(imagesData)) {
+        // MESMA LÓGICA DO EDITOR: Transformar dados corretamente
         const imageUrls = imagesData
           .map((img: any) => {
             if (typeof img === 'object' && img?.url) {
@@ -312,13 +315,20 @@ export function CaseCreationWizard({
           })
           .filter((url: string) => url && url.trim() !== '');
         
-        // Atualizar form com novas imagens
+        console.log('📊 Wizard: URLs transformadas:', imageUrls);
+        
+        // ATUALIZAÇÃO IDÊNTICA AO EDITOR
         setForm((prev: any) => ({
           ...prev,
           image_url: imageUrls
         }));
         
-        console.log('✅ Wizard: Imagens recarregadas:', imageUrls.length);
+        // FORÇAR RE-RENDER DO CONTADOR
+        setImageCount(imageUrls.length);
+        
+        console.log('✅ Wizard: Form atualizado com', imageUrls.length, 'imagens');
+      } else {
+        console.log('⚠️ Wizard: Nenhuma imagem encontrada ou erro:', error);
       }
     } catch (error) {
       console.error('❌ Erro ao recarregar imagens no wizard:', error);
@@ -546,13 +556,12 @@ export function CaseCreationWizard({
             <CaseImageUploader
               caseId={correctCaseId}
               onUploadComplete={async () => {
-                // CORREÇÃO DEFINITIVA: Recarregar imagens após upload
+                // CORREÇÃO DEFINITIVA: Exatamente igual ao editor
                 await reloadCaseImages(correctCaseId);
                 toast({
                   title: "✅ Imagens salvas!",
                   description: "As imagens foram adicionadas ao caso com sucesso.",
                 });
-                setImageCount(prev => prev + 1);
               }}
             />
           </div>
