@@ -39,8 +39,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-// SISTEMA UNIFICADO: Apenas DirectImageUpload
-import { DirectImageUpload } from "./DirectImageUpload";
+// SISTEMA DEFINITIVO: CaseImageUploader isolado
+import { CaseImageUploader } from "./CaseImageUploader";
+import { supabase } from "@/integrations/supabase/client";
 
 interface WizardStep {
   id: string;
@@ -87,6 +88,7 @@ export function CaseCreationWizard({
   const [showPreview, setShowPreview] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [imageCount, setImageCount] = useState(0);
+  const [createdCaseId, setCreatedCaseId] = useState<string | null>(isEditMode ? editingCase?.id || null : null);
 
   const steps: WizardStep[] = [
     {
@@ -219,9 +221,66 @@ export function CaseCreationWizard({
     steps[currentStep].completed = isValid;
   };
 
-  const nextStep = () => {
-    if (currentStep < steps.length - 1) {
+  const nextStep = async () => {
+    // SISTEMA DEFINITIVO: Criar caso antes da etapa de imagens (7→8)
+    if (currentStep === 6 && !isEditMode && !createdCaseId) {
+      await handleCreateCaseBeforeImages();
+    } else if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handleCreateCaseBeforeImages = async () => {
+    try {
+      console.log('🔄 Criando caso antes da etapa de imagens...');
+      
+      // Usar a mesma lógica de salvamento do CaseProfileForm
+      const sanitizeDateField = (dateValue: any) => {
+        if (!dateValue || dateValue === '' || dateValue === 'undefined') {
+          return null;
+        }
+        return dateValue;
+      };
+
+      const { data: userData } = await supabase.auth.getUser();
+      
+      const caseData = {
+        ...form,
+        image_url: [], // Sem imagens ainda
+        category_id: form.category_id ? parseInt(form.category_id) : null,
+        difficulty_level: form.difficulty_level ? parseInt(form.difficulty_level) : null,
+        points: form.points ? parseInt(form.points) : null,
+        created_by: userData.user?.id,
+        updated_at: new Date().toISOString(),
+        access_date: sanitizeDateField(form.access_date),
+        reference_citation: form.is_radiopaedia_case ? (form.reference_citation || null) : null,
+        reference_url: form.is_radiopaedia_case ? (form.reference_url || null) : null
+      };
+
+      const { data: createdCase, error } = await supabase
+        .from("medical_cases")
+        .insert(caseData)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      console.log('✅ Caso criado:', createdCase.id);
+      setCreatedCaseId(createdCase.id);
+      setCurrentStep(currentStep + 1);
+
+      toast({
+        title: "Caso criado!",
+        description: "Agora você pode adicionar imagens ao caso.",
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Erro ao criar caso:', error);
+      toast({
+        title: "Erro ao criar caso",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -427,59 +486,31 @@ export function CaseCreationWizard({
         );
 
       case "images":
+        // SISTEMA DEFINITIVO: Só exibe se o caso já foi criado
+        if (!createdCaseId && !isEditMode) {
+          return (
+            <div className="text-center py-12">
+              <ImageIcon className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Aguardando criação do caso</h3>
+              <p className="text-muted-foreground">
+                O caso precisa ser criado antes de adicionar imagens.
+                <br />
+                Clique em "Próximo" na etapa anterior para continuar.
+              </p>
+            </div>
+          );
+        }
+
         return (
           <div className="space-y-6">
-            {/* Header Simplificado Unificado */}
-            <div className="bg-gradient-to-r from-blue-50 via-purple-50 to-indigo-50 p-6 rounded-xl border-2 border-purple-200">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl shadow-lg">
-                    <ImageIcon className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-purple-800">Sistema Unificado de Imagens</h3>
-                    <p className="text-purple-600 text-sm">
-                      {isEditMode ? 'Editando imagens do caso existente' : 'Upload para novo caso'}
-                    </p>
-                  </div>
-                </div>
-                
-                <Badge variant="outline" className="bg-green-50 border-green-300 text-green-700">
-                  <ImageIcon className="h-3 w-3 mr-1" />
-                  {imageCount} imagem(ns)
-                </Badge>
-              </div>
-
-              <div className="flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-2 bg-white/70 px-3 py-1 rounded-full">
-                  <ImageIcon className="h-4 w-4 text-purple-600" />
-                  <span className="text-purple-700 font-medium">
-                    Sistema Único
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 bg-green-100 px-3 py-1 rounded-full">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  <span className="text-green-700 font-medium">
-                    Criação e Edição
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* SISTEMA UNIFICADO: DirectImageUpload para tudo */}
-            <DirectImageUpload
-              caseId={isEditMode ? editingCase?.id : undefined}
-              currentImages={Array.isArray(form.image_url) ? form.image_url : []}
-              isEditMode={isEditMode}
-              onImagesChange={(imageUrls) => {
-                console.log('📸 Sistema unificado - Imagens atualizadas:', imageUrls.length);
-                setImageCount(imageUrls.length);
-                
-                // Atualizar form com URLs das imagens
-                setForm(prev => ({
-                  ...prev,
-                  image_url: imageUrls
-                }));
+            <CaseImageUploader
+              caseId={createdCaseId || editingCase?.id}
+              onUploadComplete={() => {
+                toast({
+                  title: "✅ Imagens salvas!",
+                  description: "As imagens foram adicionadas ao caso com sucesso.",
+                });
+                setImageCount(prev => prev + 1); // Atualizar contador
               }}
             />
           </div>
@@ -610,12 +641,24 @@ export function CaseCreationWizard({
           
           {currentStep < steps.length - 1 ? (
             <Button onClick={nextStep}>
-              Próximo
+              {currentStep === 6 && !isEditMode && !createdCaseId ? "Criar Caso" : "Próximo"}
               <ChevronRight className="h-4 w-4 ml-2" />
             </Button>
           ) : (
             <Button 
-              onClick={onSubmit} 
+              onClick={() => {
+                // No modo edição, usar onSubmit normal
+                // No modo criação, só navegar (caso já foi criado)
+                if (isEditMode) {
+                  onSubmit({ preventDefault: () => {} } as any);
+                } else {
+                  toast({
+                    title: "✅ Caso criado com sucesso!",
+                    description: "O caso foi salvo e está pronto para uso.",
+                  });
+                  // Aqui poderia navegar ou fechar o wizard
+                }
+              }}
               disabled={submitting}
               className="bg-green-600 hover:bg-green-700"
             >
@@ -627,7 +670,7 @@ export function CaseCreationWizard({
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  {isEditMode ? "Atualizar Caso" : "Criar Caso"}
+                  {isEditMode ? "Atualizar Caso" : "Finalizar"}
                 </>
               )}
             </Button>
