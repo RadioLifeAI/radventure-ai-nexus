@@ -2064,6 +2064,10 @@ export type Database = {
         Args: { p_user_id: string; p_case_id: string }
         Returns: Json
       }
+      check_daily_challenge_streak: {
+        Args: { p_user_id: string }
+        Returns: number
+      }
       cleanup_old_notifications: {
         Args: Record<PropertyKey, never>
         Returns: undefined

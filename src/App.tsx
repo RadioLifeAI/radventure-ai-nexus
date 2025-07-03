@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRouteRedirect } from "@/components/auth/ProtectedRouteRedirect";
 import { useAuth } from "@/hooks/useAuth";
+import { DailyChallengeProvider } from "@/components/challenges/DailyChallengeProvider";
 
 // Imports for all pages
 import Index from "./pages/Index";
@@ -49,6 +50,7 @@ function App() {
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <DailyChallengeProvider>
           <Routes>
             {/* Rotas Públicas */}
             <Route path="/" element={<Index />} />
@@ -164,6 +166,7 @@ function App() {
             {/* 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </DailyChallengeProvider>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
