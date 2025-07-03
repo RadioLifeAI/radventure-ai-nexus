@@ -543,7 +543,7 @@ export function CaseCreationWizard({
         }
 
         const correctCaseId = isEditMode ? editingCase?.id : createdCaseId;
-        console.log('🔍 DIAGNÓSTICO ID - Etapa Images:', {
+        console.log('🔍 WIZARD SISTEMA NATIVO - Etapa Images:', {
           isEditMode,
           createdCaseId,
           editingCaseId: editingCase?.id,
@@ -551,11 +551,37 @@ export function CaseCreationWizard({
           step: 'images'
         });
 
+        // FORÇAR USO DO SISTEMA NATIVO APENAS
+        if (!correctCaseId) {
+          return (
+            <div className="text-center py-12 bg-red-50 border border-red-200 rounded-lg">
+              <ImageIcon className="mx-auto h-16 w-16 text-red-500 mb-4" />
+              <h3 className="text-lg font-semibold mb-2 text-red-800">Erro: Case ID Obrigatório</h3>
+              <p className="text-red-600">
+                Sistema nativo requer case ID válido para funcionar.
+                <br />
+                Não é possível usar sistema temporário no wizard.
+              </p>
+            </div>
+          );
+        }
+
         return (
           <div className="space-y-6">
+            {/* FORÇAR SISTEMA NATIVO */}
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <h4 className="font-semibold text-green-800 mb-2">✅ Sistema Nativo Ativo</h4>
+              <p className="text-sm text-green-700">
+                Upload direto para caso: <code className="bg-green-100 px-1 rounded">{correctCaseId}</code>
+                <br />
+                Imagens serão salvas com case_id válido na tabela case_images.
+              </p>
+            </div>
+            
             <CaseImageUploader
               caseId={correctCaseId}
               onUploadComplete={async () => {
+                console.log('🔄 WIZARD: Upload concluído, recarregando imagens...');
                 // CORREÇÃO DEFINITIVA: Exatamente igual ao editor
                 await reloadCaseImages(correctCaseId);
                 toast({
