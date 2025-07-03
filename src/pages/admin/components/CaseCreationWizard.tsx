@@ -504,19 +504,30 @@ export function CaseCreationWizard({
                   }}
                 />
               ) : (
-                <ImageUploader
-                  caseId={form.id || 'temp'}
-                  onUpload={(url) => {
-                    console.log('✅ Imagem carregada:', url);
-                    // Manter compatibilidade com contagem de imagens
-                    setTempImageCount(prev => prev + 1);
-                  }}
-                  disabled={!form.id}
-                />
+                // Para casos novos, usar upload temporário até o caso ser salvo
+                form.id ? (
+                  <ImageUploader
+                    caseId={form.id}
+                    onUpload={(url) => {
+                      console.log('✅ Imagem carregada:', url);
+                      // Adicionar URL ao formulário
+                      setForm(prev => ({
+                        ...prev,
+                        image_url: [...(prev.image_url || []), url]
+                      }));
+                      setTempImageCount(prev => prev + 1);
+                    }}
+                  />
+                ) : (
+                  <TempImageUpload 
+                    onChange={handleTempImagesChange}
+                    onImageCountChange={setTempImageCount}
+                  />
+                )
               )}
               {!isEditMode && !form.id && (
                 <p className="text-sm text-amber-600 mt-2 p-2 bg-amber-50 rounded border">
-                  ℹ️ Salve o caso primeiro para habilitar o upload de imagens
+                  ℹ️ O upload direto será habilitado após salvar o caso na etapa final
                 </p>
               )}
             </div>
