@@ -501,10 +501,19 @@ export function CaseCreationWizard({
           );
         }
 
+        const correctCaseId = isEditMode ? editingCase?.id : createdCaseId;
+        console.log('🔍 DIAGNÓSTICO ID - Etapa Images:', {
+          isEditMode,
+          createdCaseId,
+          editingCaseId: editingCase?.id,
+          correctCaseId,
+          step: 'images'
+        });
+
         return (
           <div className="space-y-6">
             <CaseImageUploader
-              caseId={createdCaseId || editingCase?.id}
+              caseId={correctCaseId}
               onUploadComplete={() => {
                 toast({
                   title: "✅ Imagens salvas!",
