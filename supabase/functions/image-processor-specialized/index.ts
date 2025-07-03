@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { ImageMagick, initialize, MagickFormat } from "https://deno.land/x/imagemagick@0.0.26/mod.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -25,6 +26,77 @@ interface SpecialtyMapping {
 interface ModalityMapping {
   modality_prefix: string
   bucket_folder: string
+}
+
+// Inicializar ImageMagick
+await initialize()
+
+// Função para processar imagem em diferentes formatos e tamanhos
+async function processImageFormats(imageBuffer: ArrayBuffer) {
+  const uint8Array = new Uint8Array(imageBuffer)
+  const processed: any = {}
+  
+  try {
+    // Obter dimensões originais
+    let originalWidth = 0, originalHeight = 0
+    
+    ImageMagick.read(uint8Array, (img) => {
+      originalWidth = img.width
+      originalHeight = img.height
+    })
+    
+    const aspectRatio = originalWidth / originalHeight
+    
+    // Thumbnail: 300x200
+    const thumbnailWidth = 300
+    const thumbnailHeight = Math.round(thumbnailWidth / aspectRatio)
+    
+    // Medium: 800x600
+    const mediumWidth = 800
+    const mediumHeight = Math.round(mediumWidth / aspectRatio)
+    
+    // Large: manter original até 1920px
+    const largeWidth = Math.min(originalWidth, 1920)
+    const largeHeight = Math.round(largeWidth / aspectRatio)
+    
+    // Processar thumbnail
+    ImageMagick.read(uint8Array, (img) => {
+      img.resize(thumbnailWidth, thumbnailHeight)
+      img.format = MagickFormat.Webp
+      img.quality = 85
+      processed.thumbnail_webp = img.writeToBlob()
+    })
+    
+    // Processar medium
+    ImageMagick.read(uint8Array, (img) => {
+      img.resize(mediumWidth, mediumHeight)
+      img.format = MagickFormat.Webp
+      img.quality = 85
+      processed.medium_webp = img.writeToBlob()
+    })
+    
+    // Processar large
+    ImageMagick.read(uint8Array, (img) => {
+      if (originalWidth > 1920) {
+        img.resize(largeWidth, largeHeight)
+      }
+      img.format = MagickFormat.Webp
+      img.quality = 90
+      processed.large_webp = img.writeToBlob()
+    })
+    
+    return {
+      processed,
+      dimensions: {
+        width: originalWidth,
+        height: originalHeight,
+        aspect_ratio: aspectRatio
+      }
+    }
+  } catch (error) {
+    console.error('Erro no processamento de imagem:', error)
+    throw error
+  }
 }
 
 serve(async (req) => {
@@ -85,21 +157,67 @@ serve(async (req) => {
     
     console.log('📁 Estrutura organizada:', { specialtyCode, modalityPrefix, bucketFolder, bucketPath })
 
-    // Simular processamento de diferentes tamanhos (implementação completa usaria Sharp/ImageMagick)
-    const processedImages = {
-      thumbnail: imageUrl,
-      medium: imageUrl,
-      large: imageUrl,
-      webp: imageUrl,
-      jpeg: imageUrl
-    }
+    // Processar imagem em diferentes formatos e tamanhos
+    console.log('🔄 Processando imagem especializada em WebP...')
+    const { processed, dimensions } = await processImageFormats(imageBuffer)
+    
+    // Upload das versões processadas para o storage com estrutura especializada
+    const baseFilename = filename.split('.')[0]
+    
+    // Upload thumbnail WebP
+    const thumbnailWebpPath = `${bucketPath}/${baseFilename}_thumb.webp`
+    const { data: thumbWebpUpload } = await supabase.storage
+      .from('case-images')
+      .upload(thumbnailWebpPath, processed.thumbnail_webp, {
+        contentType: 'image/webp',
+        upsert: true
+      })
+    
+    // Upload medium WebP
+    const mediumWebpPath = `${bucketPath}/${baseFilename}_medium.webp`
+    const { data: mediumWebpUpload } = await supabase.storage
+      .from('case-images')
+      .upload(mediumWebpPath, processed.medium_webp, {
+        contentType: 'image/webp',
+        upsert: true
+      })
+    
+    // Upload large WebP
+    const largeWebpPath = `${bucketPath}/${baseFilename}_large.webp`
+    const { data: largeWebpUpload } = await supabase.storage
+      .from('case-images')
+      .upload(largeWebpPath, processed.large_webp, {
+        contentType: 'image/webp',
+        upsert: true
+      })
+    
+    // Gerar URLs públicas
+    const { data: { publicUrl: thumbnailWebpUrl } } = supabase.storage
+      .from('case-images')
+      .getPublicUrl(thumbnailWebpPath)
+    
+    const { data: { publicUrl: mediumWebpUrl } } = supabase.storage
+      .from('case-images')
+      .getPublicUrl(mediumWebpPath)
+    
+    const { data: { publicUrl: largeWebpUrl } } = supabase.storage
+      .from('case-images')
+      .getPublicUrl(largeWebpPath)
 
-    // Simular dimensões (em implementação real, extrairíamos da imagem)
-    const dimensions = {
-      width: 1200,
-      height: 800,
-      aspect_ratio: 1.5
+    const processedImages = {
+      thumbnail: thumbnailWebpUrl,
+      medium: mediumWebpUrl,
+      large: largeWebpUrl,
+      webp: largeWebpUrl, // URL principal em WebP
+      jpeg: imageUrl // Manter original como JPEG
     }
+    
+    console.log('✨ Imagem especializada processada em WebP:', { 
+      bucketPath,
+      thumbnail: thumbnailWebpUrl,
+      medium: mediumWebpUrl, 
+      large: largeWebpUrl 
+    })
 
     // Inserir registro na tabela case_images com organização especializada
     const { data: caseImage, error: insertError } = await supabase
@@ -120,9 +238,11 @@ serve(async (req) => {
         processing_status: 'completed',
         metadata: {
           compression_ratio: 0.8,
-          file_type: 'image/jpeg',
+          file_type: 'image/webp',
           quality: 'high',
-          original_processing: true
+          original_processing: true,
+          webp_optimized: true,
+          original_format: filename.split('.').pop()?.toLowerCase()
         },
         legend: legend || '',
         sequence_order: sequenceOrder || 0,
