@@ -90,6 +90,46 @@ export function CaseCreationWizard({
   const [imageCount, setImageCount] = useState(0);
   const [createdCaseId, setCreatedCaseId] = useState<string | null>(isEditMode ? editingCase?.id || null : null);
 
+  // CORREÇÃO DEFINITIVA: useEffect para carregar contador inicial
+  useEffect(() => {
+    async function loadInitialImageCount() {
+      if (isEditMode && editingCase?.id) {
+        console.log('🔄 CORREÇÃO: Carregando imagens iniciais para edição, caso:', editingCase.id);
+        await reloadCaseImages(editingCase.id);
+      }
+    }
+    loadInitialImageCount();
+  }, [isEditMode, editingCase?.id]);
+
+  // CORREÇÃO DEFINITIVA: useEffect para sincronização automática do contador
+  useEffect(() => {
+    const currentImageUrls = Array.isArray(form.image_url) ? form.image_url : [];
+    const newCount = currentImageUrls.filter((url: any) => {
+      if (typeof url === 'string') return url.trim() !== '';
+      if (typeof url === 'object' && url?.url) return url.url.trim() !== '';
+      return false;
+    }).length;
+    
+    console.log('🔄 CORREÇÃO: Sincronizando imageCount:', {
+      formImageUrl: form.image_url,
+      calculatedCount: newCount,
+      previousCount: imageCount
+    });
+    
+    setImageCount(newCount);
+  }, [form.image_url]);
+
+  // CORREÇÃO DEFINITIVA: useEffect para sincronizar quando caso é criado
+  useEffect(() => {
+    async function syncAfterCaseCreation() {
+      if (createdCaseId && !isEditMode) {
+        console.log('🔄 CORREÇÃO: Caso criado, recarregando imagens:', createdCaseId);
+        await reloadCaseImages(createdCaseId);
+      }
+    }
+    syncAfterCaseCreation();
+  }, [createdCaseId, isEditMode]);
+
   const steps: WizardStep[] = [
     {
       id: "structured",
@@ -594,10 +634,45 @@ export function CaseCreationWizard({
         );
 
       case "review":
+        const finalCaseId = isEditMode ? editingCase?.id : createdCaseId;
+        
         return (
           <div className="space-y-6">
             <CaseProgressDashboard form={form} />
             <CaseQualityRadar form={form} />
+            
+            {/* CORREÇÃO DEFINITIVA: Status das Imagens com Atualização */}
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-semibold text-blue-800">📊 Status das Imagens</h4>
+                  <p className="text-sm text-blue-700">
+                    Contador atual: <strong>{imageCount} imagem(ns)</strong>
+                    {finalCaseId && (
+                      <span className="ml-2">| Caso ID: <code className="bg-blue-100 px-1 rounded">{finalCaseId}</code></span>
+                    )}
+                  </p>
+                </div>
+                {finalCaseId && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      console.log('🔄 CORREÇÃO: Recarregando dados da revisão final...');
+                      await reloadCaseImages(finalCaseId);
+                      toast({
+                        title: "✅ Dados atualizados!",
+                        description: "Contador de imagens sincronizado.",
+                      });
+                    }}
+                    className="text-blue-700 border-blue-300 hover:bg-blue-100"
+                  >
+                    🔄 Atualizar Dados
+                  </Button>
+                )}
+              </div>
+            </div>
+
             <div className="bg-green-50 p-6 rounded-lg border border-green-200">
               <h3 className="text-lg font-bold text-green-800 mb-4">✅ Caso Pronto para Publicação</h3>
               <div className="grid grid-cols-2 gap-4 text-sm">
@@ -616,17 +691,29 @@ export function CaseCreationWizard({
                 <div>
                   <strong>Alternativas:</strong> {form.answer_options.filter((opt: string) => opt.trim()).length}
                 </div>
-                <div>
+                <div className={`${imageCount > 0 ? 'text-green-800' : 'text-orange-800'}`}>
                   <strong>Imagens:</strong> {imageCount} imagem(ns) prontas
+                  {imageCount === 0 && <span className="text-xs ml-1">(Clique em "Atualizar Dados" se houver imagens)</span>}
                 </div>
               </div>
-              <Button
-                className="mt-4 w-full bg-green-600 hover:bg-green-700"
-                onClick={() => setShowPreview(true)}
-              >
-                <Eye className="h-4 w-4 mr-2" />
-                Visualizar Preview Completo
-              </Button>
+              <div className="flex gap-2 mt-4">
+                <Button
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  onClick={() => setShowPreview(true)}
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  Visualizar Preview Completo
+                </Button>
+                {finalCaseId && (
+                  <Button
+                    variant="outline"
+                    onClick={() => goToStep(7)} // Ir para etapa de imagens
+                    className="border-green-300 text-green-700 hover:bg-green-100"
+                  >
+                    📸 Gerenciar Imagens
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         );
