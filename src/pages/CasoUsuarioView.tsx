@@ -285,14 +285,14 @@ export default function CasoUsuarioView() {
               <Brain className="h-3 w-3 mr-1" />
               Nível {caseData.difficulty_level || 1}
             </Badge>
-            <ReportCaseButton caseId={caseId || ''} />
+            <ReportCaseButton onClick={() => {/* TODO: Implement report functionality */}} />
           </div>
         </div>
 
         {/* Case Progress */}
         <CaseProgressBar 
-          currentCase={1}
-          totalCases={1}
+          currentStep={hasAnswered ? 'feedback' : 'answer'}
+          timeSpent={0}
           hasAnswered={hasAnswered}
           isCorrect={isCorrect}
         />
@@ -311,7 +311,8 @@ export default function CasoUsuarioView() {
               {caseImages.length > 0 ? (
                 <EnhancedImageViewer 
                   images={caseImages}
-                  title={caseData.title}
+                  currentIndex={0}
+                  onIndexChange={() => {}}
                 />
               ) : (
                 <div className="bg-gray-100 rounded-lg p-8 text-center">
@@ -381,16 +382,16 @@ export default function CasoUsuarioView() {
           <CardContent className="space-y-4">
             {/* Help System */}
             <HelpSystem
-              caseId={caseId || ''}
-              caseData={caseData}
+              maxElimination={caseData.max_elimination || 2}
+              canSkip={caseData.can_skip || true}
+              skipPenalty={caseData.skip_penalty_points || 0}
+              eliminationPenalty={caseData.elimination_penalty_points || 0}
+              aiHintEnabled={caseData.ai_hint_enabled || false}
+              onEliminateOption={(correctAnswerIndex) => setEliminatedOptions(prev => [...prev, correctAnswerIndex])}
+              onSkip={() => {/* TODO: Implement skip functionality */}}
+              onAIHint={() => {/* TODO: Implement AI hint functionality */}}
               eliminatedOptions={eliminatedOptions}
-              onEliminateOption={(index) => setEliminatedOptions(prev => [...prev, index])}
-              onShowHint={(hint) => {
-                setHintText(hint);
-                setShowHint(true);
-              }}
-              onHelpUsed={(helpType) => setHelpUsed(prev => ({ ...prev, [helpType]: true }))}
-              disabled={hasAnswered}
+              correctAnswerIndex={caseData.correct_answer_index || 0}
             />
 
             {/* Hint Display */}
@@ -442,13 +443,22 @@ export default function CasoUsuarioView() {
           open={showFeedback}
           onClose={() => setShowFeedback(false)}
           isCorrect={isCorrect}
-          explanation={caseData.explanation}
-          correctAnswer={caseData.answer_options?.[caseData.correct_answer_index]}
+          explanation={caseData.explanation || ''}
+          correctAnswer={caseData.answer_options?.[caseData.correct_answer_index] || ''}
           selectedAnswer={selectedAnswer !== null ? caseData.answer_options?.[selectedAnswer] : ''}
-          points={caseData.points || 1}
-          onContinue={() => {
+          performance={{
+            points: caseData.points || 1,
+            timeSpent: 0,
+            helpUsed: Object.keys(helpUsed),
+            penalty: 0,
+            confidence: confidence
+          }}
+          onNextCase={() => {
             setShowFeedback(false);
             navigate("/app/casos");
+          }}
+          onReviewCase={() => {
+            setShowFeedback(false);
           }}
         />
       </div>
