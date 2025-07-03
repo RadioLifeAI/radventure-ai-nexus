@@ -294,6 +294,37 @@ export function CaseCreationWizard({
     setCurrentStep(stepIndex);
   };
 
+  // CORREÇÃO DEFINITIVA: Recarregar imagens após upload no wizard
+  const reloadCaseImages = async (caseId: string) => {
+    if (!caseId) return;
+    
+    try {
+      const { data: imagesData, error } = await supabase
+        .rpc('get_case_images_unified', { p_case_id: caseId });
+      
+      if (!error && imagesData && Array.isArray(imagesData)) {
+        const imageUrls = imagesData
+          .map((img: any) => {
+            if (typeof img === 'object' && img?.url) {
+              return String(img.url);
+            }
+            return String(img);
+          })
+          .filter((url: string) => url && url.trim() !== '');
+        
+        // Atualizar form com novas imagens
+        setForm((prev: any) => ({
+          ...prev,
+          image_url: imageUrls
+        }));
+        
+        console.log('✅ Wizard: Imagens recarregadas:', imageUrls.length);
+      }
+    } catch (error) {
+      console.error('❌ Erro ao recarregar imagens no wizard:', error);
+    }
+  };
+
   const completedSteps = steps.filter(step => step.completed).length;
   const progressPercentage = (completedSteps / steps.length) * 100;
 
@@ -514,12 +545,14 @@ export function CaseCreationWizard({
           <div className="space-y-6">
             <CaseImageUploader
               caseId={correctCaseId}
-              onUploadComplete={() => {
+              onUploadComplete={async () => {
+                // CORREÇÃO DEFINITIVA: Recarregar imagens após upload
+                await reloadCaseImages(correctCaseId);
                 toast({
                   title: "✅ Imagens salvas!",
                   description: "As imagens foram adicionadas ao caso com sucesso.",
                 });
-                setImageCount(prev => prev + 1); // Atualizar contador
+                setImageCount(prev => prev + 1);
               }}
             />
           </div>
