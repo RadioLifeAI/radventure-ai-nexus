@@ -22,7 +22,6 @@ export function CaseProfileForm({ editingCase, onCreated }: CaseProfileFormProps
   
   const { specialties, modalities, difficulties, isLoading } = useUnifiedFormDataSource();
   
-  // Hook refatorado - agora gerencia seu próprio estado
   const handlers = useCaseProfileFormHandlers({ 
     categories: specialties,
     difficulties
@@ -59,13 +58,13 @@ export function CaseProfileForm({ editingCase, onCreated }: CaseProfileFormProps
     setFeedback("Salvando caso médico...");
     
     try {
-      console.log('💾 Salvamento simplificado do caso');
+      console.log('💾 Sistema unificado - Salvamento do caso');
       console.log('📊 Form data:', {
         title: form.title,
-        image_count: Array.isArray(form.image_url) ? form.image_url.length : 0
+        image_count: Array.isArray(form.image_url) ? form.image_url.length : 0,
+        isEditMode: !!editingCase
       });
 
-      // Função para tratar campos de data
       const sanitizeDateField = (dateValue: any) => {
         if (!dateValue || dateValue === '' || dateValue === 'undefined') {
           return null;
@@ -137,19 +136,17 @@ export function CaseProfileForm({ editingCase, onCreated }: CaseProfileFormProps
 
       console.log('✅ Caso salvo:', savedCase.id);
       
-      // Sistema simplificado: imagens já foram carregadas via DirectImageUpload
-      // Não há necessidade de processamento adicional
+      // SISTEMA UNIFICADO: Sincronizar imagens após salvamento
+      await syncCaseImages(savedCase.id, caseData.image_url);
       
       setFeedback("Caso salvo com sucesso!");
 
-      // Toast de sucesso
       toast({
         title: editingCase ? "Caso atualizado!" : "Caso criado!",
         description: `${savedCase.title || 'Novo caso'} foi ${editingCase ? 'atualizado' : 'criado'} com sucesso.`,
         className: "bg-green-50 border-green-200",
       });
 
-      // Resetar formulário ou chamar callback
       if (editingCase) {
         onCreated?.();
       } else {
@@ -175,6 +172,100 @@ export function CaseProfileForm({ editingCase, onCreated }: CaseProfileFormProps
     } finally {
       setSubmitting(false);
       setTimeout(() => setFeedback(""), 3000);
+    }
+  };
+
+  // FUNÇÃO DE SINCRONIZAÇÃO UNIFICADA
+  const syncCaseImages = async (caseId: string, imageUrls: string[]) => {
+    try {
+      console.log('🔄 Sincronizando imagens do sistema unificado para caso:', caseId);
+      
+      if (!imageUrls || imageUrls.length === 0) {
+        console.log('⚠️ Nenhuma imagem para sincronizar');
+        return;
+      }
+
+      // 1. Mover imagens temporárias para path definitivo (se necessário)
+      const finalImageUrls: string[] = [];
+      for (let i = 0; i < imageUrls.length; i++) {
+        const imageUrl = imageUrls[i];
+        
+        // Se a URL contém "temp_", mover para path definitivo
+        if (imageUrl.includes('temp_')) {
+          try {
+            const urlParts = imageUrl.split('/');
+            const fileName = urlParts[urlParts.length - 1];
+            const tempPath = `temp_${Date.now()}/${fileName}`;
+            const finalPath = `${caseId}/${fileName}`;
+            
+            // Copiar arquivo
+            const { data: fileData } = await supabase.storage
+              .from('case-images')
+              .download(tempPath);
+            
+            if (fileData) {
+              const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('case-images')
+                .upload(finalPath, fileData, { upsert: true });
+              
+              if (!uploadError) {
+                // Obter nova URL
+                const { data: { publicUrl }} = supabase.storage
+                  .from('case-images')
+                  .getPublicUrl(finalPath);
+                
+                finalImageUrls.push(publicUrl);
+                
+                // Remover arquivo temporário
+                await supabase.storage
+                  .from('case-images')
+                  .remove([tempPath]);
+              }
+            }
+          } catch (moveError) {
+            console.warn('Erro ao mover imagem temporária:', moveError);
+            // Manter URL original se não conseguir mover
+            finalImageUrls.push(imageUrl);
+          }
+        } else {
+          finalImageUrls.push(imageUrl);
+        }
+      }
+
+      // 2. Inserir registros na tabela case_images
+      const imageRecords = finalImageUrls.map((url, index) => ({
+        case_id: caseId,
+        original_filename: `image_${index + 1}.jpg`,
+        original_url: url,
+        processing_status: 'completed',
+        sequence_order: index
+      }));
+
+      const { error: insertError } = await supabase
+        .from('case_images')
+        .upsert(imageRecords, { 
+          onConflict: 'case_id,original_url',
+          ignoreDuplicates: false 
+        });
+
+      if (insertError) {
+        console.warn('Erro ao inserir registros case_images:', insertError);
+      }
+
+      // 3. Atualizar campo image_url no caso
+      const { error: updateError } = await supabase
+        .from('medical_cases')
+        .update({ image_url: finalImageUrls })
+        .eq('id', caseId);
+
+      if (updateError) {
+        console.warn('Erro ao atualizar image_url:', updateError);
+      }
+
+      console.log('✅ Sincronização de imagens concluída:', finalImageUrls.length);
+      
+    } catch (error) {
+      console.error('❌ Erro na sincronização de imagens:', error);
     }
   };
 

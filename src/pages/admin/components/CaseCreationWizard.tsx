@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/use-toast";
 import { 
   ChevronLeft, 
@@ -21,7 +20,7 @@ import {
   Eye
 } from "lucide-react";
 
-// Importar todos os componentes existentes
+// Importar apenas os componentes necessários - SISTEMA LIMPO
 import { CaseStructuredDataAI } from "./CaseStructuredDataAI";
 import { CaseStructuredFieldsSection } from "./CaseStructuredFieldsSection";
 import { CaseBasicSectionAI } from "./CaseBasicSectionAI";
@@ -33,16 +32,14 @@ import { CaseProfileExplanationSectionContainer } from "./CaseProfileExplanation
 import { CaseAdvancedConfigAI } from "./CaseAdvancedConfigAI";
 import { CaseProfileAdvancedConfigContainer } from "./CaseProfileAdvancedConfigContainer";
 import { CaseReferenceSection } from "./CaseReferenceSection";
-import { CaseAdvancedImageManagement } from "./CaseAdvancedImageManagement";
-import { TempImageUpload } from "./TempImageUpload";
-import { ImageUploader } from "@/components/common/ImageUploader";
-import { AdvancedImageManagerModal } from "./AdvancedImageManagerModal";
 import { CaseFormPreviewModal } from "./CaseFormPreviewModal";
 import { CaseProgressDashboard } from "./CaseProgressDashboard";
 import { CaseQualityRadar } from "./CaseQualityRadar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+// SISTEMA UNIFICADO: Apenas DirectImageUpload
 import { DirectImageUpload } from "./DirectImageUpload";
 
 interface WizardStep {
@@ -88,7 +85,6 @@ export function CaseCreationWizard({
 }: CaseCreationWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
-  const [showAdvancedImageModal, setShowAdvancedImageModal] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [imageCount, setImageCount] = useState(0);
 
@@ -159,7 +155,7 @@ export function CaseCreationWizard({
     {
       id: "images",
       title: "Gestão de Imagens",
-      description: "Upload e processamento de imagens",
+      description: "Sistema unificado de upload",
       icon: <ImageIcon className="h-5 w-5" />,
       completed: false,
       valid: true,
@@ -187,7 +183,7 @@ export function CaseCreationWizard({
 
     switch (step.id) {
       case "structured":
-        isValid = true; // Sempre válido, é opcional
+        isValid = true;
         break;
       case "basic":
         isValid = !!(form.category_id && form.difficulty_level && form.modality && form.findings && form.patient_clinical_info);
@@ -202,7 +198,7 @@ export function CaseCreationWizard({
         isValid = !!form.explanation;
         break;
       case "advanced":
-        isValid = true; // Sempre válido, configurações têm defaults
+        isValid = true;
         break;
       case "reference":
         if (form.is_radiopaedia_case) {
@@ -212,7 +208,7 @@ export function CaseCreationWizard({
         }
         break;
       case "images":
-        isValid = true; // Imagens são opcionais
+        isValid = true;
         break;
       case "review":
         isValid = true;
@@ -433,7 +429,7 @@ export function CaseCreationWizard({
       case "images":
         return (
           <div className="space-y-6">
-            {/* Header Simplificado */}
+            {/* Header Simplificado Unificado */}
             <div className="bg-gradient-to-r from-blue-50 via-purple-50 to-indigo-50 p-6 rounded-xl border-2 border-purple-200">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -441,9 +437,9 @@ export function CaseCreationWizard({
                     <ImageIcon className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-purple-800">Sistema Simplificado de Imagens</h3>
+                    <h3 className="text-xl font-bold text-purple-800">Sistema Unificado de Imagens</h3>
                     <p className="text-purple-600 text-sm">
-                      Upload direto para Supabase Storage - sem complexidade
+                      {isEditMode ? 'Editando imagens do caso existente' : 'Upload para novo caso'}
                     </p>
                   </div>
                 </div>
@@ -458,24 +454,25 @@ export function CaseCreationWizard({
                 <div className="flex items-center gap-2 bg-white/70 px-3 py-1 rounded-full">
                   <ImageIcon className="h-4 w-4 text-purple-600" />
                   <span className="text-purple-700 font-medium">
-                    Upload Direto
+                    Sistema Único
                   </span>
                 </div>
                 <div className="flex items-center gap-2 bg-green-100 px-3 py-1 rounded-full">
                   <CheckCircle className="h-4 w-4 text-green-600" />
                   <span className="text-green-700 font-medium">
-                    Disponível imediatamente
+                    Criação e Edição
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Upload Direto */}
+            {/* SISTEMA UNIFICADO: DirectImageUpload para tudo */}
             <DirectImageUpload
               caseId={isEditMode ? editingCase?.id : undefined}
               currentImages={Array.isArray(form.image_url) ? form.image_url : []}
+              isEditMode={isEditMode}
               onImagesChange={(imageUrls) => {
-                console.log('📸 Imagens atualizadas:', imageUrls.length);
+                console.log('📸 Sistema unificado - Imagens atualizadas:', imageUrls.length);
                 setImageCount(imageUrls.length);
                 
                 // Atualizar form com URLs das imagens
@@ -648,27 +645,13 @@ export function CaseCreationWizard({
         </div>
       </div>
 
-      {/* Modals */}
+      {/* Modal de Preview */}
       <CaseFormPreviewModal 
         open={showPreview} 
         onClose={() => setShowPreview(false)} 
         form={form} 
         categories={categories} 
         difficulties={difficulties} 
-      />
-
-      <AdvancedImageManagerModal
-        open={showAdvancedImageModal}
-        onClose={() => setShowAdvancedImageModal(false)}
-        caseId={isEditMode ? editingCase?.id : undefined}
-        currentImages={Array.isArray(form.image_url) ? form.image_url : []}
-        onImagesUpdated={(images) => {
-          setForm(prev => ({ ...prev, image_url: images }));
-          toast({ 
-            title: "🎉 Imagens Processadas!", 
-            description: `${images.length} imagem(ns) processada(s) com ferramentas avançadas.` 
-          });
-        }}
       />
     </div>
   );

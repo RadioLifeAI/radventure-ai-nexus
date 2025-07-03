@@ -13,9 +13,8 @@ import { toast } from "@/components/ui/use-toast";
 import { CaseProfileForm } from "./CaseProfileForm";
 import { AdvancedImageManagerModal } from "./AdvancedImageManagerModal";
 import { 
-  Sparkles, 
-  Image as ImageIcon,
-  TestTube
+  Settings, 
+  Image as ImageIcon
 } from "lucide-react";
 
 type CaseEditFormModalProps = {
@@ -61,22 +60,25 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
 
       console.log('✅ CaseEditFormModal: Caso carregado com sucesso:', data?.title);
 
-      // CORREÇÃO: Carregar imagens usando get_case_images_unified
+      // SISTEMA UNIFICADO: Carregar imagens usando função unificada
       let imageUrls: string[] = [];
       try {
         const { data: imagesData, error: imagesError } = await supabase
           .rpc('get_case_images_unified', { p_case_id: caseId });
         
         if (!imagesError && imagesData) {
-          // Garantir que é um array e mapear corretamente
           const imagesArray = Array.isArray(imagesData) ? imagesData : [];
           imageUrls = imagesArray
-            .map((img: any) => typeof img === 'object' && img?.url ? String(img.url) : String(img))
+            .map((img: any) => {
+              if (typeof img === 'object' && img?.url) {
+                return String(img.url);
+              }
+              return String(img);
+            })
             .filter((url: string) => url && url.trim() !== '');
-          console.log('✅ CaseEditFormModal: Imagens carregadas via função:', imageUrls.length);
+          console.log('✅ CaseEditFormModal: Imagens carregadas via sistema unificado:', imageUrls.length);
         } else {
           console.warn('⚠️ CaseEditFormModal: Fallback para image_url do caso');
-          // Garantir que data.image_url é tratado como array de strings
           const legacyUrls = Array.isArray(data.image_url) ? data.image_url : [];
           imageUrls = legacyUrls
             .map((url: any) => String(url))
@@ -84,7 +86,6 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
         }
       } catch (imageLoadError) {
         console.error('❌ CaseEditFormModal: Erro ao carregar imagens:', imageLoadError);
-        // Fallback seguro
         const legacyUrls = Array.isArray(data.image_url) ? data.image_url : [];
         imageUrls = legacyUrls
           .map((url: any) => String(url))
@@ -127,7 +128,7 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
       setEditingCase(prev => ({ ...prev, image_url: images }));
       toast({ 
         title: "🎉 Imagens Atualizadas!", 
-        description: `${images.length} imagem(ns) processada(s) com ferramentas avançadas.` 
+        description: `${images.length} imagem(ns) processada(s) com sistema simplificado.` 
       });
     }
   };
@@ -141,25 +142,25 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
           <DialogHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 -m-6 mb-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <DialogTitle className="text-xl font-bold text-gray-800">
-                Editar Caso Médico
+                Editar Caso Médico - Sistema Unificado
               </DialogTitle>
               
-              {/* Botão de Ferramentas Avançadas - MELHORADO */}
+              {/* Botão de Gestão Simplificada */}
               {editingCase && (
                 <div className="flex items-center gap-3">
                   <Button
                     type="button"
                     size="lg"
                     onClick={() => setShowAdvancedImageModal(true)}
-                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold px-6 py-2 shadow-lg"
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold px-6 py-2 shadow-lg"
                   >
-                    <TestTube className="h-5 w-5 mr-2" />
-                    Ferramentas PRO
-                    <Badge variant="secondary" className="ml-2 bg-yellow-300 text-purple-800 font-bold text-xs">
-                      AVANÇADO
+                    <Settings className="h-5 w-5 mr-2" />
+                    Gestão Simplificada
+                    <Badge variant="secondary" className="ml-2 bg-green-300 text-blue-800 font-bold text-xs">
+                      UNIFICADO
                     </Badge>
                   </Button>
-                  <Badge variant="outline" className="bg-purple-50 border-purple-300 text-purple-700">
+                  <Badge variant="outline" className="bg-blue-50 border-blue-300 text-blue-700">
                     <ImageIcon className="h-3 w-3 mr-1" />
                     {Array.isArray(editingCase.image_url) ? editingCase.image_url.length : 0} imagem(ns)
                   </Badge>
@@ -186,7 +187,7 @@ export function CaseEditFormModal({ open, onClose, caseId, onSaved }: CaseEditFo
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Ferramentas Avançadas */}
+      {/* Modal de Gestão Simplificada */}
       <AdvancedImageManagerModal
         open={showAdvancedImageModal}
         onClose={() => setShowAdvancedImageModal(false)}
