@@ -39,8 +39,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-// SISTEMA DEFINITIVO: CaseImageUploader isolado
+// SISTEMA DEFINITIVO: Modal Avançado Completo
 import { CaseImageUploader } from "./CaseImageUploader";
+import { AdvancedImageManagerModal } from "./AdvancedImageManagerModal";
 import { supabase } from "@/integrations/supabase/client";
 
 interface WizardStep {
@@ -87,6 +88,7 @@ export function CaseCreationWizard({
   const [currentStep, setCurrentStep] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showAdvancedImageModal, setShowAdvancedImageModal] = useState(false);
   const [imageCount, setImageCount] = useState(0);
   const [createdCaseId, setCreatedCaseId] = useState<string | null>(isEditMode ? editingCase?.id || null : null);
 
@@ -608,28 +610,55 @@ export function CaseCreationWizard({
 
         return (
           <div className="space-y-6">
-            {/* FORÇAR SISTEMA NATIVO */}
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <h4 className="font-semibold text-green-800 mb-2">✅ Sistema Nativo Ativo</h4>
-              <p className="text-sm text-green-700">
-                Upload direto para caso: <code className="bg-green-100 px-1 rounded">{correctCaseId}</code>
-                <br />
-                Imagens serão salvas com case_id válido na tabela case_images.
+            {/* SISTEMA DEFINITIVO - IGUAL AO EDITOR */}
+            <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h4 className="font-bold text-purple-800 text-lg mb-2">🔬 Sistema Definitivo de Imagens</h4>
+                  <p className="text-sm text-purple-700">
+                    Upload múltiplo com processamento profissional para caso: 
+                    <code className="bg-purple-100 px-2 py-1 rounded ml-2">{correctCaseId}</code>
+                  </p>
+                </div>
+                <Badge variant="secondary" className="bg-yellow-300 text-purple-800 font-bold">
+                  {imageCount} imagem(ns)
+                </Badge>
+              </div>
+              
+              {/* BOTÃO PRINCIPAL - IGUAL AO EDITOR */}
+              <Button
+                type="button"
+                size="lg"
+                onClick={() => setShowAdvancedImageModal(true)}
+                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold px-8 py-4 shadow-xl transform hover:scale-[1.02] transition-all duration-200"
+              >
+                <ImageIcon className="h-6 w-6 mr-3" />
+                🔬 Abrir Ferramentas Avançadas
+                <Badge variant="secondary" className="ml-3 bg-yellow-300 text-purple-800 font-bold">
+                  PRO
+                </Badge>
+              </Button>
+              
+              <p className="text-sm text-purple-600 mt-3 text-center">
+                Upload múltiplo, edição avançada e processamento ZIP automático
               </p>
             </div>
-            
-            <CaseImageUploader
-              caseId={correctCaseId}
-              onUploadComplete={async () => {
-                console.log('🔄 WIZARD: Upload concluído, recarregando imagens...');
-                // CORREÇÃO DEFINITIVA: Exatamente igual ao editor
-                await reloadCaseImages(correctCaseId);
-                toast({
-                  title: "✅ Imagens salvas!",
-                  description: "As imagens foram adicionadas ao caso com sucesso.",
-                });
-              }}
-            />
+
+            {/* FALLBACK: Sistema Básico (caso necessário) */}
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              <h5 className="font-semibold text-gray-700 mb-2">📎 Sistema Básico (Fallback)</h5>
+              <CaseImageUploader
+                caseId={correctCaseId}
+                onUploadComplete={async () => {
+                  console.log('🔄 WIZARD: Upload básico concluído, recarregando imagens...');
+                  await reloadCaseImages(correctCaseId);
+                  toast({
+                    title: "✅ Imagens salvas!",
+                    description: "As imagens foram adicionadas ao caso com sucesso.",
+                  });
+                }}
+              />
+            </div>
           </div>
         );
 
@@ -859,6 +888,29 @@ export function CaseCreationWizard({
         form={form} 
         categories={categories} 
         difficulties={difficulties} 
+      />
+
+      {/* SISTEMA DEFINITIVO: Modal Avançado de Imagens - IGUAL AO EDITOR */}
+      <AdvancedImageManagerModal
+        open={showAdvancedImageModal}
+        onClose={() => setShowAdvancedImageModal(false)}
+        caseId={isEditMode ? editingCase?.id : createdCaseId}
+        currentImages={Array.isArray(form.image_url) ? form.image_url : []}
+        onImagesUpdated={async (images) => {
+          console.log('🔄 WIZARD: Imagens atualizadas via modal avançado:', images);
+          setForm(prev => ({ ...prev, image_url: images }));
+          
+          // Forçar recarregamento e sincronização
+          const caseId = isEditMode ? editingCase?.id : createdCaseId;
+          if (caseId) {
+            await reloadCaseImages(caseId);
+          }
+          
+          toast({ 
+            title: "🎉 Imagens Processadas!", 
+            description: `${images.length} imagem(ns) processada(s) com ferramentas avançadas.` 
+          });
+        }}
       />
     </div>
   );
