@@ -62,6 +62,17 @@ export function useAuth() {
             }
           }, 2000);
         }
+        
+        // Trigger para verificar Desafio do Dia no primeiro login
+        if (event === 'SIGNED_IN' && session?.user) {
+          // Aguardar um pouco mais para que outros sistemas sejam inicializados
+          setTimeout(() => {
+            // Dispatch evento customizado para o DailyChallengeProvider
+            window.dispatchEvent(new CustomEvent('checkDailyChallenge', {
+              detail: { userId: session.user.id }
+            }));
+          }, 3000);
+        }
       }
     );
 

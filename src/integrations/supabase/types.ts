@@ -460,6 +460,45 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_challenges: {
+        Row: {
+          challenge_date: string
+          community_stats: Json | null
+          correct_answer: boolean
+          created_at: string | null
+          explanation: string
+          external_id: string
+          id: string
+          is_active: boolean | null
+          question: string
+          updated_at: string | null
+        }
+        Insert: {
+          challenge_date?: string
+          community_stats?: Json | null
+          correct_answer: boolean
+          created_at?: string | null
+          explanation: string
+          external_id: string
+          id?: string
+          is_active?: boolean | null
+          question: string
+          updated_at?: string | null
+        }
+        Update: {
+          challenge_date?: string
+          community_stats?: Json | null
+          correct_answer?: boolean
+          created_at?: string | null
+          explanation?: string
+          external_id?: string
+          id?: string
+          is_active?: boolean | null
+          question?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       difficulties: {
         Row: {
           description: string | null
@@ -1729,6 +1768,57 @@ export type Database = {
         }
         Relationships: []
       }
+      user_daily_challenges: {
+        Row: {
+          answered: boolean | null
+          answered_at: string | null
+          challenge_id: string | null
+          created_at: string | null
+          id: string
+          reward_given: boolean | null
+          user_answer: boolean | null
+          user_id: string | null
+          was_correct: boolean | null
+        }
+        Insert: {
+          answered?: boolean | null
+          answered_at?: string | null
+          challenge_id?: string | null
+          created_at?: string | null
+          id?: string
+          reward_given?: boolean | null
+          user_answer?: boolean | null
+          user_id?: string | null
+          was_correct?: boolean | null
+        }
+        Update: {
+          answered?: boolean | null
+          answered_at?: string | null
+          challenge_id?: string | null
+          created_at?: string | null
+          id?: string
+          reward_given?: boolean | null
+          user_answer?: boolean | null
+          user_id?: string | null
+          was_correct?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_daily_challenges_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "daily_challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_daily_challenges_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_help_aids: {
         Row: {
           ai_tutor_credits: number
@@ -2043,6 +2133,10 @@ export type Database = {
         Args: { p_case_id: string }
         Returns: Json[]
       }
+      get_daily_challenge_for_user: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
       get_system_status: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -2126,6 +2220,14 @@ export type Database = {
       setup_initial_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      submit_daily_challenge: {
+        Args: {
+          p_user_id: string
+          p_challenge_id: string
+          p_user_answer: boolean
+        }
+        Returns: Json
       }
       sync_case_images_to_legacy: {
         Args: { p_case_id: string }
