@@ -6,7 +6,6 @@ import { toast } from "@/components/ui/use-toast";
 import { CaseCreationWizard } from "./CaseCreationWizard";
 import { useCaseProfileFormHandlers } from "../hooks/useCaseProfileFormHandlers";
 import { useUnifiedFormDataSource } from "@/hooks/useUnifiedFormDataSource";
-import { useTempCaseImages } from "@/hooks/useTempCaseImages";
 import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { HelpCircle } from "lucide-react";
 
@@ -17,7 +16,6 @@ interface CaseProfileFormProps {
 
 export function CaseProfileForm({ editingCase, onCreated }: CaseProfileFormProps) {
   const navigate = useNavigate();
-  const { associateWithCase, clearTempImages } = useTempCaseImages();
   const [highlightedFields, setHighlightedFields] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState("");
@@ -58,17 +56,16 @@ export function CaseProfileForm({ editingCase, onCreated }: CaseProfileFormProps
     if (submitting) return;
     
     setSubmitting(true);
-    setFeedback("Preparando dados do caso...");
+    setFeedback("Salvando caso médico...");
     
     try {
-      console.log('💾 Iniciando salvamento integrado do caso');
-      console.log('📊 Form antes do salvamento:', {
+      console.log('💾 Salvamento simplificado do caso');
+      console.log('📊 Form data:', {
         title: form.title,
-        image_url_length: form.image_url?.length || 0,
-        image_url: form.image_url
+        image_count: Array.isArray(form.image_url) ? form.image_url.length : 0
       });
 
-      // Função para tratar campos de data - converter strings vazias para null
+      // Função para tratar campos de data
       const sanitizeDateField = (dateValue: any) => {
         if (!dateValue || dateValue === '' || dateValue === 'undefined') {
           return null;
@@ -76,24 +73,21 @@ export function CaseProfileForm({ editingCase, onCreated }: CaseProfileFormProps
         return dateValue;
       };
 
-      // SISTEMA UNIFICADO: Preparar dados mantendo image_url para compatibilidade
+      // Preparar dados do caso
       const caseData = {
         ...form,
-        // MANTER: image_url para compatibilidade (será sincronizado posteriormente)
-        image_url: form.image_url || [],
+        image_url: Array.isArray(form.image_url) ? form.image_url : [],
         category_id: form.category_id ? parseInt(form.category_id) : null,
         difficulty_level: form.difficulty_level ? parseInt(form.difficulty_level) : null,
         points: form.points ? parseInt(form.points) : null,
         created_by: (await supabase.auth.getUser()).data.user?.id,
         updated_at: new Date().toISOString(),
-        // CORREÇÃO: Tratar campo access_date corretamente
         access_date: sanitizeDateField(form.access_date),
-        // Tratar outros campos que possam ser problemáticos
         reference_citation: form.is_radiopaedia_case ? (form.reference_citation || null) : null,
         reference_url: form.is_radiopaedia_case ? (form.reference_url || null) : null
       };
 
-      // Validação específica para casos do Radiopaedia
+      // Validação para casos do Radiopaedia
       if (form.is_radiopaedia_case) {
         if (!caseData.reference_citation?.trim()) {
           toast({
@@ -110,8 +104,6 @@ export function CaseProfileForm({ editingCase, onCreated }: CaseProfileFormProps
           return;
         }
       }
-
-      setFeedback("Salvando caso médico...");
 
       let savedCase;
       if (editingCase) {
@@ -145,46 +137,12 @@ export function CaseProfileForm({ editingCase, onCreated }: CaseProfileFormProps
 
       console.log('✅ Caso salvo:', savedCase.id);
       
-      // SISTEMA UNIFICADO: Sempre tentar associar imagens temporárias (novo e edição)
-      setFeedback("Processando imagens do sistema unificado...");
+      // Sistema simplificado: imagens já foram carregadas via DirectImageUpload
+      // Não há necessidade de processamento adicional
       
-      try {
-        console.log('🔄 SISTEMA UNIFICADO: Iniciando associação de imagens para caso:', savedCase.id);
-        const associatedImages = await associateWithCase(savedCase.id);
-        console.log('✅ SISTEMA UNIFICADO: Imagens associadas:', associatedImages.length);
-        
-        if (associatedImages.length > 0) {
-          setFeedback(`${associatedImages.length} imagem(ns) processada(s) com sucesso!`);
-          
-          // CORREÇÃO: Sincronizar URLs das imagens com o form para compatibilidade
-          const imageUrls = associatedImages.map(img => img.original_url);
-          setForm(prev => ({
-            ...prev,
-            image_url: imageUrls
-          }));
-          
-          // Toast de confirmação específico para imagens
-          toast({
-            title: "🖼️ Imagens processadas!",
-            description: `${associatedImages.length} imagem(ns) disponível(is) no caso.`,
-            className: "bg-blue-50 border-blue-200",
-          });
-        } else {
-          console.log('ℹ️ SISTEMA UNIFICADO: Nenhuma imagem temporária para processar');
-        }
-      } catch (imageError) {
-        console.error('❌ SISTEMA UNIFICADO: Erro ao associar imagens:', imageError);
-        setFeedback("Caso salvo, mas houve erro no processamento de imagens.");
-        
-        // Toast de aviso para o usuário
-        toast({
-          title: "⚠️ Aviso sobre imagens",
-          description: "Caso salvo com sucesso, mas algumas imagens podem não estar disponíveis. Tente editar o caso novamente.",
-          variant: "destructive"
-        });
-      }
+      setFeedback("Caso salvo com sucesso!");
 
-      // Feedback de sucesso
+      // Toast de sucesso
       toast({
         title: editingCase ? "Caso atualizado!" : "Caso criado!",
         description: `${savedCase.title || 'Novo caso'} foi ${editingCase ? 'atualizado' : 'criado'} com sucesso.`,
@@ -202,7 +160,6 @@ export function CaseProfileForm({ editingCase, onCreated }: CaseProfileFormProps
     } catch (error: any) {
       console.error('❌ Erro no salvamento:', error);
       
-      // Tratamento específico para erros de data
       let errorMessage = error.message || "Erro desconhecido";
       if (error.message?.includes('Invalid input syntax for type date')) {
         errorMessage = "Erro na data informada. Verifique o campo de data de acesso.";

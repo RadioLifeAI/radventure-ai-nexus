@@ -43,6 +43,7 @@ import { CaseQualityRadar } from "./CaseQualityRadar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DirectImageUpload } from "./DirectImageUpload";
 
 interface WizardStep {
   id: string;
@@ -89,7 +90,7 @@ export function CaseCreationWizard({
   const [showPreview, setShowPreview] = useState(false);
   const [showAdvancedImageModal, setShowAdvancedImageModal] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [tempImageCount, setTempImageCount] = useState(0);
+  const [imageCount, setImageCount] = useState(0);
 
   const steps: WizardStep[] = [
     {
@@ -174,15 +175,6 @@ export function CaseCreationWizard({
       required: false
     }
   ];
-
-  // SISTEMA UNIFICADO: Não sincronizar form.image_url (será feito via associateWithCase)
-  const handleTempImagesChange = (images: any[]) => {
-    // Apenas atualizar contador para feedback visual - NÃO sincronizar form.image_url
-    setTempImageCount(images.length);
-    
-    console.log('🔄 SISTEMA UNIFICADO: Imagens temporárias carregadas:', images.length);
-    console.log('📝 Form.image_url permanece limpo para uso do sistema novo');
-  };
 
   // Validação automática de cada etapa
   useEffect(() => {
@@ -441,7 +433,7 @@ export function CaseCreationWizard({
       case "images":
         return (
           <div className="space-y-6">
-            {/* Header com Ferramentas Avançadas */}
+            {/* Header Simplificado */}
             <div className="bg-gradient-to-r from-blue-50 via-purple-50 to-indigo-50 p-6 rounded-xl border-2 border-purple-200">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -449,88 +441,50 @@ export function CaseCreationWizard({
                     <ImageIcon className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-purple-800">Sistema Unificado de Imagens</h3>
+                    <h3 className="text-xl font-bold text-purple-800">Sistema Simplificado de Imagens</h3>
                     <p className="text-purple-600 text-sm">
-                      Upload direto para Supabase Storage com organização automática
+                      Upload direto para Supabase Storage - sem complexidade
                     </p>
                   </div>
                 </div>
                 
-                <Button
-                  type="button"
-                  size="lg"
-                  onClick={() => setShowAdvancedImageModal(true)}
-                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold px-8 py-3 shadow-xl"
-                >
-                  🔬 Ferramentas Avançadas
-                  <Badge variant="secondary" className="ml-2 bg-yellow-300 text-purple-800 font-bold">
-                    PRO
-                  </Badge>
-                </Button>
+                <Badge variant="outline" className="bg-green-50 border-green-300 text-green-700">
+                  <ImageIcon className="h-3 w-3 mr-1" />
+                  {imageCount} imagem(ns)
+                </Badge>
               </div>
 
               <div className="flex items-center gap-4 text-sm">
                 <div className="flex items-center gap-2 bg-white/70 px-3 py-1 rounded-full">
                   <ImageIcon className="h-4 w-4 text-purple-600" />
                   <span className="text-purple-700 font-medium">
-                    Sistema Supabase Storage
+                    Upload Direto
                   </span>
                 </div>
                 <div className="flex items-center gap-2 bg-green-100 px-3 py-1 rounded-full">
                   <CheckCircle className="h-4 w-4 text-green-600" />
                   <span className="text-green-700 font-medium">
-                    Upload direto e organizado
+                    Disponível imediatamente
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Sistema de Upload Unificado */}
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                <ImageIcon className="h-4 w-4" />
-                Upload de Imagens
-              </h4>
-              {isEditMode ? (
-                <CaseAdvancedImageManagement 
-                  caseId={editingCase?.id}
-                  onImagesChange={(images) => {
-                    console.log('Images updated:', images.length);
-                    // Sincronizar com form para modo de edição
-                    setForm((prev: any) => ({
-                      ...prev,
-                      image_url: images.map(img => img.original_url).filter(Boolean)
-                    }));
-                  }}
-                />
-              ) : (
-                // Para casos novos, usar upload temporário até o caso ser salvo
-                form.id ? (
-                  <ImageUploader
-                    caseId={form.id}
-                    onUpload={(url) => {
-                      console.log('✅ Imagem carregada:', url);
-                      // Adicionar URL ao formulário
-                      setForm(prev => ({
-                        ...prev,
-                        image_url: [...(prev.image_url || []), url]
-                      }));
-                      setTempImageCount(prev => prev + 1);
-                    }}
-                  />
-                ) : (
-                  <TempImageUpload 
-                    onChange={handleTempImagesChange}
-                    onImageCountChange={setTempImageCount}
-                  />
-                )
-              )}
-              {!isEditMode && !form.id && (
-                <p className="text-sm text-amber-600 mt-2 p-2 bg-amber-50 rounded border">
-                  ℹ️ O upload direto será habilitado após salvar o caso na etapa final
-                </p>
-              )}
-            </div>
+            {/* Upload Direto */}
+            <DirectImageUpload
+              caseId={isEditMode ? editingCase?.id : undefined}
+              currentImages={Array.isArray(form.image_url) ? form.image_url : []}
+              onImagesChange={(imageUrls) => {
+                console.log('📸 Imagens atualizadas:', imageUrls.length);
+                setImageCount(imageUrls.length);
+                
+                // Atualizar form com URLs das imagens
+                setForm(prev => ({
+                  ...prev,
+                  image_url: imageUrls
+                }));
+              }}
+            />
           </div>
         );
 
@@ -558,7 +512,7 @@ export function CaseCreationWizard({
                   <strong>Alternativas:</strong> {form.answer_options.filter((opt: string) => opt.trim()).length}
                 </div>
                 <div>
-                  <strong>Imagens:</strong> {tempImageCount} imagem(ns) {tempImageCount > 0 ? "pronta(s) para sincronização" : "temporária(s)"}
+                  <strong>Imagens:</strong> {imageCount} imagem(ns) prontas
                 </div>
               </div>
               <Button
