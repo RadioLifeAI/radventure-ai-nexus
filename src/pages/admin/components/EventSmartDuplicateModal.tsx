@@ -23,6 +23,7 @@ import {
   RefreshCw
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Event {
   id: string;
@@ -35,6 +36,8 @@ interface Event {
   number_of_cases?: number;
   case_filters?: any;
   prize_distribution?: Array<{ position: number; prize: number }>;
+  banner_url?: string;
+  auto_start?: boolean;
 }
 
 interface Props {
@@ -46,6 +49,7 @@ interface Props {
 
 export function EventSmartDuplicateModal({ open, onClose, event, onDuplicate }: Props) {
   const [activeTab, setActiveTab] = useState("quick");
+  const [loading, setLoading] = useState(false);
   const [modifications, setModifications] = useState({
     name: "",
     scheduledStart: "",
@@ -93,52 +97,105 @@ export function EventSmartDuplicateModal({ open, onClose, event, onDuplicate }: 
     };
   };
 
-  const handleQuickDuplicate = () => {
-    const smartDates = generateSmartDates();
-    const smartName = generateSmartName(event.name);
+  const handleQuickDuplicate = async () => {
+    if (loading) return;
     
-    const duplicatedEvent = {
-      ...event,
-      id: undefined, // Novo ID será gerado
-      name: smartName,
-      scheduled_start: smartDates.start,
-      scheduled_end: smartDates.end,
-      status: "DRAFT"
-    };
+    setLoading(true);
+    try {
+      const smartDates = generateSmartDates();
+      const smartName = generateSmartName(event.name);
+      
+      const duplicatedEventData = {
+        name: smartName,
+        description: event.description,
+        scheduled_start: smartDates.start,
+        scheduled_end: smartDates.end,
+        prize_radcoins: event.prize_radcoins,
+        number_of_cases: event.number_of_cases,
+        max_participants: event.max_participants,
+        banner_url: event.banner_url || null,
+        auto_start: event.auto_start || false,
+        prize_distribution: event.prize_distribution,
+        case_filters: event.case_filters,
+        status: "SCHEDULED" as const
+      };
 
-    onDuplicate(duplicatedEvent);
-    
-    toast({
-      title: "✨ Evento duplicado com sucesso!",
-      description: `"${smartName}" foi criado com ajustes inteligentes.`,
-      className: "bg-green-50 border-green-200"
-    });
-    
-    onClose();
+      const { data: duplicatedEvent, error } = await supabase
+        .from("events")
+        .insert([duplicatedEventData])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      onDuplicate(duplicatedEvent);
+      
+      toast({
+        title: "✨ Evento duplicado com sucesso!",
+        description: `"${smartName}" foi criado com ajustes inteligentes.`,
+        className: "bg-green-50 border-green-200"
+      });
+      
+      onClose();
+    } catch (error: any) {
+      toast({
+        title: "❌ Erro ao duplicar evento",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAdvancedDuplicate = () => {
-    const duplicatedEvent = {
-      ...event,
-      id: undefined,
-      name: modifications.name || generateSmartName(event.name),
-      scheduled_start: modifications.scheduledStart || event.scheduled_start,
-      scheduled_end: modifications.scheduledEnd || event.scheduled_end,
-      prize_radcoins: modifications.prizeRadcoins || event.prize_radcoins,
-      max_participants: modifications.maxParticipants || event.max_participants,
-      number_of_cases: modifications.numberOfCases || event.number_of_cases,
-      status: "DRAFT"
-    };
+  const handleAdvancedDuplicate = async () => {
+    if (loading) return;
+    
+    setLoading(true);
+    try {
+      const eventName = modifications.name || generateSmartName(event.name);
+      
+      const duplicatedEventData = {
+        name: eventName,
+        description: event.description,
+        scheduled_start: modifications.scheduledStart || event.scheduled_start,
+        scheduled_end: modifications.scheduledEnd || event.scheduled_end,
+        prize_radcoins: modifications.prizeRadcoins || event.prize_radcoins,
+        number_of_cases: modifications.numberOfCases || event.number_of_cases,
+        max_participants: modifications.maxParticipants || event.max_participants,
+        banner_url: event.banner_url || null,
+        auto_start: event.auto_start || false,
+        prize_distribution: event.prize_distribution,
+        case_filters: event.case_filters,
+        status: "SCHEDULED" as const
+      };
 
-    onDuplicate(duplicatedEvent);
-    
-    toast({
-      title: "🎯 Evento duplicado com customizações!",
-      description: `"${duplicatedEvent.name}" foi criado com suas modificações.`,
-      className: "bg-blue-50 border-blue-200"
-    });
-    
-    onClose();
+      const { data: duplicatedEvent, error } = await supabase
+        .from("events")
+        .insert([duplicatedEventData])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      onDuplicate(duplicatedEvent);
+      
+      toast({
+        title: "🎯 Evento duplicado com customizações!",
+        description: `"${eventName}" foi criado com suas modificações.`,
+        className: "bg-blue-50 border-green-200"
+      });
+      
+      onClose();
+    } catch (error: any) {
+      toast({
+        title: "❌ Erro ao duplicar evento",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSeriesDuplicate = () => {

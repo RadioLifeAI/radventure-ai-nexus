@@ -156,6 +156,55 @@ export function useEventsManagement() {
     setSortDirection(direction);
   }, []);
 
+  // Função para mudança de status
+  const toggleEventStatus = useCallback(async (eventId: string) => {
+    try {
+      // Buscar evento atual
+      const { data: event, error: fetchError } = await supabase
+        .from("events")
+        .select("status")
+        .eq("id", eventId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      let newStatus: string;
+      switch (event.status) {
+        case "SCHEDULED":
+          newStatus = "ACTIVE";
+          break;
+        case "ACTIVE":
+          newStatus = "FINISHED";
+          break;
+        case "FINISHED":
+          newStatus = "SCHEDULED";
+          break;
+        default:
+          newStatus = "ACTIVE";
+      }
+
+      const { error } = await supabase
+        .from("events")
+        .update({ status: newStatus as "SCHEDULED" | "ACTIVE" | "FINISHED" })
+        .eq("id", eventId);
+
+      if (error) throw error;
+
+      fetchEvents();
+      toast({
+        title: "Status atualizado",
+        description: `Evento alterado para ${newStatus}`,
+        className: "bg-green-50 border-green-200"
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao alterar status",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  }, [fetchEvents]);
+
   // Função para seleção de eventos
   const handleEventSelect = useCallback((eventId: string) => {
     setSelectedEvents(prev => 
@@ -229,11 +278,54 @@ export function useEventsManagement() {
   // Função para exportação
   const handleExport = useCallback(async (format: string) => {
     try {
-      // Implementar exportação
-      toast({
-        title: `Exportação ${format.toUpperCase()}`,
-        description: "Funcionalidade será implementada em breve."
-      });
+      const eventsToExport = selectedEvents.length > 0 
+        ? events.filter(e => selectedEvents.includes(e.id))
+        : events;
+
+      if (format === "csv") {
+        // Exportar como CSV
+        const headers = ["ID", "Nome", "Status", "Data Início", "Data Fim", "Prêmio", "Participantes", "Casos"];
+        const csvData = eventsToExport.map(event => [
+          event.id,
+          event.name,
+          event.status,
+          event.scheduled_start,
+          event.scheduled_end,
+          event.prize_radcoins,
+          event.max_participants || "Ilimitado",
+          event.number_of_cases
+        ]);
+
+        const csvContent = [headers, ...csvData]
+          .map(row => row.map(field => `"${field}"`).join(","))
+          .join("\n");
+
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `eventos_${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+
+        toast({
+          title: "Exportação CSV concluída",
+          description: `${eventsToExport.length} eventos exportados com sucesso.`,
+          className: "bg-green-50 border-green-200"
+        });
+      } else if (format === "json") {
+        // Exportar como JSON
+        const jsonData = JSON.stringify(eventsToExport, null, 2);
+        const blob = new Blob([jsonData], { type: "application/json" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `eventos_${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+
+        toast({
+          title: "Exportação JSON concluída",
+          description: `${eventsToExport.length} eventos exportados com sucesso.`,
+          className: "bg-green-50 border-green-200"
+        });
+      }
     } catch (error: any) {
       toast({
         title: "Erro na exportação",
@@ -241,7 +333,7 @@ export function useEventsManagement() {
         variant: "destructive"
       });
     }
-  }, []);
+  }, [events, selectedEvents]);
 
   // Função para deletar evento
   const deleteEvent = useCallback(async (eventId: string) => {
@@ -293,6 +385,7 @@ export function useEventsManagement() {
     handleBulkAction,
     handleExport,
     deleteEvent,
+    toggleEventStatus,
     refetch: fetchEvents
   };
 }

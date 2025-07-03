@@ -132,8 +132,11 @@ export function EventsCardsView({
   };
 
   const handleDuplicateComplete = (duplicatedEvent: any) => {
+    // Notificar para atualizar a lista
     onDuplicate(duplicatedEvent.id);
     setDuplicateModal({ open: false, event: null });
+    
+    // Mostrar toast de sucesso já está no modal
   };
 
   if (events.length === 0) {

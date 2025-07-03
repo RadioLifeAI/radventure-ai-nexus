@@ -6,6 +6,7 @@ import CasosMedicos from "./admin/CasosMedicos";
 import GestaoCasos from "./admin/GestaoCasos";
 import CreateEvent from "./admin/CreateEvent";
 import EventsManagement from "./admin/EventsManagement";
+import EditEvent from "./admin/EditEvent";
 import RadCoinStoreManagement from "./admin/RadCoinStoreManagement";
 import RewardsSystemManagement from "./admin/RewardsSystemManagement";
 import { DashboardAnalyticsIntegrated } from "@/components/admin/DashboardAnalyticsIntegrated";
@@ -89,6 +90,7 @@ export default function AdminPanel() {
             <Route path="gestao-casos" element={<GestaoCasos />} />
             <Route path="create-event" element={<CreateEvent />} />
             <Route path="events" element={<EventsManagement />} />
+            <Route path="events/:id/edit" element={<EditEvent />} />
             
             {/* Rota de configurações */}
             <Route path="configuracoes" element={

@@ -11,6 +11,7 @@ import { EventsCalendarView } from "./components/EventsCalendarView";
 import { EventsAnalyticsView } from "./components/EventsAnalyticsView";
 import { useEventsManagement } from "./hooks/useEventsManagement";
 import { Loader } from "@/components/Loader";
+import { toast } from "@/hooks/use-toast";
 
 export default function EventsManagement() {
   const navigate = useNavigate();
@@ -35,6 +36,7 @@ export default function EventsManagement() {
     handleBulkAction,
     handleExport,
     deleteEvent,
+    toggleEventStatus,
     refetch
   } = useEventsManagement();
 
@@ -46,23 +48,20 @@ export default function EventsManagement() {
 
   const handleView = (eventId: string) => {
     setSelectedEventId(eventId);
-    // Em futuras implementações, abrir modal de visualização rica
-    console.log("Ver evento:", eventId);
+    // Funcionalidade implementada nos modais das cardsView
   };
 
   const handleDuplicate = (eventId: string) => {
-    // Em futuras implementações, abrir modal de duplicação inteligente
-    console.log("Duplicar evento:", eventId);
+    // Funcionalidade implementada nos modais das cardsView
+    refetch(); // Atualizar lista após duplicação
   };
 
   const handleAnalytics = (eventId: string) => {
-    // Em futuras implementações, abrir modal de analytics avançado
-    console.log("Analytics do evento:", eventId);
+    // Funcionalidade implementada nos modais das cardsView
   };
 
   const handleToggleStatus = async (eventId: string) => {
-    // Em futuras implementações, alternar status do evento
-    console.log("Alternar status do evento:", eventId);
+    await toggleEventStatus(eventId);
   };
 
   const renderEventsView = () => {
