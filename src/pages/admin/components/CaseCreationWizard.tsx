@@ -611,36 +611,36 @@ export function CaseCreationWizard({
         return (
           <div className="space-y-6">
             {/* SISTEMA DEFINITIVO - IGUAL AO EDITOR */}
-            <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-6">
+            <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h4 className="font-bold text-purple-800 text-lg mb-2">🔬 Sistema Definitivo de Imagens</h4>
-                  <p className="text-sm text-purple-700">
-                    Upload múltiplo com processamento profissional para caso: 
-                    <code className="bg-purple-100 px-2 py-1 rounded ml-2">{correctCaseId}</code>
+                  <h4 className="font-bold text-blue-800 text-lg mb-2">📸 Upload WebP Simplificado</h4>
+                  <p className="text-sm text-blue-700">
+                    Sistema integrado que obtém especialidade e modalidade automaticamente do caso: 
+                    <code className="bg-blue-100 px-2 py-1 rounded ml-2">{correctCaseId}</code>
                   </p>
                 </div>
-                <Badge variant="secondary" className="bg-yellow-300 text-purple-800 font-bold">
+                <Badge variant="secondary" className="bg-yellow-300 text-blue-800 font-bold">
                   {imageCount} imagem(ns)
                 </Badge>
               </div>
               
-              {/* BOTÃO PRINCIPAL - IGUAL AO EDITOR */}
+              {/* BOTÃO PRINCIPAL - SIMPLIFICADO */}
               <Button
                 type="button"
                 size="lg"
                 onClick={() => setShowAdvancedImageModal(true)}
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold px-8 py-4 shadow-xl transform hover:scale-[1.02] transition-all duration-200"
+                className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold px-8 py-4 shadow-xl transform hover:scale-[1.02] transition-all duration-200"
               >
                 <ImageIcon className="h-6 w-6 mr-3" />
-                🔬 Abrir Ferramentas Avançadas
-                <Badge variant="secondary" className="ml-3 bg-yellow-300 text-purple-800 font-bold">
-                  PRO
+                📸 Upload WebP Inteligente
+                <Badge variant="secondary" className="ml-3 bg-yellow-300 text-blue-800 font-bold">
+                  AUTO
                 </Badge>
               </Button>
               
-              <p className="text-sm text-purple-600 mt-3 text-center">
-                Upload múltiplo, edição avançada e processamento ZIP automático
+              <p className="text-sm text-blue-600 mt-3 text-center">
+                Sistema simplificado que usa automaticamente os dados do caso
               </p>
             </div>
 
