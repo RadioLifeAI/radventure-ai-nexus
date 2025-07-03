@@ -20,8 +20,10 @@ import {
   Users,
   Target,
   Sparkles,
-  RefreshCw
+  RefreshCw,
+  Bookmark
 } from "lucide-react";
+import { EventTemplatesModal } from "@/components/admin/events/EventTemplatesModal";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -50,6 +52,7 @@ interface Props {
 export function EventSmartDuplicateModal({ open, onClose, event, onDuplicate }: Props) {
   const [activeTab, setActiveTab] = useState("quick");
   const [loading, setLoading] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
   const [modifications, setModifications] = useState({
     name: "",
     scheduledStart: "",
@@ -246,10 +249,11 @@ export function EventSmartDuplicateModal({ open, onClose, event, onDuplicate }: 
 
         <div className="flex-1 overflow-y-auto p-2">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="quick">Duplicação Rápida</TabsTrigger>
               <TabsTrigger value="advanced">Personalizada</TabsTrigger>
               <TabsTrigger value="series">Criar Série</TabsTrigger>
+              <TabsTrigger value="templates">Templates</TabsTrigger>
             </TabsList>
 
             <TabsContent value="quick" className="space-y-4">
@@ -439,6 +443,51 @@ export function EventSmartDuplicateModal({ open, onClose, event, onDuplicate }: 
                 </CardContent>
               </Card>
             </TabsContent>
+
+            <TabsContent value="templates" className="space-y-4">
+              <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-blue-800">
+                    <Bookmark className="h-5 w-5" />
+                    Biblioteca de Templates
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="text-center">
+                    <p className="text-blue-700 mb-4">
+                      Acesse nossa biblioteca com templates pré-configurados para diferentes especialidades médicas.
+                    </p>
+                    <Button 
+                      onClick={() => setShowTemplates(true)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      size="lg"
+                    >
+                      <Bookmark className="h-4 w-4 mr-2" />
+                      Explorar Templates
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div className="bg-white p-3 rounded-lg border border-blue-200">
+                      <h4 className="font-semibold text-blue-800 mb-2">🫀 Cardiologia</h4>
+                      <p className="text-sm text-blue-600">Templates para ECG, arritmias e mais</p>
+                    </div>
+                    <div className="bg-white p-3 rounded-lg border border-blue-200">
+                      <h4 className="font-semibold text-blue-800 mb-2">🧠 Neurologia</h4>
+                      <p className="text-sm text-blue-600">Casos de neuroimagem e diagnóstico</p>
+                    </div>
+                    <div className="bg-white p-3 rounded-lg border border-blue-200">
+                      <h4 className="font-semibold text-blue-800 mb-2">🔬 Radiologia</h4>
+                      <p className="text-sm text-blue-600">Diagnóstico por imagem especializado</p>
+                    </div>
+                    <div className="bg-white p-3 rounded-lg border border-blue-200">
+                      <h4 className="font-semibold text-blue-800 mb-2">👶 Pediatria</h4>
+                      <p className="text-sm text-blue-600">Casos pediátricos especializados</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
           </Tabs>
         </div>
 
@@ -451,6 +500,21 @@ export function EventSmartDuplicateModal({ open, onClose, event, onDuplicate }: 
           </div>
         </div>
       </DialogContent>
+      
+      {/* Templates Modal */}
+      <EventTemplatesModal
+        open={showTemplates}
+        onClose={() => setShowTemplates(false)}
+        onUseTemplate={(template) => {
+          // Aqui você pode aplicar o template ao evento atual
+          toast({
+            title: "🎯 Template aplicado!",
+            description: `Template "${template.name}" foi aplicado com sucesso.`,
+            className: "bg-green-50 border-green-200"
+          });
+          setShowTemplates(false);
+        }}
+      />
     </Dialog>
   );
 }

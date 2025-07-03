@@ -25,6 +25,7 @@ import {
   Download,
   Zap
 } from "lucide-react";
+import { ParticipantDashboardModal } from "@/components/admin/events/ParticipantDashboardModal";
 
 interface Event {
   id: string;
@@ -61,6 +62,7 @@ export function EventRichViewModal({
   onStart
 }: Props) {
   const [activeTab, setActiveTab] = useState("overview");
+  const [showParticipantDashboard, setShowParticipantDashboard] = useState(false);
 
   if (!event) return null;
 
@@ -246,12 +248,29 @@ export function EventRichViewModal({
             <TabsContent value="participants" className="space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Participantes do Evento</CardTitle>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>Participantes do Evento</span>
+                    <Button size="sm" onClick={() => setShowParticipantDashboard(true)}>
+                      <Users className="h-4 w-4 mr-1" />
+                      Dashboard Avançado
+                    </Button>
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center py-8 text-gray-500">
-                    <Users className="h-12 w-12 mx-auto mb-2" />
-                    <p>Sistema de participantes será implementado em breve</p>
+                  <div className="text-center py-8">
+                    <div className="bg-blue-50 p-6 rounded-lg">
+                      <Users className="h-12 w-12 mx-auto mb-4 text-blue-500" />
+                      <h3 className="text-lg font-semibold text-blue-800 mb-2">
+                        Dashboard de Participantes Disponível
+                      </h3>
+                      <p className="text-blue-600 mb-4">
+                        Acesse ferramentas avançadas para gerenciar participantes, enviar comunicações e analisar dados demográficos.
+                      </p>
+                      <Button onClick={() => setShowParticipantDashboard(true)}>
+                        <Users className="h-4 w-4 mr-1" />
+                        Abrir Dashboard
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -342,6 +361,16 @@ export function EventRichViewModal({
           </div>
         </div>
       </DialogContent>
+      
+      {/* Participant Dashboard Modal */}
+      {event && (
+        <ParticipantDashboardModal
+          open={showParticipantDashboard}
+          onClose={() => setShowParticipantDashboard(false)}
+          eventId={event.id}
+          eventName={event.name}
+        />
+      )}
     </Dialog>
   );
 }
