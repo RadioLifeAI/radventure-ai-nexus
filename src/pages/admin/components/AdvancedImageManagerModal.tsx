@@ -6,12 +6,14 @@ import {
   DialogTitle,
   DialogHeader,
 } from "@/components/ui/dialog";
-import { CaseImageUploader } from "./CaseImageUploader";
+import { AdvancedUploadTabSpecialized } from "@/components/admin/AdvancedUploadTabSpecialized";
 
 interface AdvancedImageManagerModalProps {
   open: boolean;
   onClose: () => void;
   caseId?: string;
+  categoryId?: number;
+  modality?: string;
   currentImages?: string[];
   onImagesUpdated: (images: string[]) => void;
 }
@@ -20,6 +22,8 @@ export function AdvancedImageManagerModal({
   open,
   onClose,
   caseId,
+  categoryId,
+  modality,
   currentImages = [],
   onImagesUpdated
 }: AdvancedImageManagerModalProps) {
@@ -57,11 +61,13 @@ export function AdvancedImageManagerModal({
         </DialogHeader>
         
         <div className="space-y-4">
-          <CaseImageUploader
+          <AdvancedUploadTabSpecialized
             caseId={caseId}
-            onUploadComplete={() => {
-              // A sincronização automática via trigger cuidará da atualização
-              onImagesUpdated([]); // Forçar reload no componente pai
+            categoryId={categoryId}
+            modality={modality}
+            onImagesChange={(images) => {
+              // Forçar reload no componente pai quando imagens são processadas
+              onImagesUpdated(images?.map(img => img.original_url) || []);
             }}
           />
         </div>
