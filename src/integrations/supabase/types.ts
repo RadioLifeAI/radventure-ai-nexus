@@ -350,7 +350,7 @@ export type Database = {
       case_images: {
         Row: {
           bucket_path: string | null
-          case_id: string | null
+          case_id: string
           created_at: string | null
           dimensions: Json | null
           file_size_bytes: number | null
@@ -373,7 +373,7 @@ export type Database = {
         }
         Insert: {
           bucket_path?: string | null
-          case_id?: string | null
+          case_id: string
           created_at?: string | null
           dimensions?: Json | null
           file_size_bytes?: number | null
@@ -396,7 +396,7 @@ export type Database = {
         }
         Update: {
           bucket_path?: string | null
-          case_id?: string | null
+          case_id?: string
           created_at?: string | null
           dimensions?: Json | null
           file_size_bytes?: number | null
