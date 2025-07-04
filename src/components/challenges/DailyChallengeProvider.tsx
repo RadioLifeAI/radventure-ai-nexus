@@ -53,6 +53,12 @@ export function DailyChallengeProvider({ children }: Props) {
       <DailyChallengeModal
         open={dailyChallenge.showModal}
         onClose={dailyChallenge.closeModal}
+        challenge={dailyChallenge.challenge}
+        isLoading={dailyChallenge.isLoading}
+        hasAnswered={dailyChallenge.hasAnswered}
+        result={dailyChallenge.result}
+        onSubmitAnswer={dailyChallenge.submitAnswer}
+        getCommunityStats={dailyChallenge.getCommunityStats}
       />
     </DailyChallengeContext.Provider>
   );

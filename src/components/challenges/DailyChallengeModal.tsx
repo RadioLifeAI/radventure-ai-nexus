@@ -18,24 +18,51 @@ import {
   Brain,
   Sparkles
 } from "lucide-react";
-import { useDailyChallenge } from "@/hooks/useDailyChallenge";
 import { cn } from "@/lib/utils";
+
+interface DailyChallenge {
+  id: string;
+  question: string;
+  explanation: string;
+  community_stats: {
+    total_responses: number;
+    correct_responses: number;
+  };
+  challenge_date: string;
+}
+
+interface ChallengeResult {
+  was_correct: boolean;
+  correct_answer: boolean;
+  explanation: string;
+  community_stats: {
+    total_responses: number;
+    correct_responses: number;
+  };
+  radcoins_awarded: number;
+}
 
 interface Props {
   open: boolean;
   onClose: () => void;
+  challenge: DailyChallenge | null;
+  isLoading: boolean;
+  hasAnswered: boolean;
+  result: ChallengeResult | null;
+  onSubmitAnswer: (answer: boolean) => Promise<void>;
+  getCommunityStats: () => { correctPercentage: number; incorrectPercentage: number; totalResponses: number; } | null;
 }
 
-export function DailyChallengeModal({ open, onClose }: Props) {
-  const {
-    challenge,
-    isLoading,
-    hasAnswered,
-    result,
-    submitAnswer,
-    getCommunityStats
-  } = useDailyChallenge();
-
+export function DailyChallengeModal({ 
+  open, 
+  onClose, 
+  challenge, 
+  isLoading, 
+  hasAnswered, 
+  result, 
+  onSubmitAnswer, 
+  getCommunityStats 
+}: Props) {
   const [selectedAnswer, setSelectedAnswer] = useState<boolean | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
 
@@ -55,7 +82,7 @@ export function DailyChallengeModal({ open, onClose }: Props) {
   const handleSubmit = async () => {
     if (selectedAnswer === null || hasAnswered) return;
     
-    await submitAnswer(selectedAnswer);
+    await onSubmitAnswer(selectedAnswer);
     
     if (result?.was_correct) {
       setShowConfetti(true);
