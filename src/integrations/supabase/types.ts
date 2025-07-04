@@ -2141,6 +2141,10 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: Json
       }
+      get_daily_challenge_for_user_debug: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
       get_system_status: {
         Args: Record<PropertyKey, never>
         Returns: Json
