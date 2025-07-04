@@ -19,8 +19,8 @@ export function DailyChallengeManagement() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Controle de Desafios Diários</h1>
-          <p className="text-gray-600 mt-1">Gerencie prompts, questões e agendamento automático</p>
+          <h1 className="text-3xl font-bold">Controle de Desafios Diários</h1>
+          <p className="text-muted-foreground mt-1">Gerencie prompts, questões e agendamento automático</p>
         </div>
         <Badge variant="secondary" className="px-3 py-1">
           Sistema Ativo
