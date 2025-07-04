@@ -43,9 +43,55 @@ export function useUserStats() {
         throw new Error('No user ID');
       }
 
-      console.log('📊 Buscando estatísticas reais do usuário:', user.id);
+      console.log('📊 Buscando estatísticas otimizadas do usuário:', user.id);
 
-      // Buscar histórico de casos
+      // OTIMIZAÇÃO: Primeiro tentar buscar do cache
+      const { data: cachedStats } = await supabase
+        .from('user_stats_cache')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      // Se cache existe e é recente (< 1 hora), usar cache
+      if (cachedStats && 
+          new Date(cachedStats.cache_updated_at) > new Date(Date.now() - 60 * 60 * 1000)) {
+        console.log('✅ Usando estatísticas em cache (otimizado)');
+        
+        // Buscar apenas dados complementares necessários
+        const { data: radcoinHistory } = await supabase
+          .from('radcoin_transactions_log')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        return {
+          totalCases: cachedStats.total_cases,
+          correctAnswers: cachedStats.correct_answers,
+          accuracy: cachedStats.accuracy_percentage,
+          totalPoints: cachedStats.total_points,
+          currentStreak: cachedStats.current_streak,
+          specialtyStats: (cachedStats.specialty_stats as Record<string, {
+            total: number;
+            correct: number; 
+            accuracy: number;
+            points: number;
+          }>) || {},
+          weeklyProgress: [],
+          achievements: [],
+          radcoinHistory: radcoinHistory?.map(tx => ({
+            date: tx.created_at,
+            amount: tx.amount,
+            type: tx.tx_type,
+            balance: tx.balance_after
+          })) || []
+        };
+      }
+
+      // Cache não existe ou expirou - buscar dados completos
+      console.log('🔄 Cache expirado, buscando dados completos...');
+      
+      // Buscar histórico de casos (com índice otimizado)
       const { data: caseHistory, error: caseError } = await supabase
         .from('user_case_history')
         .select(`

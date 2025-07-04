@@ -40,7 +40,70 @@ export function useUserAnalytics() {
     queryFn: async (): Promise<UserAnalytics> => {
       if (!user?.id) throw new Error('User not authenticated');
 
-      console.log('📊 Buscando analytics reais para usuário:', user.id);
+      console.log('📊 Buscando analytics otimizados para usuário:', user.id);
+
+      // OTIMIZAÇÃO: Primeiro tentar buscar do cache
+      const { data: cachedStats } = await supabase
+        .from('user_stats_cache')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      // Se cache existe e é recente (< 30 minutos), usar dados otimizados
+      if (cachedStats && 
+          new Date(cachedStats.cache_updated_at) > new Date(Date.now() - 30 * 60 * 1000)) {
+        console.log('✅ Usando analytics em cache (performance otimizada)');
+        
+        // Buscar apenas dados dinâmicos necessários
+        const [eventData, rankingsData, profileData] = await Promise.all([
+          supabase.from('event_registrations')
+            .select('*, events (name, status)')
+            .eq('user_id', user.id),
+          supabase.from('event_rankings')
+            .select('rank, score')
+            .eq('user_id', user.id),
+          supabase.from('profiles')
+            .select('current_streak')
+            .eq('id', user.id)
+            .single()
+        ]);
+
+        // Calcular participação em eventos
+        const eventParticipation = {
+          total: eventData.data?.length || 0,
+          completed: eventData.data?.filter(e => e.events?.status === 'FINISHED').length || 0,
+          averageRank: 0
+        };
+
+        if (rankingsData.data && rankingsData.data.length > 0) {
+          eventParticipation.averageRank = rankingsData.data.reduce((sum, r) => 
+            sum + (r.rank || 0), 0) / rankingsData.data.length;
+        }
+
+        return {
+          totalCases: cachedStats.total_cases,
+          correctAnswers: cachedStats.correct_answers,
+          accuracy: cachedStats.accuracy_percentage,
+          averagePoints: cachedStats.total_cases > 0 ? cachedStats.total_points / cachedStats.total_cases : 0,
+          specialtyPerformance: (cachedStats.specialty_stats as Record<string, {
+            cases: number;
+            correct: number;
+            accuracy: number;
+            points: number;
+          }>) || {},
+          weeklyActivity: {}, // Calculado dinamicamente se necessário
+          monthlyTrends: {}, // Calculado dinamicamente se necessário
+          streakData: {
+            current: profileData.data?.current_streak || 0,
+            longest: profileData.data?.current_streak || 0,
+            lastActivity: cachedStats.last_activity || ''
+          },
+          eventParticipation
+        };
+      }
+
+      // Cache não existe ou expirado - buscar dados completos
+      console.log('🔄 Cache de analytics expirado, buscando dados completos...');
 
       // Buscar histórico de casos (dados reais)
       const { data: caseHistory, error: caseError } = await supabase

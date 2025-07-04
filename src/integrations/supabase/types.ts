@@ -843,6 +843,36 @@ export type Database = {
           },
         ]
       }
+      event_stats_cache: {
+        Row: {
+          average_score: number | null
+          cache_updated_at: string | null
+          completion_rate: number | null
+          event_id: string
+          performance_distribution: Json | null
+          top_performers: Json | null
+          total_participants: number | null
+        }
+        Insert: {
+          average_score?: number | null
+          cache_updated_at?: string | null
+          completion_rate?: number | null
+          event_id: string
+          performance_distribution?: Json | null
+          top_performers?: Json | null
+          total_participants?: number | null
+        }
+        Update: {
+          average_score?: number | null
+          cache_updated_at?: string | null
+          completion_rate?: number | null
+          event_id?: string
+          performance_distribution?: Json | null
+          top_performers?: Json | null
+          total_participants?: number | null
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           auto_start: boolean | null
@@ -1639,7 +1669,247 @@ export type Database = {
         }
         Relationships: []
       }
+      radcoin_transactions_2024_07: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string
+          id: string
+          metadata: Json | null
+          tx_type: Database["public"]["Enums"]["radcoin_tx_type"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          tx_type: Database["public"]["Enums"]["radcoin_tx_type"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          tx_type?: Database["public"]["Enums"]["radcoin_tx_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      radcoin_transactions_2024_08: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string
+          id: string
+          metadata: Json | null
+          tx_type: Database["public"]["Enums"]["radcoin_tx_type"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          tx_type: Database["public"]["Enums"]["radcoin_tx_type"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          tx_type?: Database["public"]["Enums"]["radcoin_tx_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      radcoin_transactions_2024_09: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string
+          id: string
+          metadata: Json | null
+          tx_type: Database["public"]["Enums"]["radcoin_tx_type"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          tx_type: Database["public"]["Enums"]["radcoin_tx_type"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          tx_type?: Database["public"]["Enums"]["radcoin_tx_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      radcoin_transactions_2024_10: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string
+          id: string
+          metadata: Json | null
+          tx_type: Database["public"]["Enums"]["radcoin_tx_type"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          tx_type: Database["public"]["Enums"]["radcoin_tx_type"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          tx_type?: Database["public"]["Enums"]["radcoin_tx_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      radcoin_transactions_2024_11: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string
+          id: string
+          metadata: Json | null
+          tx_type: Database["public"]["Enums"]["radcoin_tx_type"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          tx_type: Database["public"]["Enums"]["radcoin_tx_type"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          tx_type?: Database["public"]["Enums"]["radcoin_tx_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      radcoin_transactions_2024_12: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string
+          id: string
+          metadata: Json | null
+          tx_type: Database["public"]["Enums"]["radcoin_tx_type"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          tx_type: Database["public"]["Enums"]["radcoin_tx_type"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          tx_type?: Database["public"]["Enums"]["radcoin_tx_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      radcoin_transactions_2025_01: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string
+          id: string
+          metadata: Json | null
+          tx_type: Database["public"]["Enums"]["radcoin_tx_type"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          tx_type: Database["public"]["Enums"]["radcoin_tx_type"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          tx_type?: Database["public"]["Enums"]["radcoin_tx_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       radcoin_transactions_log: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string
+          id: string
+          metadata: Json | null
+          tx_type: Database["public"]["Enums"]["radcoin_tx_type"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          tx_type: Database["public"]["Enums"]["radcoin_tx_type"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          tx_type?: Database["public"]["Enums"]["radcoin_tx_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      radcoin_transactions_partitioned: {
         Row: {
           amount: number
           balance_after: number
@@ -1802,6 +2072,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      system_metrics: {
+        Row: {
+          id: string
+          metric_metadata: Json | null
+          metric_type: string
+          metric_value: number
+          recorded_at: string | null
+        }
+        Insert: {
+          id?: string
+          metric_metadata?: Json | null
+          metric_type: string
+          metric_value: number
+          recorded_at?: string | null
+        }
+        Update: {
+          id?: string
+          metric_metadata?: Json | null
+          metric_type?: string
+          metric_value?: number
+          recorded_at?: string | null
+        }
+        Relationships: []
       }
       system_settings: {
         Row: {
@@ -2281,6 +2575,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_stats_cache: {
+        Row: {
+          accuracy_percentage: number | null
+          cache_updated_at: string | null
+          correct_answers: number | null
+          current_streak: number | null
+          last_activity: string | null
+          radcoin_balance: number | null
+          specialty_stats: Json | null
+          total_cases: number | null
+          total_points: number | null
+          user_id: string
+        }
+        Insert: {
+          accuracy_percentage?: number | null
+          cache_updated_at?: string | null
+          correct_answers?: number | null
+          current_streak?: number | null
+          last_activity?: string | null
+          radcoin_balance?: number | null
+          specialty_stats?: Json | null
+          total_cases?: number | null
+          total_points?: number | null
+          user_id: string
+        }
+        Update: {
+          accuracy_percentage?: number | null
+          cache_updated_at?: string | null
+          correct_answers?: number | null
+          current_streak?: number | null
+          last_activity?: string | null
+          radcoin_balance?: number | null
+          specialty_stats?: Json | null
+          total_cases?: number | null
+          total_points?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_titles: {
         Row: {
           id: string
@@ -2374,6 +2707,10 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: number
       }
+      cleanup_old_data: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       cleanup_old_notifications: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -2419,6 +2756,10 @@ export type Database = {
           p_user_filter?: Json
         }
         Returns: number
+      }
+      create_monthly_partitions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       create_user_with_auth: {
         Args: {
@@ -2510,6 +2851,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      optimize_database_performance: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       process_case_completion: {
         Args: {
           p_user_id: string
@@ -2542,6 +2887,10 @@ export type Database = {
       refill_daily_help_aids: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      refresh_user_stats_cache: {
+        Args: { p_user_id: string }
+        Returns: undefined
       }
       setup_dev_admin: {
         Args: Record<PropertyKey, never>
