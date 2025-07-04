@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { PromptControlManager } from './daily-challenge/PromptControlManager';
-import { QuestionGeneratorEnhanced } from './daily-challenge/QuestionGeneratorEnhanced';
+import { QuestionGenerator } from './daily-challenge/QuestionGenerator';
 import { PublishingScheduler } from './daily-challenge/PublishingScheduler';
 import { ChallengeAnalytics } from './daily-challenge/ChallengeAnalytics';
 import { QuestionHistory } from './daily-challenge/QuestionHistory';
@@ -130,7 +130,7 @@ export function DailyChallengeManagement() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <QuestionGeneratorEnhanced />
+              <QuestionGenerator />
             </CardContent>
           </Card>
         </TabsContent>
