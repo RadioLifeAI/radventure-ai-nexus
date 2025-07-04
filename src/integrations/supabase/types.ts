@@ -499,6 +499,113 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_quiz_questions: {
+        Row: {
+          ai_confidence: number | null
+          correct_answer: boolean
+          created_at: string | null
+          explanation: string
+          generated_by_ai: boolean | null
+          id: string
+          metadata: Json | null
+          prompt_control_id: string | null
+          published_date: string | null
+          question: string
+          reviewed_by: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ai_confidence?: number | null
+          correct_answer: boolean
+          created_at?: string | null
+          explanation: string
+          generated_by_ai?: boolean | null
+          id?: string
+          metadata?: Json | null
+          prompt_control_id?: string | null
+          published_date?: string | null
+          question: string
+          reviewed_by?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ai_confidence?: number | null
+          correct_answer?: boolean
+          created_at?: string | null
+          explanation?: string
+          generated_by_ai?: boolean | null
+          id?: string
+          metadata?: Json | null
+          prompt_control_id?: string | null
+          published_date?: string | null
+          question?: string
+          reviewed_by?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_quiz_questions_prompt_control_id_fkey"
+            columns: ["prompt_control_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_prompt_controls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_quiz_user_log: {
+        Row: {
+          answered_at: string | null
+          challenge_id: string | null
+          device_info: Json | null
+          id: string
+          is_correct: boolean
+          question_id: string | null
+          time_spent_seconds: number | null
+          user_answer: boolean
+          user_id: string
+        }
+        Insert: {
+          answered_at?: string | null
+          challenge_id?: string | null
+          device_info?: Json | null
+          id?: string
+          is_correct: boolean
+          question_id?: string | null
+          time_spent_seconds?: number | null
+          user_answer: boolean
+          user_id: string
+        }
+        Update: {
+          answered_at?: string | null
+          challenge_id?: string | null
+          device_info?: Json | null
+          id?: string
+          is_correct?: boolean
+          question_id?: string | null
+          time_spent_seconds?: number | null
+          user_answer?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_quiz_user_log_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "daily_challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_quiz_user_log_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "daily_quiz_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       difficulties: {
         Row: {
           description: string | null
@@ -1211,6 +1318,51 @@ export type Database = {
           updated_at?: string
           user_level?: number | null
           username?: string | null
+        }
+        Relationships: []
+      }
+      quiz_prompt_controls: {
+        Row: {
+          category: string
+          created_at: string | null
+          created_by: string
+          difficulty: string
+          id: string
+          is_active: boolean | null
+          modality: string
+          name: string
+          prompt_template: string
+          success_rate: number | null
+          updated_at: string | null
+          usage_count: number | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          created_by: string
+          difficulty: string
+          id?: string
+          is_active?: boolean | null
+          modality: string
+          name: string
+          prompt_template: string
+          success_rate?: number | null
+          updated_at?: string | null
+          usage_count?: number | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          created_by?: string
+          difficulty?: string
+          id?: string
+          is_active?: boolean | null
+          modality?: string
+          name?: string
+          prompt_template?: string
+          success_rate?: number | null
+          updated_at?: string | null
+          usage_count?: number | null
         }
         Relationships: []
       }
@@ -2129,6 +2281,10 @@ export type Database = {
       get_case_images_unified: {
         Args: { p_case_id: string }
         Returns: Json[]
+      }
+      get_challenge_analytics: {
+        Args: { p_date_from?: string; p_date_to?: string }
+        Returns: Json
       }
       get_daily_challenge_for_user: {
         Args: { p_user_id: string }
