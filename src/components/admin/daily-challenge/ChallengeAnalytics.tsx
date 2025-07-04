@@ -42,7 +42,7 @@ export function ChallengeAnalytics() {
       });
 
       if (error) throw error;
-      setAnalytics(data as AnalyticsData);
+      setAnalytics(data?.[0] as AnalyticsData || null);
     } catch (error) {
       console.error('Erro ao carregar analytics:', error);
     } finally {

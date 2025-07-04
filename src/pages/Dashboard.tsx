@@ -43,13 +43,6 @@ export default function Dashboard() {
   const isLoading = dashboardLoading || progressLoading;
   const [isChatOpen, setIsChatOpen] = useState(false);
 
-  // Função de teste para forçar verificação do desafio
-  const handleTestDailyChallenge = () => {
-    if (profile?.id) {
-      console.log('🧪 TESTE: Forçando verificação do desafio diário');
-      checkDailyChallenge(profile.id);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -66,17 +59,6 @@ export default function Dashboard() {
     <div className="min-h-screen w-full overflow-x-hidden flex flex-col bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white">
       <HeaderNav />
       <main className="flex-1 w-full flex flex-col gap-4 px-2 md:px-4 lg:px-8 xl:px-16 pt-4 pb-10 overflow-x-hidden">
-        {/* BOTÃO DE TESTE TEMPORÁRIO */}
-        <div className="flex justify-center">
-          <Button 
-            onClick={handleTestDailyChallenge}
-            variant="outline"
-            className="bg-yellow-500/20 border-yellow-500 text-yellow-200 hover:bg-yellow-500/30"
-          >
-            🧪 TESTE: Abrir Desafio Diário
-          </Button>
-        </div>
-        
         <UserProfile />
         <EventsSectionPlayer onEnterEvent={handleEnterEvent} />
         
