@@ -2,3 +2,6 @@ project_id = "zyrbkxkxdznyhrpudhrk"
 
 [functions.generate-daily-challenge]
 verify_jwt = false
+
+[functions.image-processor-event-banner]
+verify_jwt = false
