@@ -17,6 +17,7 @@ import CasoUsuarioView from "./pages/CasoUsuarioView";
 import EventosEnhanced from "./pages/EventosEnhanced";
 import EventoDetalhes from "./pages/EventoDetalhes";
 import EventRankingsEnhanced from "./pages/EventRankingsEnhanced";
+import EventoArena from "./pages/EventoArena";
 import Rankings from "./pages/Rankings";
 import Estatisticas from "./pages/Estatisticas";
 import AdminPanel from "./pages/AdminPanel";
@@ -109,6 +110,14 @@ function App() {
               element={
                 <ProtectedRouteRedirect>
                   <EventoDetalhes />
+                </ProtectedRouteRedirect>
+              } 
+            />
+            <Route 
+              path="/app/evento/:id/arena" 
+              element={
+                <ProtectedRouteRedirect>
+                  <EventoArena />
                 </ProtectedRouteRedirect>
               } 
             />

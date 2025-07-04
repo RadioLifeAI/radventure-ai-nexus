@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trophy, Clock, Target, Users, Zap } from "lucide-react";
+import { Trophy, Clock, Target, Users, Zap, Play } from "lucide-react";
 import { EventRankingData } from "@/hooks/useEventRankingsEnhanced";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -13,6 +14,7 @@ interface ActiveEventTrackerProps {
 }
 
 export function ActiveEventTracker({ rankings, loading }: ActiveEventTrackerProps) {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [timeLeft, setTimeLeft] = useState<Record<string, string>>({});
 
@@ -214,7 +216,9 @@ export function ActiveEventTracker({ rankings, loading }: ActiveEventTrackerProp
                 <Button 
                   size="sm" 
                   className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                  onClick={() => navigate(`/app/evento/${event.id}/arena`)}
                 >
+                  <Play className="h-4 w-4 mr-2" />
                   Entrar no Evento
                 </Button>
                 <Button variant="outline" size="sm">

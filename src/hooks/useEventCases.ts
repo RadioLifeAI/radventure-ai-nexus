@@ -1,0 +1,164 @@
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "./useAuth";
+
+export interface EventCase {
+  id: string;
+  title: string;
+  description: string;
+  specialty: string;
+  modality: string;
+  difficulty_level: number;
+  points: number;
+  image_url: any[];
+  main_question: string;
+  answer_options: string[];
+  correct_answer_index: number;
+  explanation: string;
+  answer_feedbacks: string[];
+  findings: string;
+  patient_clinical_info: string;
+}
+
+export function useEventCases(eventId: string) {
+  const { user } = useAuth();
+  const [cases, setCases] = useState<EventCase[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!eventId || !user) return;
+
+    const fetchEventCases = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // 1. Buscar configuração do evento
+        const { data: event, error: eventError } = await supabase
+          .from("events")
+          .select("*")
+          .eq("id", eventId)
+          .single();
+
+        if (eventError) throw eventError;
+
+        // 2. Verificar se há casos já associados na tabela event_cases
+        const { data: eventCases, error: eventCasesError } = await supabase
+          .from("event_cases")
+          .select(`
+            case_id,
+            sequence,
+            medical_cases!inner(*)
+          `)
+          .eq("event_id", eventId)
+          .order("sequence", { ascending: true });
+
+        if (eventCasesError) throw eventCasesError;
+
+        let casesToUse: any[] = [];
+
+        if (eventCases && eventCases.length > 0) {
+          // Usar casos já associados
+          casesToUse = eventCases.map(ec => ec.medical_cases);
+        } else {
+          // Buscar casos baseado nos filtros do evento
+          let query = supabase
+            .from("medical_cases")
+            .select("*");
+
+          // Aplicar filtros se existirem
+          if (event.case_filters) {
+            const filters = event.case_filters as any;
+
+            if (filters.specialty && filters.specialty.length > 0) {
+              query = query.in("specialty", filters.specialty);
+            }
+
+            if (filters.modality && filters.modality.length > 0) {
+              query = query.in("modality", filters.modality);
+            }
+
+            if (filters.difficulty_level) {
+              if (filters.difficulty_level.min) {
+                query = query.gte("difficulty_level", filters.difficulty_level.min);
+              }
+              if (filters.difficulty_level.max) {
+                query = query.lte("difficulty_level", filters.difficulty_level.max);
+              }
+            }
+          }
+
+          // Limitar quantidade se especificado
+          if (event.number_of_cases && event.number_of_cases > 0) {
+            query = query.limit(event.number_of_cases);
+          }
+
+          const { data: filteredCases, error: casesError } = await query;
+          if (casesError) throw casesError;
+
+          casesToUse = filteredCases || [];
+
+          // Embaralhar casos para cada usuário (usando user.id como seed)
+          const userSeed = user.id;
+          casesToUse = shuffleArray(casesToUse, userSeed);
+        }
+
+        // Formatar casos para uso na arena
+        const formattedCases: EventCase[] = casesToUse.map(case_ => ({
+          id: case_.id,
+          title: case_.title || "Caso Médico",
+          description: case_.description || "",
+          specialty: case_.specialty || "",
+          modality: case_.modality || "",
+          difficulty_level: case_.difficulty_level || 1,
+          points: case_.points || 10,
+          image_url: case_.image_url || [],
+          main_question: case_.main_question || "",
+          answer_options: case_.answer_options || [],
+          correct_answer_index: case_.correct_answer_index || 0,
+          explanation: case_.explanation || "",
+          answer_feedbacks: case_.answer_feedbacks || [],
+          findings: case_.findings || "",
+          patient_clinical_info: case_.patient_clinical_info || ""
+        }));
+
+        setCases(formattedCases);
+      } catch (err: any) {
+        console.error("Erro ao buscar casos do evento:", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEventCases();
+  }, [eventId, user]);
+
+  return { cases, loading, error, refetch: () => window.location.reload() };
+}
+
+// Função para embaralhar array baseado em seed (determinística)
+function shuffleArray<T>(array: T[], seed: string): T[] {
+  const arr = [...array];
+  let hash = 0;
+  
+  for (let i = 0; i < seed.length; i++) {
+    const char = seed.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  
+  // Simple seeded random
+  const random = () => {
+    hash = (hash * 9301 + 49297) % 233280;
+    return hash / 233280;
+  };
+  
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  
+  return arr;
+}

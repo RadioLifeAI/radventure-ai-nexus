@@ -2407,6 +2407,60 @@ export type Database = {
           },
         ]
       }
+      user_event_progress: {
+        Row: {
+          cases_completed: number
+          cases_correct: number
+          completed_at: string | null
+          created_at: string
+          current_case_index: number
+          current_score: number
+          event_id: string
+          id: string
+          last_activity_at: string
+          metadata: Json | null
+          started_at: string
+          status: string
+          time_spent_seconds: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cases_completed?: number
+          cases_correct?: number
+          completed_at?: string | null
+          created_at?: string
+          current_case_index?: number
+          current_score?: number
+          event_id: string
+          id?: string
+          last_activity_at?: string
+          metadata?: Json | null
+          started_at?: string
+          status?: string
+          time_spent_seconds?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cases_completed?: number
+          cases_correct?: number
+          completed_at?: string | null
+          created_at?: string
+          current_case_index?: number
+          current_score?: number
+          event_id?: string
+          id?: string
+          last_activity_at?: string
+          metadata?: Json | null
+          started_at?: string
+          status?: string
+          time_spent_seconds?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_help_aids: {
         Row: {
           ai_tutor_credits: number
@@ -2908,6 +2962,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      start_event_participation: {
+        Args: { p_event_id: string }
+        Returns: Json
+      }
       submit_daily_challenge: {
         Args: {
           p_user_id: string
@@ -2940,6 +2998,15 @@ export type Database = {
       system_cleanup_maintenance: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      update_event_progress: {
+        Args: {
+          p_event_id: string
+          p_case_correct: boolean
+          p_points_earned?: number
+          p_time_spent?: number
+        }
+        Returns: Json
       }
       validate_points_system: {
         Args: Record<PropertyKey, never>
