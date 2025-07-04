@@ -2443,6 +2443,7 @@ export type Database = {
         | "ai_chat_usage"
         | "store_purchase"
         | "store_welcome_bonus"
+        | "daily_challenge"
       subscription_tier: "Free" | "Pro" | "Plus"
     }
     CompositeTypes: {
@@ -2581,6 +2582,7 @@ export const Constants = {
         "ai_chat_usage",
         "store_purchase",
         "store_welcome_bonus",
+        "daily_challenge",
       ],
       subscription_tier: ["Free", "Pro", "Plus"],
     },
