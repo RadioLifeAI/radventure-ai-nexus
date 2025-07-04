@@ -347,6 +347,30 @@ export type Database = {
           },
         ]
       }
+      automation_logs: {
+        Row: {
+          created_at: string | null
+          details: Json | null
+          id: string
+          operation_type: string
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          operation_type: string
+          status: string
+        }
+        Update: {
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          operation_type?: string
+          status?: string
+        }
+        Relationships: []
+      }
       case_images: {
         Row: {
           bucket_path: string | null
@@ -2178,6 +2202,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      auto_publish_daily_challenge: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      auto_schedule_daily_questions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       award_daily_login_bonus: {
         Args: { p_user_id: string }
         Returns: Json
@@ -2324,6 +2356,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_automation: {
+        Args: { p_operation_type: string; p_status: string; p_details?: Json }
+        Returns: undefined
+      }
       log_signup_event: {
         Args: {
           p_user_id: string
@@ -2331,6 +2367,10 @@ export type Database = {
           p_event_data?: Json
           p_error_message?: string
         }
+        Returns: undefined
+      }
+      maintain_question_pool: {
+        Args: Record<PropertyKey, never>
         Returns: undefined
       }
       process_case_completion: {

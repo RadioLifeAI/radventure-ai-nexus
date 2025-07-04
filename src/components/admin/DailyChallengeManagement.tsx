@@ -5,6 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { QuestionGeneratorSimplified } from './daily-challenge/QuestionGeneratorSimplified';
 import { AutomationDashboard } from './daily-challenge/AutomationDashboard';
+import { AutomationControlCenter } from './daily-challenge/AutomationControlCenter';
+import { AutomationNotifications } from './daily-challenge/AutomationNotifications';
 import { PublishingScheduler } from './daily-challenge/PublishingScheduler';
 import { ChallengeAnalytics } from './daily-challenge/ChallengeAnalytics';
 import { QuestionHistory } from './daily-challenge/QuestionHistory';
@@ -12,7 +14,7 @@ import { useDailyChallengeStats } from '@/hooks/useDailyChallengeStats';
 import { Bot, Zap, Calendar, BarChart3, History, Loader2 } from 'lucide-react';
 
 export function DailyChallengeManagement() {
-  const [activeTab, setActiveTab] = useState('generator');
+  const [activeTab, setActiveTab] = useState('automation');
   const { stats, isLoading } = useDailyChallengeStats();
 
   return (
@@ -90,14 +92,18 @@ export function DailyChallengeManagement() {
 
       {/* Tabs Simplificadas */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="automation" className="flex items-center gap-2">
+            <Bot className="h-4 w-4" />
+            Controle Auto
+          </TabsTrigger>
           <TabsTrigger value="generator" className="flex items-center gap-2">
             <Zap className="h-4 w-4" />
             Gerador
           </TabsTrigger>
-          <TabsTrigger value="automation" className="flex items-center gap-2">
+          <TabsTrigger value="dashboard" className="flex items-center gap-2">
             <Bot className="h-4 w-4" />
-            Automação
+            Dashboard
           </TabsTrigger>
           <TabsTrigger value="scheduler" className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
@@ -128,11 +134,32 @@ export function DailyChallengeManagement() {
         </TabsContent>
 
         <TabsContent value="automation" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>🤖 Central de Controle da Automação</CardTitle>
+                  <CardDescription>
+                    Sistema 100% automatizado - Gera, agenda e publica questões diariamente
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <AutomationControlCenter />
+                </CardContent>
+              </Card>
+            </div>
+            <div className="lg:col-span-1">
+              <AutomationNotifications />
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="dashboard" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Dashboard de Automação</CardTitle>
               <CardDescription>
-                Monitoramento e controle do sistema automatizado
+                Monitoramento e métricas do sistema automatizado
               </CardDescription>
             </CardHeader>
             <CardContent>
