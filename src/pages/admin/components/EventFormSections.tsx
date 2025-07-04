@@ -11,9 +11,10 @@ interface BasicInfoSectionProps {
   setDescription: (value: string) => void;
   bannerUrl: string;
   setBannerUrl: (value: string) => void;
+  eventId?: string; // Para permitir upload do banner
 }
 
-export function BasicInfoSection({ name, setName, description, setDescription, bannerUrl, setBannerUrl }: BasicInfoSectionProps) {
+export function BasicInfoSection({ name, setName, description, setDescription, bannerUrl, setBannerUrl, eventId }: BasicInfoSectionProps) {
   return (
     <CaseFormGamifiedLayout
       section="basic"
@@ -51,7 +52,15 @@ export function BasicInfoSection({ name, setName, description, setDescription, b
           <label className="block text-sm font-medium text-blue-700 mb-2">
             🖼️ Banner do evento
           </label>
-          <EventBannerUpload value={bannerUrl} onChange={setBannerUrl} />
+          {eventId ? (
+            <EventBannerUpload value={bannerUrl} onChange={setBannerUrl} eventId={eventId} />
+          ) : (
+            <div className="text-center p-4 border-2 border-dashed border-gray-300 rounded-lg">
+              <p className="text-sm text-gray-500">
+                Banner será habilitado após salvar o evento
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </CaseFormGamifiedLayout>
