@@ -8,16 +8,47 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// PROMPT GLOBAL UNIFICADO - Sistema Inteligente
+const GLOBAL_PROMPT_TEMPLATE = `Você é um especialista em medicina que cria questões educativas de verdadeiro/falso para desafios diários.
+
+INSTRUÇÕES PARA GERAÇÃO:
+- Crie uma pergunta de VERDADEIRO/FALSO sobre medicina
+- Nível de dificuldade: {difficulty}
+- Especialidade: {category}
+- Modalidade de imagem: {modality}
+
+ESTRUTURA DA QUESTÃO:
+1. A pergunta deve ser clinicamente relevante e educativa
+2. Apropriada para estudantes de medicina
+3. Clara, objetiva e sem ambiguidades
+4. Focada em conceitos importantes da especialidade
+5. Use terminologia médica adequada ao nível
+
+FORMATO DE RESPOSTA (JSON apenas):
+{
+  "question": "Pergunta clara e objetiva de verdadeiro/falso",
+  "correct_answer": true/false,
+  "explanation": "Explicação educativa detalhada de 3-4 frases que ensine o conceito",
+  "confidence": 0.95
+}
+
+EXEMPLO:
+{
+  "question": "A radiografia de tórax em PA é o exame de primeira linha para avaliar pneumonia em pacientes adultos.",
+  "correct_answer": true,
+  "explanation": "A radiografia de tórax em PA (posteroanterior) é realmente o exame inicial de escolha para investigar pneumonia em adultos, pois permite identificar consolidações, infiltrados e outras alterações pulmonares com boa sensibilidade e especificidade. É um exame de baixo custo, amplamente disponível e com dose de radiação relativamente baixa.",
+  "confidence": 0.92
+}`;
+
 interface GenerateRequest {
-  promptControlId: string;
-  promptTemplate: string;
-  category: string;
-  difficulty: string;
-  modality: string;
+  mode?: 'manual' | 'auto';
+  category?: string;
+  difficulty?: string;
+  modality?: string;
 }
 
 serve(async (req) => {
-  console.log('🎯 Iniciando generate-daily-challenge...');
+  console.log('🎯 Generate Daily Challenge - Iniciando...');
   
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -29,54 +60,62 @@ serve(async (req) => {
       console.error('❌ OPENAI_API_KEY não configurada');
       return new Response(JSON.stringify({ 
         success: false,
-        error: 'OpenAI API Key não configurada. Configure em Supabase Edge Function Secrets.'
+        error: 'OpenAI API Key não configurada'
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    console.log('✅ OpenAI API Key encontrada');
-
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { promptControlId, promptTemplate, category, difficulty, modality }: GenerateRequest = await req.json();
+    const requestData: GenerateRequest = await req.json().catch(() => ({}));
+    const mode = requestData.mode || 'manual';
 
-    console.log('📝 Gerando questão:', { 
-      promptControlId, 
-      category, 
-      difficulty, 
-      modality,
-      templateLength: promptTemplate?.length || 0
-    });
+    console.log('📝 Modo de geração:', mode);
 
-    // Construir prompt específico
-    const systemPrompt = `Você é um especialista em medicina que cria perguntas de verdadeiro/falso para desafios diários educacionais.
+    // SELEÇÃO INTELIGENTE DE PARÂMETROS
+    let category = requestData.category;
+    let difficulty = requestData.difficulty;
+    let modality = requestData.modality;
 
-INSTRUÇÕES IMPORTANTES:
-- Crie uma pergunta VERDADEIRO/FALSO sobre ${category} com dificuldade ${difficulty} relacionada a ${modality}
-- A pergunta deve ser clara, objetiva e educativa
-- Forneça uma explicação detalhada que ensine o conceito
-- Retorne APENAS um JSON válido no formato especificado
-- NÃO inclua texto adicional antes ou depois do JSON
+    if (mode === 'auto' || !category) {
+      // Buscar especialidades disponíveis
+      const { data: specialties } = await supabase
+        .from('medical_specialties')
+        .select('name')
+        .limit(10);
 
-FORMATO DE RESPOSTA (JSON):
-{
-  "question": "Pergunta clara e objetiva de verdadeiro/falso",
-  "correct_answer": true/false,
-  "explanation": "Explicação detalhada educativa de 3-4 frases",
-  "confidence": 0.95
-}`;
+      // Seleção aleatória inteligente
+      const availableCategories = specialties?.map(s => s.name) || [
+        'Cardiologia', 'Pneumologia', 'Neurologia', 'Radiologia', 'Dermatologia'
+      ];
+      category = availableCategories[Math.floor(Math.random() * availableCategories.length)];
+    }
 
-    const userPrompt = promptTemplate.replace(/\{category\}/g, category)
-                                  .replace(/\{difficulty\}/g, difficulty)
-                                  .replace(/\{modality\}/g, modality);
+    if (mode === 'auto' || !difficulty) {
+      const difficulties = ['Iniciante', 'Intermediário', 'Avançado'];
+      difficulty = difficulties[Math.floor(Math.random() * difficulties.length)];
+    }
+
+    if (mode === 'auto' || !modality) {
+      const modalities = ['Radiografia', 'Tomografia Computadorizada', 'Ressonância Magnética', 'Ultrassom', 'Exame Clínico'];
+      modality = modalities[Math.floor(Math.random() * modalities.length)];
+    }
+
+    console.log('🎲 Parâmetros selecionados:', { category, difficulty, modality });
+
+    // CONSTRUIR PROMPT PERSONALIZADO
+    const personalizedPrompt = GLOBAL_PROMPT_TEMPLATE
+      .replace(/\{category\}/g, category)
+      .replace(/\{difficulty\}/g, difficulty)
+      .replace(/\{modality\}/g, modality);
 
     console.log('🤖 Chamando OpenAI API...');
 
-    // Chamar OpenAI
+    // CHAMADA PARA OPENAI
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -86,96 +125,102 @@ FORMATO DE RESPOSTA (JSON):
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
+          { 
+            role: 'system', 
+            content: 'Você é um especialista em medicina que cria questões educativas. Retorne APENAS JSON válido no formato especificado.' 
+          },
+          { role: 'user', content: personalizedPrompt }
         ],
         temperature: 0.7,
-        max_tokens: 500,
+        max_tokens: 800,
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error('❌ OpenAI API error:', response.status, errorText);
-      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+      throw new Error(`OpenAI API error: ${response.status}`);
     }
 
     const aiResponse = await response.json();
     const content = aiResponse.choices[0].message.content.trim();
     
-    console.log('✅ OpenAI Response recebida. Content length:', content.length);
+    console.log('✅ OpenAI Response recebida');
 
-    // Parse da resposta da IA
+    // PARSE E VALIDAÇÃO DA RESPOSTA
     let parsedResponse;
     try {
-      // Tentar extrair JSON se houver texto extra
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       const jsonString = jsonMatch ? jsonMatch[0] : content;
       parsedResponse = JSON.parse(jsonString);
     } catch (parseError) {
-      console.error('Erro ao parsear resposta da IA:', parseError);
-      throw new Error('Resposta da IA inválida - não foi possível parsear JSON');
+      console.error('❌ Erro ao parsear resposta:', parseError);
+      throw new Error('Resposta da IA inválida');
     }
 
-    // Validar estrutura da resposta
-    if (!parsedResponse.question || typeof parsedResponse.correct_answer !== 'boolean' || !parsedResponse.explanation) {
-      console.error('Resposta incompleta:', parsedResponse);
-      throw new Error('Resposta da IA incompleta - campos obrigatórios ausentes');
+    // VALIDAÇÃO DOS CAMPOS OBRIGATÓRIOS
+    if (!parsedResponse.question || 
+        typeof parsedResponse.correct_answer !== 'boolean' || 
+        !parsedResponse.explanation) {
+      console.error('❌ Resposta incompleta:', parsedResponse);
+      throw new Error('Resposta da IA incompleta');
     }
 
-    console.log('💾 Salvando questão na base de dados...');
+    console.log('💾 Salvando questão na base...');
 
-    // Salvar questão gerada na base de dados
+    // AUTO-APROVAÇÃO INTELIGENTE
+    const confidence = parsedResponse.confidence || 0.8;
+    const autoApprove = confidence >= 0.9 && mode === 'auto';
+    const status = autoApprove ? 'approved' : 'draft';
+
+    console.log(`🎯 Confiança: ${confidence}, Auto-aprovação: ${autoApprove}, Status: ${status}`);
+
+    // SALVAR NA BASE DE DADOS
     const { data: question, error: dbError } = await supabase
       .from('daily_quiz_questions')
       .insert({
-        prompt_control_id: promptControlId,
         question: parsedResponse.question,
         correct_answer: parsedResponse.correct_answer,
         explanation: parsedResponse.explanation,
-        status: 'draft',
+        status: status,
         generated_by_ai: true,
-        ai_confidence: parsedResponse.confidence || 0.8,
+        ai_confidence: confidence,
         metadata: {
           ai_model: 'gpt-4o-mini',
-          generation_params: { category, difficulty, modality },
-          raw_response: content
+          generation_mode: mode,
+          auto_approved: autoApprove,
+          parameters: { category, difficulty, modality },
+          raw_response: content,
+          generated_at: new Date().toISOString()
         }
       })
       .select()
       .single();
 
     if (dbError) {
-      console.error('Erro ao salvar questão:', dbError);
-      throw new Error('Erro ao salvar questão no banco de dados: ' + dbError.message);
+      console.error('❌ Erro ao salvar questão:', dbError);
+      throw new Error('Erro ao salvar questão: ' + dbError.message);
     }
 
-    // Atualizar contador de uso do prompt
-    await supabase
-      .from('quiz_prompt_controls')
-      .update({ 
-        usage_count: supabase.sql`usage_count + 1`,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', promptControlId);
-
-    console.log('✅ Questão criada com sucesso! ID:', question.id);
+    console.log('✅ Questão salva com sucesso! ID:', question.id);
 
     return new Response(JSON.stringify({
       success: true,
       question: question,
-      ai_response: parsedResponse
+      auto_approved: autoApprove,
+      confidence: confidence,
+      parameters: { category, difficulty, modality },
+      mode: mode
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
-    console.error('❌ ERRO na geração de questão:', error);
-    console.error('Stack trace:', error.stack);
+    console.error('❌ ERRO na geração:', error);
     return new Response(JSON.stringify({ 
       success: false,
       error: error.message,
-      details: error.stack
+      timestamp: new Date().toISOString()
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

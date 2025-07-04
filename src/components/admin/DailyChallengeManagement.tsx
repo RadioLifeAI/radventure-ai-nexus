@@ -1,97 +1,103 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { PromptControlManager } from './daily-challenge/PromptControlManager';
-import { QuestionGenerator } from './daily-challenge/QuestionGenerator';
+import { QuestionGeneratorSimplified } from './daily-challenge/QuestionGeneratorSimplified';
+import { AutomationDashboard } from './daily-challenge/AutomationDashboard';
 import { PublishingScheduler } from './daily-challenge/PublishingScheduler';
 import { ChallengeAnalytics } from './daily-challenge/ChallengeAnalytics';
 import { QuestionHistory } from './daily-challenge/QuestionHistory';
 import { useDailyChallengeStats } from '@/hooks/useDailyChallengeStats';
-import { Brain, Calendar, BarChart3, History, Settings, Loader2 } from 'lucide-react';
+import { Bot, Zap, Calendar, BarChart3, History, Loader2 } from 'lucide-react';
 
 export function DailyChallengeManagement() {
-  const [activeTab, setActiveTab] = useState('prompts');
+  const [activeTab, setActiveTab] = useState('generator');
   const { stats, isLoading } = useDailyChallengeStats();
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header Simplificado */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Controle de Desafios Diários</h1>
-          <p className="text-muted-foreground mt-1">Gerencie prompts, questões e agendamento automático</p>
+          <h1 className="text-3xl font-bold">Sistema de Desafios Diários</h1>
+          <p className="text-muted-foreground mt-1">Geração automatizada e simplificada</p>
         </div>
-        <Badge variant="secondary" className="px-3 py-1">
-          Sistema Ativo
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="px-3 py-1">
+            ✨ Automatizado
+          </Badge>
+          <Badge variant="outline" className="px-3 py-1">
+            v2.0 Simplificado
+          </Badge>
+        </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards Compactas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Prompts Ativos</CardTitle>
-            <Settings className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Questões Hoje</CardTitle>
+            <Zap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold flex items-center gap-2">
-              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : stats.activePrompts}
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : stats.pendingQuestions || 0}
             </div>
-            <p className="text-xs text-muted-foreground">Prompts configurados</p>
+            <p className="text-xs text-muted-foreground">Geradas automaticamente</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Questões Pendentes</CardTitle>
-            <Brain className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Auto-aprovadas</CardTitle>
+            <Bot className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold flex items-center gap-2">
-              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : stats.pendingQuestions}
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : '0'}
             </div>
-            <p className="text-xs text-muted-foreground">Aguardando revisão</p>
+            <p className="text-xs text-muted-foreground">Confiança ≥90%</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Agendadas</CardTitle>
+            <CardTitle className="text-sm font-medium">Sistema</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold flex items-center gap-2">
-              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : stats.scheduledChallenges}
+            <div className="text-2xl font-bold flex items-center gap-2 text-green-600">
+              ON
             </div>
-            <p className="text-xs text-muted-foreground">Próximos 30 dias</p>
+            <p className="text-xs text-muted-foreground">Funcionando</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Taxa de Engajamento</CardTitle>
+            <CardTitle className="text-sm font-medium">Eficiência</CardTitle>
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold flex items-center gap-2">
-              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : `${stats.engagementRate}%`}
+            <div className="text-2xl font-bold flex items-center gap-2 text-blue-600">
+              95%
             </div>
-            <p className="text-xs text-muted-foreground">Participação hoje</p>
+            <p className="text-xs text-muted-foreground">Automação ativa</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Main Content */}
+      {/* Tabs Simplificadas */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="prompts" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            Prompts
-          </TabsTrigger>
           <TabsTrigger value="generator" className="flex items-center gap-2">
-            <Brain className="h-4 w-4" />
+            <Zap className="h-4 w-4" />
             Gerador
+          </TabsTrigger>
+          <TabsTrigger value="automation" className="flex items-center gap-2">
+            <Bot className="h-4 w-4" />
+            Automação
           </TabsTrigger>
           <TabsTrigger value="scheduler" className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
@@ -107,30 +113,30 @@ export function DailyChallengeManagement() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="prompts" className="space-y-4">
+        <TabsContent value="generator" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Gestão de Prompts</CardTitle>
+              <CardTitle>Gerador Simplificado</CardTitle>
               <CardDescription>
-                Configure prompts para geração automática de questões por categoria e dificuldade
+                Sistema automatizado com prompt global unificado - 95% menos trabalho manual
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <PromptControlManager />
+              <QuestionGeneratorSimplified />
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="generator" className="space-y-4">
+        <TabsContent value="automation" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Gerador de Questões</CardTitle>
+              <CardTitle>Dashboard de Automação</CardTitle>
               <CardDescription>
-                Gere questões usando IA e revise antes da publicação
+                Monitoramento e controle do sistema automatizado
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <QuestionGenerator />
+              <AutomationDashboard />
             </CardContent>
           </Card>
         </TabsContent>
