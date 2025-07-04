@@ -7,10 +7,12 @@ import { QuestionGenerator } from './daily-challenge/QuestionGenerator';
 import { PublishingScheduler } from './daily-challenge/PublishingScheduler';
 import { ChallengeAnalytics } from './daily-challenge/ChallengeAnalytics';
 import { QuestionHistory } from './daily-challenge/QuestionHistory';
-import { Brain, Calendar, BarChart3, History, Settings } from 'lucide-react';
+import { useDailyChallengeStats } from '@/hooks/useDailyChallengeStats';
+import { Brain, Calendar, BarChart3, History, Settings, Loader2 } from 'lucide-react';
 
 export function DailyChallengeManagement() {
   const [activeTab, setActiveTab] = useState('prompts');
+  const { stats } = useDailyChallengeStats();
 
   return (
     <div className="space-y-6">
@@ -33,8 +35,10 @@ export function DailyChallengeManagement() {
             <Settings className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">+2 esta semana</p>
+            <div className="text-2xl font-bold flex items-center gap-2">
+              {stats.isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : stats.activePrompts}
+            </div>
+            <p className="text-xs text-muted-foreground">Prompts configurados</p>
           </CardContent>
         </Card>
 
@@ -44,7 +48,9 @@ export function DailyChallengeManagement() {
             <Brain className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">7</div>
+            <div className="text-2xl font-bold flex items-center gap-2">
+              {stats.isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : stats.pendingQuestions}
+            </div>
             <p className="text-xs text-muted-foreground">Aguardando revisão</p>
           </CardContent>
         </Card>
@@ -55,7 +61,9 @@ export function DailyChallengeManagement() {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">15</div>
+            <div className="text-2xl font-bold flex items-center gap-2">
+              {stats.isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : stats.scheduledChallenges}
+            </div>
             <p className="text-xs text-muted-foreground">Próximos 30 dias</p>
           </CardContent>
         </Card>
@@ -66,8 +74,10 @@ export function DailyChallengeManagement() {
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">78%</div>
-            <p className="text-xs text-muted-foreground">+5% vs mês anterior</p>
+            <div className="text-2xl font-bold flex items-center gap-2">
+              {stats.isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : `${stats.engagementRate}%`}
+            </div>
+            <p className="text-xs text-muted-foreground">Participação hoje</p>
           </CardContent>
         </Card>
       </div>
