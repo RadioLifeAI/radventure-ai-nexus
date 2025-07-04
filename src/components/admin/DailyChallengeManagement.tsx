@@ -12,7 +12,7 @@ import { Brain, Calendar, BarChart3, History, Settings, Loader2 } from 'lucide-r
 
 export function DailyChallengeManagement() {
   const [activeTab, setActiveTab] = useState('prompts');
-  const { stats } = useDailyChallengeStats();
+  const { stats, isLoading } = useDailyChallengeStats();
 
   return (
     <div className="space-y-6">
@@ -36,7 +36,7 @@ export function DailyChallengeManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold flex items-center gap-2">
-              {stats.isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : stats.activePrompts}
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : stats.activePrompts}
             </div>
             <p className="text-xs text-muted-foreground">Prompts configurados</p>
           </CardContent>
@@ -49,7 +49,7 @@ export function DailyChallengeManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold flex items-center gap-2">
-              {stats.isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : stats.pendingQuestions}
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : stats.pendingQuestions}
             </div>
             <p className="text-xs text-muted-foreground">Aguardando revisão</p>
           </CardContent>
@@ -62,7 +62,7 @@ export function DailyChallengeManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold flex items-center gap-2">
-              {stats.isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : stats.scheduledChallenges}
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : stats.scheduledChallenges}
             </div>
             <p className="text-xs text-muted-foreground">Próximos 30 dias</p>
           </CardContent>
@@ -75,7 +75,7 @@ export function DailyChallengeManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold flex items-center gap-2">
-              {stats.isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : `${stats.engagementRate}%`}
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : `${stats.engagementRate}%`}
             </div>
             <p className="text-xs text-muted-foreground">Participação hoje</p>
           </CardContent>
