@@ -40,6 +40,13 @@ export function DailyChallengeProvider({ children }: Props) {
     };
   }, [dailyChallenge]);
 
+  // DEBUG: Log do estado do modal
+  console.log('🔄 DailyChallengeProvider render:', {
+    showModal: dailyChallenge.showModal,
+    challenge: dailyChallenge.challenge?.id,
+    isLoading: dailyChallenge.isLoading
+  });
+
   return (
     <DailyChallengeContext.Provider value={dailyChallenge}>
       {children}

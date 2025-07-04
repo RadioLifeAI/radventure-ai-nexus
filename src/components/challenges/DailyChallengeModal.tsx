@@ -39,6 +39,14 @@ export function DailyChallengeModal({ open, onClose }: Props) {
   const [selectedAnswer, setSelectedAnswer] = useState<boolean | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
 
+  // DEBUG: Log das props do modal
+  console.log('🎯 DailyChallengeModal render:', { 
+    open, 
+    challenge: challenge?.id, 
+    isLoading, 
+    hasAnswered 
+  });
+
   const handleAnswerSelect = (answer: boolean) => {
     if (hasAnswered) return;
     setSelectedAnswer(answer);

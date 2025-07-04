@@ -34,7 +34,12 @@ export function useDailyChallenge() {
 
   // Verificar se há desafio pendente para o usuário
   const checkDailyChallenge = async (userId: string) => {
-    if (!userId) return;
+    if (!userId) {
+      console.log('❌ checkDailyChallenge: userId inválido');
+      return;
+    }
+    
+    console.log('🔍 Verificando desafio diário para usuário:', userId);
     
     try {
       setIsLoading(true);
@@ -44,21 +49,33 @@ export function useDailyChallenge() {
         p_user_id: userId
       });
 
+      console.log('📡 Resposta do Supabase:', { data, error });
+
       if (error) {
-        console.error('Erro ao buscar desafio diário:', error);
+        console.error('❌ Erro ao buscar desafio diário:', error);
         return;
       }
 
       if (data) {
         const challengeData = data as unknown as DailyChallenge;
-        setChallenge(challengeData);
-        setShowModal(true);
         console.log('📅 Desafio diário encontrado:', challengeData.id);
+        
+        // CORREÇÃO: Definir challenge e showModal de forma síncrona
+        setChallenge(challengeData);
+        
+        // Usar setTimeout para garantir que o state seja atualizado
+        setTimeout(() => {
+          setShowModal(true);
+          console.log('✅ Modal definido como visível. Challenge:', challengeData.id);
+        }, 100);
+        
       } else {
         console.log('✅ Nenhum desafio pendente para hoje');
+        setChallenge(null);
+        setShowModal(false);
       }
     } catch (error) {
-      console.error('Erro na verificação do desafio diário:', error);
+      console.error('❌ Erro na verificação do desafio diário:', error);
     } finally {
       setIsLoading(false);
     }
