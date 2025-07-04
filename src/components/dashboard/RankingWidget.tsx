@@ -6,15 +6,15 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Trophy, TrendingUp, Zap, Target, Star, Award } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useUserProfile } from "@/hooks/useUserProfile";
-import { useUserRankings } from "@/hooks/useUserRankings";
+import { useOptimizedRankings } from "@/hooks/useOptimizedRankings";
 
 export function RankingWidget() {
   const navigate = useNavigate();
   const { profile } = useUserProfile();
-  const { userRank, loading, filteredRankings } = useUserRankings();
+  const { rankings, userRank, isLoading: loading } = useOptimizedRankings();
 
   // Encontrar dados do usuário atual no ranking
-  const currentUserData = profile ? filteredRankings.find(p => p.id === profile.id) : null;
+  const currentUserData = profile ? rankings.find(p => p.id === profile.id) : null;
 
   const getRankBadgeColor = (rank?: number) => {
     if (!rank) return "bg-gray-500";
