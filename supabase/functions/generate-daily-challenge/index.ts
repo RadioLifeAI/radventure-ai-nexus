@@ -5,7 +5,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
 };
 
 interface GenerateRequest {
@@ -17,6 +16,8 @@ interface GenerateRequest {
 }
 
 serve(async (req) => {
+  console.log('🎯 Iniciando generate-daily-challenge...');
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -24,7 +25,7 @@ serve(async (req) => {
   try {
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
-      console.error('OPENAI_API_KEY não configurada');
+      console.error('❌ OPENAI_API_KEY não configurada');
       return new Response(JSON.stringify({ 
         success: false,
         error: 'OpenAI API Key não configurada. Configure em Supabase Edge Function Secrets.'
@@ -34,13 +35,21 @@ serve(async (req) => {
       });
     }
 
+    console.log('✅ OpenAI API Key encontrada');
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { promptControlId, promptTemplate, category, difficulty, modality }: GenerateRequest = await req.json();
 
-    console.log('Gerando questão:', { category, difficulty, modality });
+    console.log('📝 Gerando questão:', { 
+      promptControlId, 
+      category, 
+      difficulty, 
+      modality,
+      templateLength: promptTemplate?.length || 0
+    });
 
     // Construir prompt específico
     const systemPrompt = `Você é um especialista em medicina que cria perguntas de verdadeiro/falso para desafios diários educacionais.
@@ -64,7 +73,7 @@ FORMATO DE RESPOSTA (JSON):
                                   .replace(/\{difficulty\}/g, difficulty)
                                   .replace(/\{modality\}/g, modality);
 
-    console.log('Chamando OpenAI...');
+    console.log('🤖 Chamando OpenAI API...');
 
     // Chamar OpenAI
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -86,14 +95,14 @@ FORMATO DE RESPOSTA (JSON):
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI API error:', response.status, errorText);
+      console.error('❌ OpenAI API error:', response.status, errorText);
       throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
     }
 
     const aiResponse = await response.json();
     const content = aiResponse.choices[0].message.content.trim();
     
-    console.log('AI Response content:', content);
+    console.log('✅ OpenAI Response recebida. Content length:', content.length);
 
     // Parse da resposta da IA
     let parsedResponse;
@@ -113,7 +122,7 @@ FORMATO DE RESPOSTA (JSON):
       throw new Error('Resposta da IA incompleta - campos obrigatórios ausentes');
     }
 
-    console.log('Salvando questão na base de dados...');
+    console.log('💾 Salvando questão na base de dados...');
 
     // Salvar questão gerada na base de dados
     const { data: question, error: dbError } = await supabase
@@ -149,7 +158,7 @@ FORMATO DE RESPOSTA (JSON):
       })
       .eq('id', promptControlId);
 
-    console.log('Questão criada com sucesso:', question.id);
+    console.log('✅ Questão criada com sucesso! ID:', question.id);
 
     return new Response(JSON.stringify({
       success: true,
@@ -160,10 +169,12 @@ FORMATO DE RESPOSTA (JSON):
     });
 
   } catch (error) {
-    console.error('Erro na geração de questão:', error);
+    console.error('❌ ERRO na geração de questão:', error);
+    console.error('Stack trace:', error.stack);
     return new Response(JSON.stringify({ 
       success: false,
-      error: error.message 
+      error: error.message,
+      details: error.stack
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
