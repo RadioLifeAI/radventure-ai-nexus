@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -148,38 +148,33 @@ export function EventCreationWizard({
     }
   ];
 
-  // Validação automática de cada etapa
-  useEffect(() => {
-    validateCurrentStep();
-  }, [name, scheduledStart, scheduledEnd, numberOfCases, durationMinutes, currentStep]);
-
-  const validateCurrentStep = () => {
+  // Função de validação dinâmica para a etapa atual
+  const getCurrentStepValidation = useMemo(() => {
     const step = steps[currentStep];
-    let isValid = false;
-
+    
     switch (step.id) {
       case "ai-templates":
-        isValid = true;
-        break;
+        return true;
       case "basic-info":
-        isValid = !!(name.trim());
-        break;
+        return !!(name.trim());
       case "schedule":
-        isValid = !!(scheduledStart && scheduledEnd && durationMinutes > 0);
-        break;
+        return !!(scheduledStart && scheduledEnd && durationMinutes > 0);
       case "game-config":
-        isValid = !!(numberOfCases > 0 && prizeRadcoins >= 0);
-        break;
+        return !!(numberOfCases > 0 && prizeRadcoins >= 0);
       case "case-filters":
-        isValid = true;
-        break;
+        return true;
       case "banner-final":
-        isValid = true;
-        break;
+        return true;
+      default:
+        return false;
     }
+  }, [currentStep, name, scheduledStart, scheduledEnd, durationMinutes, numberOfCases, prizeRadcoins]);
 
-    steps[currentStep].valid = isValid;
-    steps[currentStep].completed = isValid;
+  // Atualizar status das etapas baseado na validação
+  const getStepStatus = (stepIndex: number) => {
+    if (stepIndex < currentStep) return true; // Etapas anteriores são consideradas completas
+    if (stepIndex === currentStep) return getCurrentStepValidation;
+    return false; // Etapas futuras não estão completas
   };
 
   const nextStep = async () => {
@@ -469,7 +464,7 @@ export function EventCreationWizard({
     }
   };
 
-  const completedSteps = steps.filter(step => step.completed).length;
+  const completedSteps = steps.filter((_, index) => getStepStatus(index)).length;
   const progressPercentage = (completedSteps / steps.length) * 100;
 
   const renderStepContent = () => {
@@ -651,15 +646,15 @@ export function EventCreationWizard({
             <button
               key={step.id}
               onClick={() => goToStep(index)}
-              className={`
-                flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all
-                ${index === currentStep 
-                  ? 'bg-blue-600 text-white' 
-                  : step.completed 
-                    ? 'bg-green-100 text-green-700 hover:bg-green-200' 
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }
-              `}
+               className={`
+                 flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all
+                 ${index === currentStep 
+                   ? 'bg-blue-600 text-white' 
+                   : getStepStatus(index)
+                     ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                 }
+               `}
             >
               {step.icon}
               <span className="hidden sm:inline">{step.title}</span>
@@ -699,7 +694,7 @@ export function EventCreationWizard({
           {currentStep === steps.length - 1 ? (
             <Button
               onClick={handleFinalSubmit}
-              disabled={!steps[currentStep].valid || loading}
+              disabled={!getCurrentStepValidation || loading}
               className="bg-green-600 hover:bg-green-700 text-white"
             >
               {loading ? (
@@ -717,7 +712,7 @@ export function EventCreationWizard({
           ) : (
             <Button
               onClick={nextStep}
-              disabled={!steps[currentStep].valid || loading}
+              disabled={!getCurrentStepValidation || loading}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               Próxima
