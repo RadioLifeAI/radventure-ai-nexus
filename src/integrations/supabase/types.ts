@@ -3003,8 +3003,8 @@ export type Database = {
         Args: {
           p_event_id: string
           p_case_correct: boolean
-          p_points_earned?: number
-          p_time_spent?: number
+          p_points_earned: number
+          p_time_spent: number
         }
         Returns: Json
       }
