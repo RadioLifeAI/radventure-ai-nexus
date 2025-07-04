@@ -386,106 +386,171 @@ export default function EventoArena() {
               </CardContent>
             </Card>
           ) : (
-            // Interface do caso
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Coluna da esquerda - Imagens */}
-              <div className="space-y-4">
-                {currentCase.image_url && currentCase.image_url.length > 0 ? (
-                  <EnhancedImageViewer 
-                    images={currentCase.image_url}
-                    currentIndex={currentImageIndex}
-                    onIndexChange={setCurrentImageIndex}
-                  />
-                ) : (
-                  <Card className="bg-white/95 backdrop-blur p-8 text-center">
-                    <Target className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-500">Nenhuma imagem disponível</p>
+            // Interface redesenhada do caso
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+              {/* Coluna da esquerda - Imagens e Achados */}
+              <div className="xl:col-span-1 space-y-6">
+                {/* Visualizador de Imagens */}
+                <div className="group">
+                  {currentCase.image_url && currentCase.image_url.length > 0 ? (
+                    <div className="relative">
+                      <EnhancedImageViewer 
+                        images={currentCase.image_url}
+                        currentIndex={currentImageIndex}
+                        onIndexChange={setCurrentImageIndex}
+                      />
+                      <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
+                        <div className="bg-gradient-to-r from-primary/80 to-primary-glow/80 backdrop-blur-sm px-3 py-1 rounded-full">
+                          <span className="text-xs font-medium text-white">
+                            {currentImageIndex + 1} de {currentCase.image_url.length}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <Card className="bg-gradient-to-br from-background to-muted/50 border-2 border-dashed border-muted-foreground/20 hover:border-muted-foreground/40 transition-all duration-300">
+                      <CardContent className="p-12 text-center">
+                        <Target className="h-16 w-16 mx-auto text-muted-foreground/40 mb-4" />
+                        <p className="text-muted-foreground">Nenhuma imagem disponível</p>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+
+                {/* Achados - Nova posição abaixo da imagem */}
+                {currentCase.findings && (
+                  <Card className="bg-gradient-to-br from-secondary/5 to-secondary/10 border border-secondary/20 shadow-lg hover:shadow-xl transition-all duration-300">
+                    <CardContent className="p-6">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-2 h-2 bg-gradient-to-r from-secondary to-secondary-glow rounded-full"></div>
+                        <h3 className="font-bold text-secondary-foreground text-lg">Achados</h3>
+                      </div>
+                      <div className="prose prose-sm max-w-none">
+                        <p className="text-secondary-foreground/80 leading-relaxed">{currentCase.findings}</p>
+                      </div>
+                    </CardContent>
                   </Card>
                 )}
               </div>
 
-              {/* Coluna da direita - Caso */}
-              <div className="space-y-6">
-                <Card className="bg-white/95 backdrop-blur">
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Badge>{currentCase.specialty}</Badge>
-                      <Badge variant="outline">{currentCase.modality}</Badge>
-                      <Badge variant="secondary">
-                        {currentCase.difficulty_level}/5 ⭐
-                      </Badge>
+              {/* Coluna da direita - Informações do Caso */}
+              <div className="xl:col-span-2 space-y-6">
+                <Card className="bg-gradient-to-br from-card to-card/90 backdrop-blur-xl border border-border/50 shadow-2xl">
+                  <CardContent className="p-8">
+                    {/* Header com badges e título */}
+                    <div className="space-y-6">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <Badge className="bg-gradient-to-r from-primary to-primary-glow text-primary-foreground px-3 py-1 text-sm font-medium">
+                          {currentCase.specialty}
+                        </Badge>
+                        <Badge variant="outline" className="border-accent text-accent-foreground px-3 py-1 text-sm">
+                          {currentCase.modality}
+                        </Badge>
+                        <Badge variant="secondary" className="bg-gradient-to-r from-secondary/20 to-secondary-glow/20 text-secondary-foreground px-3 py-1 text-sm">
+                          {currentCase.difficulty_level}/5 ⭐
+                        </Badge>
+                      </div>
+
+                      <div className="space-y-2">
+                        <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent leading-tight">
+                          {currentCase.title}
+                        </h1>
+                      </div>
                     </div>
 
-                    <h1 className="text-2xl font-bold text-gray-800 mb-4">
-                      {currentCase.title}
-                    </h1>
-
+                    {/* Informações Clínicas */}
                     {currentCase.patient_clinical_info && (
-                      <div className="bg-blue-50 p-4 rounded-lg mb-4">
-                        <h3 className="font-semibold text-blue-800 mb-2">Informações Clínicas:</h3>
-                        <p className="text-blue-700">{currentCase.patient_clinical_info}</p>
+                      <div className="mt-6 bg-gradient-to-br from-primary/5 to-primary-glow/5 border border-primary/20 rounded-xl p-6 shadow-inner">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="w-2 h-2 bg-gradient-to-r from-primary to-primary-glow rounded-full animate-pulse"></div>
+                          <h3 className="font-bold text-primary text-lg">Informações Clínicas</h3>
+                        </div>
+                        <div className="prose prose-sm max-w-none">
+                          <p className="text-primary/80 leading-relaxed">{currentCase.patient_clinical_info}</p>
+                        </div>
                       </div>
                     )}
 
-                    {currentCase.findings && (
-                      <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                        <h3 className="font-semibold text-gray-800 mb-2">Achados:</h3>
-                        <p className="text-gray-700">{currentCase.findings}</p>
+                    {/* Pergunta Principal */}
+                    <div className="mt-8 space-y-6">
+                      <div className="bg-gradient-to-r from-accent/10 to-accent-glow/10 border-l-4 border-accent p-6 rounded-r-xl">
+                        <h2 className="text-xl font-bold text-accent-foreground mb-2">
+                          {currentCase.main_question}
+                        </h2>
                       </div>
-                    )}
 
-                    <div className="mb-6">
-                      <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                        {currentCase.main_question}
-                      </h2>
-
-                      <div className="space-y-3">
-                        {currentCase.answer_options.map((option, index) => (
-                          <button
-                            key={index}
-                            onClick={() => setSelectedAnswer(index)}
-                            className={`w-full p-4 text-left rounded-lg border-2 transition-all ${
-                              selectedAnswer === index
-                                ? "border-blue-500 bg-blue-50"
-                                : "border-gray-200 hover:border-gray-300 bg-white"
-                            }`}
-                          >
-                            <div className="flex items-center">
-                              <div className={`w-6 h-6 rounded-full border-2 mr-3 flex items-center justify-center ${
-                                selectedAnswer === index
-                                  ? "border-blue-500 bg-blue-500"
-                                  : "border-gray-300"
-                              }`}>
-                                {selectedAnswer === index && (
-                                  <div className="w-2 h-2 bg-white rounded-full" />
-                                )}
+                      {/* Opções de Resposta */}
+                      <div className="space-y-4">
+                        {currentCase.answer_options.map((option, index) => {
+                          const isSelected = selectedAnswer === index;
+                          return (
+                            <button
+                              key={index}
+                              onClick={() => setSelectedAnswer(index)}
+                              className={`group w-full p-5 text-left rounded-xl border-2 transition-all duration-300 hover:scale-[1.02] ${
+                                isSelected
+                                  ? "border-primary shadow-lg shadow-primary/25 bg-gradient-to-br from-primary/10 to-primary-glow/10"
+                                  : "border-border hover:border-muted-foreground/40 bg-gradient-to-br from-card to-muted/20 hover:shadow-md"
+                              }`}
+                            >
+                              <div className="flex items-start gap-4">
+                                <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
+                                  isSelected
+                                    ? "border-primary bg-primary shadow-lg shadow-primary/50"
+                                    : "border-muted-foreground/40 group-hover:border-primary/60"
+                                }`}>
+                                  {isSelected && (
+                                    <div className="w-3 h-3 bg-primary-foreground rounded-full animate-scale-in" />
+                                  )}
+                                </div>
+                                <div className="flex-1 space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className={`font-bold text-lg ${isSelected ? 'text-primary' : 'text-foreground/80'}`}>
+                                      {String.fromCharCode(65 + index)}.
+                                    </span>
+                                  </div>
+                                  <p className={`text-base leading-relaxed ${isSelected ? 'text-primary-foreground/90' : 'text-foreground/80'}`}>
+                                    {option}
+                                  </p>
+                                </div>
                               </div>
-                              <span className="font-medium text-gray-800">
-                                {String.fromCharCode(65 + index)}.
-                              </span>
-                              <span className="ml-2 text-gray-700">{option}</span>
-                            </div>
-                          </button>
-                        ))}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
 
-                    <div className="mb-6">
+                    {/* Seletor de Confiança */}
+                    <div className="mt-8 bg-gradient-to-br from-muted/30 to-muted/10 rounded-xl p-6 border border-muted-foreground/10">
                       <ConfidenceSelector
                         confidence={confidence * 10}
                         onConfidenceChange={(value) => setConfidence(value / 10)}
                       />
                     </div>
 
-                    <Button
-                      onClick={handleAnswerSubmit}
-                      disabled={selectedAnswer === null || submitting}
-                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
-                      size="lg"
-                    >
-                      {submitting ? "Salvando..." : "Confirmar Resposta"}
-                      <Zap className="ml-2 h-5 w-5" />
-                    </Button>
+                    {/* Botão de Confirmação */}
+                    <div className="mt-8">
+                      <Button
+                        onClick={handleAnswerSubmit}
+                        disabled={selectedAnswer === null || submitting}
+                        className="w-full h-14 bg-gradient-to-r from-primary via-primary-glow to-primary hover:from-primary/90 hover:via-primary-glow/90 hover:to-primary/90 text-primary-foreground font-bold text-lg shadow-xl hover:shadow-2xl hover:shadow-primary/25 transition-all duration-300 hover:scale-[1.02] disabled:hover:scale-100"
+                        size="lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          {submitting ? (
+                            <>
+                              <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                              Salvando...
+                            </>
+                          ) : (
+                            <>
+                              Confirmar Resposta
+                              <Zap className="h-6 w-6" />
+                            </>
+                          )}
+                        </div>
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
