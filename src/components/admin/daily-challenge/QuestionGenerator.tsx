@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -6,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
-import { Brain, Sparkles, CheckCircle, XCircle, Edit, Save, X } from 'lucide-react';
+import { Brain, Sparkles, CheckCircle, XCircle, Edit, Save, X, RefreshCw } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface PromptControl {
@@ -45,6 +46,8 @@ export function QuestionGenerator() {
 
   const loadData = async () => {
     try {
+      console.log('🔄 Carregando dados do gerador...');
+      
       // Carregar prompts ativos
       const { data: promptsData, error: promptsError } = await supabase
         .from('quiz_prompt_controls')
@@ -53,7 +56,6 @@ export function QuestionGenerator() {
         .order('name');
 
       if (promptsError) throw promptsError;
-      setPrompts(promptsData || []);
 
       // Carregar questões geradas (últimas 10)
       const { data: questionsData, error: questionsError } = await supabase
@@ -63,9 +65,16 @@ export function QuestionGenerator() {
         .limit(10);
 
       if (questionsError) throw questionsError;
+
+      console.log('📊 Dados carregados:', {
+        prompts: promptsData?.length || 0,
+        questions: questionsData?.length || 0
+      });
+
+      setPrompts(promptsData || []);
       setGeneratedQuestions(questionsData || []);
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+      console.error('❌ Erro ao carregar dados:', error);
       toast({
         title: 'Erro',
         description: 'Não foi possível carregar os dados',
@@ -93,7 +102,7 @@ export function QuestionGenerator() {
 
     try {
       console.log('🚀 Iniciando geração de questão...');
-      console.log('📋 Dados do prompt selecionado:', {
+      console.log('📋 Prompt selecionado:', {
         id: selectedPrompt.id,
         name: selectedPrompt.name,
         category: selectedPrompt.category,
@@ -169,7 +178,7 @@ export function QuestionGenerator() {
       
       loadData();
     } catch (error) {
-      console.error('Erro ao atualizar status:', error);
+      console.error('❌ Erro ao atualizar status:', error);
       toast({
         title: 'Erro',
         description: 'Não foi possível atualizar o status',
@@ -201,7 +210,7 @@ export function QuestionGenerator() {
       setEditingQuestion(null);
       loadData();
     } catch (error) {
-      console.error('Erro ao editar questão:', error);
+      console.error('❌ Erro ao editar questão:', error);
       toast({
         title: 'Erro',
         description: 'Não foi possível editar a questão',
@@ -225,16 +234,17 @@ export function QuestionGenerator() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Pergunta</label>
+              <label className="text-sm font-medium block mb-2">Pergunta</label>
               <Textarea
                 value={formData.question}
                 onChange={(e) => setFormData({ ...formData, question: e.target.value })}
                 rows={3}
+                placeholder="Digite a pergunta..."
               />
             </div>
             
             <div>
-              <label className="text-sm font-medium">Resposta Correta</label>
+              <label className="text-sm font-medium block mb-2">Resposta Correta</label>
               <Select 
                 value={formData.correct_answer.toString()} 
                 onValueChange={(value) => setFormData({ ...formData, correct_answer: value === 'true' })}
@@ -250,15 +260,16 @@ export function QuestionGenerator() {
             </div>
 
             <div>
-              <label className="text-sm font-medium">Explicação</label>
+              <label className="text-sm font-medium block mb-2">Explicação</label>
               <Textarea
                 value={formData.explanation}
                 onChange={(e) => setFormData({ ...formData, explanation: e.target.value })}
                 rows={4}
+                placeholder="Digite a explicação..."
               />
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 pt-4">
               <Button onClick={() => saveEditedQuestion(formData)} className="flex-1">
                 <Save className="h-4 w-4 mr-2" />
                 Salvar
@@ -275,7 +286,12 @@ export function QuestionGenerator() {
   };
 
   if (loading) {
-    return <div className="flex justify-center p-8">Carregando...</div>;
+    return (
+      <div className="flex justify-center items-center p-8">
+        <RefreshCw className="h-6 w-6 animate-spin mr-2" />
+        Carregando...
+      </div>
+    );
   }
 
   return (
@@ -298,22 +314,32 @@ export function QuestionGenerator() {
               <SelectContent>
                 {prompts.map((prompt) => (
                   <SelectItem key={prompt.id} value={prompt.id}>
-                    {prompt.name} - {prompt.category} ({prompt.difficulty})
+                    <div className="flex items-center gap-2">
+                      <span>{prompt.name}</span>
+                      <span className="text-xs text-gray-500">
+                        ({prompt.category} • {prompt.difficulty})
+                      </span>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {prompts.length === 0 && (
+              <p className="text-sm text-amber-600 mt-2">
+                ⚠️ Nenhum prompt ativo encontrado. Configure prompts na aba anterior.
+              </p>
+            )}
           </div>
 
           <Button 
             onClick={generateQuestion} 
-            disabled={!selectedPromptId || isGenerating}
+            disabled={!selectedPromptId || isGenerating || prompts.length === 0}
             className="w-full"
           >
             {isGenerating ? (
               <>
                 <Sparkles className="h-4 w-4 mr-2 animate-spin" />
-                Gerando...
+                Gerando questão...
               </>
             ) : (
               <>
@@ -327,7 +353,14 @@ export function QuestionGenerator() {
 
       {/* Questões Geradas */}
       <div>
-        <h3 className="text-lg font-semibold mb-4">Questões Geradas Recentemente</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">Questões Geradas Recentemente</h3>
+          <Button variant="outline" size="sm" onClick={loadData}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Atualizar
+          </Button>
+        </div>
+        
         <div className="space-y-4">
           {generatedQuestions.map((question) => (
             <Card key={question.id}>
@@ -337,25 +370,27 @@ export function QuestionGenerator() {
                     <div className="flex-1">
                       <p className="font-medium">{question.question}</p>
                       <p className="text-sm text-gray-600 mt-1">
-                        Resposta: <strong>{question.correct_answer ? 'Verdadeiro' : 'Falso'}</strong>
+                        <strong>Resposta:</strong> {question.correct_answer ? 'Verdadeiro' : 'Falso'}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 ml-4">
                       {question.status === 'draft' && (
-                        <>
+                        <div className="flex gap-1">
                           <Button
                             size="sm"
                             onClick={() => updateQuestionStatus(question.id, 'approved')}
                             variant="outline"
+                            className="text-green-600 border-green-200 hover:bg-green-50"
                           >
-                            <CheckCircle className="h-4 w-4 text-green-600" />
+                            <CheckCircle className="h-4 w-4" />
                           </Button>
                           <Button
                             size="sm"
                             onClick={() => updateQuestionStatus(question.id, 'rejected')}
                             variant="outline"
+                            className="text-red-600 border-red-200 hover:bg-red-50"
                           >
-                            <XCircle className="h-4 w-4 text-red-600" />
+                            <XCircle className="h-4 w-4" />
                           </Button>
                           <Button
                             size="sm"
@@ -364,7 +399,7 @@ export function QuestionGenerator() {
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
-                        </>
+                        </div>
                       )}
                       <Badge 
                         variant={
@@ -381,17 +416,16 @@ export function QuestionGenerator() {
                     </div>
                   </div>
 
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
                     <strong>Explicação:</strong> {question.explanation}
                   </div>
 
-                  {question.ai_confidence && (
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                      <span>Confiança da IA: {(question.ai_confidence * 100).toFixed(0)}%</span>
-                      <span>•</span>
-                      <span>{new Date(question.created_at).toLocaleString('pt-BR')}</span>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-4 text-xs text-gray-500">
+                    {question.ai_confidence && (
+                      <span>Confiança IA: {(question.ai_confidence * 100).toFixed(0)}%</span>
+                    )}
+                    <span>{new Date(question.created_at).toLocaleString('pt-BR')}</span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -399,9 +433,9 @@ export function QuestionGenerator() {
         </div>
 
         {generatedQuestions.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            <Sparkles className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Nenhuma questão gerada ainda.</p>
+          <div className="text-center py-12 text-gray-500">
+            <Sparkles className="h-16 w-16 mx-auto mb-4 opacity-50" />
+            <h3 className="text-lg font-medium mb-2">Nenhuma questão gerada ainda</h3>
             <p className="text-sm">Use o gerador acima para criar sua primeira questão.</p>
           </div>
         )}

@@ -10,9 +10,8 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
-import { Plus, Edit, Trash2, Save, X, Brain } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, Brain, RefreshCw } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useUnifiedFormDataSource } from '@/hooks/useUnifiedFormDataSource';
 
 interface PromptControl {
   id: string;
@@ -27,46 +26,75 @@ interface PromptControl {
   created_at: string;
 }
 
+interface ReferenceData {
+  specialties: Array<{ id: number; name: string }>;
+  difficulties: Array<{ id: number; description: string; level: number }>;
+  modalities: Array<{ id: number; name: string }>;
+}
+
 export function PromptControlManager() {
   const [prompts, setPrompts] = useState<PromptControl[]>([]);
+  const [referenceData, setReferenceData] = useState<ReferenceData>({
+    specialties: [],
+    difficulties: [],
+    modalities: []
+  });
   const [loading, setLoading] = useState(true);
   const [editingPrompt, setEditingPrompt] = useState<PromptControl | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const { toast } = useToast();
-  
-  // Usar dados das tabelas reais do banco
-  const { specialties, modalities, difficulties, isLoading: dataLoading } = useUnifiedFormDataSource();
 
   const defaultPromptTemplate = `Crie uma pergunta de verdadeiro/falso sobre {category} com nível de dificuldade {difficulty} relacionada a {modality}.
 
-A pergunta deve:
-- Ser clara e objetiva
-- Ter relevância clínica prática
-- Ser apropriada para estudantes de medicina
-- Incluir conceitos importantes da especialidade
+A pergunta deve ser:
+- Clara e objetiva para estudantes de medicina
+- Clinicamente relevante e educativa
+- Apropriada para o nível {difficulty}
+- Focada em conceitos importantes de {category}
 
-Categoria: {category}
-Dificuldade: {difficulty} 
-Modalidade: {modality}`;
+Use terminologia médica adequada ao nível de dificuldade especificado.`;
 
   useEffect(() => {
-    loadPrompts();
+    loadAllData();
   }, []);
 
-  const loadPrompts = async () => {
+  const loadAllData = async () => {
     try {
-      const { data, error } = await supabase
-        .from('quiz_prompt_controls')
-        .select('*')
-        .order('created_at', { ascending: false });
+      console.log('🔄 Carregando todos os dados...');
+      
+      // Carregar dados de referência em paralelo
+      const [specialtiesRes, difficultiesRes, modalitiesRes, promptsRes] = await Promise.all([
+        supabase.from('medical_specialties').select('id, name').order('name'),
+        supabase.from('difficulties').select('id, description, level').order('level'),
+        supabase.from('imaging_modalities').select('id, name').order('name'),
+        supabase.from('quiz_prompt_controls').select('*').order('created_at', { ascending: false })
+      ]);
 
-      if (error) throw error;
-      setPrompts(data || []);
+      // Verificar erros
+      if (specialtiesRes.error) throw specialtiesRes.error;
+      if (difficultiesRes.error) throw difficultiesRes.error;
+      if (modalitiesRes.error) throw modalitiesRes.error;
+      if (promptsRes.error) throw promptsRes.error;
+
+      console.log('📊 Dados carregados:', {
+        specialties: specialtiesRes.data?.length || 0,
+        difficulties: difficultiesRes.data?.length || 0,
+        modalities: modalitiesRes.data?.length || 0,
+        prompts: promptsRes.data?.length || 0
+      });
+
+      setReferenceData({
+        specialties: specialtiesRes.data || [],
+        difficulties: difficultiesRes.data || [],
+        modalities: modalitiesRes.data || []
+      });
+
+      setPrompts(promptsRes.data || []);
     } catch (error) {
-      console.error('Erro ao carregar prompts:', error);
+      console.error('❌ Erro ao carregar dados:', error);
       toast({
         title: 'Erro',
-        description: 'Não foi possível carregar os prompts',
+        description: 'Não foi possível carregar os dados de referência',
         variant: 'destructive',
       });
     } finally {
@@ -76,11 +104,13 @@ Modalidade: {modality}`;
 
   const savePrompt = async (promptData: Omit<PromptControl, 'id' | 'created_at' | 'usage_count' | 'success_rate'>) => {
     try {
+      console.log('💾 Salvando prompt:', promptData);
+      
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Usuário não autenticado');
 
       if (editingPrompt) {
-        // Atualizar
+        // Atualizar prompt existente
         const { error } = await supabase
           .from('quiz_prompt_controls')
           .update({
@@ -96,7 +126,7 @@ Modalidade: {modality}`;
         if (error) throw error;
         toast({ title: 'Sucesso', description: 'Prompt atualizado com sucesso' });
       } else {
-        // Criar
+        // Criar novo prompt
         const { error } = await supabase
           .from('quiz_prompt_controls')
           .insert({
@@ -110,9 +140,9 @@ Modalidade: {modality}`;
 
       setEditingPrompt(null);
       setIsCreateModalOpen(false);
-      loadPrompts();
+      loadAllData(); // Recarregar todos os dados
     } catch (error) {
-      console.error('Erro ao salvar prompt:', error);
+      console.error('❌ Erro ao salvar prompt:', error);
       toast({
         title: 'Erro',
         description: 'Não foi possível salvar o prompt',
@@ -133,9 +163,9 @@ Modalidade: {modality}`;
       if (error) throw error;
       
       toast({ title: 'Sucesso', description: 'Prompt excluído com sucesso' });
-      loadPrompts();
+      loadAllData();
     } catch (error) {
-      console.error('Erro ao excluir prompt:', error);
+      console.error('❌ Erro ao excluir prompt:', error);
       toast({
         title: 'Erro',
         description: 'Não foi possível excluir o prompt',
@@ -152,9 +182,9 @@ Modalidade: {modality}`;
         .eq('id', id);
 
       if (error) throw error;
-      loadPrompts();
+      loadAllData();
     } catch (error) {
-      console.error('Erro ao alterar status:', error);
+      console.error('❌ Erro ao alterar status:', error);
       toast({
         title: 'Erro',
         description: 'Não foi possível alterar o status',
@@ -181,6 +211,16 @@ Modalidade: {modality}`;
       is_active: prompt?.is_active ?? true,
     });
 
+    const updatePromptTemplate = () => {
+      if (formData.category && formData.difficulty && formData.modality) {
+        const newTemplate = defaultPromptTemplate
+          .replace(/{category}/g, formData.category)
+          .replace(/{difficulty}/g, formData.difficulty)
+          .replace(/{modality}/g, formData.modality);
+        setFormData({ ...formData, prompt_template: newTemplate });
+      }
+    };
+
     return (
       <div className="space-y-4">
         <div>
@@ -189,19 +229,27 @@ Modalidade: {modality}`;
             id="name"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            placeholder="Ex: Prompt Cardiologia Básica"
+            placeholder="Ex: Cardiologia Básica - Radiografia"
           />
         </div>
 
         <div className="grid grid-cols-3 gap-4">
           <div>
             <Label htmlFor="category">Especialidade</Label>
-            <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+            <Select 
+              value={formData.category} 
+              onValueChange={(value) => {
+                setFormData({ ...formData, category: value });
+                if (!formData.name) {
+                  setFormData(prev => ({ ...prev, name: `${value} - ${prev.difficulty} - ${prev.modality}` }));
+                }
+              }}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione especialidade" />
               </SelectTrigger>
               <SelectContent>
-                {specialties.map((specialty) => (
+                {referenceData.specialties.map((specialty) => (
                   <SelectItem key={specialty.id} value={specialty.name}>
                     {specialty.name}
                   </SelectItem>
@@ -212,12 +260,20 @@ Modalidade: {modality}`;
 
           <div>
             <Label htmlFor="difficulty">Dificuldade</Label>
-            <Select value={formData.difficulty} onValueChange={(value) => setFormData({ ...formData, difficulty: value })}>
+            <Select 
+              value={formData.difficulty} 
+              onValueChange={(value) => {
+                setFormData({ ...formData, difficulty: value });
+                if (!formData.name) {
+                  setFormData(prev => ({ ...prev, name: `${prev.category} - ${value} - ${prev.modality}` }));
+                }
+              }}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione dificuldade" />
               </SelectTrigger>
               <SelectContent>
-                {difficulties.map((diff) => (
+                {referenceData.difficulties.map((diff) => (
                   <SelectItem key={diff.id} value={diff.description || `Nível ${diff.level}`}>
                     {diff.description || `Nível ${diff.level}`}
                   </SelectItem>
@@ -228,12 +284,20 @@ Modalidade: {modality}`;
 
           <div>
             <Label htmlFor="modality">Modalidade</Label>
-            <Select value={formData.modality} onValueChange={(value) => setFormData({ ...formData, modality: value })}>
+            <Select 
+              value={formData.modality} 
+              onValueChange={(value) => {
+                setFormData({ ...formData, modality: value });
+                if (!formData.name) {
+                  setFormData(prev => ({ ...prev, name: `${prev.category} - ${prev.difficulty} - ${value}` }));
+                }
+              }}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione modalidade" />
               </SelectTrigger>
               <SelectContent>
-                {modalities.map((modality) => (
+                {referenceData.modalities.map((modality) => (
                   <SelectItem key={modality.id} value={modality.name}>
                     {modality.name}
                   </SelectItem>
@@ -244,12 +308,24 @@ Modalidade: {modality}`;
         </div>
 
         <div>
-          <Label htmlFor="prompt_template">Template do Prompt</Label>
+          <div className="flex items-center justify-between mb-2">
+            <Label htmlFor="prompt_template">Template do Prompt</Label>
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm" 
+              onClick={updatePromptTemplate}
+              disabled={!formData.category || !formData.difficulty || !formData.modality}
+            >
+              <RefreshCw className="h-4 w-4 mr-1" />
+              Atualizar Template
+            </Button>
+          </div>
           <Textarea
             id="prompt_template"
             value={formData.prompt_template}
             onChange={(e) => setFormData({ ...formData, prompt_template: e.target.value })}
-            rows={8}
+            rows={12}
             placeholder="Template do prompt para IA..."
           />
           <p className="text-sm text-gray-500 mt-1">
@@ -280,32 +356,48 @@ Modalidade: {modality}`;
     );
   };
 
-  if (loading || dataLoading) {
-    return <div className="flex justify-center p-8">Carregando prompts...</div>;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center p-8">
+        <RefreshCw className="h-6 w-6 animate-spin mr-2" />
+        Carregando prompts...
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header com estatísticas */}
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Prompts Configurados</h3>
-        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Prompt
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Criar Novo Prompt</DialogTitle>
-            </DialogHeader>
-            <PromptForm
-              onSave={(data) => savePrompt(data)}
-              onCancel={() => setIsCreateModalOpen(false)}
-            />
-          </DialogContent>
-        </Dialog>
+        <div>
+          <h3 className="text-lg font-semibold">Prompts Configurados</h3>
+          <p className="text-sm text-gray-600">
+            {prompts.length} prompts • {prompts.filter(p => p.is_active).length} ativos
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={loadAllData}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Atualizar
+          </Button>
+          <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Novo Prompt
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Criar Novo Prompt</DialogTitle>
+              </DialogHeader>
+              <PromptForm
+                onSave={(data) => savePrompt(data)}
+                onCancel={() => setIsCreateModalOpen(false)}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Prompts Grid */}
@@ -355,7 +447,9 @@ Modalidade: {modality}`;
                   <span>Usos: {prompt.usage_count}</span>
                   <span>Taxa de sucesso: {prompt.success_rate.toFixed(1)}%</span>
                 </div>
-                <p className="line-clamp-2">{prompt.prompt_template}</p>
+                <p className="line-clamp-3 bg-gray-50 p-2 rounded text-xs">
+                  {prompt.prompt_template}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -365,7 +459,7 @@ Modalidade: {modality}`;
       {/* Edit Modal */}
       {editingPrompt && (
         <Dialog open={!!editingPrompt} onOpenChange={() => setEditingPrompt(null)}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Editar Prompt</DialogTitle>
             </DialogHeader>
@@ -379,10 +473,14 @@ Modalidade: {modality}`;
       )}
 
       {prompts.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
-          <Brain className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p>Nenhum prompt configurado ainda.</p>
-          <p className="text-sm">Crie seu primeiro prompt para começar a gerar questões.</p>
+        <div className="text-center py-12 text-gray-500">
+          <Brain className="h-16 w-16 mx-auto mb-4 opacity-50" />
+          <h3 className="text-lg font-medium mb-2">Nenhum prompt configurado</h3>
+          <p className="text-sm mb-4">Crie seu primeiro prompt para começar a gerar questões.</p>
+          <Button onClick={() => setIsCreateModalOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Criar Primeiro Prompt
+          </Button>
         </div>
       )}
     </div>
