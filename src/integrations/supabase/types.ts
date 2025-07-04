@@ -648,6 +648,59 @@ export type Database = {
         }
         Relationships: []
       }
+      event_banner_images: {
+        Row: {
+          created_at: string | null
+          event_id: string
+          file_size_bytes: number | null
+          full_url: string
+          id: string
+          medium_url: string
+          metadata: Json | null
+          original_filename: string
+          processed: boolean | null
+          thumb_url: string
+          updated_at: string | null
+          uploaded_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_id: string
+          file_size_bytes?: number | null
+          full_url: string
+          id?: string
+          medium_url: string
+          metadata?: Json | null
+          original_filename: string
+          processed?: boolean | null
+          thumb_url: string
+          updated_at?: string | null
+          uploaded_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string
+          file_size_bytes?: number | null
+          full_url?: string
+          id?: string
+          medium_url?: string
+          metadata?: Json | null
+          original_filename?: string
+          processed?: boolean | null
+          thumb_url?: string
+          updated_at?: string | null
+          uploaded_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_banner_images_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_cases: {
         Row: {
           case_id: string
@@ -2246,6 +2299,10 @@ export type Database = {
         Returns: number
       }
       cleanup_old_notifications: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      cleanup_orphaned_event_banners: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }

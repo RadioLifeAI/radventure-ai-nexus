@@ -1,24 +1,23 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
-export function useAvatarUpload() {
+export function useEventBannerUpload() {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
 
-  const uploadAvatar = async (file: File, userId: string) => {
+  const uploadEventBanner = async (file: File, eventId: string) => {
     try {
       setUploading(true);
-      console.log('📤 Processando avatar para usuário:', userId.slice(0, 8));
+      console.log('🖼️ Processando banner para evento:', eventId.slice(0, 8));
 
       // Validar arquivo
       if (!file.type.startsWith('image/')) {
         throw new Error('Arquivo deve ser uma imagem');
       }
 
-      if (file.size > 10 * 1024 * 1024) { // 10MB
-        throw new Error('Imagem deve ter no máximo 10MB');
+      if (file.size > 15 * 1024 * 1024) { // 15MB
+        throw new Error('Imagem deve ter no máximo 15MB');
       }
 
       // Converter para base64
@@ -35,10 +34,10 @@ export function useAvatarUpload() {
       const base64File = await base64Promise;
 
       // Processar via Edge Function
-      const { data, error } = await supabase.functions.invoke('image-processor-avatar', {
+      const { data, error } = await supabase.functions.invoke('image-processor-event-banner', {
         body: {
           file: base64File,
-          userId: userId,
+          eventId: eventId,
           fileName: file.name
         }
       });
@@ -52,14 +51,17 @@ export function useAvatarUpload() {
         throw new Error(data.error || 'Falha no processamento da imagem');
       }
 
-      console.log('✅ Avatar processado e otimizado');
+      console.log('✅ Banner processado em 3 tamanhos:', data.urls);
 
       toast({
-        title: 'Avatar atualizado',
-        description: 'Sua foto de perfil foi otimizada e atualizada com sucesso.',
+        title: 'Banner atualizado',
+        description: 'Banner do evento foi otimizado e salvo em múltiplos tamanhos.',
       });
 
-      return data.avatar_url;
+      return {
+        bannerData: data.banner_data,
+        urls: data.urls
+      };
     } catch (error: any) {
       console.error('❌ Erro no upload:', error);
       toast({
@@ -74,7 +76,7 @@ export function useAvatarUpload() {
   };
 
   return {
-    uploadAvatar,
+    uploadEventBanner,
     uploading
   };
 }
