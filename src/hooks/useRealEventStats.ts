@@ -58,7 +58,7 @@ export function useRealEventStats() {
       let userWins = 0;
       let bestRank = 0;
       let totalPrizeEarned = 0;
-      const userEventHistory: any[] = [];
+      let userEventHistory: any[] = [];
       const recentEvents: any[] = [];
 
       if (user?.id) {
@@ -92,7 +92,7 @@ export function useRealEventStats() {
           userWins = userRankings.filter(r => r.rank === 1).length;
           bestRank = Math.min(...userRankings.map(r => r.rank || 999));
 
-          // Buscar final rankings para prêmios
+          // Buscar final rankings para prêmios em uma única query
           const { data: finalRankings } = await supabase
             .from('event_final_rankings')
             .select('*')
@@ -100,71 +100,94 @@ export function useRealEventStats() {
 
           totalPrizeEarned = finalRankings?.reduce((sum, r) => sum + (r.radcoins_awarded || 0), 0) || 0;
 
-          // Histórico de eventos do usuário
-          for (const ranking of userRankings) {
-            // Contar participantes do evento
-            const { count: participantCount } = await supabase
-              .from('event_rankings')
-              .select('*', { count: 'exact', head: true })
-              .eq('event_id', ranking.event_id);
+          // OTIMIZAÇÃO: Contar participantes por evento em batch usando view ou query otimizada
+          const eventIdsForCounting = userRankings.map(r => r.event_id);
+          const { data: participantCounts } = await supabase
+            .from('event_rankings') 
+            .select('event_id')
+            .in('event_id', eventIdsForCounting);
 
+          // Contar participantes por evento
+          const participantCountsMap = new Map<string, number>();
+          participantCounts?.forEach(p => {
+            const count = participantCountsMap.get(p.event_id) || 0;
+            participantCountsMap.set(p.event_id, count + 1);
+          });
+
+          // Histórico de eventos do usuário (sem loop de queries individuais)
+          userEventHistory = userRankings.map(ranking => {
             const finalRanking = finalRankings?.find(f => f.event_id === ranking.event_id);
+            const participantCount = participantCountsMap.get(ranking.event_id) || 0;
 
-            userEventHistory.push({
+            return {
               eventId: ranking.event_id,
               eventName: ranking.events?.name || 'Evento',
               rank: ranking.rank || 0,
               score: ranking.score || 0,
-              participants: participantCount || 0,
+              participants: participantCount,
               prizeEarned: finalRanking?.radcoins_awarded || 0,
               completedAt: ranking.updated_at
-            });
-          }
+            };
+          });
         }
       }
 
-      // Eventos recentes com estatísticas
-      for (const event of (allEvents?.slice(0, 10) || [])) {
-        const { count: participantCount } = await supabase
-          .from('event_registrations')
-          .select('*', { count: 'exact', head: true })
-          .eq('event_id', event.id);
+      // OTIMIZAÇÃO: Eventos recentes com estatísticas (sem loops de queries)
+      const recentEventsData = allEvents?.slice(0, 10) || [];
+      const recentEventIds = recentEventsData.map(e => e.id);
+      
+      // Buscar contagem de registrações de forma otimizada
+      const { data: allRegistrations } = await supabase
+        .from('event_registrations')
+        .select('event_id')
+        .in('event_id', recentEventIds);
 
-        let userRank;
-        let prizeEarned = 0;
+      // Contar registrações por evento
+      const registrationCountsMap = new Map<string, number>();
+      allRegistrations?.forEach(reg => {
+        const count = registrationCountsMap.get(reg.event_id) || 0;
+        registrationCountsMap.set(reg.event_id, count + 1);
+      });
 
-        if (user?.id) {
-          const { data: userRanking } = await supabase
-            .from('event_rankings')
-            .select('rank')
-            .eq('event_id', event.id)
-            .eq('user_id', user.id)
-            .single();
+      let userRankingsForRecent: any[] = [];
+      let userFinalRankingsForRecent: any[] = [];
 
-          userRank = userRanking?.rank;
+      if (user?.id) {
+        // Buscar rankings do usuário para eventos recentes
+        const { data: userRankingsData } = await supabase
+          .from('event_rankings')
+          .select('event_id, rank')
+          .eq('user_id', user.id)
+          .in('event_id', recentEventIds);
 
-          if (userRank) {
-            const { data: finalRanking } = await supabase
-              .from('event_final_rankings')
-              .select('radcoins_awarded')
-              .eq('event_id', event.id)
-              .eq('user_id', user.id)
-              .single();
+        userRankingsForRecent = userRankingsData || [];
 
-            prizeEarned = finalRanking?.radcoins_awarded || 0;
-          }
-        }
+        // Buscar prêmios finais do usuário para eventos recentes
+        const { data: userFinalData } = await supabase
+          .from('event_final_rankings')
+          .select('event_id, radcoins_awarded')
+          .eq('user_id', user.id)
+          .in('event_id', recentEventIds);
+
+        userFinalRankingsForRecent = userFinalData || [];
+      }
+
+      // Construir eventos recentes sem loop de queries
+      recentEventsData.forEach(event => {
+        const registrationCount = registrationCountsMap.get(event.id) || 0;
+        const userRankingData = userRankingsForRecent.find(r => r.event_id === event.id);
+        const userFinalData = userFinalRankingsForRecent.find(f => f.event_id === event.id);
 
         recentEvents.push({
           id: event.id,
           name: event.name,
           status: event.status,
-          participants: participantCount || 0,
-          userRank,
-          prizeEarned,
+          participants: registrationCount,
+          userRank: userRankingData?.rank,
+          prizeEarned: userFinalData?.radcoins_awarded || 0,
           scheduledStart: event.scheduled_start
         });
-      }
+      });
 
       console.log('✅ Estatísticas de eventos calculadas:', {
         totalEvents,
