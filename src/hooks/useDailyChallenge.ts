@@ -44,6 +44,16 @@ export function useDailyChallenge() {
     try {
       setIsLoading(true);
       
+      // Aguardar um pouco para garantir que o usuário está autenticado
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Verificar novamente se o usuário ainda está autenticado
+      const { data: currentUser } = await supabase.auth.getUser();
+      if (!currentUser.user || currentUser.user.id !== userId) {
+        console.log('❌ Usuário não autenticado na verificação');
+        return;
+      }
+      
       // Chamar função do Supabase para buscar desafio do dia
       const { data, error } = await supabase.rpc('get_daily_challenge_for_user', {
         p_user_id: userId

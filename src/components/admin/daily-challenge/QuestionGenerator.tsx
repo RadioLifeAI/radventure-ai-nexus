@@ -102,22 +102,34 @@ export function QuestionGenerator() {
         }
       });
 
-      if (error) throw error;
+      console.log('📡 Resposta da edge function:', { data, error });
 
-      if (data.success) {
+      if (error) {
+        console.error('❌ Erro na edge function:', error);
+        throw error;
+      }
+
+      if (data?.success) {
         toast({
-          title: 'Sucesso',
+          title: '✅ Sucesso',
           description: 'Questão gerada com sucesso!',
         });
         loadData(); // Recarregar as questões
       } else {
-        throw new Error(data.error || 'Erro na geração');
+        console.error('❌ Erro retornado pela função:', data);
+        throw new Error(data?.error || 'Erro desconhecido na geração');
       }
-    } catch (error) {
-      console.error('Erro ao gerar questão:', error);
+    } catch (error: any) {
+      console.error('❌ Erro ao gerar questão:', error);
+      
+      let errorMessage = 'Não foi possível gerar a questão';
+      if (error.message) {
+        errorMessage += `: ${error.message}`;
+      }
+      
       toast({
-        title: 'Erro',
-        description: 'Não foi possível gerar a questão',
+        title: '❌ Erro',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
