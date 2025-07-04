@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -92,6 +93,15 @@ export function QuestionGenerator() {
     setIsGenerating(true);
 
     try {
+      console.log('🚀 Iniciando geração de questão...');
+      console.log('📋 Dados do prompt selecionado:', {
+        id: selectedPrompt.id,
+        name: selectedPrompt.name,
+        category: selectedPrompt.category,
+        difficulty: selectedPrompt.difficulty,
+        modality: selectedPrompt.modality
+      });
+
       const { data, error } = await supabase.functions.invoke('generate-daily-challenge', {
         body: {
           promptControlId: selectedPromptId,
@@ -110,6 +120,7 @@ export function QuestionGenerator() {
       }
 
       if (data?.success) {
+        console.log('✅ Questão gerada com sucesso!', data.question);
         toast({
           title: '✅ Sucesso',
           description: 'Questão gerada com sucesso!',
