@@ -31,6 +31,7 @@ const adminMenu = [
   { label: "Tutor IA", icon: <Brain size={20} />, to: "/admin/tutor-ia" },
   { label: "Conquistas", icon: <Trophy size={20} />, to: "/admin/conquistas" },
   { label: "Controle de Desafios", icon: <Brain size={20} />, to: "/admin/desafios-diarios" },
+  { label: "Sistema Prompts IA", icon: <Settings size={20} />, to: "/admin/sistema-prompts-ia" },
   { label: "Notificações", icon: <Bell size={20} />, to: "/admin/notificacoes" },
   { label: "Monitoramento", icon: <Monitor size={20} />, to: "/admin/monitoramento" },
   { label: "Monitor Educacional", icon: <Shield size={20} />, to: "/admin/monitor-educacional" },

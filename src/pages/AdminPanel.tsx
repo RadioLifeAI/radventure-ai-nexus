@@ -24,6 +24,7 @@ import { StripeManagement } from "@/components/admin/StripeManagement";
 import { NotificationManagement } from "@/components/admin/NotificationManagement";
 import { EducationalMonitoring } from "@/components/admin/monitoring/EducationalMonitoring";
 import { DailyChallengeManagement } from "@/components/admin/DailyChallengeManagement";
+import { UnifiedAIPromptsManagement } from "@/components/admin/UnifiedAIPromptsManagement";
 import { Crown, Sparkles, Shield, Zap } from "lucide-react";
 
 export default function AdminPanel() {
@@ -78,6 +79,7 @@ export default function AdminPanel() {
             <Route path="tutor-ia" element={<AITutorManagement />} />
             <Route path="conquistas" element={<AchievementManagement />} />
             <Route path="desafios-diarios" element={<DailyChallengeManagement />} />
+            <Route path="sistema-prompts-ia" element={<UnifiedAIPromptsManagement />} />
             <Route path="notificacoes" element={<NotificationManagement />} />
             <Route path="monitoramento" element={<SystemMonitoringIntegrated />} />
             <Route path="monitor-educacional" element={<EducationalMonitoring />} />
