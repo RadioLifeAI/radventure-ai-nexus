@@ -1,6 +1,6 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useDailyChallenge } from '@/hooks/useDailyChallenge';
-import { DailyChallengeModal } from './DailyChallengeModal';
+import { DailyChallengeToast } from './DailyChallengeToast';
 
 interface DailyChallengeContextType {
   checkDailyChallenge: (userId: string) => Promise<void>;
@@ -50,7 +50,7 @@ export function DailyChallengeProvider({ children }: Props) {
   return (
     <DailyChallengeContext.Provider value={dailyChallenge}>
       {children}
-      <DailyChallengeModal
+      <DailyChallengeToast
         open={dailyChallenge.showModal}
         onClose={dailyChallenge.closeModal}
         challenge={dailyChallenge.challenge}
