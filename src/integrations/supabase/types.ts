@@ -1777,7 +1777,7 @@ export type Database = {
           id: string
           reward_given: boolean | null
           user_answer: boolean | null
-          user_id: string | null
+          user_id: string
           was_correct: boolean | null
         }
         Insert: {
@@ -1788,7 +1788,7 @@ export type Database = {
           id?: string
           reward_given?: boolean | null
           user_answer?: boolean | null
-          user_id?: string | null
+          user_id: string
           was_correct?: boolean | null
         }
         Update: {
@@ -1799,7 +1799,7 @@ export type Database = {
           id?: string
           reward_given?: boolean | null
           user_answer?: boolean | null
-          user_id?: string | null
+          user_id?: string
           was_correct?: boolean | null
         }
         Relationships: [
@@ -1808,13 +1808,6 @@ export type Database = {
             columns: ["challenge_id"]
             isOneToOne: false
             referencedRelation: "daily_challenges"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_daily_challenges_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
