@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { Plus, Edit, Trash2, Save, X, Brain } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useUnifiedFormDataSource } from '@/hooks/useUnifiedFormDataSource';
 
 interface PromptControl {
   id: string;
@@ -31,18 +33,9 @@ export function PromptControlManager() {
   const [editingPrompt, setEditingPrompt] = useState<PromptControl | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const { toast } = useToast();
-
-  const categories = [
-    'Cardiologia', 'Neurologia', 'Pneumologia', 'Radiologia', 
-    'Ortopedia', 'Medicina Interna', 'Pediatria', 'Ginecologia'
-  ];
-
-  const difficulties = ['fácil', 'médio', 'difícil'];
   
-  const modalities = [
-    'Tomografia Computadorizada', 'Ressonância Magnética', 'Radiografia',
-    'Ultrassom', 'Ecocardiograma', 'Eletrocardiograma', 'Endoscopia'
-  ];
+  // Usar dados das tabelas reais do banco
+  const { specialties, modalities, difficulties, isLoading: dataLoading } = useUnifiedFormDataSource();
 
   const defaultPromptTemplate = `Crie uma pergunta de verdadeiro/falso sobre {category} com nível de dificuldade {difficulty} relacionada a {modality}.
 
@@ -202,14 +195,16 @@ Modalidade: {modality}`;
 
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <Label htmlFor="category">Categoria</Label>
+            <Label htmlFor="category">Especialidade</Label>
             <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
               <SelectTrigger>
-                <SelectValue placeholder="Selecione categoria" />
+                <SelectValue placeholder="Selecione especialidade" />
               </SelectTrigger>
               <SelectContent>
-                {categories.map((cat) => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                {specialties.map((specialty) => (
+                  <SelectItem key={specialty.id} value={specialty.name}>
+                    {specialty.name}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -223,7 +218,9 @@ Modalidade: {modality}`;
               </SelectTrigger>
               <SelectContent>
                 {difficulties.map((diff) => (
-                  <SelectItem key={diff} value={diff}>{diff}</SelectItem>
+                  <SelectItem key={diff.id} value={diff.description || `Nível ${diff.level}`}>
+                    {diff.description || `Nível ${diff.level}`}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -236,8 +233,10 @@ Modalidade: {modality}`;
                 <SelectValue placeholder="Selecione modalidade" />
               </SelectTrigger>
               <SelectContent>
-                {modalities.map((mod) => (
-                  <SelectItem key={mod} value={mod}>{mod}</SelectItem>
+                {modalities.map((modality) => (
+                  <SelectItem key={modality.id} value={modality.name}>
+                    {modality.name}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -281,7 +280,7 @@ Modalidade: {modality}`;
     );
   };
 
-  if (loading) {
+  if (loading || dataLoading) {
     return <div className="flex justify-center p-8">Carregando prompts...</div>;
   }
 
