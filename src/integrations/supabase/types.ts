@@ -1821,6 +1821,78 @@ export type Database = {
         }
         Relationships: []
       }
+      temp_backup_case_images: {
+        Row: {
+          bucket_path: string | null
+          case_id: string | null
+          created_at: string | null
+          dimensions: Json | null
+          file_size_bytes: number | null
+          formats: Json | null
+          id: string | null
+          large_url: string | null
+          legend: string | null
+          medium_url: string | null
+          metadata: Json | null
+          modality_prefix: string | null
+          organization_metadata: Json | null
+          original_filename: string | null
+          original_url: string | null
+          processed_at: string | null
+          processing_status: string | null
+          sequence_order: number | null
+          specialty_code: string | null
+          thumbnail_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          bucket_path?: string | null
+          case_id?: string | null
+          created_at?: string | null
+          dimensions?: Json | null
+          file_size_bytes?: number | null
+          formats?: Json | null
+          id?: string | null
+          large_url?: string | null
+          legend?: string | null
+          medium_url?: string | null
+          metadata?: Json | null
+          modality_prefix?: string | null
+          organization_metadata?: Json | null
+          original_filename?: string | null
+          original_url?: string | null
+          processed_at?: string | null
+          processing_status?: string | null
+          sequence_order?: number | null
+          specialty_code?: string | null
+          thumbnail_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          bucket_path?: string | null
+          case_id?: string | null
+          created_at?: string | null
+          dimensions?: Json | null
+          file_size_bytes?: number | null
+          formats?: Json | null
+          id?: string | null
+          large_url?: string | null
+          legend?: string | null
+          medium_url?: string | null
+          metadata?: Json | null
+          modality_prefix?: string | null
+          organization_metadata?: Json | null
+          original_filename?: string | null
+          original_url?: string | null
+          processed_at?: string | null
+          processing_status?: string | null
+          sequence_order?: number | null
+          specialty_code?: string | null
+          thumbnail_url?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       user_achievements_progress: {
         Row: {
           achievement_id: string
@@ -2255,6 +2327,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      auto_cleanup_temp_files: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       auto_publish_daily_challenge: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -2356,6 +2432,10 @@ export type Database = {
       emergency_admin_recovery: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      execute_ultra_safe_bucket_cleanup: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       get_active_prompt: {
         Args: { p_function_type: string; p_category?: string }
