@@ -24,7 +24,14 @@ serve(async (req) => {
   try {
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
-      throw new Error('OPENAI_API_KEY não configurada');
+      console.error('OPENAI_API_KEY não configurada');
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: 'OpenAI API Key não configurada. Configure em Supabase Edge Function Secrets.'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -32,6 +39,8 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { promptControlId, promptTemplate, category, difficulty, modality }: GenerateRequest = await req.json();
+
+    console.log('Gerando questão:', { category, difficulty, modality });
 
     // Construir prompt específico
     const systemPrompt = `Você é um especialista em medicina que cria perguntas de verdadeiro/falso para desafios diários educacionais.
@@ -55,6 +64,8 @@ FORMATO DE RESPOSTA (JSON):
                                   .replace(/\{difficulty\}/g, difficulty)
                                   .replace(/\{modality\}/g, modality);
 
+    console.log('Chamando OpenAI...');
+
     // Chamar OpenAI
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -74,7 +85,9 @@ FORMATO DE RESPOSTA (JSON):
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error('OpenAI API error:', response.status, errorText);
+      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
     }
 
     const aiResponse = await response.json();
@@ -96,8 +109,11 @@ FORMATO DE RESPOSTA (JSON):
 
     // Validar estrutura da resposta
     if (!parsedResponse.question || typeof parsedResponse.correct_answer !== 'boolean' || !parsedResponse.explanation) {
+      console.error('Resposta incompleta:', parsedResponse);
       throw new Error('Resposta da IA incompleta - campos obrigatórios ausentes');
     }
+
+    console.log('Salvando questão na base de dados...');
 
     // Salvar questão gerada na base de dados
     const { data: question, error: dbError } = await supabase
@@ -121,7 +137,7 @@ FORMATO DE RESPOSTA (JSON):
 
     if (dbError) {
       console.error('Erro ao salvar questão:', dbError);
-      throw new Error('Erro ao salvar questão no banco de dados');
+      throw new Error('Erro ao salvar questão no banco de dados: ' + dbError.message);
     }
 
     // Atualizar contador de uso do prompt
@@ -132,6 +148,8 @@ FORMATO DE RESPOSTA (JSON):
         updated_at: new Date().toISOString()
       })
       .eq('id', promptControlId);
+
+    console.log('Questão criada com sucesso:', question.id);
 
     return new Response(JSON.stringify({
       success: true,
