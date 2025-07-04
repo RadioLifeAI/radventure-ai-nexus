@@ -481,42 +481,42 @@ export default function EventoArena() {
 
                       {/* Opções de Resposta */}
                       <div className="space-y-4">
-                      {currentCase.answer_options.map((option, index) => {
-                        const isSelected = selectedAnswer === index;
-                        return (
-                          <button
-                            key={index}
-                            onClick={() => setSelectedAnswer(index)}
-                            className={`group w-full p-5 text-left rounded-xl border-2 transition-all duration-300 hover:scale-[1.02] ${
-                              isSelected
-                                ? "border-blue-500 shadow-lg shadow-blue-500/25 bg-gradient-to-br from-blue-50 to-blue-100"
-                                : "border-gray-200 hover:border-gray-300 bg-gradient-to-br from-white to-gray-50 hover:shadow-md"
-                            }`}
-                          >
-                            <div className="flex items-start gap-4">
-                              <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
+                        {currentCase.answer_options.map((option, index) => {
+                          const isSelected = selectedAnswer === index;
+                          return (
+                            <button
+                              key={index}
+                              onClick={() => setSelectedAnswer(index)}
+                              className={`group w-full p-5 text-left rounded-xl border-2 transition-all duration-300 hover:scale-[1.02] ${
                                 isSelected
-                                  ? "border-blue-500 bg-blue-500 shadow-lg shadow-blue-500/50"
-                                  : "border-gray-300 group-hover:border-blue-400"
-                              }`}>
-                                {isSelected && (
-                                  <div className="w-3 h-3 bg-white rounded-full animate-scale-in" />
-                                )}
-                              </div>
-                              <div className="flex-1 space-y-1">
-                                <div className="flex items-center gap-2">
-                                  <span className={`font-bold text-lg ${isSelected ? 'text-blue-700' : 'text-gray-700'}`}>
-                                    {String.fromCharCode(65 + index)}.
-                                  </span>
+                                  ? "border-primary shadow-lg shadow-primary/25 bg-gradient-to-br from-primary/10 to-primary-glow/10"
+                                  : "border-border hover:border-muted-foreground/40 bg-gradient-to-br from-card to-muted/20 hover:shadow-md"
+                              }`}
+                            >
+                              <div className="flex items-start gap-4">
+                                <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
+                                  isSelected
+                                    ? "border-primary bg-primary shadow-lg shadow-primary/50"
+                                    : "border-muted-foreground/40 group-hover:border-primary/60"
+                                }`}>
+                                  {isSelected && (
+                                    <div className="w-3 h-3 bg-primary-foreground rounded-full animate-scale-in" />
+                                  )}
                                 </div>
-                                <p className={`text-base leading-relaxed ${isSelected ? 'text-gray-800' : 'text-gray-700'}`}>
-                                  {option}
-                                </p>
+                                <div className="flex-1 space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className={`font-bold text-lg ${isSelected ? 'text-primary' : 'text-foreground/80'}`}>
+                                      {String.fromCharCode(65 + index)}.
+                                    </span>
+                                  </div>
+                                  <p className={`text-base leading-relaxed ${isSelected ? 'text-primary-foreground/90' : 'text-foreground/80'}`}>
+                                    {option}
+                                  </p>
+                                </div>
                               </div>
-                            </div>
-                          </button>
-                        );
-                      })}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
 
