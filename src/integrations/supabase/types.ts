@@ -2770,6 +2770,10 @@ export type Database = {
         }
         Returns: Json
       }
+      debug_event_banner_upload: {
+        Args: { p_event_id: string }
+        Returns: Json
+      }
       emergency_admin_recovery: {
         Args: Record<PropertyKey, never>
         Returns: string

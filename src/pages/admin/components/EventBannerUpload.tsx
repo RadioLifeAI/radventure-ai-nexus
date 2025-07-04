@@ -3,7 +3,8 @@ import React, { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Upload, Image as ImageIcon, X, Loader2, CheckCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Upload, Image as ImageIcon, X, Loader2, CheckCircle, AlertTriangle, Info } from "lucide-react";
 import { useEventBannerUpload } from "@/hooks/useEventBannerUpload";
 
 type Props = {
@@ -19,6 +20,12 @@ export function EventBannerUpload({ value, onChange, eventId }: Props) {
     medium_url?: string;
     full_url?: string;
   }>({});
+  const [uploadStatus, setUploadStatus] = useState<{
+    method?: 'edge_function' | 'direct_fallback';
+    processed?: boolean;
+    error?: string;
+  }>({});
+  
   const { uploadEventBanner, uploading } = useEventBannerUpload();
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -41,6 +48,7 @@ export function EventBannerUpload({ value, onChange, eventId }: Props) {
     }
 
     try {
+      setUploadStatus({ error: undefined });
       const result = await uploadEventBanner(file, eventId);
       
       // Set all sizes in state for preview
@@ -48,8 +56,21 @@ export function EventBannerUpload({ value, onChange, eventId }: Props) {
       
       // Use full size as the main value
       onChange(result.urls.full_url);
-    } catch (error) {
+      
+      // Update status based on result
+      setUploadStatus({
+        method: result.fallback ? 'direct_fallback' : 'edge_function',
+        processed: !result.fallback,
+        error: undefined
+      });
+      
+    } catch (error: any) {
       console.error('Erro no upload:', error);
+      setUploadStatus({
+        error: error.message,
+        method: undefined,
+        processed: false
+      });
     }
 
     if (inputRef.current) inputRef.current.value = "";
@@ -58,6 +79,7 @@ export function EventBannerUpload({ value, onChange, eventId }: Props) {
   function handleRemove() {
     onChange("");
     setPreviewUrls({});
+    setUploadStatus({});
   }
 
   const displayUrls = Object.keys(previewUrls).length > 0 ? previewUrls : {};
@@ -102,8 +124,30 @@ export function EventBannerUpload({ value, onChange, eventId }: Props) {
       {uploading && (
         <div className="w-full">
           <Progress value={65} className="w-full" />
-          <p className="text-xs text-muted-foreground mt-1">Processando e otimizando imagem...</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Processando e otimizando imagem... (tentando método otimizado primeiro)
+          </p>
         </div>
+      )}
+
+      {/* STATUS E ALERTAS */}
+      {uploadStatus.error && (
+        <Alert variant="destructive" className="w-full">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Erro no upload:</strong> {uploadStatus.error}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {uploadStatus.method === 'direct_fallback' && (
+        <Alert className="w-full border-orange-200 bg-orange-50">
+          <Info className="h-4 w-4 text-orange-600" />
+          <AlertDescription className="text-orange-800">
+            <strong>Upload simplificado:</strong> Banner salvo com sucesso, mas sem otimização automática.
+            O sistema otimizado não estava disponível no momento.
+          </AlertDescription>
+        </Alert>
       )}
 
       {mainImage && (
@@ -116,11 +160,29 @@ export function EventBannerUpload({ value, onChange, eventId }: Props) {
           
           {Object.keys(displayUrls).length > 0 && (
             <div className="flex gap-1 mt-2 flex-wrap">
-              <Badge variant="secondary" className="text-xs">
-                <CheckCircle size={12} className="mr-1" />
-                3 tamanhos gerados
-              </Badge>
-              <Badge variant="outline" className="text-xs">WebP otimizado</Badge>
+              {uploadStatus.method === 'edge_function' && (
+                <Badge variant="secondary" className="text-xs">
+                  <CheckCircle size={12} className="mr-1" />
+                  3 tamanhos gerados
+                </Badge>
+              )}
+              
+              {uploadStatus.method === 'direct_fallback' && (
+                <Badge variant="outline" className="text-xs border-orange-300 text-orange-700">
+                  <AlertTriangle size={12} className="mr-1" />
+                  Upload direto
+                </Badge>
+              )}
+              
+              {uploadStatus.processed && (
+                <Badge variant="outline" className="text-xs">WebP otimizado</Badge>
+              )}
+              
+              {!uploadStatus.processed && uploadStatus.method && (
+                <Badge variant="outline" className="text-xs border-orange-300 text-orange-700">
+                  Não otimizado
+                </Badge>
+              )}
             </div>
           )}
         </div>
@@ -134,8 +196,8 @@ export function EventBannerUpload({ value, onChange, eventId }: Props) {
       )}
 
       <div className="text-xs text-muted-foreground">
-        <p>• Máx: 15MB • Será otimizado automaticamente para WebP</p>
-        <p>• Gera 3 tamanhos: thumb (400px), medium (800px), full (1600px)</p>
+        <p>• Máx: 15MB • Sistema híbrido com fallback automático</p>
+        <p>• Tentará otimização WebP + 3 tamanhos primeiro, depois upload direto se necessário</p>
       </div>
     </div>
   );
