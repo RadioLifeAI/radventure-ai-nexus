@@ -50,9 +50,10 @@ export function AutomationDashboard() {
       if (error) throw error;
 
       const total = todayQuestions?.length || 0;
-      const autoApproved = todayQuestions?.filter(q => 
-        q.metadata?.auto_approved === true
-      ).length || 0;
+      const autoApproved = todayQuestions?.filter(q => {
+        const metadata = q.metadata as any;
+        return metadata?.auto_approved === true;
+      }).length || 0;
       
       const avgConfidence = todayQuestions?.length ? 
         todayQuestions.reduce((sum, q) => sum + (q.ai_confidence || 0), 0) / todayQuestions.length : 0;

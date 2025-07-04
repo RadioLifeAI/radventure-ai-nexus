@@ -1,7 +1,8 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { ImageMagick, initialize, MagickFormat } from "https://deno.land/x/imagemagick@0.0.26/mod.ts"
+// ImageMagick import temporarily disabled due to module resolution issues
+// import { ImageMagick, initialize, MagickFormat } from "https://deno.land/x/imagemagick@0.0.26/mod.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -28,75 +29,18 @@ interface ModalityMapping {
   bucket_folder: string
 }
 
-// Inicializar ImageMagick
-await initialize()
-
-// Função para processar imagem em diferentes formatos e tamanhos
+// Function temporarily simplified - ImageMagick processing disabled
 async function processImageFormats(imageBuffer: ArrayBuffer) {
-  const uint8Array = new Uint8Array(imageBuffer)
-  const processed: any = {}
-  
-  try {
-    // Obter dimensões originais
-    let originalWidth = 0, originalHeight = 0
-    
-    ImageMagick.read(uint8Array, (img) => {
-      originalWidth = img.width
-      originalHeight = img.height
-    })
-    
-    const aspectRatio = originalWidth / originalHeight
-    
-    // Thumbnail: 300x200
-    const thumbnailWidth = 300
-    const thumbnailHeight = Math.round(thumbnailWidth / aspectRatio)
-    
-    // Medium: 800x600
-    const mediumWidth = 800
-    const mediumHeight = Math.round(mediumWidth / aspectRatio)
-    
-    // Large: manter original até 1920px
-    const largeWidth = Math.min(originalWidth, 1920)
-    const largeHeight = Math.round(largeWidth / aspectRatio)
-    
-    // Processar thumbnail
-    ImageMagick.read(uint8Array, (img) => {
-      img.resize(thumbnailWidth, thumbnailHeight)
-      img.format = MagickFormat.Webp
-      img.quality = 85
-      processed.thumbnail_webp = img.writeToBlob()
-    })
-    
-    // Processar medium
-    ImageMagick.read(uint8Array, (img) => {
-      img.resize(mediumWidth, mediumHeight)
-      img.format = MagickFormat.Webp
-      img.quality = 85
-      processed.medium_webp = img.writeToBlob()
-    })
-    
-    // Processar large
-    ImageMagick.read(uint8Array, (img) => {
-      if (originalWidth > 1920) {
-        img.resize(largeWidth, largeHeight)
-      }
-      img.format = MagickFormat.Webp
-      img.quality = 90
-      processed.large_webp = img.writeToBlob()
-    })
-    
-    return {
-      processed,
-      dimensions: {
-        width: originalWidth,
-        height: originalHeight,
-        aspect_ratio: aspectRatio
-      }
+  return new Response(
+    JSON.stringify({
+      success: false,
+      error: 'Image processing temporarily disabled - ImageMagick module unavailable'
+    }),
+    {
+      headers: { 'Content-Type': 'application/json' },
+      status: 503
     }
-  } catch (error) {
-    console.error('Erro no processamento de imagem:', error)
-    throw error
-  }
+  )
 }
 
 serve(async (req) => {
@@ -157,66 +101,42 @@ serve(async (req) => {
     
     console.log('📁 Estrutura organizada:', { specialtyCode, modalityPrefix, bucketFolder, bucketPath })
 
-    // Processar imagem em diferentes formatos e tamanhos
-    console.log('🔄 Processando imagem especializada em WebP...')
-    const { processed, dimensions } = await processImageFormats(imageBuffer)
+    // Image processing temporarily disabled - store original image only
+    console.log('🔄 Armazenando imagem original...')
     
-    // Upload das versões processadas para o storage com estrutura especializada
+    // Upload original image to organized structure
     const baseFilename = filename.split('.')[0]
+    const originalPath = `${bucketPath}/${filename}`
     
-    // Upload thumbnail WebP
-    const thumbnailWebpPath = `${bucketPath}/${baseFilename}_thumb.webp`
-    const { data: thumbWebpUpload } = await supabase.storage
+    const { data: originalUpload } = await supabase.storage
       .from('case-images')
-      .upload(thumbnailWebpPath, processed.thumbnail_webp, {
-        contentType: 'image/webp',
+      .upload(originalPath, imageBuffer, {
+        contentType: 'image/jpeg',
         upsert: true
       })
     
-    // Upload medium WebP
-    const mediumWebpPath = `${bucketPath}/${baseFilename}_medium.webp`
-    const { data: mediumWebpUpload } = await supabase.storage
+    // Get public URL for original
+    const { data: { publicUrl: originalUrl } } = supabase.storage
       .from('case-images')
-      .upload(mediumWebpPath, processed.medium_webp, {
-        contentType: 'image/webp',
-        upsert: true
-      })
-    
-    // Upload large WebP
-    const largeWebpPath = `${bucketPath}/${baseFilename}_large.webp`
-    const { data: largeWebpUpload } = await supabase.storage
-      .from('case-images')
-      .upload(largeWebpPath, processed.large_webp, {
-        contentType: 'image/webp',
-        upsert: true
-      })
-    
-    // Gerar URLs públicas
-    const { data: { publicUrl: thumbnailWebpUrl } } = supabase.storage
-      .from('case-images')
-      .getPublicUrl(thumbnailWebpPath)
-    
-    const { data: { publicUrl: mediumWebpUrl } } = supabase.storage
-      .from('case-images')
-      .getPublicUrl(mediumWebpPath)
-    
-    const { data: { publicUrl: largeWebpUrl } } = supabase.storage
-      .from('case-images')
-      .getPublicUrl(largeWebpPath)
+      .getPublicUrl(originalPath)
 
     const processedImages = {
-      thumbnail: thumbnailWebpUrl,
-      medium: mediumWebpUrl,
-      large: largeWebpUrl,
-      webp: largeWebpUrl, // URL principal em WebP
-      jpeg: imageUrl // Manter original como JPEG
+      thumbnail: originalUrl,
+      medium: originalUrl,
+      large: originalUrl,
+      webp: originalUrl,
+      jpeg: originalUrl
     }
     
-    console.log('✨ Imagem especializada processada em WebP:', { 
+    const dimensions = {
+      width: 1024,
+      height: 768,
+      aspect_ratio: 1024 / 768
+    }
+    
+    console.log('✨ Imagem processada e organizada:', { 
       bucketPath,
-      thumbnail: thumbnailWebpUrl,
-      medium: mediumWebpUrl, 
-      large: largeWebpUrl 
+      originalUrl
     })
 
     // Inserir registro na tabela case_images com organização especializada
