@@ -149,79 +149,89 @@ export function HistoryAnalyticsTab() {
       </div>
 
       {/* Cards de Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
         <Card className="bg-gradient-to-r from-blue-600/20 to-cyan-600/20 border-blue-400/30">
-          <CardContent className="p-4 text-center">
-            <DollarSign className="h-8 w-8 text-blue-400 mx-auto mb-2" />
-            <h3 className="text-2xl font-bold text-white">
+          <CardContent className="p-3 sm:p-4 text-center">
+            <DollarSign className="h-6 w-6 sm:h-8 sm:w-8 text-blue-400 mx-auto mb-2" />
+            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-white">
               {processedData.stats.totalTransactions}
             </h3>
-            <p className="text-blue-200">Transações Totais</p>
+            <p className="text-blue-200 text-xs sm:text-sm">Transações Totais</p>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-r from-green-600/20 to-emerald-600/20 border-green-400/30">
-          <CardContent className="p-4 text-center">
-            <ArrowUp className="h-8 w-8 text-green-400 mx-auto mb-2" />
-            <h3 className="text-2xl font-bold text-white">
+          <CardContent className="p-3 sm:p-4 text-center">
+            <ArrowUp className="h-6 w-6 sm:h-8 sm:w-8 text-green-400 mx-auto mb-2" />
+            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-white">
               +{processedData.stats.totalEarned.toLocaleString()}
             </h3>
-            <p className="text-green-200">RadCoins Ganhos</p>
+            <p className="text-green-200 text-xs sm:text-sm">RadCoins Ganhos</p>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-r from-red-600/20 to-pink-600/20 border-red-400/30">
-          <CardContent className="p-4 text-center">
-            <ArrowDown className="h-8 w-8 text-red-400 mx-auto mb-2" />
-            <h3 className="text-2xl font-bold text-white">
+          <CardContent className="p-3 sm:p-4 text-center">
+            <ArrowDown className="h-6 w-6 sm:h-8 sm:w-8 text-red-400 mx-auto mb-2" />
+            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-white">
               -{processedData.stats.totalSpent.toLocaleString()}
             </h3>
-            <p className="text-red-200">RadCoins Gastos</p>
+            <p className="text-red-200 text-xs sm:text-sm">RadCoins Gastos</p>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 border-purple-400/30">
-          <CardContent className="p-4 text-center">
-            <TrendingUp className="h-8 w-8 text-purple-400 mx-auto mb-2" />
-            <h3 className="text-2xl font-bold text-white">
+          <CardContent className="p-3 sm:p-4 text-center">
+            <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-purple-400 mx-auto mb-2" />
+            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-white">
               {processedData.stats.netBalance >= 0 ? '+' : ''}
               {processedData.stats.netBalance.toLocaleString()}
             </h3>
-            <p className="text-purple-200">Saldo Líquido</p>
+            <p className="text-purple-200 text-xs sm:text-sm">Saldo Líquido</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Gráficos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
         {/* Gráfico de Linha - Histórico de Saldo */}
         <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-slate-600">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-cyan-400" />
-              Histórico de Transações
+          <CardHeader className="p-3 sm:p-6">
+            <CardTitle className="text-white flex items-center gap-2 text-sm sm:text-base">
+              <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-cyan-400" />
+              <span className="truncate">Histórico de Transações</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+          <CardContent className="p-3 sm:p-6">
+            <ResponsiveContainer width="100%" height={250}>
               <LineChart data={processedData.chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="date" stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" />
+                <XAxis 
+                  dataKey="date" 
+                  stroke="#9CA3AF" 
+                  fontSize={12}
+                  tick={{ fontSize: 12 }}
+                />
+                <YAxis 
+                  stroke="#9CA3AF" 
+                  fontSize={12}
+                  tick={{ fontSize: 12 }}
+                />
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: '#1F2937', 
                     border: '1px solid #374151',
                     borderRadius: '8px',
-                    color: '#FFFFFF'
+                    color: '#FFFFFF',
+                    fontSize: '12px'
                   }} 
                 />
                 <Line 
                   type="monotone" 
                   dataKey="balance" 
                   stroke="#06B6D4" 
-                  strokeWidth={3}
-                  dot={{ fill: '#06B6D4', strokeWidth: 2, r: 4 }}
+                  strokeWidth={2}
+                  dot={{ fill: '#06B6D4', strokeWidth: 1, r: 3 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -230,21 +240,21 @@ export function HistoryAnalyticsTab() {
 
         {/* Gráfico de Pizza - Tipos de Transação */}
         <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-slate-600">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-purple-400" />
-              Gastos por Categoria
+          <CardHeader className="p-3 sm:p-6">
+            <CardTitle className="text-white flex items-center gap-2 text-sm sm:text-base">
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-purple-400" />
+              <span className="truncate">Gastos por Categoria</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+          <CardContent className="p-3 sm:p-6">
+            <ResponsiveContainer width="100%" height={250}>
               <PieChart>
                 <Pie
                   data={processedData.pieData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
+                  innerRadius={40}
+                  outerRadius={80}
                   paddingAngle={5}
                   dataKey="value"
                 >
@@ -257,7 +267,8 @@ export function HistoryAnalyticsTab() {
                     backgroundColor: '#1F2937', 
                     border: '1px solid #374151',
                     borderRadius: '8px',
-                    color: '#FFFFFF'
+                    color: '#FFFFFF',
+                    fontSize: '12px'
                   }} 
                 />
               </PieChart>
@@ -268,19 +279,19 @@ export function HistoryAnalyticsTab() {
 
       {/* Lista de Transações Recentes */}
       <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-slate-600">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-green-400" />
-            Transações Recentes
+        <CardHeader className="p-3 sm:p-6">
+          <CardTitle className="text-white flex items-center gap-2 text-sm sm:text-base">
+            <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-green-400" />
+            <span className="truncate">Transações Recentes</span>
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-3 max-h-96 overflow-y-auto">
+        <CardContent className="p-3 sm:p-6">
+          <div className="space-y-2 sm:space-y-3 max-h-96 overflow-y-auto">
             {transactions.length === 0 ? (
-              <div className="text-center py-8">
-                <DollarSign className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-400">Nenhuma transação encontrada</p>
-                <p className="text-sm text-gray-500 mt-2">
+              <div className="text-center py-6 sm:py-8">
+                <DollarSign className="h-8 w-8 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-400 text-sm sm:text-base">Nenhuma transação encontrada</p>
+                <p className="text-xs sm:text-sm text-gray-500 mt-2">
                   Comece comprando pacotes de ajuda ou participando de eventos!
                 </p>
               </div>
@@ -293,31 +304,31 @@ export function HistoryAnalyticsTab() {
                 return (
                   <div 
                     key={tx.id}
-                    className="flex items-center justify-between p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+                    className="flex items-center justify-between p-3 sm:p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className={`p-2 rounded-full ${
+                    <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
+                      <div className={`p-1.5 sm:p-2 rounded-full flex-shrink-0 ${
                         isPositive ? 'bg-green-500/20' : 'bg-red-500/20'
                       }`}>
-                        <Icon className={`h-5 w-5 ${
+                        <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${
                           isPositive ? 'text-green-400' : 'text-red-400'
                         }`} />
                       </div>
-                      <div>
-                        <h4 className="text-white font-semibold">
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-white font-semibold text-xs sm:text-sm truncate">
                           {metadata.package_name || metadata.offer_name || 
                            tx.tx_type.replace('_', ' ').toUpperCase()}
                         </h4>
-                        <p className="text-gray-400 text-sm">
+                        <p className="text-gray-400 text-xs">
                           {format(new Date(tx.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className={`text-lg font-bold ${getTransactionColor(tx.amount)}`}>
+                    <div className="text-right flex-shrink-0">
+                      <div className={`text-sm sm:text-lg font-bold ${getTransactionColor(tx.amount)}`}>
                         {isPositive ? '+' : ''}{tx.amount.toLocaleString()}
                       </div>
-                      <div className="text-sm text-gray-400">
+                      <div className="text-xs text-gray-400">
                         Saldo: {tx.balance_after.toLocaleString()}
                       </div>
                     </div>

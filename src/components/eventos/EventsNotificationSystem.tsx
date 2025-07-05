@@ -101,22 +101,23 @@ export function EventsNotificationSystem() {
         )}
       </Button>
 
-      {/* Panel de notificações - Sistema aprimorado sem reaparecer notificações excluídas */}
+      {/* Panel de notificações - Sistema aprimorado mobile-first */}
       {isOpen && (
-        <Card className="absolute right-0 top-12 w-80 max-h-96 overflow-y-auto z-50 shadow-xl">
+        <Card className="absolute right-0 top-12 w-[95vw] sm:w-80 max-w-sm max-h-[80vh] sm:max-h-96 overflow-y-auto z-50 shadow-xl bg-white">
           <CardContent className="p-0">
-            <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between">
-              <h3 className="font-semibold">Notificações</h3>
+            <div className="sticky top-0 bg-white border-b p-3 sm:p-4 flex items-center justify-between">
+              <h3 className="font-semibold text-sm sm:text-base">Notificações</h3>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsOpen(false)}
+                className="min-h-[44px] min-w-[44px] p-2"
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
 
-            <div className="max-h-80 overflow-y-auto">
+            <div className="max-h-[60vh] sm:max-h-80 overflow-y-auto">
               {loading ? (
                 <div className="p-4 text-center">
                   <div className="animate-spin h-6 w-6 border-2 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
@@ -125,50 +126,50 @@ export function EventsNotificationSystem() {
               ) : notifications.length === 0 ? (
                 <div className="p-4 text-center text-gray-500">
                   <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>Nenhuma notificação</p>
+                  <p className="text-sm">Nenhuma notificação</p>
                 </div>
               ) : (
                 notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`border-l-4 p-4 border-b hover:bg-gray-50 cursor-pointer ${
+                    className={`border-l-4 p-3 sm:p-4 border-b hover:bg-gray-50 cursor-pointer ${
                       getPriorityColor(notification.priority, notification.type)
                     } ${!notification.isRead ? 'bg-opacity-50' : ''}`}
                     onClick={() => handleNotificationClick(notification)}
                   >
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-start gap-2 sm:gap-3">
                       <div className="flex-shrink-0 mt-0.5">
                         {getNotificationIcon(notification.type)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <h4 className={`text-sm font-medium ${
+                          <h4 className={`text-xs sm:text-sm font-medium truncate ${
                             !notification.isRead ? 'font-semibold' : ''
                           }`}>
                             {notification.title}
                           </h4>
                           {!notification.isRead && (
-                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
                           )}
                         </div>
-                        <p className="text-xs text-gray-600 mb-2">
+                        <p className="text-xs text-gray-600 mb-2 line-clamp-2">
                           {notification.message}
                         </p>
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                           <span className="text-xs text-gray-400">
                             {notification.timestamp.toLocaleTimeString('pt-BR', {
                               hour: '2-digit',
                               minute: '2-digit'
                             })}
                           </span>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1 sm:gap-2">
                             {notification.actionLabel && notification.type !== 'report_update' && (
-                              <Button size="sm" variant="outline" className="text-xs px-2 py-1">
+                              <Button size="sm" variant="outline" className="text-xs px-2 py-1 min-h-[36px]">
                                 {notification.actionLabel}
                               </Button>
                             )}
                             {notification.type === 'report_update' && (
-                              <Button size="sm" variant="outline" className="text-xs px-2 py-1">
+                              <Button size="sm" variant="outline" className="text-xs px-2 py-1 min-h-[36px]">
                                 Ver Report
                               </Button>
                             )}
@@ -179,7 +180,7 @@ export function EventsNotificationSystem() {
                                 e.stopPropagation();
                                 removeNotification(notification.id);
                               }}
-                              className="text-xs px-2 py-1 hover:text-red-500"
+                              className="text-xs px-2 py-1 hover:text-red-500 min-h-[36px] min-w-[36px]"
                             >
                               <X className="h-3 w-3" />
                             </Button>
@@ -193,12 +194,12 @@ export function EventsNotificationSystem() {
             </div>
 
             {notifications.length > 0 && unreadCount > 0 && (
-              <div className="p-4 border-t">
+              <div className="p-3 sm:p-4 border-t">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={markAllAsRead}
-                  className="w-full text-sm"
+                  className="w-full text-xs sm:text-sm min-h-[44px]"
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
                   Marcar todas como lidas
