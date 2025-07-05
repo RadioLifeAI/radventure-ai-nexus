@@ -18,6 +18,8 @@ import {
   Brain,
   Award
 } from "lucide-react";
+import { useResponsive } from "@/hooks/useResponsive";
+import { cn } from "@/lib/utils";
 
 type Props = {
   open: boolean;
@@ -51,12 +53,31 @@ export function FeedbackModal({
   onReviewCase
 }: Props) {
   const [activeTab, setActiveTab] = useState("summary");
+  const { isMobile, isTablet } = useResponsive();
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // Títulos adaptativos das abas
+  const getTabTitles = () => {
+    if (isMobile) {
+      return {
+        summary: "Resumo",
+        analysis: "Análise",
+        insights: "Insights"
+      };
+    }
+    return {
+      summary: "Resumo",
+      analysis: "Análise Detalhada", 
+      insights: "Insights de Aprendizado"
+    };
+  };
+
+  const tabTitles = getTabTitles();
 
   // Usar o isCorrect como fonte única de verdade (já validado no useCaseProgress)
   const actuallyCorrect = isCorrect;
@@ -108,10 +129,43 @@ export function FeedbackModal({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="summary">Resumo</TabsTrigger>
-            <TabsTrigger value="analysis">Análise Detalhada</TabsTrigger>
-            <TabsTrigger value="insights">Insights de Aprendizado</TabsTrigger>
+          <TabsList className={cn(
+            "grid w-full grid-cols-3 h-auto",
+            isMobile ? "gap-0 p-0.5" : "gap-1 p-1"
+          )}>
+            <TabsTrigger 
+              value="summary"
+              className={cn(
+                "transition-all duration-200",
+                isMobile ? 
+                  "px-2 py-2 text-xs min-h-[44px] leading-tight whitespace-nowrap" : 
+                  "px-3 py-2 text-sm min-h-[40px]"
+              )}
+            >
+              {tabTitles.summary}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="analysis"
+              className={cn(
+                "transition-all duration-200",
+                isMobile ? 
+                  "px-2 py-2 text-xs min-h-[44px] leading-tight whitespace-nowrap" : 
+                  "px-3 py-2 text-sm min-h-[40px]"
+              )}
+            >
+              {tabTitles.analysis}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="insights"
+              className={cn(
+                "transition-all duration-200",
+                isMobile ? 
+                  "px-2 py-2 text-xs min-h-[44px] leading-tight whitespace-nowrap" : 
+                  "px-3 py-2 text-sm min-h-[40px]"
+              )}
+            >
+              {tabTitles.insights}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="summary" className="space-y-4">
