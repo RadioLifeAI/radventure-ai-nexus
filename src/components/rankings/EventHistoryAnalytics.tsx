@@ -34,8 +34,9 @@ export function EventHistoryAnalytics({ historicalData, loading }: EventHistoryA
     ? Math.round(historicalData.reduce((sum, event) => sum + event.rank, 0) / totalEvents)
     : 0;
 
-  // Agrupar por status do evento
+  // Agrupar por status do evento - INCLUIR EVENTOS ATIVOS
   const completedEvents = historicalData.filter(event => event.event.status === 'FINISHED');
+  const activeEvents = historicalData.filter(event => event.event.status === 'ACTIVE');
   const recentEvents = historicalData.slice(0, 5);
 
   // Estatísticas por mês (últimos 6 meses)
@@ -89,12 +90,20 @@ export function EventHistoryAnalytics({ historicalData, loading }: EventHistoryA
   return (
     <div className="space-y-6">
       {/* Cards de Estatísticas Gerais */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200">
           <CardContent className="p-4 text-center">
             <Calendar className="h-8 w-8 mx-auto text-blue-600 mb-2" />
             <div className="text-2xl font-bold text-blue-700">{totalEvents}</div>
-            <div className="text-sm text-blue-600">Eventos Participados</div>
+            <div className="text-sm text-blue-600">Total Participações</div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+          <CardContent className="p-4 text-center">
+            <TrendingUp className="h-8 w-8 mx-auto text-green-600 mb-2" />
+            <div className="text-2xl font-bold text-green-700">{activeEvents.length}</div>
+            <div className="text-sm text-green-600">Eventos Ativos</div>
           </CardContent>
         </Card>
         

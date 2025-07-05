@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Crown, Trophy, Star, Award, Medal, Flame } from "lucide-react";
+import { Crown, Trophy, Star, Award, Medal, Flame, Zap, Calendar } from "lucide-react";
 import { EventRankingData } from "@/hooks/useEventRankingsEnhanced";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -69,6 +69,33 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
       case "recent": return <Flame className="h-5 w-5" />;
       case "prizes": return <Medal className="h-5 w-5" />;
       default: return <Trophy className="h-5 w-5" />;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'FINISHED': return 'bg-green-100 text-green-700 border-green-200';
+      case 'ACTIVE': return 'bg-blue-100 text-blue-700 border-blue-200';
+      case 'SCHEDULED': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+      default: return 'bg-gray-100 text-gray-700 border-gray-200';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'FINISHED': return 'Finalizado';
+      case 'ACTIVE': return 'Em Andamento';
+      case 'SCHEDULED': return 'Agendado';
+      default: return 'Desconhecido';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'FINISHED': return <Trophy className="h-4 w-4" />;
+      case 'ACTIVE': return <Zap className="h-4 w-4" />;
+      case 'SCHEDULED': return <Calendar className="h-4 w-4" />;
+      default: return <Star className="h-4 w-4" />;
     }
   };
 
@@ -217,8 +244,8 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
 
         <TabsContent value="recent" className="space-y-4">
           <div className="mb-4">
-            <h3 className="text-xl font-bold text-gray-800 mb-2">🔥 Campeões Recentes</h3>
-            <p className="text-gray-600">Últimos vencedores de eventos</p>
+            <h3 className="text-xl font-bold text-gray-800 mb-2">🔥 Líderes Atuais & Campeões Recentes</h3>
+            <p className="text-gray-600">Líderes de eventos ativos e últimos vencedores</p>
           </div>
           
           <div className="grid gap-3">
@@ -239,6 +266,16 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
                           <Badge variant="outline" className="text-xs">
                             {event.score} pontos
                           </Badge>
+                          <Badge className={getStatusColor(event.event.status)}>
+                            {getStatusIcon(event.event.status)}
+                            <span className="ml-1">{getStatusLabel(event.event.status)}</span>
+                          </Badge>
+                          {event.event.status === 'ACTIVE' && (
+                            <Badge variant="outline" className="text-orange-600 border-orange-300 bg-orange-50">
+                              <Zap className="h-3 w-3 mr-1" />
+                              Liderando Agora
+                            </Badge>
+                          )}
                           <span className="text-xs text-gray-500">
                             {formatDistanceToNow(new Date(event.event.scheduled_start), { 
                               addSuffix: true, 
