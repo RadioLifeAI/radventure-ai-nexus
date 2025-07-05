@@ -696,6 +696,13 @@ export type Database = {
             foreignKeyName: "event_banner_images_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "event_system_monitor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_banner_images_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
@@ -726,6 +733,13 @@ export type Database = {
             columns: ["case_id"]
             isOneToOne: false
             referencedRelation: "medical_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_cases_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_system_monitor"
             referencedColumns: ["id"]
           },
           {
@@ -763,6 +777,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "event_final_rankings_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_system_monitor"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "event_final_rankings_event_id_fkey"
             columns: ["event_id"]
@@ -809,6 +830,13 @@ export type Database = {
             foreignKeyName: "event_rankings_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "event_system_monitor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_rankings_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
@@ -834,6 +862,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "event_registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_system_monitor"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "event_registrations_event_id_fkey"
             columns: ["event_id"]
@@ -2702,7 +2737,22 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      event_system_monitor: {
+        Row: {
+          casos_configurados: number | null
+          casos_na_tabela: number | null
+          id: string | null
+          maior_pontuacao: number | null
+          media_pontuacao: number | null
+          name: string | null
+          participantes: number | null
+          premios_distribuidos: boolean | null
+          status: Database["public"]["Enums"]["event_status"] | null
+          status_casos: string | null
+          status_premios: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       add_help_aids: {
@@ -3037,6 +3087,10 @@ export type Database = {
           p_points_earned: number
           p_time_spent: number
         }
+        Returns: Json
+      }
+      validate_event_system: {
+        Args: Record<PropertyKey, never>
         Returns: Json
       }
       validate_points_system: {
