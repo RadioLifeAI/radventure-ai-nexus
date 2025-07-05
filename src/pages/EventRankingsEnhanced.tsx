@@ -14,6 +14,7 @@ export default function EventRankingsEnhanced() {
     activeEventRankings,
     personalStats,
     hallOfFameData,
+    historyData,
     loading,
     activeTab,
     setActiveTab
@@ -82,7 +83,7 @@ export default function EventRankingsEnhanced() {
 
             <TabsContent value="analytics" className="animate-fade-in">
               <EventHistoryAnalytics 
-                historicalData={hallOfFameData}
+                historicalData={historyData}
                 loading={loading}
               />
             </TabsContent>

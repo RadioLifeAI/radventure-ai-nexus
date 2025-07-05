@@ -4,6 +4,7 @@ import { useAuth } from "./useAuth";
 import { useEventRankings, EventRankingData } from "./useEventRankings";
 import { usePersonalEventStats, PersonalEventStats } from "./usePersonalEventStats";
 import { useHallOfFame } from "./useHallOfFame";
+import { useEventHistoryData, EventFinalRankingData } from "./useEventHistoryData";
 
 export function useEventRankingsEnhanced() {
   const { user } = useAuth();
@@ -12,13 +13,15 @@ export function useEventRankingsEnhanced() {
   const { activeEventRankings, loading: rankingsLoading, refetch: refetchRankings } = useEventRankings();
   const { personalStats, loading: statsLoading } = usePersonalEventStats(user?.id);
   const { hallOfFameData, loading: hallLoading, refetch: refetchHall } = useHallOfFame();
+  const { historyData, loading: historyLoading, refetch: refetchHistory } = useEventHistoryData();
 
-  const loading = rankingsLoading || statsLoading || hallLoading;
+  const loading = rankingsLoading || statsLoading || hallLoading || historyLoading;
 
   const refetch = async () => {
     await Promise.all([
       refetchRankings(),
-      refetchHall()
+      refetchHall(),
+      refetchHistory()
     ]);
   };
 
@@ -26,6 +29,7 @@ export function useEventRankingsEnhanced() {
     activeEventRankings,
     personalStats,
     hallOfFameData,
+    historyData,
     loading,
     activeTab,
     setActiveTab,
@@ -33,4 +37,4 @@ export function useEventRankingsEnhanced() {
   };
 }
 
-export type { EventRankingData, PersonalEventStats };
+export type { EventRankingData, PersonalEventStats, EventFinalRankingData };

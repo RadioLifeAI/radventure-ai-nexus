@@ -3,12 +3,12 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BarChart3, TrendingUp, Calendar, Award, Trophy, Target } from "lucide-react";
-import { EventRankingData } from "@/hooks/useEventRankingsEnhanced";
+import { EventFinalRankingData } from "@/hooks/useEventRankingsEnhanced";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface EventHistoryAnalyticsProps {
-  historicalData: EventRankingData[];
+  historicalData: EventFinalRankingData[];
   loading: boolean;
 }
 
@@ -203,10 +203,10 @@ export function EventHistoryAnalytics({ historicalData, loading }: EventHistoryA
                   </div>
                    <div className="text-right">
                      <div className="font-semibold text-gray-800">
-                       {event.score?.toLocaleString() || 0} pts
+                       {event.radcoins_awarded?.toLocaleString() || 0} RadCoins
                      </div>
                      <div className="text-sm text-gray-500">
-                       {event.event?.prize_radcoins?.toLocaleString() || 0} RadCoins
+                       {event.event?.prize_radcoins?.toLocaleString() || 0} Total do Evento
                      </div>
                    </div>
                 </div>

@@ -1,14 +1,14 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { EventRankingData } from "./useEventRankings";
+import { EventFinalRankingData } from "./useEventRankingsEnhanced";
 
 export interface PersonalEventStats {
   totalParticipations: number;
   totalRadCoinsEarned: number;
   bestRank: number;
   averageRank: number;
-  recentEvents: EventRankingData[];
+  recentEvents: EventFinalRankingData[];
   winCount: number;
   topThreeCount: number;
 }
@@ -62,8 +62,9 @@ export function usePersonalEventStats(userId?: string) {
           id: ranking.id,
           event_id: ranking.event_id,
           user_id: ranking.user_id,
-          score: 0, // event_final_rankings doesn't have score field
           rank: ranking.rank || 999,
+          radcoins_awarded: ranking.radcoins_awarded || 0,
+          created_at: ranking.created_at || new Date().toISOString(),
           event: event ? {
             id: event.id,
             name: event.name || "Evento",

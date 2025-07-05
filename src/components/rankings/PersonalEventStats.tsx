@@ -253,9 +253,9 @@ export function PersonalEventStats({ stats, loading }: PersonalEventStatsProps) 
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-semibold">{event.score} pts</div>
+                    <div className="font-semibold">{event.radcoins_awarded} RadCoins</div>
                     <div className="text-sm text-gray-500">
-                      {event.event.prize_radcoins.toLocaleString()} RadCoins
+                      {event.event.prize_radcoins.toLocaleString()} Total do Evento
                     </div>
                   </div>
                 </div>
