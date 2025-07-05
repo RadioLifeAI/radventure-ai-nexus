@@ -33,16 +33,29 @@ export function useHallOfFame() {
       console.log("🏆 useHallOfFame - Campeões encontrados:", topRankings.length, topRankings);
 
       const eventIds = [...new Set(topRankings.map(r => r.event_id))];
-      const { data: events } = await supabase
+      console.log("🏆 useHallOfFame - IDs dos eventos para buscar:", eventIds);
+      const { data: events, error: eventsError } = await supabase
         .from("events")
         .select("*")
         .in("id", eventIds);
 
+      if (eventsError) {
+        console.error("🏆 useHallOfFame - Erro ao buscar eventos:", eventsError);
+      }
+      console.log("🏆 useHallOfFame - Eventos encontrados:", events?.length || 0, events);
+
       const userIds = [...new Set(topRankings.map(r => r.user_id))];
-      const { data: profiles } = await supabase
+      console.log("🏆 useHallOfFame - IDs dos usuários para buscar:", userIds);
+      
+      const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("id, full_name, username, avatar_url, medical_specialty")
         .in("id", userIds);
+
+      if (profilesError) {
+        console.error("🏆 useHallOfFame - Erro ao buscar perfis:", profilesError);
+      }
+      console.log("🏆 useHallOfFame - Perfis encontrados:", profiles?.length || 0, profiles);
 
       const eventsMap = new Map((events || []).map(e => [e.id, e]));
       const profilesMap = new Map((profiles || []).map(p => [p.id, p]));
@@ -88,6 +101,7 @@ export function useHallOfFame() {
         };
       });
 
+      console.log("🏆 useHallOfFame - Dados formatados finais:", formattedHallOfFame.length, formattedHallOfFame);
       setHallOfFameData(formattedHallOfFame);
 
     } catch (error) {

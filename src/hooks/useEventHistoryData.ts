@@ -33,20 +33,25 @@ export function useEventHistoryData() {
     try {
       setLoading(true);
       
+      console.log("📊 useEventHistoryData - Iniciando busca dos dados históricos...");
+      
       const { data: finalRankings, error: rankingsError } = await supabase
         .from("event_final_rankings")
         .select("*")
         .order("created_at", { ascending: false });
 
       if (rankingsError) {
-        console.error("Erro ao buscar histórico de rankings:", rankingsError);
+        console.error("📊 useEventHistoryData - Erro ao buscar histórico de rankings:", rankingsError);
         return;
       }
 
       if (!finalRankings || finalRankings.length === 0) {
+        console.log("📊 useEventHistoryData - Nenhum ranking histórico encontrado");
         setHistoryData([]);
         return;
       }
+
+      console.log("📊 useEventHistoryData - Rankings históricos encontrados:", finalRankings.length, finalRankings);
 
       const eventIds = [...new Set(finalRankings.map(r => r.event_id))];
       const { data: events } = await supabase
@@ -104,6 +109,7 @@ export function useEventHistoryData() {
         };
       });
 
+      console.log("📊 useEventHistoryData - Dados históricos formatados:", formattedHistory.length, formattedHistory);
       setHistoryData(formattedHistory);
 
     } catch (error) {

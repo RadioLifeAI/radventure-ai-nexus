@@ -47,7 +47,8 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
     }
     acc[userId].victories.push(champion);
     acc[userId].totalVictories++;
-    acc[userId].totalRadCoins += champion.event.prize_radcoins;
+    // CORRIGIDO: Usar radcoins_awarded (valor real distribuído) em vez de prize_radcoins
+    acc[userId].totalRadCoins += champion.radcoins_awarded || 0;
     return acc;
   }, {} as Record<string, any>);
 
@@ -55,15 +56,19 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
     .sort((a: any, b: any) => b.totalVictories - a.totalVictories)
     .slice(0, 10);
 
+  console.log("🏆 EventHallOfFame - Campeões agrupados:", topChampions.length, championsByUser);
+
   // Eventos mais recentes
   const recentEvents = hallOfFameData
     .sort((a, b) => new Date(b.event.scheduled_start).getTime() - new Date(a.event.scheduled_start).getTime())
     .slice(0, 10);
 
-  // Maiores prêmios
+  // Maiores prêmios - CORRIGIDO: Usar radcoins_awarded (valor real ganho)
   const biggestPrizes = [...hallOfFameData]
-    .sort((a, b) => b.event.prize_radcoins - a.event.prize_radcoins)
+    .sort((a, b) => (b.radcoins_awarded || 0) - (a.radcoins_awarded || 0))
     .slice(0, 10);
+
+  console.log("🏆 EventHallOfFame - Maiores prêmios:", biggestPrizes.length, biggestPrizes);
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -172,10 +177,10 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
         <CardHeader>
           <CardTitle className="flex items-center gap-3 text-2xl">
             <Crown className="h-8 w-8" />
-            Hall da Fama - Legends of RadMed
+            Hall da Fama - Legends of RadVenture
           </CardTitle>
           <p className="text-purple-100">
-            Os maiores campeões e performances históricas dos eventos RadMed
+            Os maiores campeões e performances históricas dos eventos RadVenture
           </p>
         </CardHeader>
       </Card>
@@ -250,12 +255,12 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
                         </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-bold text-green-600">
-                        {event.event.prize_radcoins.toLocaleString()}
-                      </div>
-                      <div className="text-xs text-gray-500">RadCoins</div>
-                    </div>
+                     <div className="text-right">
+                       <div className="font-bold text-green-600">
+                         {(event.radcoins_awarded || 0).toLocaleString()}
+                       </div>
+                       <div className="text-xs text-gray-500">RadCoins Ganhos</div>
+                     </div>
                   </div>
                 </CardContent>
               </Card>
@@ -290,15 +295,15 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
                         </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-green-600">
-                        {event.event.prize_radcoins.toLocaleString()}
-                      </div>
-                       <div className="text-sm text-gray-500">RadCoins</div>
-                       <Badge className="mt-1 bg-yellow-100 text-yellow-700">
-                         Rank #{event.rank}
-                       </Badge>
-                    </div>
+                     <div className="text-right">
+                       <div className="text-2xl font-bold text-green-600">
+                         {(event.radcoins_awarded || 0).toLocaleString()}
+                       </div>
+                        <div className="text-sm text-gray-500">RadCoins Ganhos</div>
+                        <Badge className="mt-1 bg-yellow-100 text-yellow-700">
+                          Rank #{event.rank}
+                        </Badge>
+                     </div>
                   </div>
                 </CardContent>
               </Card>
