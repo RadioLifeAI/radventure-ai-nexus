@@ -655,35 +655,95 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
           "flex-1 overflow-y-auto",
           isMobile ? "p-3 max-h-none" : isTablet ? "p-4" : "p-6 max-h-screen"
         )}>
-          {/* História Clínica */}
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-5 mb-6 border border-green-200">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-green-500 rounded-lg">
-                <User className="h-5 w-5 text-white" />
+          {/* História Clínica RESPONSIVA */}
+          <div className={cn(
+            "bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200 mb-6",
+            isMobile ? "p-3" : isTablet ? "p-4" : "p-5"
+          )}>
+            <div className={cn(
+              "flex items-center gap-3",
+              isMobile ? "mb-3" : "mb-4"
+            )}>
+              <div className={cn(
+                "bg-green-500 rounded-lg",
+                isMobile ? "p-1.5" : "p-2"
+              )}>
+                <User className={cn(isMobile ? "h-4 w-4" : "h-5 w-5", "text-white")} />
               </div>
-              <h3 className="text-lg font-bold text-green-800">História Clínica</h3>
+              <h3 className={cn(
+                "font-bold text-green-800",
+                isMobile ? "text-base" : isTablet ? "text-lg" : "text-lg"
+              )}>
+                História Clínica
+              </h3>
             </div>
             
-            <div className="grid grid-cols-3 gap-4 mb-4">
+            {/* Cards de Dados RESPONSIVOS */}
+            <div className={cn(
+              "gap-3 mb-4",
+              isMobile ? "grid grid-cols-1 space-y-2" : 
+              isTablet ? "grid grid-cols-2" : "grid grid-cols-3"
+            )}>
               <div className="bg-white rounded-lg p-3 border border-green-200">
-                <div className="text-xs text-green-600 font-semibold mb-1">IDADE</div>
-                <div className="text-lg font-bold text-green-800">{caso.patient_age || "--"}</div>
+                <div className={cn(
+                  "text-green-600 font-semibold mb-1",
+                  isMobile ? "text-xs" : "text-xs"
+                )}>
+                  IDADE
+                </div>
+                <div className={cn(
+                  "font-bold text-green-800",
+                  isMobile ? "text-base" : "text-lg"
+                )}>
+                  {caso.patient_age || "--"}
+                </div>
               </div>
               <div className="bg-white rounded-lg p-3 border border-green-200">
-                <div className="text-xs text-green-600 font-semibold mb-1">GÊNERO</div>
-                <div className="text-lg font-bold text-green-800">{caso.patient_gender || "--"}</div>
+                <div className={cn(
+                  "text-green-600 font-semibold mb-1",
+                  isMobile ? "text-xs" : "text-xs"
+                )}>
+                  GÊNERO
+                </div>
+                <div className={cn(
+                  "font-bold text-green-800",
+                  isMobile ? "text-base" : "text-lg"
+                )}>
+                  {caso.patient_gender || "--"}
+                </div>
               </div>
-              <div className="bg-white rounded-lg p-3 border border-green-200 flex items-center gap-2">
-                <Clock className="h-4 w-4 text-green-600" />
-                <div>
-                  <div className="text-xs text-green-600 font-semibold">DURAÇÃO</div>
-                  <div className="text-sm font-bold text-green-800">{caso.symptoms_duration || "--"}</div>
+              <div className={cn(
+                "bg-white rounded-lg p-3 border border-green-200 flex gap-2",
+                isMobile ? "col-span-1" : isTablet ? "col-span-2" : "col-span-1",
+                isMobile ? "items-start" : "items-center"
+              )}>
+                <Clock className={cn(
+                  "text-green-600 flex-shrink-0",
+                  isMobile ? "h-3 w-3 mt-0.5" : "h-4 w-4"
+                )} />
+                <div className="flex-1 min-w-0">
+                  <div className={cn(
+                    "text-green-600 font-semibold",
+                    isMobile ? "text-xs mb-0.5" : "text-xs mb-1"
+                  )}>
+                    DURAÇÃO DOS SINTOMAS
+                  </div>
+                  <div className={cn(
+                    "font-bold text-green-800",
+                    isMobile ? "text-sm leading-tight" : "text-sm"
+                  )}>
+                    {caso.symptoms_duration || "--"}
+                  </div>
                 </div>
               </div>
             </div>
 
+            {/* Informações Clínicas */}
             <div className="bg-white rounded-lg p-4 border border-green-200">
-              <div className="text-sm text-green-900 leading-relaxed">
+              <div className={cn(
+                "text-green-900 leading-relaxed",
+                isMobile ? "text-sm" : "text-sm"
+              )}>
                 {caso.patient_clinical_info || caso.findings || "Informações clínicas não disponíveis"}
               </div>
             </div>
