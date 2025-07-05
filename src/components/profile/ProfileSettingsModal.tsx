@@ -19,6 +19,7 @@ import {
   Coins,
   Menu
 } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { ProfileEditTab } from "./ProfileEditTab";
 import { AvatarUploadTab } from "./AvatarUploadTab";
 import { SecurityTab } from "./SecurityTab";
@@ -86,9 +87,9 @@ export function ProfileSettingsModal({ isOpen, onClose }: ProfileSettingsModalPr
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className={`${getModalSize()} overflow-hidden p-0 bg-gradient-to-br from-background via-muted/20 to-background border-primary/20`}>
+      <DialogContent className={`${getModalSize()} p-0 bg-gradient-to-br from-background via-muted/20 to-background border-primary/20 max-h-[85vh] sm:max-h-[90vh]`}>
         <DialogHeader className={`px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 border-b border-primary/20`}>
-          <DialogTitle className={`flex items-center gap-2 sm:gap-3 ${isMobile ? 'text-lg' : 'text-2xl'} bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent font-semibold`}>
+          <DialogTitle className={`flex items-center gap-2 sm:gap-3 ${isMobile ? 'text-lg' : 'text-2xl'} text-gray-900 font-semibold`}>
             <div className="p-1.5 sm:p-2 bg-gradient-to-br from-primary to-secondary rounded-lg">
               <Settings className={`${isMobile ? 'h-4 w-4' : 'h-6 w-6'} text-primary-foreground`} />
             </div>
@@ -96,7 +97,7 @@ export function ProfileSettingsModal({ isOpen, onClose }: ProfileSettingsModalPr
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-auto">
+        <ScrollArea className="flex-1 max-h-[calc(85vh-100px)] sm:max-h-[calc(90vh-120px)]">
           <Tabs defaultValue="profile" className="h-full">
             <TabsList className={`grid w-full ${isMobile ? 'grid-cols-2 gap-0.5' : isTablet ? 'grid-cols-3 gap-1' : 'grid-cols-5 gap-1'} bg-gradient-to-r from-muted/50 via-card to-muted/50 mx-2 sm:mx-6 mt-2 sm:mt-4 border border-primary/20 ${isMobile ? 'overflow-x-auto' : ''}`}>
               <TabsTrigger value="profile" className={`flex items-center justify-center ${isMobile ? 'gap-1 px-1 text-xs' : 'gap-2 px-3'} hover:bg-primary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground transition-all duration-300 min-h-[44px] whitespace-nowrap`}>
@@ -156,7 +157,7 @@ export function ProfileSettingsModal({ isOpen, onClose }: ProfileSettingsModalPr
               </TabsContent>
             </div>
           </Tabs>
-        </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

@@ -16,7 +16,7 @@ import {
   ArrowUp,
   ArrowDown
 } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -53,38 +53,12 @@ export function HistoryAnalyticsTab() {
     enabled: !!user?.id
   });
 
-  // Processar dados para gráficos
-  const processedData = React.useMemo(() => {
+  // Processar dados para estatísticas
+  const stats = React.useMemo(() => {
     if (!transactions.length) return { 
-      chartData: [], 
-      pieData: [], 
-      stats: { totalTransactions: 0, totalSpent: 0, totalEarned: 0, netBalance: 0 } as StatsData
-    };
+      totalTransactions: 0, totalSpent: 0, totalEarned: 0, netBalance: 0 
+    } as StatsData;
 
-    // Dados para gráfico de linha (últimos 30 dias)
-    const chartData = transactions
-      .slice(0, 30)
-      .reverse()
-      .map(tx => ({
-        date: format(new Date(tx.created_at), 'dd/MM', { locale: ptBR }),
-        amount: Math.abs(tx.amount),
-        balance: tx.balance_after,
-        type: tx.tx_type
-      }));
-
-    // Dados para gráfico de pizza (tipos de transação)
-    const typeCount: { [key: string]: number } = {};
-    transactions.forEach(tx => {
-      const type = tx.tx_type.replace('_', ' ').toUpperCase();
-      typeCount[type] = (typeCount[type] || 0) + Math.abs(tx.amount);
-    });
-
-    const pieData = Object.entries(typeCount).map(([name, value]) => ({
-      name,
-      value
-    }));
-
-    // Estatísticas gerais
     const totalSpent = transactions
       .filter(tx => tx.amount < 0)
       .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
@@ -93,14 +67,12 @@ export function HistoryAnalyticsTab() {
       .filter(tx => tx.amount > 0)
       .reduce((sum, tx) => sum + tx.amount, 0);
 
-    const stats: StatsData = {
+    return {
       totalTransactions: transactions.length,
       totalSpent,
       totalEarned,
       netBalance: totalEarned - totalSpent
-    };
-
-    return { chartData, pieData, stats };
+    } as StatsData;
   }, [transactions]);
 
   const getTransactionIcon = (txType: string) => {
@@ -126,7 +98,7 @@ export function HistoryAnalyticsTab() {
     return metadata || {};
   };
 
-  const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#00ff00'];
+  
 
   if (isLoading) {
     return (
@@ -153,129 +125,45 @@ export function HistoryAnalyticsTab() {
         <Card className="bg-gradient-to-r from-blue-600/20 to-cyan-600/20 border-blue-400/30">
           <CardContent className="p-3 sm:p-4 text-center">
             <DollarSign className="h-6 w-6 sm:h-8 sm:w-8 text-blue-400 mx-auto mb-2" />
-            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-white">
-              {processedData.stats.totalTransactions}
+            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
+              {stats.totalTransactions}
             </h3>
-            <p className="text-blue-200 text-xs sm:text-sm">Transações Totais</p>
+            <p className="text-gray-700 text-xs sm:text-sm">Transações Totais</p>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-r from-green-600/20 to-emerald-600/20 border-green-400/30">
           <CardContent className="p-3 sm:p-4 text-center">
             <ArrowUp className="h-6 w-6 sm:h-8 sm:w-8 text-green-400 mx-auto mb-2" />
-            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-white">
-              +{processedData.stats.totalEarned.toLocaleString()}
+            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
+              +{stats.totalEarned.toLocaleString()}
             </h3>
-            <p className="text-green-200 text-xs sm:text-sm">RadCoins Ganhos</p>
+            <p className="text-gray-700 text-xs sm:text-sm">RadCoins Ganhos</p>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-r from-red-600/20 to-pink-600/20 border-red-400/30">
           <CardContent className="p-3 sm:p-4 text-center">
             <ArrowDown className="h-6 w-6 sm:h-8 sm:w-8 text-red-400 mx-auto mb-2" />
-            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-white">
-              -{processedData.stats.totalSpent.toLocaleString()}
+            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
+              -{stats.totalSpent.toLocaleString()}
             </h3>
-            <p className="text-red-200 text-xs sm:text-sm">RadCoins Gastos</p>
+            <p className="text-gray-700 text-xs sm:text-sm">RadCoins Gastos</p>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 border-purple-400/30">
           <CardContent className="p-3 sm:p-4 text-center">
             <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-purple-400 mx-auto mb-2" />
-            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-white">
-              {processedData.stats.netBalance >= 0 ? '+' : ''}
-              {processedData.stats.netBalance.toLocaleString()}
+            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
+              {stats.netBalance >= 0 ? '+' : ''}
+              {stats.netBalance.toLocaleString()}
             </h3>
-            <p className="text-purple-200 text-xs sm:text-sm">Saldo Líquido</p>
+            <p className="text-gray-700 text-xs sm:text-sm">Saldo Líquido</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Gráficos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-        {/* Gráfico de Linha - Histórico de Saldo */}
-        <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-slate-600">
-          <CardHeader className="p-3 sm:p-6">
-            <CardTitle className="text-white flex items-center gap-2 text-sm sm:text-base">
-              <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-cyan-400" />
-              <span className="truncate">Histórico de Transações</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 sm:p-6">
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={processedData.chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis 
-                  dataKey="date" 
-                  stroke="#9CA3AF" 
-                  fontSize={12}
-                  tick={{ fontSize: 12 }}
-                />
-                <YAxis 
-                  stroke="#9CA3AF" 
-                  fontSize={12}
-                  tick={{ fontSize: 12 }}
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1F2937', 
-                    border: '1px solid #374151',
-                    borderRadius: '8px',
-                    color: '#FFFFFF',
-                    fontSize: '12px'
-                  }} 
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="balance" 
-                  stroke="#06B6D4" 
-                  strokeWidth={2}
-                  dot={{ fill: '#06B6D4', strokeWidth: 1, r: 3 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Gráfico de Pizza - Tipos de Transação */}
-        <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-slate-600">
-          <CardHeader className="p-3 sm:p-6">
-            <CardTitle className="text-white flex items-center gap-2 text-sm sm:text-base">
-              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-purple-400" />
-              <span className="truncate">Gastos por Categoria</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 sm:p-6">
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={processedData.pieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={40}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {processedData.pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1F2937', 
-                    border: '1px solid #374151',
-                    borderRadius: '8px',
-                    color: '#FFFFFF',
-                    fontSize: '12px'
-                  }} 
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Lista de Transações Recentes */}
       <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-slate-600">
