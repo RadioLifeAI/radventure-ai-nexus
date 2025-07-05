@@ -35,59 +35,90 @@ export function useDailyChallenge() {
   // Verificar se há desafio pendente para o usuário
   const checkDailyChallenge = async (userId: string) => {
     if (!userId) {
-      console.log('❌ checkDailyChallenge: userId inválido');
+      console.log('❌ DAILY CHALLENGE: userId inválido');
       return;
     }
     
-    console.log('🔍 Verificando desafio diário para usuário:', userId);
+    console.log('🔍 DAILY CHALLENGE: Iniciando verificação para usuário:', userId.slice(0, 8) + '...');
     
     try {
       setIsLoading(true);
       
       // Aguardar um pouco para garantir que o usuário está autenticado
+      console.log('⏳ DAILY CHALLENGE: Aguardando autenticação...');
       await new Promise(resolve => setTimeout(resolve, 500));
       
       // Verificar novamente se o usuário ainda está autenticado
-      const { data: currentUser } = await supabase.auth.getUser();
-      if (!currentUser.user || currentUser.user.id !== userId) {
-        console.log('❌ Usuário não autenticado na verificação');
+      const { data: currentUser, error: authError } = await supabase.auth.getUser();
+      
+      if (authError) {
+        console.error('❌ DAILY CHALLENGE: Erro de autenticação:', authError);
         return;
       }
+      
+      if (!currentUser.user || currentUser.user.id !== userId) {
+        console.log('❌ DAILY CHALLENGE: Usuário não autenticado na verificação');
+        return;
+      }
+      
+      console.log('✅ DAILY CHALLENGE: Usuário autenticado, chamando função RPC...');
       
       // Chamar função do Supabase para buscar desafio do dia
       const { data, error } = await supabase.rpc('get_daily_challenge_for_user', {
         p_user_id: userId
       });
 
-      console.log('📡 Resposta do Supabase:', { data, error });
+      console.log('📡 DAILY CHALLENGE: Resposta do RPC:', { 
+        hasData: !!data, 
+        dataType: typeof data,
+        error: error?.message,
+        errorCode: error?.code
+      });
 
       if (error) {
-        console.error('❌ Erro ao buscar desafio diário:', error);
+        console.error('❌ DAILY CHALLENGE: Erro na função RPC:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        });
         return;
       }
 
       if (data) {
         const challengeData = data as unknown as DailyChallenge;
-        console.log('📅 Desafio diário encontrado:', challengeData.id);
+        console.log('📋 DAILY CHALLENGE: Dados recebidos:', {
+          id: challengeData.id?.slice(0, 8) + '...',
+          hasQuestion: !!challengeData.question,
+          questionLength: challengeData.question?.length,
+          challengeDate: challengeData.challenge_date
+        });
         
-        // CORREÇÃO: Definir challenge e showModal de forma síncrona
+        console.log('📅 DAILY CHALLENGE: Processando desafio:', challengeData.id?.slice(0, 8) + '...');
+        
+        // Definir challenge e showModal
         setChallenge(challengeData);
         
         // Usar setTimeout para garantir que o state seja atualizado
         setTimeout(() => {
           setShowModal(true);
-          console.log('✅ Modal definido como visível. Challenge:', challengeData.id);
+          console.log('✅ DAILY CHALLENGE: Modal ativado para challenge:', challengeData.id?.slice(0, 8) + '...');
         }, 100);
         
       } else {
-        console.log('✅ Nenhum desafio pendente para hoje');
+        console.log('ℹ️ DAILY CHALLENGE: Nenhum desafio pendente para hoje (usuário já respondeu ou não há desafio ativo)');
         setChallenge(null);
         setShowModal(false);
       }
-    } catch (error) {
-      console.error('❌ Erro na verificação do desafio diário:', error);
+    } catch (error: any) {
+      console.error('❌ DAILY CHALLENGE: Erro crítico na verificação:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
     } finally {
       setIsLoading(false);
+      console.log('🏁 DAILY CHALLENGE: Verificação finalizada');
     }
   };
 
