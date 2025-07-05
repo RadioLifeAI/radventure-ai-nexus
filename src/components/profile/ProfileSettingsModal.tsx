@@ -87,10 +87,10 @@ export function ProfileSettingsModal({ isOpen, onClose }: ProfileSettingsModalPr
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className={`${getModalSize()} p-0 bg-gradient-to-br from-background via-muted/20 to-background border-primary/20 max-h-[85vh] sm:max-h-[90vh]`}>
-        <DialogHeader className={`px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 border-b border-primary/20`}>
-          <DialogTitle className={`flex items-center gap-2 sm:gap-3 ${isMobile ? 'text-lg' : 'text-2xl'} text-gray-900 font-semibold`}>
-            <div className="p-1.5 sm:p-2 bg-gradient-to-br from-primary to-secondary rounded-lg">
+      <DialogContent className={`${getModalSize()} p-0 bg-background border-border max-h-[85vh] sm:max-h-[90vh]`}>
+        <DialogHeader className={`px-4 sm:px-6 py-3 sm:py-4 bg-muted border-b border-border`}>
+          <DialogTitle className={`flex items-center gap-2 sm:gap-3 ${isMobile ? 'text-lg' : 'text-2xl'} text-foreground font-semibold`}>
+            <div className="p-1.5 sm:p-2 bg-primary rounded-lg">
               <Settings className={`${isMobile ? 'h-4 w-4' : 'h-6 w-6'} text-primary-foreground`} />
             </div>
             {isMobile ? 'Conta' : 'Gerenciar Conta'}
@@ -100,47 +100,57 @@ export function ProfileSettingsModal({ isOpen, onClose }: ProfileSettingsModalPr
         <Tabs defaultValue="profile" className="h-full flex flex-col">
           {/* Abas fixas fora do ScrollArea */}
           <div className="flex-shrink-0 px-2 sm:px-6 mt-2 sm:mt-4">
-            <TabsList className={`w-full bg-gradient-to-r from-muted/50 via-card to-muted/50 border border-primary/20 ${
+            <TabsList className={`w-full bg-muted border border-border ${
               isMobile 
-                ? 'flex overflow-x-auto scrollbar-hide gap-1 p-1' 
+                ? 'grid grid-rows-2 grid-cols-3 gap-1 p-1 h-20' 
                 : isTablet 
-                  ? 'grid grid-cols-3 gap-1' 
-                  : 'grid grid-cols-5 gap-1'
+                  ? 'grid grid-rows-2 grid-cols-3 gap-1 p-1 h-16' 
+                  : 'grid grid-cols-5 gap-1 p-1 h-10'
             }`}>
               <TabsTrigger 
                 value="profile" 
-                className={`flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 hover:bg-primary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground transition-all duration-300 min-h-[44px] whitespace-nowrap ${isMobile ? 'min-w-[80px] flex-shrink-0' : ''}`}
+                className={`flex items-center justify-center ${isMobile ? 'flex-col gap-1 px-1 py-2' : isTablet ? 'gap-1 px-2' : 'gap-2 px-3'} hover:bg-primary/10 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-sm`}
               >
-                <User className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} flex-shrink-0`} />
-                <span className={`${isMobile ? 'text-xs' : 'text-sm'} truncate`}>Perfil</span>
+                <User className={`${isMobile ? 'h-4 w-4' : 'h-4 w-4'} flex-shrink-0`} />
+                {!isMobile && <span className={`${isTablet ? 'text-xs' : 'text-sm'} truncate`}>
+                  {isTablet ? 'Perfil' : 'Perfil'}
+                </span>}
               </TabsTrigger>
               <TabsTrigger 
                 value="avatar" 
-                className={`flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 hover:bg-secondary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-accent data-[state=active]:text-secondary-foreground transition-all duration-300 min-h-[44px] whitespace-nowrap ${isMobile ? 'min-w-[80px] flex-shrink-0' : ''}`}
+                className={`flex items-center justify-center ${isMobile ? 'flex-col gap-1 px-1 py-2' : isTablet ? 'gap-1 px-2' : 'gap-2 px-3'} hover:bg-secondary/10 data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground rounded-sm`}
               >
-                <Camera className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} flex-shrink-0`} />
-                <span className={`${isMobile ? 'text-xs' : 'text-sm'} truncate`}>Avatar</span>
+                <Camera className={`${isMobile ? 'h-4 w-4' : 'h-4 w-4'} flex-shrink-0`} />
+                {!isMobile && <span className={`${isTablet ? 'text-xs' : 'text-sm'} truncate`}>
+                  {isTablet ? 'Avatar' : 'Avatar'}
+                </span>}
               </TabsTrigger>
               <TabsTrigger 
                 value="radcoin-shop" 
-                className={`flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 hover:bg-primary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground transition-all duration-300 min-h-[44px] whitespace-nowrap ${isMobile ? 'min-w-[70px] flex-shrink-0' : ''}`}
+                className={`flex items-center justify-center ${isMobile ? 'flex-col gap-1 px-1 py-2' : isTablet ? 'gap-1 px-2' : 'gap-2 px-3'} hover:bg-primary/10 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-sm`}
               >
-                <Coins className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} flex-shrink-0`} />
-                <span className={`${isMobile ? 'text-xs' : 'text-sm'} truncate`}>Loja</span>
+                <Coins className={`${isMobile ? 'h-4 w-4' : 'h-4 w-4'} flex-shrink-0`} />
+                {!isMobile && <span className={`${isTablet ? 'text-xs' : 'text-sm'} truncate`}>
+                  {isTablet ? 'Loja' : 'Loja'}
+                </span>}
               </TabsTrigger>
               <TabsTrigger 
                 value="history" 
-                className={`flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 hover:bg-secondary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-accent data-[state=active]:text-secondary-foreground transition-all duration-300 min-h-[44px] whitespace-nowrap ${isMobile ? 'min-w-[90px] flex-shrink-0' : ''}`}
+                className={`flex items-center justify-center ${isMobile ? 'flex-col gap-1 px-1 py-2' : isTablet ? 'gap-1 px-2' : 'gap-2 px-3'} hover:bg-secondary/10 data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground rounded-sm`}
               >
-                <Settings className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} flex-shrink-0`} />
-                <span className={`${isMobile ? 'text-xs' : 'text-sm'} truncate`}>Histórico</span>
+                <Settings className={`${isMobile ? 'h-4 w-4' : 'h-4 w-4'} flex-shrink-0`} />
+                {!isMobile && <span className={`${isTablet ? 'text-xs' : 'text-sm'} truncate`}>
+                  {isTablet ? 'Hist' : 'Histórico'}
+                </span>}
               </TabsTrigger>
               <TabsTrigger 
                 value="security" 
-                className={`flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 hover:bg-accent/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-accent data-[state=active]:to-primary data-[state=active]:text-accent-foreground transition-all duration-300 min-h-[44px] whitespace-nowrap ${isMobile ? 'min-w-[95px] flex-shrink-0' : ''}`}
+                className={`flex items-center justify-center ${isMobile ? 'flex-col gap-1 px-1 py-2' : isTablet ? 'gap-1 px-2' : 'gap-2 px-3'} hover:bg-accent/10 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground rounded-sm`}
               >
-                <Shield className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} flex-shrink-0`} />
-                <span className={`${isMobile ? 'text-xs' : 'text-sm'} truncate`}>Segurança</span>
+                <Shield className={`${isMobile ? 'h-4 w-4' : 'h-4 w-4'} flex-shrink-0`} />
+                {!isMobile && <span className={`${isTablet ? 'text-xs' : 'text-sm'} truncate`}>
+                  {isTablet ? 'Seg' : 'Segurança'}
+                </span>}
               </TabsTrigger>
             </TabsList>
           </div>
