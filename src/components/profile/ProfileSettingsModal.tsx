@@ -98,51 +98,134 @@ export function ProfileSettingsModal({ isOpen, onClose }: ProfileSettingsModalPr
         </DialogHeader>
 
         <Tabs defaultValue="profile" className="h-full flex flex-col">
-          {/* Abas fixas fora do ScrollArea */}
+          {/* Abas responsivas - Layout otimizado */}
           <div className="flex-shrink-0 px-2 sm:px-6 mt-2 sm:mt-4">
-            <TabsList className={`w-full bg-gradient-to-r from-muted/50 via-card to-muted/50 border border-primary/20 ${
-              isMobile 
-                ? 'flex overflow-x-auto scrollbar-hide gap-1 p-1' 
-                : isTablet 
-                  ? 'grid grid-cols-3 gap-1' 
-                  : 'grid grid-cols-5 gap-1'
-            }`}>
-              <TabsTrigger 
-                value="profile" 
-                className={`flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 hover:bg-primary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground transition-all duration-300 min-h-[44px] whitespace-nowrap ${isMobile ? 'min-w-[80px] flex-shrink-0' : ''}`}
-              >
-                <User className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} flex-shrink-0`} />
-                <span className={`${isMobile ? 'text-xs' : 'text-sm'} truncate`}>Perfil</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="avatar" 
-                className={`flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 hover:bg-secondary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-accent data-[state=active]:text-secondary-foreground transition-all duration-300 min-h-[44px] whitespace-nowrap ${isMobile ? 'min-w-[80px] flex-shrink-0' : ''}`}
-              >
-                <Camera className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} flex-shrink-0`} />
-                <span className={`${isMobile ? 'text-xs' : 'text-sm'} truncate`}>Avatar</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="radcoin-shop" 
-                className={`flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 hover:bg-primary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground transition-all duration-300 min-h-[44px] whitespace-nowrap ${isMobile ? 'min-w-[70px] flex-shrink-0' : ''}`}
-              >
-                <Coins className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} flex-shrink-0`} />
-                <span className={`${isMobile ? 'text-xs' : 'text-sm'} truncate`}>Loja</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="history" 
-                className={`flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 hover:bg-secondary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-accent data-[state=active]:text-secondary-foreground transition-all duration-300 min-h-[44px] whitespace-nowrap ${isMobile ? 'min-w-[90px] flex-shrink-0' : ''}`}
-              >
-                <Settings className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} flex-shrink-0`} />
-                <span className={`${isMobile ? 'text-xs' : 'text-sm'} truncate`}>Histórico</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="security" 
-                className={`flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 hover:bg-accent/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-accent data-[state=active]:to-primary data-[state=active]:text-accent-foreground transition-all duration-300 min-h-[44px] whitespace-nowrap ${isMobile ? 'min-w-[95px] flex-shrink-0' : ''}`}
-              >
-                <Shield className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} flex-shrink-0`} />
-                <span className={`${isMobile ? 'text-xs' : 'text-sm'} truncate`}>Segurança</span>
-              </TabsTrigger>
-            </TabsList>
+            {isMobile ? (
+              // Mobile: 2 linhas verticais com ícones apenas
+              <div className="space-y-2">
+                <div className="grid grid-cols-3 gap-2">
+                  <TabsTrigger 
+                    value="profile" 
+                    className="flex flex-col items-center justify-center gap-1 p-3 hover:bg-primary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground transition-all duration-300 min-h-[64px] rounded-lg border border-primary/20"
+                  >
+                    <User className="h-5 w-5 flex-shrink-0" />
+                    <span className="text-xs font-medium">Perfil</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="avatar" 
+                    className="flex flex-col items-center justify-center gap-1 p-3 hover:bg-secondary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-accent data-[state=active]:text-secondary-foreground transition-all duration-300 min-h-[64px] rounded-lg border border-secondary/20"
+                  >
+                    <Camera className="h-5 w-5 flex-shrink-0" />
+                    <span className="text-xs font-medium">Avatar</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="radcoin-shop" 
+                    className="flex flex-col items-center justify-center gap-1 p-3 hover:bg-primary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground transition-all duration-300 min-h-[64px] rounded-lg border border-primary/20"
+                  >
+                    <Coins className="h-5 w-5 flex-shrink-0" />
+                    <span className="text-xs font-medium">Loja</span>
+                  </TabsTrigger>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <TabsTrigger 
+                    value="history" 
+                    className="flex flex-col items-center justify-center gap-1 p-3 hover:bg-secondary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-accent data-[state=active]:text-secondary-foreground transition-all duration-300 min-h-[64px] rounded-lg border border-secondary/20"
+                  >
+                    <Settings className="h-5 w-5 flex-shrink-0" />
+                    <span className="text-xs font-medium">Histórico</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="security" 
+                    className="flex flex-col items-center justify-center gap-1 p-3 hover:bg-accent/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-accent data-[state=active]:to-primary data-[state=active]:text-accent-foreground transition-all duration-300 min-h-[64px] rounded-lg border border-accent/20"
+                  >
+                    <Shield className="h-5 w-5 flex-shrink-0" />
+                    <span className="text-xs font-medium">Segurança</span>
+                  </TabsTrigger>
+                </div>
+              </div>
+            ) : isTablet ? (
+              // Tablet: Grid compacto com ícones + texto curto
+              <div className="space-y-2">
+                <div className="grid grid-cols-3 gap-2">
+                  <TabsTrigger 
+                    value="profile" 
+                    className="flex items-center justify-center gap-2 px-3 py-2 hover:bg-primary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground transition-all duration-300 min-h-[48px] rounded-lg border border-primary/20"
+                  >
+                    <User className="h-4 w-4 flex-shrink-0" />
+                    <span className="text-sm font-medium">Perfil</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="avatar" 
+                    className="flex items-center justify-center gap-2 px-3 py-2 hover:bg-secondary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-accent data-[state=active]:text-secondary-foreground transition-all duration-300 min-h-[48px] rounded-lg border border-secondary/20"
+                  >
+                    <Camera className="h-4 w-4 flex-shrink-0" />
+                    <span className="text-sm font-medium">Avatar</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="radcoin-shop" 
+                    className="flex items-center justify-center gap-2 px-3 py-2 hover:bg-primary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground transition-all duration-300 min-h-[48px] rounded-lg border border-primary/20"
+                  >
+                    <Coins className="h-4 w-4 flex-shrink-0" />
+                    <span className="text-sm font-medium">Loja</span>
+                  </TabsTrigger>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <TabsTrigger 
+                    value="history" 
+                    className="flex items-center justify-center gap-2 px-3 py-2 hover:bg-secondary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-accent data-[state=active]:text-secondary-foreground transition-all duration-300 min-h-[48px] rounded-lg border border-secondary/20"
+                  >
+                    <Settings className="h-4 w-4 flex-shrink-0" />
+                    <span className="text-sm font-medium">Histórico</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="security" 
+                    className="flex items-center justify-center gap-2 px-3 py-2 hover:bg-accent/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-accent data-[state=active]:to-primary data-[state=active]:text-accent-foreground transition-all duration-300 min-h-[48px] rounded-lg border border-accent/20"
+                  >
+                    <Shield className="h-4 w-4 flex-shrink-0" />
+                    <span className="text-sm font-medium">Segurança</span>
+                  </TabsTrigger>
+                </div>
+              </div>
+            ) : (
+              // Desktop: Layout horizontal original
+              <TabsList className="w-full bg-gradient-to-r from-muted/50 via-card to-muted/50 border border-primary/20 grid grid-cols-5 gap-1">
+                <TabsTrigger 
+                  value="profile" 
+                  className="flex items-center justify-center gap-2 px-3 hover:bg-primary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground transition-all duration-300 min-h-[44px]"
+                >
+                  <User className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-sm">Perfil</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="avatar" 
+                  className="flex items-center justify-center gap-2 px-3 hover:bg-secondary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-accent data-[state=active]:text-secondary-foreground transition-all duration-300 min-h-[44px]"
+                >
+                  <Camera className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-sm">Avatar</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="radcoin-shop" 
+                  className="flex items-center justify-center gap-2 px-3 hover:bg-primary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground transition-all duration-300 min-h-[44px]"
+                >
+                  <Coins className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-sm">Loja</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="history" 
+                  className="flex items-center justify-center gap-2 px-3 hover:bg-secondary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-accent data-[state=active]:text-secondary-foreground transition-all duration-300 min-h-[44px]"
+                >
+                  <Settings className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-sm">Histórico</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="security" 
+                  className="flex items-center justify-center gap-2 px-3 hover:bg-accent/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-accent data-[state=active]:to-primary data-[state=active]:text-accent-foreground transition-all duration-300 min-h-[44px]"
+                >
+                  <Shield className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-sm">Segurança</span>
+                </TabsTrigger>
+              </TabsList>
+            )}
           </div>
 
           {/* ScrollArea apenas para o conteúdo das abas */}
