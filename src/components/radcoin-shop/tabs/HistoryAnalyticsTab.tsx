@@ -111,11 +111,11 @@ export function HistoryAnalyticsTab() {
   return (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-white mb-2 flex items-center justify-center gap-3">
+        <h2 className="text-3xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-3">
           <TrendingUp className="h-8 w-8 text-cyan-400" />
           Histórico & Analytics
         </h2>
-        <p className="text-blue-200 text-lg">
+        <p className="text-gray-700 text-lg">
           Acompanhe suas transações e estatísticas de RadCoins
         </p>
       </div>
