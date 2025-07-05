@@ -93,11 +93,11 @@ export function EventMetricsCards({ metrics, loading }: Props) {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
         {[...Array(4)].map((_, index) => (
           <Card key={index} className="bg-white/10 backdrop-blur-sm border-white/20 animate-pulse">
-            <CardContent className="p-4">
-              <div className="h-16 bg-white/10 rounded"></div>
+            <CardContent className="p-3 sm:p-4">
+              <div className="h-12 sm:h-16 bg-white/10 rounded"></div>
             </CardContent>
           </Card>
         ))}
@@ -106,23 +106,25 @@ export function EventMetricsCards({ metrics, loading }: Props) {
   }
 
   return (
-    <div className="space-y-4 mb-6">
+    <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
       {/* Métricas Globais */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
         {globalMetrics.map((metric, index) => (
-          <Card key={index} className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 transition-all">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className={`p-2 rounded-lg ${metric.bgColor}`}>
-                  <metric.icon className={`h-5 w-5 ${metric.color}`} />
+          <Card key={index} className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 transition-all touch-target">
+            <CardContent className="p-2 sm:p-3 lg:p-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-1 sm:mb-2">
+                <div className={`p-1.5 sm:p-2 rounded-lg ${metric.bgColor} mb-2 sm:mb-0`}>
+                  <metric.icon className={`h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 ${metric.color}`} />
                 </div>
-                <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
+                <Badge variant="secondary" className="text-xs bg-green-500/20 text-green-400 border-green-600/30 px-1.5 py-0.5">
                   {metric.change}
                 </Badge>
               </div>
               <div>
-                <p className="text-sm text-cyan-200">{metric.label}</p>
-                <p className="text-2xl font-bold text-white">{metric.value}</p>
+                <p className="text-xs sm:text-sm text-cyan-200 truncate">{metric.label}</p>
+                <p className="text-sm sm:text-lg lg:text-xl xl:text-2xl font-bold text-white truncate" title={metric.value.toString()}>
+                  {metric.value}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -131,17 +133,19 @@ export function EventMetricsCards({ metrics, loading }: Props) {
 
       {/* Métricas do Usuário */}
       {user && userMetrics.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
           {userMetrics.map((metric, index) => (
-            <Card key={index} className="bg-white/5 backdrop-blur-sm border-white/10 hover:bg-white/10 transition-all">
-              <CardContent className="p-4">
+            <Card key={index} className="bg-white/5 backdrop-blur-sm border-white/10 hover:bg-white/10 transition-all touch-target">
+              <CardContent className="p-2 sm:p-3 lg:p-4">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-cyan-300">{metric.label}</p>
-                    <p className="text-xl font-bold text-white">{metric.value}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm text-cyan-300 truncate">{metric.label}</p>
+                    <p className="text-sm sm:text-lg lg:text-xl font-bold text-white truncate" title={metric.value.toString()}>
+                      {metric.value}
+                    </p>
                   </div>
-                  <div className={`p-2 rounded-lg ${metric.bgColor}`}>
-                    <metric.icon className={`h-4 w-4 ${metric.color}`} />
+                  <div className={`p-1.5 sm:p-2 rounded-lg ${metric.bgColor} ml-2 flex-shrink-0`}>
+                    <metric.icon className={`h-3 w-3 sm:h-4 sm:w-4 ${metric.color}`} />
                   </div>
                 </div>
               </CardContent>
