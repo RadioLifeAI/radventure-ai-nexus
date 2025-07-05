@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useEventAudit } from "@/hooks/useEventAudit";
 
 interface EventFilters {
   search: string;
@@ -37,6 +38,7 @@ export function useEventsManagement() {
   const [totalEvents, setTotalEvents] = useState(0);
   const [loading, setLoading] = useState(true);
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
+  const { logEventAction } = useEventAudit();
   
   // Estados de filtros e visualização
   const [filters, setFilters] = useState<EventFilters>({
@@ -159,12 +161,23 @@ export function useEventsManagement() {
   // Função para pausar evento
   const pauseEvent = useCallback(async (eventId: string) => {
     try {
+      const { data: eventData } = await supabase
+        .from("events")
+        .select("name")
+        .eq("id", eventId)
+        .single();
+
       const { error } = await supabase
         .from("events")
         .update({ status: "PAUSED" as "SCHEDULED" | "ACTIVE" | "FINISHED" })
         .eq("id", eventId);
 
       if (error) throw error;
+
+      await logEventAction("PAUSE", eventId, eventData?.name, {
+        previous_status: "ACTIVE",
+        new_status: "PAUSED"
+      });
 
       fetchEvents();
       toast({
@@ -179,17 +192,28 @@ export function useEventsManagement() {
         variant: "destructive"
       });
     }
-  }, [fetchEvents]);
+  }, [fetchEvents, logEventAction]);
 
   // Função para finalizar evento
   const finishEvent = useCallback(async (eventId: string) => {
     try {
+      const { data: eventData } = await supabase
+        .from("events")
+        .select("name, status")
+        .eq("id", eventId)
+        .single();
+
       const { error } = await supabase
         .from("events")
         .update({ status: "FINISHED" as "SCHEDULED" | "ACTIVE" | "FINISHED" })
         .eq("id", eventId);
 
       if (error) throw error;
+
+      await logEventAction("FINISH", eventId, eventData?.name, {
+        previous_status: eventData?.status,
+        new_status: "FINISHED"
+      });
 
       fetchEvents();
       toast({
@@ -204,17 +228,70 @@ export function useEventsManagement() {
         variant: "destructive"
       });
     }
-  }, [fetchEvents]);
+  }, [fetchEvents, logEventAction]);
 
-  // Função para reativar evento pausado
-  const resumeEvent = useCallback(async (eventId: string) => {
+  // Função para iniciar evento agendado manualmente
+  const startEvent = useCallback(async (eventId: string) => {
     try {
+      // Buscar dados do evento para logs
+      const { data: eventData } = await supabase
+        .from("events")
+        .select("name")
+        .eq("id", eventId)
+        .single();
+
       const { error } = await supabase
         .from("events")
         .update({ status: "ACTIVE" as "SCHEDULED" | "ACTIVE" | "FINISHED" })
         .eq("id", eventId);
 
       if (error) throw error;
+
+      // Registrar auditoria
+      await logEventAction("MANUAL_START", eventId, eventData?.name, {
+        previous_status: "SCHEDULED",
+        new_status: "ACTIVE",
+        method: "manual_admin_action"
+      });
+
+      fetchEvents();
+      toast({
+        title: "Evento iniciado",
+        description: `O evento "${eventData?.name || 'evento'}" foi iniciado manualmente`,
+        className: "bg-green-50 border-green-200"
+      });
+
+      console.log(`📅 EVENTO INICIADO MANUALMENTE: ${eventData?.name} (ID: ${eventId})`);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao iniciar evento",
+        description: error.message,
+        variant: "destructive"
+      });
+      console.error(`❌ Erro ao iniciar evento ${eventId}:`, error);
+    }
+  }, [fetchEvents, logEventAction]);
+
+  // Função para reativar evento pausado
+  const resumeEvent = useCallback(async (eventId: string) => {
+    try {
+      const { data: eventData } = await supabase
+        .from("events")
+        .select("name")
+        .eq("id", eventId)
+        .single();
+
+      const { error } = await supabase
+        .from("events")
+        .update({ status: "ACTIVE" as "SCHEDULED" | "ACTIVE" | "FINISHED" })
+        .eq("id", eventId);
+
+      if (error) throw error;
+
+      await logEventAction("RESUME", eventId, eventData?.name, {
+        previous_status: "PAUSED",
+        new_status: "ACTIVE"
+      });
 
       fetchEvents();
       toast({
@@ -229,7 +306,7 @@ export function useEventsManagement() {
         variant: "destructive"
       });
     }
-  }, [fetchEvents]);
+  }, [fetchEvents, logEventAction]);
 
   // Função para seleção de eventos
   const handleEventSelect = useCallback((eventId: string) => {
@@ -414,6 +491,7 @@ export function useEventsManagement() {
       pauseEvent,
       finishEvent,
       resumeEvent,
+      startEvent,
       refetch: fetchEvents
     };
 }

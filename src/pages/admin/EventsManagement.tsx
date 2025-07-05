@@ -39,6 +39,7 @@ export default function EventsManagement() {
     pauseEvent,
     finishEvent,
     resumeEvent,
+    startEvent,
     refetch
   } = useEventsManagement();
 
@@ -60,6 +61,10 @@ export default function EventsManagement() {
 
   const handleAnalytics = (eventId: string) => {
     // Funcionalidade implementada nos modais das cardsView
+  };
+
+  const handleStart = async (eventId: string) => {
+    await startEvent(eventId);
   };
 
   const handlePause = async (eventId: string) => {
@@ -92,6 +97,7 @@ export default function EventsManagement() {
             onPause={handlePause}
             onFinish={handleFinish}
             onResume={handleResume}
+            onStart={handleStart}
           />
         );
       case "timeline":

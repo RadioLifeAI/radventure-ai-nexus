@@ -51,6 +51,7 @@ interface Props {
   onPause?: (eventId: string) => void;
   onFinish?: (eventId: string) => void;
   onResume?: (eventId: string) => void;
+  onStart?: (eventId: string) => void;
 }
 
 export function EventsCardsView({
@@ -62,7 +63,8 @@ export function EventsCardsView({
   onDelete,
   onPause,
   onFinish,
-  onResume
+  onResume,
+  onStart
 }: Props) {
   const [detailsModal, setDetailsModal] = useState<{ open: boolean; event: any }>({ open: false, event: null });
 
@@ -138,6 +140,12 @@ export function EventsCardsView({
     }
   };
 
+  const handleStart = (eventId: string) => {
+    if (onStart) {
+      onStart(eventId);
+    }
+  };
+
   if (events.length === 0) {
     return (
       <div className="text-center py-12">
@@ -155,9 +163,11 @@ export function EventsCardsView({
           const isSelected = selectedEvents.includes(event.id);
           const isActive = event.status === "ACTIVE";
           const isPaused = event.status === "PAUSED";
+          const isScheduled = event.status === "SCHEDULED";
           const canPause = event.status === "ACTIVE";
           const canFinish = event.status === "ACTIVE" || event.status === "PAUSED";
           const canResume = event.status === "PAUSED";
+          const canStart = event.status === "SCHEDULED";
 
           return (
             <Card 
@@ -193,6 +203,12 @@ export function EventsCardsView({
                       Editar
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
+                    {canStart && (
+                      <DropdownMenuItem onClick={() => handleStart(event.id)}>
+                        <Play className="h-4 w-4 mr-2" />
+                        Iniciar Evento
+                      </DropdownMenuItem>
+                    )}
                     {canPause && (
                       <DropdownMenuItem onClick={() => handlePause(event.id)}>
                         <Pause className="h-4 w-4 mr-2" />
@@ -231,6 +247,13 @@ export function EventsCardsView({
                     alt={event.name}
                     className="w-full h-full object-cover"
                   />
+                  {isScheduled && (
+                    <div className="absolute top-2 left-2">
+                      <Badge className="bg-blue-500 text-white">
+                        AGENDADO
+                      </Badge>
+                    </div>
+                  )}
                   {isActive && (
                     <div className="absolute top-2 left-2">
                       <Badge className="bg-red-500 text-white animate-pulse">
