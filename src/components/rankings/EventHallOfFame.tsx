@@ -141,15 +141,13 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
               {champion.victories.slice(0, 2).map((victory: any, vIndex: number) => (
                 <div key={vIndex} className="flex items-center justify-between text-xs">
                   <span className="text-gray-600 truncate flex-1 mr-2">
-                    {victory.event ? victory.event.name : 'Evento'}
+                    {victory.event.name}
                   </span>
                   <span className="text-gray-500 whitespace-nowrap">
-                    {victory.event && victory.event.scheduled_start ? 
-                      formatDistanceToNow(new Date(victory.event.scheduled_start), { 
-                        addSuffix: true, 
-                        locale: ptBR 
-                      }) : 'Data não disponível'
-                    }
+                    {formatDistanceToNow(new Date(victory.event.scheduled_start), { 
+                      addSuffix: true, 
+                      locale: ptBR 
+                    })}
                   </span>
                 </div>
               ))}
@@ -241,14 +239,12 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
                           <Badge variant="outline" className="text-xs">
                             {event.score} pontos
                           </Badge>
-                           <span className="text-xs text-gray-500">
-                             {event.event && event.event.scheduled_start ? 
-                               formatDistanceToNow(new Date(event.event.scheduled_start), { 
-                                 addSuffix: true, 
-                                 locale: ptBR 
-                               }) : 'Data não disponível'
-                             }
-                           </span>
+                          <span className="text-xs text-gray-500">
+                            {formatDistanceToNow(new Date(event.event.scheduled_start), { 
+                              addSuffix: true, 
+                              locale: ptBR 
+                            })}
+                          </span>
                         </div>
                       </div>
                     </div>

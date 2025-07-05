@@ -29,28 +29,32 @@ export function EventMetricsCards({ metrics, loading }: Props) {
       value: metrics.activeEvents,
       icon: Zap,
       color: "text-green-500",
-      bgColor: "bg-green-50"
+      bgColor: "bg-green-50",
+      change: "+12%"
     },
     {
       label: "Total de Eventos",
       value: metrics.totalEvents,
       icon: Calendar,
       color: "text-blue-500",
-      bgColor: "bg-blue-50"
+      bgColor: "bg-blue-50",
+      change: "+5%"
     },
     {
       label: "Participantes Ativos",
       value: metrics.totalParticipants,
       icon: Users,
       color: "text-purple-500",
-      bgColor: "bg-purple-50"
+      bgColor: "bg-purple-50",
+      change: "+23%"
     },
     {
       label: "Pool de Prêmios",
       value: `${metrics.totalPrizePool.toLocaleString()} RC`,
       icon: Trophy,
       color: "text-yellow-500",
-      bgColor: "bg-yellow-50"
+      bgColor: "bg-yellow-50",
+      change: "+18%"
     }
   ];
 
@@ -109,9 +113,12 @@ export function EventMetricsCards({ metrics, loading }: Props) {
           <Card key={index} className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 transition-all touch-target">
             <CardContent className="p-2 sm:p-3 lg:p-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-1 sm:mb-2">
-              <div className={`p-1.5 sm:p-2 rounded-lg ${metric.bgColor} mb-2 sm:mb-0`}>
-                <metric.icon className={`h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 ${metric.color}`} />
-              </div>
+                <div className={`p-1.5 sm:p-2 rounded-lg ${metric.bgColor} mb-2 sm:mb-0`}>
+                  <metric.icon className={`h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 ${metric.color}`} />
+                </div>
+                <Badge variant="secondary" className="text-xs bg-green-500/20 text-green-400 border-green-600/30 px-1.5 py-0.5">
+                  {metric.change}
+                </Badge>
               </div>
               <div>
                 <p className="text-xs sm:text-sm text-cyan-200 truncate">{metric.label}</p>
