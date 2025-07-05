@@ -156,49 +156,50 @@ export function useEventsManagement() {
     setSortDirection(direction);
   }, []);
 
-  // Função para mudança de status
-  const toggleEventStatus = useCallback(async (eventId: string) => {
+  // Função para pausar evento
+  const pauseEvent = useCallback(async (eventId: string) => {
     try {
-      // Buscar evento atual
-      const { data: event, error: fetchError } = await supabase
-        .from("events")
-        .select("status")
-        .eq("id", eventId)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      let newStatus: string;
-      switch (event.status) {
-        case "SCHEDULED":
-          newStatus = "ACTIVE";
-          break;
-        case "ACTIVE":
-          newStatus = "FINISHED";
-          break;
-        case "FINISHED":
-          newStatus = "SCHEDULED";
-          break;
-        default:
-          newStatus = "ACTIVE";
-      }
-
       const { error } = await supabase
         .from("events")
-        .update({ status: newStatus as "SCHEDULED" | "ACTIVE" | "FINISHED" })
+        .update({ status: "PAUSED" as "SCHEDULED" | "ACTIVE" | "FINISHED" })
         .eq("id", eventId);
 
       if (error) throw error;
 
       fetchEvents();
       toast({
-        title: "Status atualizado",
-        description: `Evento alterado para ${newStatus}`,
-        className: "bg-green-50 border-green-200"
+        title: "Evento pausado",
+        description: "O evento foi pausado com sucesso",
+        className: "bg-orange-50 border-orange-200"
       });
     } catch (error: any) {
       toast({
-        title: "Erro ao alterar status",
+        title: "Erro ao pausar evento",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  }, [fetchEvents]);
+
+  // Função para finalizar evento
+  const finishEvent = useCallback(async (eventId: string) => {
+    try {
+      const { error } = await supabase
+        .from("events")
+        .update({ status: "FINISHED" as "SCHEDULED" | "ACTIVE" | "FINISHED" })
+        .eq("id", eventId);
+
+      if (error) throw error;
+
+      fetchEvents();
+      toast({
+        title: "Evento finalizado",
+        description: "O evento foi finalizado com sucesso",
+        className: "bg-purple-50 border-purple-200"
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao finalizar evento",
         description: error.message,
         variant: "destructive"
       });
@@ -364,28 +365,29 @@ export function useEventsManagement() {
     fetchEvents();
   }, [fetchEvents]);
 
-  return {
-    events,
-    totalEvents,
-    loading,
-    selectedEvents,
-    filters,
-    setFilters,
-    savedFilters,
-    handleSaveFilter,
-    handleLoadFilter,
-    handleDeleteFilter,
-    viewMode,
-    setViewMode,
-    sortField,
-    sortDirection,
-    handleSort,
-    handleEventSelect,
-    handleSelectAll,
-    handleBulkAction,
-    handleExport,
-    deleteEvent,
-    toggleEventStatus,
-    refetch: fetchEvents
-  };
+    return {
+      events,
+      totalEvents,
+      loading,
+      selectedEvents,
+      filters,
+      setFilters,
+      savedFilters,
+      handleSaveFilter,
+      handleLoadFilter,
+      handleDeleteFilter,
+      viewMode,
+      setViewMode,
+      sortField,
+      sortDirection,
+      handleSort,
+      handleEventSelect,
+      handleSelectAll,
+      handleBulkAction,
+      handleExport,
+      deleteEvent,
+      pauseEvent,
+      finishEvent,
+      refetch: fetchEvents
+    };
 }

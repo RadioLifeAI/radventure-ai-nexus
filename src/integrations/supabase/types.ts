@@ -3038,7 +3038,7 @@ export type Database = {
         | "event_ai_suggestions"
         | "journey_ai_suggestions"
         | "radbot_chat"
-      event_status: "SCHEDULED" | "ACTIVE" | "FINISHED"
+      event_status: "SCHEDULED" | "ACTIVE" | "FINISHED" | "PAUSED"
       profile_type: "USER" | "ADMIN"
       radcoin_tx_type:
         | "event_reward"
@@ -3177,7 +3177,7 @@ export const Constants = {
         "journey_ai_suggestions",
         "radbot_chat",
       ],
-      event_status: ["SCHEDULED", "ACTIVE", "FINISHED"],
+      event_status: ["SCHEDULED", "ACTIVE", "FINISHED", "PAUSED"],
       profile_type: ["USER", "ADMIN"],
       radcoin_tx_type: [
         "event_reward",

@@ -36,7 +36,8 @@ export default function EventsManagement() {
     handleBulkAction,
     handleExport,
     deleteEvent,
-    toggleEventStatus,
+    pauseEvent,
+    finishEvent,
     refetch
   } = useEventsManagement();
 
@@ -60,8 +61,12 @@ export default function EventsManagement() {
     // Funcionalidade implementada nos modais das cardsView
   };
 
-  const handleToggleStatus = async (eventId: string) => {
-    await toggleEventStatus(eventId);
+  const handlePause = async (eventId: string) => {
+    await pauseEvent(eventId);
+  };
+
+  const handleFinish = async (eventId: string) => {
+    await finishEvent(eventId);
   };
 
   const renderEventsView = () => {
@@ -78,10 +83,9 @@ export default function EventsManagement() {
             onEventSelect={handleEventSelect}
             onEdit={handleEdit}
             onView={handleView}
-            onDuplicate={handleDuplicate}
             onDelete={deleteEvent}
-            onAnalytics={handleAnalytics}
-            onToggleStatus={handleToggleStatus}
+            onPause={handlePause}
+            onFinish={handleFinish}
           />
         );
       case "timeline":
@@ -111,7 +115,7 @@ export default function EventsManagement() {
     }
   };
 
-  const activeEvents = events.filter(e => e.status === 'ACTIVE' || e.status === 'SCHEDULED').length;
+  const activeEvents = events.filter(e => e.status === 'ACTIVE' || e.status === 'SCHEDULED' || e.status === 'PAUSED').length;
 
   return (
     <div className="space-y-6 animate-fade-in">

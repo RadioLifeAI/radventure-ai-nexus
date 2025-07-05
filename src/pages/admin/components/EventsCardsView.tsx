@@ -12,21 +12,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Calendar,
-  Clock,
   Users,
   Trophy,
   MoreHorizontal,
   Edit,
   Eye,
-  Copy,
   Trash2,
-  BarChart3,
   Play,
+  Pause,
+  Square,
   Target
 } from "lucide-react";
-import { EventRichViewModal } from "./EventRichViewModal";
-import { EventSmartDuplicateModal } from "./EventSmartDuplicateModal";
-import { EventAdvancedAnalyticsModal } from "./EventAdvancedAnalyticsModal";
+import EventDetailsModal from "./EventDetailsModal";
 
 interface Event {
   id: string;
@@ -50,10 +47,9 @@ interface Props {
   onEventSelect: (eventId: string) => void;
   onEdit: (eventId: string) => void;
   onView: (eventId: string) => void;
-  onDuplicate: (eventId: string) => void;
   onDelete: (eventId: string) => void;
-  onAnalytics?: (eventId: string) => void;
-  onToggleStatus?: (eventId: string) => void;
+  onPause?: (eventId: string) => void;
+  onFinish?: (eventId: string) => void;
 }
 
 export function EventsCardsView({
@@ -62,20 +58,18 @@ export function EventsCardsView({
   onEventSelect,
   onEdit,
   onView,
-  onDuplicate,
   onDelete,
-  onAnalytics,
-  onToggleStatus
+  onPause,
+  onFinish
 }: Props) {
-  const [richViewModal, setRichViewModal] = useState<{ open: boolean; event: any }>({ open: false, event: null });
-  const [duplicateModal, setDuplicateModal] = useState<{ open: boolean; event: any }>({ open: false, event: null });
-  const [analyticsModal, setAnalyticsModal] = useState<{ open: boolean; event: any }>({ open: false, event: null });
+  const [detailsModal, setDetailsModal] = useState<{ open: boolean; event: any }>({ open: false, event: null });
 
   const getStatusColor = (status: string) => {
     const colors = {
       DRAFT: "bg-gray-100 text-gray-700",
       SCHEDULED: "bg-blue-100 text-blue-700",
       ACTIVE: "bg-green-100 text-green-700",
+      PAUSED: "bg-orange-100 text-orange-700",
       FINISHED: "bg-purple-100 text-purple-700",
       CANCELLED: "bg-red-100 text-red-700"
     };
@@ -87,6 +81,7 @@ export function EventsCardsView({
       DRAFT: "Rascunho",
       SCHEDULED: "Agendado",
       ACTIVE: "Ativo",
+      PAUSED: "Pausado",
       FINISHED: "Finalizado",
       CANCELLED: "Cancelado"
     };
@@ -119,24 +114,20 @@ export function EventsCardsView({
     return prizeDistribution.reduce((total, prize) => total + (prize.prize || 0), 0);
   };
 
-  const handleRichView = (event: any) => {
-    setRichViewModal({ open: true, event });
+  const handleView = (event: any) => {
+    setDetailsModal({ open: true, event });
   };
 
-  const handleSmartDuplicate = (event: any) => {
-    setDuplicateModal({ open: true, event });
+  const handlePause = (eventId: string) => {
+    if (onPause) {
+      onPause(eventId);
+    }
   };
 
-  const handleAdvancedAnalytics = (event: any) => {
-    setAnalyticsModal({ open: true, event });
-  };
-
-  const handleDuplicateComplete = (duplicatedEvent: any) => {
-    // Notificar para atualizar a lista
-    onDuplicate(duplicatedEvent.id);
-    setDuplicateModal({ open: false, event: null });
-    
-    // Mostrar toast de sucesso já está no modal
+  const handleFinish = (eventId: string) => {
+    if (onFinish) {
+      onFinish(eventId);
+    }
   };
 
   if (events.length === 0) {
@@ -155,7 +146,9 @@ export function EventsCardsView({
           const statusColors = getStatusColor(event.status);
           const isSelected = selectedEvents.includes(event.id);
           const isActive = event.status === "ACTIVE";
-          const canStart = event.status === "SCHEDULED" && new Date(event.scheduled_start) <= new Date();
+          const isPaused = event.status === "PAUSED";
+          const canPause = event.status === "ACTIVE";
+          const canFinish = event.status === "ACTIVE" || event.status === "PAUSED";
 
           return (
             <Card 
@@ -182,29 +175,28 @@ export function EventsCardsView({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="bg-white">
-                    <DropdownMenuItem onClick={() => handleRichView(event)}>
+                    <DropdownMenuItem onClick={() => handleView(event)}>
                       <Eye className="h-4 w-4 mr-2" />
-                      Visualização Rica
+                      Visualizar
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onEdit(event.id)}>
                       <Edit className="h-4 w-4 mr-2" />
                       Editar
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleSmartDuplicate(event)}>
-                      <Copy className="h-4 w-4 mr-2" />
-                      Duplicação Inteligente
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleAdvancedAnalytics(event)}>
-                      <BarChart3 className="h-4 w-4 mr-2" />
-                      Analytics Avançado
-                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    {canStart && (
-                      <DropdownMenuItem onClick={() => onToggleStatus(event.id)}>
-                        <Play className="h-4 w-4 mr-2" />
-                        Iniciar Evento
+                    {canPause && (
+                      <DropdownMenuItem onClick={() => handlePause(event.id)}>
+                        <Pause className="h-4 w-4 mr-2" />
+                        Pausar Evento
                       </DropdownMenuItem>
                     )}
+                    {canFinish && (
+                      <DropdownMenuItem onClick={() => handleFinish(event.id)}>
+                        <Square className="h-4 w-4 mr-2" />
+                        Finalizar Evento
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem 
                       onClick={() => onDelete(event.id)}
                       className="text-red-600"
@@ -231,6 +223,13 @@ export function EventsCardsView({
                       </Badge>
                     </div>
                   )}
+                  {isPaused && (
+                    <div className="absolute top-2 left-2">
+                      <Badge className="bg-orange-500 text-white">
+                        PAUSADO
+                      </Badge>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -244,11 +243,6 @@ export function EventsCardsView({
                     <Badge className={statusColors}>
                       {getStatusLabel(event.status)}
                     </Badge>
-                    {canStart && (
-                      <Badge className="bg-orange-100 text-orange-700">
-                        Pronto para Iniciar
-                      </Badge>
-                    )}
                   </div>
                 </div>
 
@@ -299,7 +293,7 @@ export function EventsCardsView({
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleRichView(event)}
+                    onClick={() => handleView(event)}
                     className="flex-1"
                   >
                     <Eye className="h-3 w-3 mr-1" />
@@ -320,27 +314,12 @@ export function EventsCardsView({
         })}
       </div>
 
-      {/* Modais */}
-      <EventRichViewModal
-        open={richViewModal.open}
-        onClose={() => setRichViewModal({ open: false, event: null })}
-        event={richViewModal.event}
-        onEdit={onEdit}
-        onDuplicate={handleSmartDuplicate}
-        onAnalytics={handleAdvancedAnalytics}
-      />
-
-      <EventSmartDuplicateModal
-        open={duplicateModal.open}
-        onClose={() => setDuplicateModal({ open: false, event: null })}
-        event={duplicateModal.event}
-        onDuplicate={handleDuplicateComplete}
-      />
-
-      <EventAdvancedAnalyticsModal
-        open={analyticsModal.open}
-        onClose={() => setAnalyticsModal({ open: false, event: null })}
-        event={analyticsModal.event}
+      {/* Modal de detalhes */}
+      <EventDetailsModal
+        open={detailsModal.open}
+        onClose={() => setDetailsModal({ open: false, event: null })}
+        event={detailsModal.event}
+        ranking={[]} // Mock empty ranking for now
       />
     </>
   );
