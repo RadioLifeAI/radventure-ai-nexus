@@ -8,6 +8,7 @@ import { Crown, Trophy, Star, Award, Medal, Flame } from "lucide-react";
 import { EventFinalRankingData } from "@/hooks/useEventRankingsEnhanced";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { EventPodiumDisplay } from "./EventPodiumDisplay";
 
 interface EventHallOfFameProps {
   hallOfFameData: EventFinalRankingData[];
@@ -212,22 +213,25 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="champions" className="space-y-4">
-          <div className="mb-4">
-            <h3 className="text-xl font-bold text-gray-800 mb-2">🏆 Top Campeões Históricos</h3>
-            <p className="text-gray-600">Jogadores com mais vitórias em eventos</p>
+        <TabsContent value="champions" className="space-y-6">
+          <div className="text-center mb-8">
+            <h3 className="text-3xl font-bold text-gray-800 mb-2 flex items-center justify-center gap-3">
+              <Crown className="h-8 w-8 text-yellow-500" />
+              Hall da Fama - Top Campeões
+              <Crown className="h-8 w-8 text-yellow-500" />
+            </h3>
+            <p className="text-gray-600 text-lg">Os maiores campeões da história dos eventos RadVenture</p>
           </div>
           
-          {topChampions.length === 0 ? (
-            <Card className="text-center py-12">
-              <CardContent>
-                <Trophy className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                <p className="text-gray-500">Nenhum campeão histórico encontrado</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
-              {topChampions.map((champion, index) => renderChampionCard(champion, index))}
+          <EventPodiumDisplay topChampions={topChampions} />
+          
+          {/* Lista completa dos campeões (4º em diante) */}
+          {topChampions.length > 3 && (
+            <div className="mt-12">
+              <h4 className="text-xl font-bold text-gray-800 mb-6 text-center">Outros Campeões Históricos</h4>
+              <div className="grid gap-4">
+                {topChampions.slice(3).map((champion, index) => renderChampionCard(champion, index + 3))}
+              </div>
             </div>
           )}
         </TabsContent>
