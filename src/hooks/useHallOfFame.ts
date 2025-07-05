@@ -12,7 +12,7 @@ export function useHallOfFame() {
       setLoading(true);
       
       const { data: topRankings, error: rankingsError } = await supabase
-        .from("event_rankings")
+        .from("event_final_rankings")
         .select("*")
         .eq("rank", 1)
         .limit(20)
@@ -51,7 +51,7 @@ export function useHallOfFame() {
           id: ranking.id,
           event_id: ranking.event_id,
           user_id: ranking.user_id,
-          score: ranking.score || 0,
+          score: 0, // event_final_rankings doesn't have score field
           rank: ranking.rank || 1,
           event: event ? {
             id: event.id,

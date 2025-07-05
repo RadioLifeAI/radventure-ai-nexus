@@ -34,9 +34,9 @@ export function EventHistoryAnalytics({ historicalData, loading }: EventHistoryA
     ? Math.round(historicalData.reduce((sum, event) => sum + event.rank, 0) / totalEvents)
     : 0;
 
-  // Agrupar por status do evento
-  const completedEvents = historicalData.filter(event => event.event.status === 'FINISHED');
-  const recentEvents = historicalData.slice(0, 5);
+      // Agrupar por status do evento
+      const completedEvents = historicalData.filter(event => event.event?.status === 'FINISHED');
+      const recentEvents = historicalData.slice(0, 5);
 
   // Estatísticas por mês (últimos 6 meses)
   const monthlyStats = React.useMemo(() => {
@@ -52,7 +52,7 @@ export function EventHistoryAnalytics({ historicalData, loading }: EventHistoryA
     }).reverse();
 
     historicalData.forEach(event => {
-      const eventDate = new Date(event.event.scheduled_start);
+      const eventDate = new Date(event.event?.scheduled_start || new Date());
       const monthIndex = months.findIndex(m => 
         eventDate.getMonth() === new Date(`${m.month} 1, ${m.year}`).getMonth() &&
         eventDate.getFullYear() === m.year
@@ -186,29 +186,29 @@ export function EventHistoryAnalytics({ historicalData, loading }: EventHistoryA
                       #{event.rank}
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-800">{event.event.name}</h4>
+                      <h4 className="font-semibold text-gray-800">{event.event?.name || 'Evento'}</h4>
                       <div className="flex items-center gap-3 mt-1">
-                        <Badge className={getStatusColor(event.event.status)}>
-                          {event.event.status === 'FINISHED' ? 'Finalizado' : 
-                           event.event.status === 'ACTIVE' ? 'Ativo' : 'Agendado'}
+                         <Badge className={getStatusColor(event.event?.status || 'UNKNOWN')}>
+                           {event.event?.status === 'FINISHED' ? 'Finalizado' : 
+                            event.event?.status === 'ACTIVE' ? 'Ativo' : 'Agendado'}
                         </Badge>
-                        <span className="text-sm text-gray-500">
-                          {formatDistanceToNow(new Date(event.event.scheduled_start), { 
-                            addSuffix: true, 
-                            locale: ptBR 
-                          })}
-                        </span>
+                         <span className="text-sm text-gray-500">
+                           {formatDistanceToNow(new Date(event.event?.scheduled_start || new Date()), { 
+                             addSuffix: true, 
+                             locale: ptBR 
+                           })}
+                         </span>
                       </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="font-semibold text-gray-800">
-                      {event.score.toLocaleString()} pts
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {event.event.prize_radcoins.toLocaleString()} RadCoins
-                    </div>
-                  </div>
+                   <div className="text-right">
+                     <div className="font-semibold text-gray-800">
+                       {event.score?.toLocaleString() || 0} pts
+                     </div>
+                     <div className="text-sm text-gray-500">
+                       {event.event?.prize_radcoins?.toLocaleString() || 0} RadCoins
+                     </div>
+                   </div>
                 </div>
               ))
             )}

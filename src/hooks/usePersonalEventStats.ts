@@ -20,7 +20,7 @@ export function usePersonalEventStats(userId?: string) {
   const fetchPersonalStats = async (userId: string) => {
     try {
       const { data: userRankings, error: rankingsError } = await supabase
-        .from("event_rankings")
+        .from("event_final_rankings")
         .select("*")
         .eq("user_id", userId)
         .order("created_at", { ascending: false });
@@ -47,12 +47,7 @@ export function usePersonalEventStats(userId?: string) {
         .eq("id", userId)
         .single();
 
-      const { data: finalRankings } = await supabase
-        .from("event_final_rankings")
-        .select("radcoins_awarded")
-        .eq("user_id", userId);
-
-      const totalRadCoinsEarned = (finalRankings || []).reduce((sum, r) => sum + (r.radcoins_awarded || 0), 0);
+      const totalRadCoinsEarned = (userRankings || []).reduce((sum, r) => sum + (r.radcoins_awarded || 0), 0);
       const eventsMap = new Map((events || []).map(e => [e.id, e]));
       const ranks = userRankings.map(r => r.rank || 999).filter(rank => rank < 999);
       const bestRank = ranks.length > 0 ? Math.min(...ranks) : 0;
@@ -67,7 +62,7 @@ export function usePersonalEventStats(userId?: string) {
           id: ranking.id,
           event_id: ranking.event_id,
           user_id: ranking.user_id,
-          score: ranking.score || 0,
+          score: 0, // event_final_rankings doesn't have score field
           rank: ranking.rank || 999,
           event: event ? {
             id: event.id,
