@@ -19,31 +19,27 @@ export function usePersonalEventStats(userId?: string) {
 
   const fetchPersonalStats = async (userId: string) => {
     try {
-      console.log("🔍 PERSONAL STATS: Buscando dados para usuário:", userId);
-      
-      // CORREÇÃO: Incluir dados do evento na query
       const { data: userRankings, error: rankingsError } = await supabase
         .from("event_rankings")
-        .select(`
-          *,
-          events!inner(id, name, status, scheduled_start, scheduled_end, prize_radcoins, banner_url)
-        `)
+        .select("*")
         .eq("user_id", userId)
         .order("created_at", { ascending: false });
 
       if (rankingsError) {
-        console.error("❌ PERSONAL STATS: Erro ao buscar rankings:", rankingsError);
-        setPersonalStats(null);
+        console.error("Erro ao buscar rankings do usuário:", rankingsError);
         return;
       }
-
-      console.log("📊 PERSONAL STATS: Rankings encontrados:", userRankings?.length || 0);
 
       if (!userRankings || userRankings.length === 0) {
-        console.log("⚠️ PERSONAL STATS: Nenhum ranking encontrado para o usuário");
         setPersonalStats(null);
         return;
       }
+
+      const eventIds = [...new Set(userRankings.map(r => r.event_id))];
+      const { data: events } = await supabase
+        .from("events")
+        .select("*")
+        .in("id", eventIds);
 
       const { data: userProfile } = await supabase
         .from("profiles")
@@ -57,22 +53,15 @@ export function usePersonalEventStats(userId?: string) {
         .eq("user_id", userId);
 
       const totalRadCoinsEarned = (finalRankings || []).reduce((sum, r) => sum + (r.radcoins_awarded || 0), 0);
+      const eventsMap = new Map((events || []).map(e => [e.id, e]));
       const ranks = userRankings.map(r => r.rank || 999).filter(rank => rank < 999);
       const bestRank = ranks.length > 0 ? Math.min(...ranks) : 0;
       const averageRank = ranks.length > 0 ? Math.round(ranks.reduce((sum, rank) => sum + rank, 0) / ranks.length) : 0;
       const winCount = userRankings.filter(r => r.rank === 1).length;
       const topThreeCount = userRankings.filter(r => r.rank && r.rank <= 3).length;
-      
-      console.log("📈 PERSONAL STATS: Estatísticas calculadas:", {
-        totalParticipations: userRankings.length,
-        totalRadCoinsEarned,
-        bestRank,
-        winCount,
-        topThreeCount
-      });
 
       const formattedUserRankings = userRankings.slice(0, 5).map(ranking => {
-        const event = ranking.events; // Dados já vêm do JOIN
+        const event = eventsMap.get(ranking.event_id);
         
         return {
           id: ranking.id,
@@ -80,7 +69,7 @@ export function usePersonalEventStats(userId?: string) {
           user_id: ranking.user_id,
           score: ranking.score || 0,
           rank: ranking.rank || 999,
-          event: {
+          event: event ? {
             id: event.id,
             name: event.name || "Evento",
             status: event.status || "UNKNOWN",
@@ -88,6 +77,13 @@ export function usePersonalEventStats(userId?: string) {
             scheduled_end: event.scheduled_end || new Date().toISOString(),
             prize_radcoins: event.prize_radcoins || 0,
             banner_url: event.banner_url
+          } : {
+            id: ranking.event_id,
+            name: "Evento não encontrado",
+            status: "UNKNOWN",
+            scheduled_start: new Date().toISOString(),
+            scheduled_end: new Date().toISOString(),
+            prize_radcoins: 0
           },
           user: {
             full_name: userProfile?.full_name || userProfile?.username || "Usuário",
