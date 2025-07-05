@@ -57,6 +57,23 @@ export function useEventProgress(eventId: string) {
     try {
       setSubmitting(true);
       
+      // CORREÇÃO: Validar se evento tem casos antes de iniciar
+      const { data: eventCases, error: casesError } = await supabase
+        .from('event_cases')
+        .select('id')
+        .eq('event_id', eventId);
+      
+      if (casesError) throw casesError;
+      
+      if (!eventCases || eventCases.length === 0) {
+        toast({
+          title: "Evento indisponível",
+          description: "Este evento não possui casos médicos configurados.",
+          variant: "destructive"
+        });
+        return null;
+      }
+      
       const { data, error } = await supabase.rpc('start_event_participation', {
         p_event_id: eventId
       });
