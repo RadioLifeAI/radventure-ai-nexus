@@ -44,31 +44,7 @@ export function AutomationControlCenter() {
     generateQuestionAuto 
   } = useAutomationSystem();
   
-  const [status, setStatus] = useState<AutomationStatus>({
-    isActive: true,
-    lastExecution: null,
-    nextExecution: null,
-    questionsInPool: 0,
-    scheduledQuestions: 0,
-    systemHealth: 'good',
-    cronJobs: {
-      autoSchedule: true,
-      autoPublish: true,
-      poolMaintenance: true
-    }
-  });
   const { toast } = useToast();
-
-  // Atualizar status com base nas métricas do hook
-  useEffect(() => {
-    setStatus(prev => ({
-      ...prev,
-      questionsInPool: metrics.questionsInPool,
-      scheduledQuestions: metrics.scheduledQuestions,
-      systemHealth: metrics.systemHealth,
-      lastExecution: metrics.lastExecution
-    }));
-  }, [metrics]);
 
   const executeManualOperation = async (operation: string) => {
     try {
@@ -113,7 +89,7 @@ export function AutomationControlCenter() {
     }
   };
 
-  if (isLoading && !metrics.questionsInPool) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center p-8">
         <RefreshCw className="h-6 w-6 animate-spin mr-2" />
@@ -135,10 +111,10 @@ export function AutomationControlCenter() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Status do Sistema */}
-            <div className={`p-4 rounded-lg border ${getHealthColor(status.systemHealth)}`}>
+            <div className={`p-4 rounded-lg border ${getHealthColor(metrics.systemHealth)}`}>
               <div className="flex items-center gap-2 mb-2">
-                {getHealthIcon(status.systemHealth)}
-                <span className="font-medium capitalize">{status.systemHealth}</span>
+                {getHealthIcon(metrics.systemHealth)}
+                <span className="font-medium capitalize">{metrics.systemHealth}</span>
               </div>
               <p className="text-sm opacity-80">Status do Sistema</p>
             </div>
@@ -147,7 +123,7 @@ export function AutomationControlCenter() {
             <div className="p-4 rounded-lg border bg-blue-50 border-blue-200">
               <div className="flex items-center gap-2 mb-2">
                 <Zap className="h-5 w-5 text-blue-600" />
-                <span className="font-medium text-blue-600">{status.questionsInPool}</span>
+                <span className="font-medium text-blue-600">{metrics.questionsInPool}</span>
               </div>
               <p className="text-sm text-blue-600 opacity-80">Questões no Pool</p>
             </div>
@@ -156,7 +132,7 @@ export function AutomationControlCenter() {
             <div className="p-4 rounded-lg border bg-purple-50 border-purple-200">
               <div className="flex items-center gap-2 mb-2">
                 <Calendar className="h-5 w-5 text-purple-600" />
-                <span className="font-medium text-purple-600">{status.scheduledQuestions}</span>
+                <span className="font-medium text-purple-600">{metrics.scheduledQuestions}</span>
               </div>
               <p className="text-sm text-purple-600 opacity-80">Questões Agendadas</p>
             </div>
@@ -178,7 +154,7 @@ export function AutomationControlCenter() {
                   <p className="font-medium">Auto-Agendamento</p>
                   <p className="text-xs text-muted-foreground">Diário às 23:00</p>
                 </div>
-                <Switch checked={status.cronJobs.autoSchedule} disabled />
+                <Switch checked={true} disabled />
               </div>
 
               <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -186,7 +162,7 @@ export function AutomationControlCenter() {
                   <p className="font-medium">Auto-Publicação</p>
                   <p className="text-xs text-muted-foreground">Diário às 06:00</p>
                 </div>
-                <Switch checked={status.cronJobs.autoPublish} disabled />
+                <Switch checked={true} disabled />
               </div>
 
               <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -194,7 +170,7 @@ export function AutomationControlCenter() {
                   <p className="font-medium">Manutenção Pool</p>
                   <p className="text-xs text-muted-foreground">Diário às 22:00</p>
                 </div>
-                <Switch checked={status.cronJobs.poolMaintenance} disabled />
+                <Switch checked={true} disabled />
               </div>
             </div>
 

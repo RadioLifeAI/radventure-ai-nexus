@@ -2920,6 +2920,10 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: Json
       }
+      get_daily_challenge_pool_status: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       get_event_prize_stats: {
         Args: { p_event_id: string }
         Returns: Json
@@ -3008,6 +3012,10 @@ export type Database = {
           promotion_reason?: string
         }
         Returns: boolean
+      }
+      publish_next_daily_challenge: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       purchase_radcoin_product: {
         Args: {

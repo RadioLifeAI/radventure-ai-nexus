@@ -1,177 +1,214 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
 interface AutomationMetrics {
   questionsInPool: number;
   scheduledQuestions: number;
-  todayQuestion: any;
   systemHealth: 'excellent' | 'good' | 'warning' | 'error';
   lastExecution: string | null;
-  automationLogs: any[];
+  approvedToday: number;
+  pendingReview: number;
 }
 
 export function useAutomationSystem() {
   const [metrics, setMetrics] = useState<AutomationMetrics>({
     questionsInPool: 0,
     scheduledQuestions: 0,
-    todayQuestion: null,
     systemHealth: 'good',
     lastExecution: null,
-    automationLogs: []
+    approvedToday: 0,
+    pendingReview: 0
   });
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  const loadMetrics = useCallback(async () => {
+  const loadMetrics = async () => {
     try {
-      // Questões no pool (aprovadas e não agendadas)
-      const { data: poolQuestions } = await supabase
-        .from('daily_quiz_questions')
-        .select('id')
-        .eq('status', 'approved')
-        .is('published_date', null);
+      // Buscar status do pool
+      const { data: poolStatus, error: poolError } = await supabase
+        .rpc('get_daily_challenge_pool_status');
 
-      // Questões agendadas (futuras)
-      const { data: scheduledQuestions } = await supabase
-        .from('daily_quiz_questions')
-        .select('id, published_date')
-        .not('published_date', 'is', null)
-        .gte('published_date', new Date().toISOString().split('T')[0]);
+      if (poolError) throw poolError;
 
-      // Questão de hoje
+      // Buscar questões aprovadas hoje
       const today = new Date().toISOString().split('T')[0];
-      const { data: todayChallenge } = await supabase
-        .from('daily_challenges')
+      const { data: todayQuestions, error: todayError } = await supabase
+        .from('daily_quiz_questions')
         .select('*')
-        .eq('challenge_date', today)
-        .eq('is_active', true)
-        .single();
+        .gte('created_at', today);
 
-      // Logs de automação
-      const { data: logs } = await supabase
+      if (todayError) throw todayError;
+
+      // Buscar questões pendentes de revisão
+      const { data: pendingQuestions, error: pendingError } = await supabase
+        .from('daily_quiz_questions')
+        .select('*')
+        .eq('status', 'pending');
+
+      if (pendingError) throw pendingError;
+
+      // Buscar último log de automação
+      const { data: lastLog, error: logError } = await supabase
         .from('automation_logs')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(1);
 
-      const questionsInPool = poolQuestions?.length || 0;
-      const scheduledCount = scheduledQuestions?.length || 0;
-
-      // Calcular health do sistema
-      let systemHealth: AutomationMetrics['systemHealth'] = 'excellent';
-      
-      if (questionsInPool === 0) {
-        systemHealth = 'error';
-      } else if (questionsInPool < 3) {
-        systemHealth = 'warning';
-      } else if (scheduledCount < 5) {
-        systemHealth = questionsInPool > 7 ? 'good' : 'warning';
-      }
+      if (logError) throw logError;
 
       setMetrics({
-        questionsInPool,
-        scheduledQuestions: scheduledCount,
-        todayQuestion: todayChallenge,
-        systemHealth,
-        lastExecution: logs?.[0]?.created_at || null,
-        automationLogs: logs || []
+        questionsInPool: (poolStatus as any)?.approved_questions || 0,
+        scheduledQuestions: (poolStatus as any)?.scheduled_challenges || 0,
+        systemHealth: (poolStatus as any)?.pool_health || 'good',
+        lastExecution: lastLog?.[0]?.created_at || null,
+        approvedToday: todayQuestions?.filter(q => q.status === 'approved').length || 0,
+        pendingReview: pendingQuestions?.length || 0
       });
 
     } catch (error) {
       console.error('Erro ao carregar métricas:', error);
+      toast({
+        title: 'Erro ao carregar métricas',
+        description: 'Não foi possível carregar os dados do sistema',
+        variant: 'destructive'
+      });
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  };
 
-  const executeAutomationFunction = useCallback(async (functionName: 'auto_schedule_daily_questions' | 'auto_publish_daily_challenge' | 'maintain_question_pool', params: any = {}) => {
-    setIsLoading(true);
+  const scheduleQuestions = async () => {
     try {
-      const { data, error } = await supabase.rpc(functionName, params);
+      setIsLoading(true);
       
-      if (error) throw error;
-
-      toast({
-        title: 'Sucesso',
-        description: `Função ${functionName} executada com sucesso`,
-      });
-
-      // Recarregar métricas
-      await loadMetrics();
-      
-      return { success: true, data };
-    } catch (error: any) {
-      console.error(`Erro ao executar ${functionName}:`, error);
-      toast({
-        title: 'Erro',
-        description: error.message,
-        variant: 'destructive',
-      });
-      return { success: false, error: error.message };
-    } finally {
-      setIsLoading(false);
-    }
-  }, [loadMetrics, toast]);
-
-  const scheduleQuestions = useCallback(() => {
-    return executeAutomationFunction('auto_schedule_daily_questions');
-  }, [executeAutomationFunction]);
-
-  const publishTodaysChallenge = useCallback(() => {
-    return executeAutomationFunction('auto_publish_daily_challenge');
-  }, [executeAutomationFunction]);
-
-  const maintainQuestionPool = useCallback(() => {
-    return executeAutomationFunction('maintain_question_pool');
-  }, [executeAutomationFunction]);
-
-  const generateQuestionAuto = useCallback(async (category?: string) => {
-    try {
       const { data, error } = await supabase.functions.invoke('generate-daily-challenge', {
-        body: { 
-          mode: 'auto',
-          category: category || 'Cardiologia'
-        }
+        body: { action: 'weekly_batch', count: 7 }
       });
 
       if (error) throw error;
 
       toast({
-        title: 'Questão Gerada',
-        description: 'Nova questão gerada automaticamente',
+        title: '📅 Questões Agendadas',
+        description: `${data.generated_count} questões geradas para a próxima semana`,
       });
 
       await loadMetrics();
-      return { success: true, data };
+    } catch (error: any) {
+      console.error('Erro ao agendar questões:', error);
+      toast({
+        title: 'Erro no Agendamento',
+        description: error.message,
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const publishTodaysChallenge = async () => {
+    try {
+      setIsLoading(true);
+      
+      const { data, error } = await supabase.functions.invoke('daily-challenge-generator', {
+        body: { action: 'publish_daily' }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: '🚀 Desafio Publicado',
+        description: 'Desafio diário foi publicado com sucesso',
+      });
+
+      await loadMetrics();
+    } catch (error: any) {
+      console.error('Erro ao publicar desafio:', error);
+      toast({
+        title: 'Erro na Publicação',
+        description: error.message,
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const maintainQuestionPool = async () => {
+    try {
+      setIsLoading(true);
+      
+      const { data, error } = await supabase.functions.invoke('generate-daily-challenge', {
+        body: { action: 'maintain_pool' }
+      });
+
+      if (error) throw error;
+
+      const message = data.emergency_generation 
+        ? `Pool mantido - ${data.generated_count} questões de emergência geradas`
+        : 'Pool verificado - nenhuma manutenção necessária';
+
+      toast({
+        title: '🔧 Pool Mantido',
+        description: message,
+      });
+
+      await loadMetrics();
+    } catch (error: any) {
+      console.error('Erro ao manter pool:', error);
+      toast({
+        title: 'Erro na Manutenção',
+        description: error.message,
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const generateQuestionAuto = async () => {
+    try {
+      setIsLoading(true);
+      
+      const { data, error } = await supabase.functions.invoke('generate-daily-challenge', {
+        body: { mode: 'auto' }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: '🤖 Questão Gerada',
+        description: `Questão sobre ${data.specialty} ${data.auto_approved ? 'aprovada automaticamente' : 'aguardando revisão'}`,
+      });
+
+      await loadMetrics();
     } catch (error: any) {
       console.error('Erro ao gerar questão:', error);
       toast({
-        title: 'Erro',
+        title: 'Erro na Geração',
         description: error.message,
-        variant: 'destructive',
+        variant: 'destructive'
       });
-      return { success: false, error: error.message };
+    } finally {
+      setIsLoading(false);
     }
-  }, [loadMetrics, toast]);
+  };
 
   useEffect(() => {
     loadMetrics();
     
     // Atualizar métricas a cada 30 segundos
     const interval = setInterval(loadMetrics, 30000);
-    
     return () => clearInterval(interval);
-  }, [loadMetrics]);
+  }, []);
 
   return {
     metrics,
     isLoading,
-    loadMetrics,
     scheduleQuestions,
     publishTodaysChallenge,
     maintainQuestionPool,
     generateQuestionAuto,
-    executeAutomationFunction
+    refreshMetrics: loadMetrics
   };
 }
