@@ -2776,6 +2776,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      auto_update_event_status: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       award_daily_login_bonus: {
         Args: { p_user_id: string }
         Returns: Json
