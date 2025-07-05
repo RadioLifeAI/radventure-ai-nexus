@@ -206,6 +206,31 @@ export function useEventsManagement() {
     }
   }, [fetchEvents]);
 
+  // Função para reativar evento pausado
+  const resumeEvent = useCallback(async (eventId: string) => {
+    try {
+      const { error } = await supabase
+        .from("events")
+        .update({ status: "ACTIVE" as "SCHEDULED" | "ACTIVE" | "FINISHED" })
+        .eq("id", eventId);
+
+      if (error) throw error;
+
+      fetchEvents();
+      toast({
+        title: "Evento reativado",
+        description: "O evento foi reativado com sucesso",
+        className: "bg-green-50 border-green-200"
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao reativar evento",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  }, [fetchEvents]);
+
   // Função para seleção de eventos
   const handleEventSelect = useCallback((eventId: string) => {
     setSelectedEvents(prev => 
@@ -388,6 +413,7 @@ export function useEventsManagement() {
       deleteEvent,
       pauseEvent,
       finishEvent,
+      resumeEvent,
       refetch: fetchEvents
     };
 }

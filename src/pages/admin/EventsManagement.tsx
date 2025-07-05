@@ -38,6 +38,7 @@ export default function EventsManagement() {
     deleteEvent,
     pauseEvent,
     finishEvent,
+    resumeEvent,
     refetch
   } = useEventsManagement();
 
@@ -69,6 +70,10 @@ export default function EventsManagement() {
     await finishEvent(eventId);
   };
 
+  const handleResume = async (eventId: string) => {
+    await resumeEvent(eventId);
+  };
+
   const renderEventsView = () => {
     if (loading) {
       return <Loader />;
@@ -86,6 +91,7 @@ export default function EventsManagement() {
             onDelete={deleteEvent}
             onPause={handlePause}
             onFinish={handleFinish}
+            onResume={handleResume}
           />
         );
       case "timeline":

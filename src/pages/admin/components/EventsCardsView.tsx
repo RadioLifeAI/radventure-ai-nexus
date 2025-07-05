@@ -50,6 +50,7 @@ interface Props {
   onDelete: (eventId: string) => void;
   onPause?: (eventId: string) => void;
   onFinish?: (eventId: string) => void;
+  onResume?: (eventId: string) => void;
 }
 
 export function EventsCardsView({
@@ -60,7 +61,8 @@ export function EventsCardsView({
   onView,
   onDelete,
   onPause,
-  onFinish
+  onFinish,
+  onResume
 }: Props) {
   const [detailsModal, setDetailsModal] = useState<{ open: boolean; event: any }>({ open: false, event: null });
 
@@ -130,6 +132,12 @@ export function EventsCardsView({
     }
   };
 
+  const handleResume = (eventId: string) => {
+    if (onResume) {
+      onResume(eventId);
+    }
+  };
+
   if (events.length === 0) {
     return (
       <div className="text-center py-12">
@@ -149,6 +157,7 @@ export function EventsCardsView({
           const isPaused = event.status === "PAUSED";
           const canPause = event.status === "ACTIVE";
           const canFinish = event.status === "ACTIVE" || event.status === "PAUSED";
+          const canResume = event.status === "PAUSED";
 
           return (
             <Card 
@@ -188,6 +197,12 @@ export function EventsCardsView({
                       <DropdownMenuItem onClick={() => handlePause(event.id)}>
                         <Pause className="h-4 w-4 mr-2" />
                         Pausar Evento
+                      </DropdownMenuItem>
+                    )}
+                    {canResume && (
+                      <DropdownMenuItem onClick={() => handleResume(event.id)}>
+                        <Play className="h-4 w-4 mr-2" />
+                        Reativar Evento
                       </DropdownMenuItem>
                     )}
                     {canFinish && (
