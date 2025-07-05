@@ -31,19 +31,19 @@ export function EventPodiumDisplay({ topChampions }: EventPodiumDisplayProps) {
 
   const getPodiumIcon = (position: number) => {
     switch (position) {
-      case 1: return <Crown size={40} className="text-yellow-400 drop-shadow-lg" />;
-      case 2: return <Trophy size={36} className="text-gray-400 drop-shadow-lg" />;
-      case 3: return <Medal size={32} className="text-amber-600 drop-shadow-lg" />;
-      default: return <Star size={28} className="text-cyan-400 drop-shadow-lg" />;
+      case 1: return <Crown size={20} className="text-yellow-400 drop-shadow-lg" />;
+      case 2: return <Trophy size={18} className="text-gray-400 drop-shadow-lg" />;
+      case 3: return <Medal size={16} className="text-amber-600 drop-shadow-lg" />;
+      default: return <Star size={14} className="text-cyan-400 drop-shadow-lg" />;
     }
   };
 
   const getPodiumHeight = (position: number) => {
     switch (position) {
-      case 1: return "h-40";
-      case 2: return "h-32";
-      case 3: return "h-28";
-      default: return "h-24";
+      case 1: return "h-24 sm:h-32";
+      case 2: return "h-20 sm:h-24";
+      case 3: return "h-16 sm:h-20";
+      default: return "h-12 sm:h-16";
     }
   };
 
@@ -89,16 +89,16 @@ export function EventPodiumDisplay({ topChampions }: EventPodiumDisplayProps) {
               <img 
                 src={champion.user.avatar_url} 
                 alt="Avatar"
-                className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover ${getAvatarBorder(position)}`}
+                className={`w-10 h-10 sm:w-14 sm:h-14 rounded-full object-cover ${getAvatarBorder(position)}`}
               />
             ) : (
-              <div className={`w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xl sm:text-2xl font-bold ${getAvatarBorder(position)}`}>
+              <div className={`w-10 h-10 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm sm:text-lg font-bold ${getAvatarBorder(position)}`}>
                 {champion.user.full_name?.charAt(0) || champion.user.username?.charAt(0) || '?'}
               </div>
             )}
             
             {/* Ícone da posição */}
-            <div className="absolute -top-3 -right-3 bg-white rounded-full p-2 shadow-xl">
+            <div className="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow-lg">
               {getPodiumIcon(position)}
             </div>
             
@@ -109,40 +109,40 @@ export function EventPodiumDisplay({ topChampions }: EventPodiumDisplayProps) {
           </div>
           
           <div className="text-center">
-            <h3 className="font-bold text-lg text-white mb-1">
+            <h3 className="font-bold text-xs sm:text-sm text-white mb-1 leading-tight">
               {champion.user.full_name || champion.user.username}
             </h3>
-            <p className="text-sm text-gray-100 mb-3">
+            <p className="text-xs text-gray-100 mb-2 hidden sm:block">
               {champion.user.medical_specialty}
             </p>
             
-            {/* Badges de estatísticas */}
-            <div className="flex flex-col gap-2 items-center">
-              <Badge className="bg-yellow-200 text-yellow-800 border-yellow-400 px-3 py-1 font-semibold">
-                <Crown className="h-3 w-3 mr-1" />
-                {champion.totalVictories} vitória{champion.totalVictories !== 1 ? 's' : ''}
+            {/* Badges de estatísticas - simplificados para mobile */}
+            <div className="flex flex-col gap-1 items-center">
+              <Badge className="bg-yellow-200 text-yellow-800 border-yellow-400 px-2 py-0.5 font-semibold text-xs">
+                <Crown className="h-2 w-2 mr-1" />
+                {champion.totalVictories}
               </Badge>
-              <Badge className="bg-green-200 text-green-800 border-green-400 px-3 py-1 font-semibold">
-                {champion.totalRadCoins.toLocaleString()} RadCoins
+              <Badge className="bg-green-200 text-green-800 border-green-400 px-2 py-0.5 font-semibold text-xs hidden sm:flex">
+                {champion.totalRadCoins.toLocaleString()} RC
               </Badge>
             </div>
           </div>
         </div>
 
         {/* Pódio */}
-        <div className={`${getPodiumHeight(position)} ${getPodiumColors(position)} bg-gradient-to-t w-24 sm:w-28 rounded-t-xl flex flex-col items-center justify-start pt-2 sm:pt-3 shadow-2xl relative overflow-hidden`}>
+        <div className={`${getPodiumHeight(position)} ${getPodiumColors(position)} bg-gradient-to-t w-16 sm:w-20 rounded-t-lg flex flex-col items-center justify-start pt-1 sm:pt-2 shadow-xl relative overflow-hidden`}>
           {/* Efeito de brilho */}
           <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/20 to-transparent opacity-30"></div>
           
           {/* Número da posição */}
-          <span className="text-white font-bold text-2xl drop-shadow-2xl relative z-10" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
+          <span className="text-white font-bold text-sm sm:text-lg drop-shadow-lg relative z-10" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
             {position}º
           </span>
           
           {/* Efeito especial para o primeiro lugar */}
           {position === 1 && (
-            <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
-              <div className="w-32 h-8 bg-gradient-to-r from-transparent via-yellow-300/50 to-transparent blur-sm"></div>
+            <div className="absolute -top-1 left-1/2 transform -translate-x-1/2">
+              <div className="w-20 h-4 bg-gradient-to-r from-transparent via-yellow-300/50 to-transparent blur-sm"></div>
             </div>
           )}
         </div>
@@ -162,7 +162,7 @@ export function EventPodiumDisplay({ topChampions }: EventPodiumDisplayProps) {
   return (
     <div className="w-full space-y-8">
       {/* Pódio Principal */}
-      <div className="flex flex-col sm:flex-row items-center sm:items-end justify-center gap-6 sm:gap-8 mb-8 sm:mb-12 px-4">
+      <div className="flex flex-row items-end justify-center gap-2 sm:gap-4 mb-6 sm:mb-8 px-2">
         {/* 2º Lugar */}
         {renderChampion(second, 2, "0.2s")}
         
