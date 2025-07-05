@@ -2925,6 +2925,15 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      populate_event_cases_from_filters: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          event_id: string
+          event_name: string
+          cases_added: number
+          success: boolean
+        }[]
+      }
       process_case_completion: {
         Args: {
           p_user_id: string
