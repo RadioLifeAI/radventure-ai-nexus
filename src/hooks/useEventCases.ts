@@ -63,41 +63,67 @@ export function useEventCases(eventId: string) {
           casesToUse = eventCases.map(ec => ec.medical_cases);
           console.log(`✅ Usando ${casesToUse.length} casos pré-selecionados para evento ${eventId}`);
         } else {
-          // 📋 FALLBACK: Buscar casos baseado nos filtros (compatibilidade)
-          console.log(`📋 Fallback: Aplicando filtros dinâmicos para evento ${eventId}`);
+          // 📋 FALLBACK: Aplicar migração automática se necessário
+          console.warn(`⚠️ Evento ${eventId} sem casos pré-selecionados - aplicando migração`);
           
-          let query = supabase
-            .from("medical_cases")
-            .select("*");
+          if (event.case_filters && Object.keys(event.case_filters).length > 0) {
+            // Tentar popular casos automaticamente
+            const { data: migrationResult } = await supabase.rpc('populate_event_cases_from_filters');
+            
+            // Tentar buscar casos novamente após migração
+            const { data: newEventCases } = await supabase
+              .from("event_cases")
+              .select(`
+                case_id,
+                sequence,
+                medical_cases!inner(*)
+              `)
+              .eq("event_id", eventId)
+              .order("sequence", { ascending: true });
+            
+            if (newEventCases && newEventCases.length > 0) {
+              casesToUse = newEventCases.map(ec => ec.medical_cases);
+              console.log(`✅ Migração executada: ${casesToUse.length} casos adicionados`);
+            } else {
+              console.log(`📋 Fallback: Aplicando filtros dinâmicos para evento ${eventId}`);
+              
+              let query = supabase
+                .from("medical_cases")
+                .select("*");
 
-          // Aplicar filtros se existirem
-          if (event.case_filters) {
-            const filters = event.case_filters as any;
+              // Aplicar filtros se existirem
+              if (event.case_filters) {
+                const filters = event.case_filters as any;
 
-            if (filters.category && filters.category.length > 0) {
-              query = query.in("specialty", filters.category);
+                if (filters.category && filters.category.length > 0) {
+                  query = query.in("specialty", filters.category);
+                }
+
+                if (filters.modality && filters.modality.length > 0) {
+                  query = query.in("modality", filters.modality);
+                }
+
+                if (filters.difficulty && filters.difficulty.length > 0) {
+                  query = query.in("difficulty_level", filters.difficulty.map(d => parseInt(d)));
+                }
+              }
+
+              const { data: filteredCases, error: casesError } = await query;
+              if (casesError) throw casesError;
+
+              casesToUse = filteredCases || [];
+
+              // 🎯 ORDEM CONSISTENTE: Usar seed fixo baseado no eventId (não user.id)
+              casesToUse = shuffleArray(casesToUse, eventId);
+              
+              // Limitar quantidade se especificado
+              if (event.number_of_cases && event.number_of_cases > 0) {
+                casesToUse = casesToUse.slice(0, event.number_of_cases);
+              }
             }
-
-            if (filters.modality && filters.modality.length > 0) {
-              query = query.in("modality", filters.modality);
-            }
-
-            if (filters.difficulty && filters.difficulty.length > 0) {
-              query = query.in("difficulty_level", filters.difficulty.map(d => parseInt(d)));
-            }
-          }
-
-          const { data: filteredCases, error: casesError } = await query;
-          if (casesError) throw casesError;
-
-          casesToUse = filteredCases || [];
-
-          // 🎯 ORDEM CONSISTENTE: Usar seed fixo baseado no eventId (não user.id)
-          casesToUse = shuffleArray(casesToUse, eventId);
-          
-          // Limitar quantidade se especificado
-          if (event.number_of_cases && event.number_of_cases > 0) {
-            casesToUse = casesToUse.slice(0, event.number_of_cases);
+          } else {
+            console.warn(`⚠️ Evento ${eventId} não possui filtros configurados`);
+            casesToUse = [];
           }
         }
 

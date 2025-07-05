@@ -2963,6 +2963,16 @@ export type Database = {
         }
         Returns: Json
       }
+      recalculate_event_scores: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          user_id: string
+          event_id: string
+          old_score: number
+          new_score: number
+          updated: boolean
+        }[]
+      }
       refill_daily_help_aids: {
         Args: Record<PropertyKey, never>
         Returns: number

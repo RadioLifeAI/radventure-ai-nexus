@@ -144,7 +144,8 @@ export default function EventoArena() {
     const originalCorrectText = currentCase.answer_options?.[currentCase.correct_answer_index] || '';
     const isCorrect = selectedText === originalCorrectText;
     
-    const basePoints = currentCase.points || 10;
+    // ✅ CORREÇÃO: Usar pontuação real baseada na dificuldade
+    const basePoints = currentCase.points || (currentCase.difficulty_level * 5) || 10;
     const confidenceMultiplier = confidence / 10;
     const pointsEarned = isCorrect ? Math.round(basePoints * confidenceMultiplier) : 0;
     const caseTimeSpent = Math.floor((Date.now() - startTime) / 1000) - timeSpent;
@@ -374,7 +375,7 @@ export default function EventoArena() {
                 </Badge>
                 <Badge className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold px-3 py-1 flex items-center gap-1">
                   <Award className="h-4 w-4" />
-                  {currentCase?.points || 100} pts
+                  {currentCase?.points || (currentCase?.difficulty_level * 5) || 10} pts
                 </Badge>
                 <Badge className="bg-green-100 text-green-700">
                   <Trophy className="h-3 w-3 mr-1" />
