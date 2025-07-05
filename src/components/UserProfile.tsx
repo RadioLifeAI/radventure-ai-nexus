@@ -76,27 +76,27 @@ export function UserProfile() {
     <>
       <section className="space-y-4 md:space-y-6">
         {/* Seção Principal do Perfil */}
-        <div className="flex flex-col gap-4 md:gap-6 items-center justify-between w-full rounded-xl px-4 md:px-6 lg:px-10 py-4 md:py-7 bg-gradient-to-br from-[#232983] via-[#224ba7] to-[#25bfff] drop-shadow-lg hover:scale-[1.02] transition-all duration-300">
-          <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6 w-full">
-            <div className="relative">
+        <div className="flex flex-col gap-4 lg:gap-6 items-center justify-between w-full rounded-xl px-4 sm:px-6 lg:px-10 py-4 sm:py-6 lg:py-7 bg-gradient-to-br from-[#232983] via-[#224ba7] to-[#25bfff] drop-shadow-lg hover:scale-[1.02] transition-all duration-300">
+          <div className="flex flex-col lg:flex-row items-center gap-4 lg:gap-6 w-full">
+            <div className="relative flex-shrink-0">
               <img 
                 src={profile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.id}`} 
                 alt="Avatar" 
-                className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-cyan-400 shadow-lg hover:scale-110 transition-transform duration-300 object-cover bg-white" 
+                className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full border-4 border-cyan-400 shadow-lg hover:scale-110 transition-transform duration-300 object-cover bg-white" 
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.id}`;
                 }}
               />
-              <div className="absolute -top-1 -right-1 w-5 h-5 md:w-6 md:h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
-                <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-white rounded-full animate-pulse"></div>
+              <div className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 lg:w-2 lg:h-2 bg-white rounded-full animate-pulse"></div>
               </div>
             </div>
             
-            <div className="flex-1 text-center md:text-left w-full max-w-full">
-              <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white tracking-tight flex flex-col md:flex-row items-center justify-center md:justify-start gap-2 md:gap-3 mb-2">
+            <div className="flex-1 text-center lg:text-left w-full max-w-full">
+              <h2 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-white tracking-tight flex flex-col lg:flex-row items-center justify-center lg:justify-start gap-2 lg:gap-3 mb-2">
                 <span className="truncate max-w-full">{displayName}</span>
-                <div className="flex items-center gap-2 flex-wrap justify-center md:justify-start">
+                <div className="flex items-center gap-2 flex-wrap justify-center lg:justify-start">
                   {isAdmin && (
                     <Badge className="bg-yellow-500 text-yellow-900 font-bold text-xs">
                       ADMIN
@@ -121,51 +121,55 @@ export function UserProfile() {
                 </div>
               )}
               
-              <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-2 sm:gap-4 text-cyan-50 font-medium text-sm md:text-base mb-3">
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-2 sm:gap-3 lg:gap-4 text-cyan-50 font-medium text-xs sm:text-sm lg:text-base mb-3">
                 <div className="flex items-center gap-1">
-                  <Zap className="h-4 w-4 text-yellow-400" />
+                  <Zap className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-400 flex-shrink-0" />
                   <span>{totalPoints.toLocaleString()} pts</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <MapPin className="h-4 w-4 text-cyan-400" />
-                  <span className="truncate max-w-[200px]">{location}</span>
+                <div className="flex items-center gap-1 min-w-0">
+                  <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-cyan-400 flex-shrink-0" />
+                  <span className="truncate max-w-[150px] sm:max-w-[200px]">{location}</span>
                 </div>
                 {currentStreak > 0 && (
                   <div className="flex items-center gap-1">
-                    <Target className="h-4 w-4 text-green-400" />
-                    <span>{currentStreak} dia{currentStreak > 1 ? 's' : ''} seguidos</span>
+                    <Target className="h-3 w-3 sm:h-4 sm:w-4 text-green-400 flex-shrink-0" />
+                    <span className="whitespace-nowrap">{currentStreak} dia{currentStreak > 1 ? 's' : ''} seguidos</span>
                   </div>
                 )}
               </div>
               
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-xs sm:text-sm">
-                <Badge className="bg-cyan-600/70 px-3 py-1 rounded-2xl text-white font-medium flex items-center gap-2 hover:bg-cyan-600/80 transition-colors justify-center sm:justify-start">
-                  <Trophy className="h-3 w-3 sm:h-4 sm:w-4" />
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 text-xs sm:text-sm">
+                <Badge className="bg-cyan-600/70 px-2 sm:px-3 py-1 rounded-2xl text-white font-medium flex items-center gap-1 sm:gap-2 hover:bg-cyan-600/80 transition-colors">
+                  <Trophy className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                   {rankingsLoading ? (
                     <span className="flex items-center gap-1">
-                      Ranking: <div className="w-8 h-3 bg-white/30 rounded animate-pulse"></div>
+                      <span className="hidden sm:inline">Ranking:</span>
+                      <div className="w-6 sm:w-8 h-3 bg-white/30 rounded animate-pulse"></div>
                     </span>
                   ) : displayRank ? (
-                    <span>Ranking: <b>#{displayRank}</b></span>
+                    <span><span className="hidden sm:inline">Ranking:</span> <b>#{displayRank}</b></span>
                   ) : (
-                    <span>Ranking: <b>Calculando...</b></span>
+                    <span><span className="hidden sm:inline">Ranking:</span> <b>...</b></span>
                   )}
                 </Badge>
                 
-                <Badge className="bg-gradient-to-r from-yellow-500/70 to-orange-500/70 px-3 py-1 rounded-2xl text-white font-medium flex items-center gap-2 hover:from-yellow-500/80 hover:to-orange-500/80 transition-colors justify-center sm:justify-start">
-                  <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                  {radcoins.toLocaleString()} RadCoins
+                <Badge className="bg-gradient-to-r from-yellow-500/70 to-orange-500/70 px-2 sm:px-3 py-1 rounded-2xl text-white font-medium flex items-center gap-1 sm:gap-2 hover:from-yellow-500/80 hover:to-orange-500/80 transition-colors">
+                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-yellow-400 rounded-full flex-shrink-0"></div>
+                  <span className="truncate">
+                    {radcoins > 999 ? `${(radcoins / 1000).toFixed(1)}k` : radcoins.toLocaleString()}
+                    <span className="hidden sm:inline"> RadCoins</span>
+                  </span>
                 </Badge>
                 
                 {profile.medical_specialty && (
-                  <Badge className="bg-purple-600/70 px-3 py-1 rounded-2xl text-white font-medium hover:bg-purple-600/80 transition-colors text-center truncate max-w-full">
+                  <Badge className="bg-purple-600/70 px-2 sm:px-3 py-1 rounded-2xl text-white font-medium hover:bg-purple-600/80 transition-colors truncate max-w-[120px] sm:max-w-full">
                     {profile.medical_specialty}
                   </Badge>
                 )}
 
                 {/* Exibir plano ativo se houver */}
                 {benefits.hasActivePlan && benefits.planName && (
-                  <Badge className="bg-green-600/70 px-3 py-1 rounded-2xl text-white font-medium hover:bg-green-600/80 transition-colors text-center">
+                  <Badge className="bg-green-600/70 px-2 sm:px-3 py-1 rounded-2xl text-white font-medium hover:bg-green-600/80 transition-colors truncate">
                     📋 {benefits.planName}
                   </Badge>
                 )}
@@ -176,7 +180,7 @@ export function UserProfile() {
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             <Button 
               onClick={() => navigate('/app/casos')}
-              className="bg-gradient-to-r from-cyan-400 to-blue-500 shadow-lg px-4 sm:px-6 lg:px-8 py-2 sm:py-3 text-sm sm:text-base lg:text-lg font-bold rounded-xl text-white hover:scale-105 transition-all duration-300 hover:shadow-xl group w-full sm:w-auto"
+              className="bg-gradient-to-r from-cyan-400 to-blue-500 shadow-lg touch-target px-4 sm:px-6 lg:px-8 py-3 text-sm sm:text-base lg:text-lg font-bold rounded-xl text-white hover:scale-105 transition-all duration-300 hover:shadow-xl group w-full sm:w-auto"
             >
               <span className="group-hover:animate-pulse text-sm sm:text-base">🚀</span>
               <span className="ml-2 truncate">Começar Novo Desafio</span>
@@ -186,7 +190,7 @@ export function UserProfile() {
               <Button 
                 variant="outline"
                 onClick={() => setIsSettingsOpen(true)}
-                className="bg-white/10 border-white/30 text-white hover:bg-white/20 px-3 sm:px-4 py-2 sm:py-3 rounded-xl transition-all duration-300"
+                className="bg-white/10 border-white/30 text-white hover:bg-white/20 touch-target px-3 sm:px-4 py-3 rounded-xl transition-all duration-300"
               >
                 <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
@@ -194,9 +198,9 @@ export function UserProfile() {
               {isAdmin && (
                 <Button 
                   onClick={() => navigate('/admin')}
-                  className="bg-gradient-to-r from-red-500 to-pink-600 shadow-lg px-3 sm:px-4 lg:px-6 py-2 sm:py-3 text-sm sm:text-base lg:text-lg font-bold rounded-xl text-white hover:scale-105 transition-all duration-300 hover:shadow-xl flex items-center gap-2"
+                  className="bg-gradient-to-r from-red-500 to-pink-600 shadow-lg touch-target px-3 sm:px-4 lg:px-6 py-3 text-sm sm:text-base lg:text-lg font-bold rounded-xl text-white hover:scale-105 transition-all duration-300 hover:shadow-xl flex items-center gap-2"
                 >
-                  <Shield className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <Shield className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
                   <span className="hidden sm:inline">Painel Admin</span>
                 </Button>
               )}

@@ -58,7 +58,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen w-full overflow-x-hidden flex flex-col bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white">
       <HeaderNav />
-      <main className="flex-1 w-full flex flex-col gap-4 px-2 md:px-4 lg:px-8 xl:px-16 pt-4 pb-10 overflow-x-hidden">
+      <main className="flex-1 w-full flex flex-col gap-4 sm:gap-5 lg:gap-6 px-4 sm:px-6 lg:px-8 xl:px-16 pt-4 pb-10 overflow-x-hidden">
         <UserProfile />
         <EventsSectionPlayer onEnterEvent={handleEnterEvent} />
         

@@ -93,15 +93,15 @@ export function HeaderNav() {
         <div className="w-full h-full max-w-none mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-full">
             {/* Logo */}
-            <Link to="/dashboard" className="flex items-center space-x-3 flex-shrink-0">
-              <div className="bg-white/10 rounded-full p-2">
-                <Rocket className="h-6 w-6 sm:h-8 sm:w-8 text-cyan-300" />
+            <Link to="/dashboard" className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+              <div className="bg-white/10 rounded-full p-1.5 sm:p-2">
+                <Rocket className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 text-cyan-300" />
               </div>
-              <span className="text-lg sm:text-2xl font-bold text-white">RadVenture</span>
+              <span className="text-base sm:text-lg lg:text-2xl font-bold text-white">RadVenture</span>
             </Link>
 
             {/* Navigation */}
-            <nav className="hidden md:flex space-x-1 flex-1 justify-center max-w-2xl">
+            <nav className="hidden lg:flex space-x-1 flex-1 justify-center max-w-3xl">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = isActiveRoute(item.href);
@@ -109,34 +109,38 @@ export function HeaderNav() {
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${
+                    className={`flex items-center gap-2 px-2 lg:px-3 py-2 rounded-lg text-xs lg:text-sm font-medium transition-all duration-200 whitespace-nowrap touch-target ${
                       isActive
                         ? 'bg-white/20 text-white shadow-lg'
                         : 'text-cyan-100 hover:bg-white/10 hover:text-white'
                     }`}
                   >
-                    <Icon className="h-4 w-4" />
-                    <span>{item.name}</span>
+                    <Icon className="h-4 w-4 lg:h-5 lg:w-5 flex-shrink-0" />
+                    <span className="hidden xl:block">{item.name}</span>
                   </Link>
                 );
               })}
             </nav>
 
             {/* User Menu */}
-            <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
               {/* Sistema de Notificações */}
               {user && <EventsNotificationSystem />}
 
-              {/* RadCoins Display - AGORA CLICÁVEL */}
+              {/* RadCoins Display - Mobile & Desktop */}
               <button
                 onClick={() => setShowRadCoinShop(true)}
-                className="hidden sm:flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-2 sm:px-3 py-1 hover:bg-white/20 hover:scale-105 transition-all duration-300 cursor-pointer group"
+                className="flex items-center gap-1 sm:gap-2 bg-white/10 backdrop-blur-sm rounded-full px-2 sm:px-3 py-1.5 hover:bg-white/20 hover:scale-105 transition-all duration-300 cursor-pointer group touch-target"
               >
-                <div className="w-2 h-2 bg-yellow-400 rounded-full group-hover:animate-pulse"></div>
+                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-yellow-400 rounded-full group-hover:animate-pulse"></div>
                 <span className="text-xs sm:text-sm text-white font-medium">
-                  {userData.radcoins.toLocaleString()} RadCoins
+                  {userData.radcoins > 999 ? 
+                    `${(userData.radcoins / 1000).toFixed(1)}k` : 
+                    userData.radcoins.toLocaleString()
+                  }
+                  <span className="hidden sm:inline"> RadCoins</span>
                 </span>
-                <div className="w-4 h-4 bg-yellow-400/20 rounded-full flex items-center justify-center group-hover:bg-yellow-400/40 transition-colors">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-yellow-400/20 rounded-full flex items-center justify-center group-hover:bg-yellow-400/40 transition-colors">
                   <span className="text-yellow-400 text-xs">+</span>
                 </div>
               </button>
@@ -146,7 +150,7 @@ export function HeaderNav() {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="flex items-center space-x-2 hover:bg-white/10 rounded-full p-2"
+                    className="flex items-center gap-1 sm:gap-2 hover:bg-white/10 rounded-full p-2 touch-target"
                   >
                     {profileLoading ? (
                       <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-cyan-300" />
@@ -158,47 +162,55 @@ export function HeaderNav() {
                         </AvatarFallback>
                       </Avatar>
                     )}
-                    <div className="hidden sm:block text-left">
-                      <div className="text-sm font-medium text-white flex items-center gap-2">
-                        {userData.name}
+                    <div className="hidden lg:block text-left min-w-0">
+                      <div className="text-xs lg:text-sm font-medium text-white flex items-center gap-2">
+                        <span className="truncate max-w-[120px]">{userData.name}</span>
                         {/* Exibir selo de colaborador se existir */}
                         {userData.collaboratorBadge && userData.collaboratorBadge.includes('Colaborador') && (
-                          <span className="text-xs bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-2 py-0.5 rounded-full font-bold">
+                          <span className="text-xs bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-1.5 py-0.5 rounded-full font-bold flex-shrink-0">
                             {userData.collaboratorBadge.replace('Colaborador ', '').charAt(0)}
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-cyan-200">
-                        {userData.points.toLocaleString()} pts
+                      <div className="text-xs text-cyan-200 truncate">
+                        {userData.points > 999 ? 
+                          `${(userData.points / 1000).toFixed(1)}k pts` : 
+                          `${userData.points.toLocaleString()} pts`
+                        }
                       </div>
                     </div>
-                    <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 text-cyan-200" />
+                    <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 text-cyan-200 flex-shrink-0" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-white border shadow-lg z-50" sideOffset={8}>
+                <DropdownMenuContent align="end" className="w-64 sm:w-72 bg-white border shadow-lg z-50" sideOffset={8}>
                   <DropdownMenuLabel>
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium">{userData.name}</p>
-                      <p className="text-xs text-muted-foreground">{userData.email}</p>
+                      <p className="text-sm font-medium truncate">{userData.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{userData.email}</p>
                       {/* Selo completo no dropdown */}
                       {userData.collaboratorBadge && userData.collaboratorBadge.includes('Colaborador') && (
                         <p className="text-xs text-orange-600 font-semibold">
                           🏆 {userData.collaboratorBadge}
                         </p>
                       )}
+                      {/* Stats no mobile */}
+                      <div className="flex lg:hidden items-center gap-3 pt-2 text-xs text-muted-foreground">
+                        <span>{userData.points.toLocaleString()} pts</span>
+                        <span>{userData.radcoins.toLocaleString()} RadCoins</span>
+                      </div>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setShowProfileSettings(true)}>
+                  <DropdownMenuItem onClick={() => setShowProfileSettings(true)} className="touch-target">
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Gerenciar Conta</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/app/estatisticas')}>
+                  <DropdownMenuItem onClick={() => navigate('/app/estatisticas')} className="touch-target">
                     <User className="mr-2 h-4 w-4" />
                     <span>Meu Perfil</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut}>
+                  <DropdownMenuItem onClick={handleSignOut} className="touch-target">
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Sair</span>
                   </DropdownMenuItem>
