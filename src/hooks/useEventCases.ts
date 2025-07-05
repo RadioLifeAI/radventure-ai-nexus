@@ -71,21 +71,18 @@ export function useEventCases(eventId: string) {
           if (event.case_filters) {
             const filters = event.case_filters as any;
 
-            if (filters.specialty && filters.specialty.length > 0) {
-              query = query.in("specialty", filters.specialty);
+            // CORREÇÃO: category no banco → specialty na query
+            if (filters.category && filters.category.length > 0) {
+              query = query.in("specialty", filters.category);
             }
 
             if (filters.modality && filters.modality.length > 0) {
               query = query.in("modality", filters.modality);
             }
 
-            if (filters.difficulty_level) {
-              if (filters.difficulty_level.min) {
-                query = query.gte("difficulty_level", filters.difficulty_level.min);
-              }
-              if (filters.difficulty_level.max) {
-                query = query.lte("difficulty_level", filters.difficulty_level.max);
-              }
+            // CORREÇÃO: difficulty array no banco → difficulty_level na query
+            if (filters.difficulty && filters.difficulty.length > 0) {
+              query = query.in("difficulty_level", filters.difficulty.map(d => parseInt(d)));
             }
           }
 
