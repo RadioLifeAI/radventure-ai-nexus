@@ -67,17 +67,17 @@ export function SpecialtyCard({ specialty }: SpecialtyCardProps) {
           </div>
         )}
 
-        <div className="relative p-6 flex flex-col h-full min-h-[180px]">
+        <div className="relative p-4 sm:p-6 flex flex-col h-full min-h-[200px] sm:min-h-[220px]">
           {/* Icon and Title */}
-          <div className="flex items-start gap-4 mb-4">
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 shadow-md group-hover:scale-110 transition-transform duration-300">
-              {specialtyData.icon}
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4 mb-4 text-center sm:text-left">
+            <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 sm:p-4 shadow-md group-hover:scale-110 transition-transform duration-300">
+              {React.cloneElement(specialtyData.icon, { size: 32, className: "sm:size-8" })}
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-lg text-gray-800 leading-tight mb-1 group-hover:text-gray-900 transition-colors">
+              <h3 className="font-bold text-lg sm:text-xl text-gray-800 leading-tight mb-2 group-hover:text-gray-900 transition-colors">
                 {specialty.name}
               </h3>
-              <p className="text-sm text-gray-600 line-clamp-2">
+              <p className="text-sm sm:text-base text-gray-600 line-clamp-2 leading-relaxed">
                 {specialtyData.description}
               </p>
             </div>
@@ -131,8 +131,7 @@ export function SpecialtyCard({ specialty }: SpecialtyCardProps) {
             </div>
 
             <Button 
-              size="sm" 
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold px-4 py-2 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 group-hover:scale-105"
+              className="min-h-[44px] bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold px-4 py-3 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 group-hover:scale-105 text-sm sm:text-base"
               onClick={(e) => {
                 e.stopPropagation();
                 handleExplore();

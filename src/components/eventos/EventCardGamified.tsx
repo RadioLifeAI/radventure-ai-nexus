@@ -64,11 +64,11 @@ export function EventCardGamified({ event, onEnter }: Props) {
 
   return (
     <div 
-      className="rounded-2xl shadow-xl bg-white bg-opacity-85 p-4 flex flex-col hover:scale-105 transition-all duration-200 border-2 border-cyan-200 max-w-xl w-full relative overflow-hidden hover:ring-4 hover:ring-cyan-200 animate-fade-in cursor-pointer"
+      className="rounded-2xl shadow-xl bg-white bg-opacity-85 p-4 sm:p-6 flex flex-col hover:scale-105 transition-all duration-200 border-2 border-cyan-200 max-w-xl w-full relative overflow-hidden hover:ring-4 hover:ring-cyan-200 animate-fade-in cursor-pointer"
       onClick={handleCardClick}
     >
       {/* Status badges */}
-      <div className="absolute right-4 top-4 flex gap-1 z-10">
+      <div className="absolute right-4 top-4 flex flex-wrap gap-1 z-10">
         {isActive && (
           <Badge className="bg-green-200 text-green-900 text-xs font-bold animate-pulse">
             Ao Vivo
@@ -87,18 +87,19 @@ export function EventCardGamified({ event, onEnter }: Props) {
         )}
       </div>
 
-      <div className="flex gap-4">
+      {/* Mobile: Vertical layout, Desktop: Horizontal */}
+      <div className="flex flex-col sm:flex-row gap-4">
         <img
           src={event.banner_url || '/placeholder.svg'}
           alt="banner"
-          className="w-28 h-20 object-cover rounded-xl border"
+          className="w-full h-32 sm:w-28 sm:h-20 object-cover rounded-xl border"
         />
         <div className="flex-1 flex flex-col justify-between">
           <div>
-            <div className="font-bold text-lg text-cyan-700 drop-shadow mb-1">
+            <div className="font-bold text-lg sm:text-xl text-cyan-700 drop-shadow mb-2 leading-tight">
               {event.name}
             </div>
-            <div className="flex gap-3 text-xs text-gray-500 mb-1">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 text-xs sm:text-sm text-gray-500 mb-3">
               <span className="flex items-center gap-1">
                 <Calendar size={14} />
                 {new Date(event.scheduled_start).toLocaleDateString("pt-BR")}
@@ -110,11 +111,13 @@ export function EventCardGamified({ event, onEnter }: Props) {
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2 mt-2 text-sm">
-              <Award size={16} className="text-yellow-400" />
-              <span className="font-semibold">{event.prize_radcoins} RadCoins</span>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm">
+              <div className="flex items-center gap-2">
+                <Award size={16} className="text-yellow-400" />
+                <span className="font-semibold">{event.prize_radcoins} RadCoins</span>
+              </div>
               {Array.isArray(event.prize_distribution) && event.prize_distribution.length >= 3 && (
-                <span className="ml-1 text-gray-400 text-xs">
+                <span className="text-gray-400 text-xs">
                   • Top 3: 
                   <Trophy size={12} className="inline ml-1 text-yellow-600" />
                 </span>
@@ -122,21 +125,19 @@ export function EventCardGamified({ event, onEnter }: Props) {
             </div>
           </div>
           
-          <div className="flex gap-2 mt-3">
+          <div className="flex gap-2 mt-4">
             {/* Botão principal - varia conforme estado */}
             {isActive && isRegistered ? (
               <Button
-                size="sm"
-                className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold px-4 py-2 rounded-lg shadow"
+                className="flex-1 min-h-[44px] bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold px-4 py-3 rounded-lg shadow text-sm sm:text-base"
                 onClick={handleEnterEvent}
               >
-                <Play className="h-3 w-3 mr-1" />
+                <Play className="h-4 w-4 mr-2" />
                 Entrar Agora
               </Button>
             ) : !isRegistered ? (
               <Button
-                size="sm"
-                className="flex-1 bg-gradient-to-r from-[#11d3fc] to-[#26b2fe] text-white font-bold px-4 py-2 rounded-lg shadow hover:scale-105"
+                className="flex-1 min-h-[44px] bg-gradient-to-r from-[#11d3fc] to-[#26b2fe] text-white font-bold px-4 py-3 rounded-lg shadow hover:scale-105 text-sm sm:text-base"
                 onClick={handleQuickRegister}
                 disabled={loading}
               >
@@ -144,9 +145,8 @@ export function EventCardGamified({ event, onEnter }: Props) {
               </Button>
             ) : (
               <Button
-                size="sm"
                 variant="outline"
-                className="flex-1"
+                className="flex-1 min-h-[44px] px-4 py-3 text-sm sm:text-base"
                 onClick={handleEnterEvent}
               >
                 Ver Detalhes
