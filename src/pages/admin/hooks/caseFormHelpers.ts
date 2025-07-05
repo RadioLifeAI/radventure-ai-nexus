@@ -13,11 +13,11 @@ export function normalizeString(str: string = ""): string {
 /** Sugere pontuação padrão baseada no nível de dificuldade */
 export function suggestPointsByDifficulty(level: string): string {
   switch (level) {
-    case "1": return "10";
-    case "2": return "20";
-    case "3": return "30";
-    case "4": return "50";
-    default:  return "10";
+    case "1": return "5";
+    case "2": return "10";
+    case "3": return "15";
+    case "4": return "20";
+    default:  return "5";
   }
 }
 

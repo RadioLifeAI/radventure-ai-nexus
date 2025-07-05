@@ -165,7 +165,7 @@ export function useCaseProgress(caseId: string) {
       validation: 'texto-baseada'
     });
     
-    const basePoints = case_.points || 10;
+    const basePoints = case_.points || (case_.difficulty_level * 5) || 10;
     const points = calculatePoints(basePoints, isCorrect);
     const penalties = calculatePenalties(basePoints);
 
