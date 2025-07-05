@@ -215,12 +215,12 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
 
         <TabsContent value="champions" className="space-y-6">
           <div className="text-center mb-8">
-            <h3 className="text-3xl font-bold text-gray-800 mb-2 flex items-center justify-center gap-3">
+            <h3 className="text-3xl font-bold text-white mb-2 flex items-center justify-center gap-3">
               <Crown className="h-8 w-8 text-yellow-500" />
               Hall da Fama - Top Campeões
               <Crown className="h-8 w-8 text-yellow-500" />
             </h3>
-            <p className="text-gray-600 text-lg">Os maiores campeões da história dos eventos RadVenture</p>
+            <p className="text-gray-100 text-lg">Os maiores campeões da história dos eventos RadVenture</p>
           </div>
           
           <EventPodiumDisplay topChampions={topChampions} />
