@@ -12,6 +12,7 @@ import { toast } from "@/hooks/use-toast";
 import { getLetter } from "@/utils/quiz";
 import clsx from "clsx";
 import { cn } from "@/lib/utils";
+import { useResponsive } from "@/hooks/useResponsive";
 import { 
   Clock, Trophy, Target, Zap, CheckCircle, XCircle, 
   ArrowRight, Timer, Play, Flag, Home, Activity, Award,
@@ -50,6 +51,7 @@ export default function EventoArena() {
   const [caseImages, setCaseImages] = useState<Array<{ url: string; legend?: string }>>([]);
   const [timeSpent, setTimeSpent] = useState(0);
   const [startTime, setStartTime] = useState<number>(Date.now());
+  const { isMobile, isTablet, isDesktop } = useResponsive();
 
   // Função para buscar imagens do caso atual
   const fetchCaseImages = async (caseId: string) => {
@@ -342,9 +344,10 @@ export default function EventoArena() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Header Gamificado com design do CasoUsuarioView */}
+      {/* Header RESPONSIVO para Eventos */}
       <div className={cn(
-        "relative text-white p-6",
+        "relative text-white",
+        isMobile ? "p-3" : isTablet ? "p-4" : "p-6",
         showResult 
           ? lastResult?.isCorrect 
             ? "bg-gradient-to-r from-green-600 via-green-700 to-emerald-600"
@@ -352,72 +355,116 @@ export default function EventoArena() {
           : "bg-gradient-to-r from-blue-600 via-blue-700 to-cyan-600"
       )}>
         <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <div className="flex items-center gap-4">
+          <div className={cn("flex items-center", isMobile ? "gap-2" : "gap-4")}>
             <Button 
               variant="ghost" 
               size="icon" 
-              className="text-white hover:bg-white/20 rounded-full"
+              className={cn(
+                "text-white hover:bg-white/20 rounded-full min-h-[44px] min-w-[44px]",
+                isMobile ? "h-10 w-10" : "h-12 w-12"
+              )}
               onClick={() => navigate('/app/eventos')}
             >
-              <ChevronLeft className="h-6 w-6" />
+              <ChevronLeft className={isMobile ? "h-5 w-5" : "h-6 w-6"} />
             </Button>
-            <div className="p-3 bg-white/20 rounded-full backdrop-blur-sm">
-              <Trophy className="h-8 w-8 text-blue-100" />
+            <div className={cn(
+              "bg-white/20 rounded-full backdrop-blur-sm",
+              isMobile ? "p-2" : "p-3"
+            )}>
+              <Trophy className={isMobile ? "h-6 w-6" : "h-8 w-8"} />
             </div>
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <Badge className="bg-blue-500 hover:bg-blue-600 text-white font-bold px-3 py-1">
-                  Caso {currentCaseIndex + 1} de {cases.length}
+            <div className="flex-1 min-w-0">
+              {/* Badges Responsivas */}
+              <div className={cn(
+                "flex flex-wrap items-center mb-2",
+                isMobile ? "gap-1" : "gap-3"
+              )}>
+                <Badge className={cn(
+                  "bg-blue-500 hover:bg-blue-600 text-white font-bold",
+                  isMobile ? "px-2 py-1 text-xs" : "px-3 py-1"
+                )}>
+                  {isMobile ? `${currentCaseIndex + 1}/${cases.length}` : `Caso ${currentCaseIndex + 1} de ${cases.length}`}
                 </Badge>
-                <Badge className={cn("text-white font-bold px-3 py-1", getDifficultyColor(currentCase?.difficulty_level || 1))}>
-                  Nível {currentCase?.difficulty_level || 1}
+                <Badge className={cn(
+                  "text-white font-bold",
+                  isMobile ? "px-2 py-1 text-xs" : "px-3 py-1",
+                  getDifficultyColor(currentCase?.difficulty_level || 1)
+                )}>
+                  {isMobile ? `N${currentCase?.difficulty_level || 1}` : `Nível ${currentCase?.difficulty_level || 1}`}
                 </Badge>
-                <Badge className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold px-3 py-1 flex items-center gap-1">
-                  <Award className="h-4 w-4" />
+                <Badge className={cn(
+                  "bg-yellow-500 hover:bg-yellow-600 text-white font-bold flex items-center gap-1",
+                  isMobile ? "px-2 py-1 text-xs" : "px-3 py-1"
+                )}>
+                  <Award className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
                   {currentCase?.points || (currentCase?.difficulty_level * 5) || 10} pts
                 </Badge>
-                <Badge className="bg-green-100 text-green-700">
-                  <Trophy className="h-3 w-3 mr-1" />
+                <Badge className={cn(
+                  "bg-green-100 text-green-700",
+                  isMobile ? "px-2 py-1 text-xs" : "px-3 py-1"
+                )}>
+                  <Trophy className={isMobile ? "h-2 w-2 mr-1" : "h-3 w-3 mr-1"} />
                   {progress?.current_score || 0} pts
                 </Badge>
                 {showResult && lastResult && (
                   <Badge className={cn(
-                    "text-white font-bold px-3 py-1 flex items-center gap-1",
+                    "text-white font-bold flex items-center gap-1",
+                    isMobile ? "px-2 py-1 text-xs" : "px-3 py-1",
                     lastResult.isCorrect ? "bg-green-600" : "bg-red-600"
                   )}>
-                    {lastResult.isCorrect ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
-                    {lastResult.isCorrect ? `+${lastResult.pointsEarned} pts` : "Incorreto"}
+                    {lastResult.isCorrect ? 
+                      <CheckCircle className={isMobile ? "h-3 w-3" : "h-4 w-4"} /> : 
+                      <XCircle className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
+                    }
+                    {isMobile ? 
+                      (lastResult.isCorrect ? `+${lastResult.pointsEarned}` : "✗") :
+                      (lastResult.isCorrect ? `+${lastResult.pointsEarned} pts` : "Incorreto")
+                    }
                   </Badge>
                 )}
               </div>
-              <h1 className="text-2xl font-bold text-white mb-1">
-                {event?.name || "Arena de Eventos"}
+              <h1 className={cn(
+                "font-bold text-white mb-1",
+                isMobile ? "text-lg leading-tight" : isTablet ? "text-xl" : "text-2xl"
+              )}>
+                {isMobile ? 
+                  (event?.name?.slice(0, 25) + (event?.name?.length > 25 ? '...' : '') || "Arena") :
+                  (event?.name || "Arena de Eventos")
+                }
               </h1>
-              <p className="text-blue-100 flex items-center gap-2">
-                <Activity className="h-4 w-4" />
-                <Clock className="h-4 w-4" />
-                {formatTime(timeSpent)} • {progress ? Math.round((progress.cases_correct / Math.max(progress.cases_completed, 1)) * 100) : 0}% precisão
+              <p className={cn(
+                "text-blue-100 flex items-center gap-2",
+                isMobile ? "text-sm" : "text-base"
+              )}>
+                <Clock className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
+                {formatTime(timeSpent)} • {progress ? Math.round((progress.cases_correct / Math.max(progress.cases_completed, 1)) * 100) : 0}%
               </p>
             </div>
           </div>
           <Button 
             variant="ghost" 
             size="icon" 
-            className="text-white hover:bg-white/20 rounded-full"
+            className={cn(
+              "text-white hover:bg-white/20 rounded-full min-h-[44px] min-w-[44px]",
+              isMobile ? "h-10 w-10" : "h-12 w-12"
+            )}
             onClick={() => navigate('/app/eventos')}
           >
-            <X className="h-6 w-6" />
+            <X className={isMobile ? "h-5 w-5" : "h-6 w-6"} />
           </Button>
         </div>
         
         {/* Progress Bar */}
-        <div className="max-w-7xl mx-auto mt-4">
-          <Progress value={progressPercentage} className="h-3 bg-white/20" />
+        <div className={cn("max-w-7xl mx-auto", isMobile ? "mt-2" : "mt-4")}>
+          <Progress value={progressPercentage} className={cn("bg-white/20", isMobile ? "h-2" : "h-3")} />
         </div>
       </div>
 
-      {/* Layout Principal - 3 Colunas como CasoUsuarioView */}
-      <div className="flex max-w-7xl mx-auto">
+      {/* Layout Principal RESPONSIVO */}
+      <div className={cn(
+        "max-w-7xl mx-auto",
+        isMobile ? "flex flex-col" : isTablet ? "flex flex-col lg:flex-row" : "flex"
+      )}>
         {showResult ? (
           // Tela de resultado
           <div className="w-full p-4">
@@ -488,8 +535,13 @@ export default function EventoArena() {
           </div>
         ) : (
           <>
-            {/* Coluna da esquerda - Imagens */}
-            <div className="w-80 bg-white border-r border-gray-200 p-4 flex flex-col">
+            {/* Seção de Imagem RESPONSIVA */}
+            <div className={cn(
+              "bg-white flex flex-col",
+              isMobile ? "w-full border-b border-gray-200 p-3" : 
+              isTablet ? "w-full lg:w-80 lg:border-r border-b lg:border-b-0 border-gray-200 p-4" :
+              "w-80 border-r border-gray-200 p-4"
+            )}>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-gray-800 flex items-center gap-2">
                   <Target className="h-5 w-5 text-blue-600" />
@@ -588,8 +640,11 @@ export default function EventoArena() {
               )}
             </div>
 
-            {/* Coluna do meio - Informações do Caso */}
-            <div className="flex-1 bg-white border-r border-gray-200 p-6">
+            {/* Seção Central RESPONSIVA */}
+            <div className={cn(
+              "flex-1 bg-white",
+              isMobile ? "p-3" : isTablet ? "p-4 lg:border-r border-gray-200" : "border-r border-gray-200 p-6"
+            )}>
               <div className="space-y-6">
                 {/* Título e Descrição */}
                 <div>
@@ -646,8 +701,12 @@ export default function EventoArena() {
               </div>
             </div>
 
-            {/* Coluna da direita - Alternativas e Ações */}
-            <div className="w-96 bg-white p-6">
+            {/* Seção de Alternativas RESPONSIVA */}
+            <div className={cn(
+              "bg-white",
+              isMobile ? "w-full p-3 border-t border-gray-200" : 
+              isTablet ? "w-full lg:w-96 p-4" : "w-96 p-6"
+            )}>
               <div className="space-y-6">
                 {/* Informações do Evento */}
                 <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg border border-purple-200">
@@ -713,11 +772,14 @@ export default function EventoArena() {
                 </div>
 
 
-                {/* Botão de Responder */}
+                {/* Botão de Responder RESPONSIVO */}
                 <Button
                   onClick={handleAnswerSubmit}
                   disabled={selectedAnswer === null || submitting}
-                  className="w-full py-3 text-lg font-semibold bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
+                  className={cn(
+                    "w-full font-semibold bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 min-h-[50px]",
+                    isMobile ? "py-3 text-base" : "py-3 text-lg"
+                  )}
                 >
                   {submitting ? "Enviando..." : "Responder"}
                 </Button>

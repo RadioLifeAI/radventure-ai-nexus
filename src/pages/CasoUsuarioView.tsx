@@ -39,6 +39,7 @@ import { cn } from "@/lib/utils";
 import { useShuffledAnswers } from "@/hooks/useShuffledAnswers";
 import { Loader } from "@/components/Loader";
 import { getLetter } from "@/utils/quiz";
+import { useResponsive } from "@/hooks/useResponsive";
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import { FeedbackModal } from "@/components/cases/FeedbackModal";
 import { useCaseProgress } from "@/hooks/useCaseProgress";
@@ -123,6 +124,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
 
   const { toast } = useToast();
   const { helpAids, consumeHelp, getTutorHint, isGettingHint } = useUserHelpAids();
+  const { isMobile, isTablet, isDesktop } = useResponsive();
 
   // CORREÇÃO: Busca híbrida de imagens usando a nova função SQL
   const fetchCaseImages = async (caseId: string) => {
@@ -409,9 +411,10 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Header Gamificado com Navegação - Atualizado com badge de revisão */}
+      {/* Header Gamificado RESPONSIVO */}
       <div className={cn(
-        "relative text-white p-6",
+        "relative text-white",
+        isMobile ? "p-3" : isTablet ? "p-4" : "p-6",
         isAnswered 
           ? performance?.isCorrect 
             ? "bg-gradient-to-r from-green-600 via-green-700 to-emerald-600"
@@ -421,99 +424,160 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
             : "bg-gradient-to-r from-blue-600 via-blue-700 to-cyan-600"
       )}>
         <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <div className="flex items-center gap-4">
+          <div className={cn("flex items-center", isMobile ? "gap-2" : "gap-4")}>
             <Button 
               variant="ghost" 
               size="icon" 
-              className="text-white hover:bg-white/20 rounded-full"
+              className={cn(
+                "text-white hover:bg-white/20 rounded-full min-h-[44px] min-w-[44px]",
+                isMobile ? "h-10 w-10" : "h-12 w-12"
+              )}
               onClick={handleBackNavigation}
             >
-              <ChevronLeft className="h-6 w-6" />
+              <ChevronLeft className={isMobile ? "h-5 w-5" : "h-6 w-6"} />
             </Button>
-            <div className="p-3 bg-white/20 rounded-full backdrop-blur-sm">
-              {isReview ? <Eye className="h-8 w-8 text-blue-100" /> : <Stethoscope className="h-8 w-8 text-blue-100" />}
+            <div className={cn(
+              "bg-white/20 rounded-full backdrop-blur-sm",
+              isMobile ? "p-2" : "p-3"
+            )}>
+              {isReview ? 
+                <Eye className={isMobile ? "h-6 w-6" : "h-8 w-8"} /> : 
+                <Stethoscope className={isMobile ? "h-6 w-6" : "h-8 w-8"} />
+              }
             </div>
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <Badge className="bg-blue-500 hover:bg-blue-600 text-white font-bold px-3 py-1">
-                  {caso.specialty || "Medicina"}
+            <div className="flex-1 min-w-0">
+              {/* Badges Responsivas */}
+              <div className={cn(
+                "flex flex-wrap items-center mb-2",
+                isMobile ? "gap-1" : "gap-3"
+              )}>
+                <Badge className={cn(
+                  "bg-blue-500 hover:bg-blue-600 text-white font-bold",
+                  isMobile ? "px-2 py-1 text-xs" : "px-3 py-1"
+                )}>
+                  {isMobile ? (caso.specialty?.slice(0, 8) || "Med") : (caso.specialty || "Medicina")}
                 </Badge>
-                <Badge className={cn("text-white font-bold px-3 py-1", getDifficultyColor(caso.difficulty_level || 1))}>
-                  Nível {caso.difficulty_level || 1}
+                <Badge className={cn(
+                  "text-white font-bold",
+                  isMobile ? "px-2 py-1 text-xs" : "px-3 py-1",
+                  getDifficultyColor(caso.difficulty_level || 1)
+                )}>
+                  {isMobile ? `N${caso.difficulty_level || 1}` : `Nível ${caso.difficulty_level || 1}`}
                 </Badge>
-                <Badge className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold px-3 py-1 flex items-center gap-1">
-                  <Award className="h-4 w-4" />
+                <Badge className={cn(
+                  "bg-yellow-500 hover:bg-yellow-600 text-white font-bold flex items-center gap-1",
+                  isMobile ? "px-2 py-1 text-xs" : "px-3 py-1"
+                )}>
+                  <Award className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
                   {caso.points || 100} pts
                 </Badge>
-                {/* Badge de Revisão */}
+                {/* Badges de Status */}
                 {isReview && (
                   <ReviewModeBadge
                     isReview={isReview}
                     reviewCount={reviewStatus?.review_count || 0}
                     previousPoints={reviewStatus?.previous_points}
-                    size="sm"
+                    size={isMobile ? "sm" : "sm"}
                   />
                 )}
                 {isAnswered && performance && (
                   <Badge className={cn(
-                    "text-white font-bold px-3 py-1 flex items-center gap-1",
+                    "text-white font-bold flex items-center gap-1",
+                    isMobile ? "px-2 py-1 text-xs" : "px-3 py-1",
                     performance.isCorrect ? "bg-green-600" : "bg-red-600"
                   )}>
-                    {performance.isCorrect ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
                     {performance.isCorrect ? 
-                      (isReview ? "Correto (Revisão)" : `+${performance.points} pts`) : 
-                      "Incorreto"}
+                      <CheckCircle className={isMobile ? "h-3 w-3" : "h-4 w-4"} /> : 
+                      <XCircle className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
+                    }
+                    {isMobile ? 
+                      (performance.isCorrect ? `+${performance.points}` : "✗") :
+                      (performance.isCorrect ? 
+                        (isReview ? "Correto (Revisão)" : `+${performance.points} pts`) : 
+                        "Incorreto")
+                    }
                   </Badge>
                 )}
               </div>
-              <h1 className="text-2xl font-bold text-white mb-1">
-                {caso.title || "Caso Clínico"}
+              <h1 className={cn(
+                "font-bold text-white mb-1",
+                isMobile ? "text-lg leading-tight" : isTablet ? "text-xl" : "text-2xl"
+              )}>
+                {isMobile ? 
+                  (caso.title?.slice(0, 40) + (caso.title?.length > 40 ? '...' : '') || "Caso Clínico") :
+                  (caso.title || "Caso Clínico")
+                }
               </h1>
-              <p className="text-blue-100 flex items-center gap-2">
-                <Activity className="h-4 w-4" />
-                {isReview ? "Modo Revisão - Para Estudo" : 
-                 isAnswered ? "Caso Respondido" : "Caso Interativo"}
+              <p className={cn(
+                "text-blue-100 flex items-center gap-2",
+                isMobile ? "text-sm" : "text-base"
+              )}>
+                <Activity className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
+                {isMobile ? 
+                  (isReview ? "Revisão" : isAnswered ? "Respondido" : "Ativo") :
+                  (isReview ? "Modo Revisão - Para Estudo" : 
+                   isAnswered ? "Caso Respondido" : "Caso Interativo")
+                }
               </p>
             </div>
           </div>
           <Button 
             variant="ghost" 
             size="icon" 
-            className="text-white hover:bg-white/20 rounded-full"
+            className={cn(
+              "text-white hover:bg-white/20 rounded-full min-h-[44px] min-w-[44px]",
+              isMobile ? "h-10 w-10" : "h-12 w-12"
+            )}
             onClick={() => navigate('/app/casos')}
           >
-            <X className="h-6 w-6" />
+            <X className={isMobile ? "h-5 w-5" : "h-6 w-6"} />
           </Button>
         </div>
       </div>
 
-      {/* Layout Principal - 3 Colunas */}
-      <div className="flex max-w-7xl mx-auto">
-        {/* Coluna 1: Imagem Médica - CORRIGIDA com sistema híbrido */}
-        <div className="w-80 bg-white border-r border-gray-200 p-4 flex flex-col">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-800 flex items-center gap-2">
-              <Target className="h-5 w-5 text-blue-600" />
-              Imagem Médica
+      {/* Layout Principal RESPONSIVO */}
+      <div className={cn(
+        "max-w-7xl mx-auto",
+        isMobile ? "flex flex-col" : isTablet ? "flex flex-col lg:flex-row" : "flex"
+      )}>
+        {/* Seção de Imagem RESPONSIVA */}
+        <div className={cn(
+          "bg-white flex flex-col",
+          isMobile ? "w-full border-b border-gray-200 p-3" : 
+          isTablet ? "w-full lg:w-80 lg:border-r border-b lg:border-b-0 border-gray-200 p-4" :
+          "w-80 border-r border-gray-200 p-4"
+        )}>
+          <div className={cn("flex items-center justify-between", isMobile ? "mb-2" : "mb-4")}>
+            <h3 className={cn(
+              "font-semibold text-gray-800 flex items-center gap-2",
+              isMobile ? "text-sm" : "text-base"
+            )}>
+              <Target className={isMobile ? "h-4 w-4" : "h-5 w-5"} />
+              {isMobile ? "Imagem" : "Imagem Médica"}
             </h3>
             {caseImages.length > 1 && (
               <div className="flex items-center gap-1">
                 <Button
                   variant="outline"
-                  size="sm"
+                  size={isMobile ? "sm" : "sm"}
                   onClick={prevImage}
                   disabled={caseImages.length <= 1}
+                  className="min-h-[44px] min-w-[44px]"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <span className="text-sm text-gray-600 px-2">
+                <span className={cn(
+                  "text-gray-600 px-2 font-medium",
+                  isMobile ? "text-xs" : "text-sm"
+                )}>
                   {currentImageIndex + 1}/{caseImages.length}
                 </span>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size={isMobile ? "sm" : "sm"}
                   onClick={nextImage}
                   disabled={caseImages.length <= 1}
+                  className="min-h-[44px] min-w-[44px]"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -521,7 +585,10 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
             )}
           </div>
 
-          <div className="flex-1 relative bg-gray-100 rounded-lg overflow-hidden min-h-[300px]">
+          <div className={cn(
+            "relative bg-gray-100 rounded-lg overflow-hidden",
+            isMobile ? "min-h-[250px] flex-1" : "flex-1 min-h-[300px]"
+          )}>
             {caseImages.length > 0 ? (
               <div className="relative h-full">
                 <img
@@ -530,25 +597,31 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
                   className="w-full h-full object-contain transition-transform duration-300"
                   style={{ transform: `scale(${imageZoom})` }}
                 />
-                <div className="absolute bottom-2 right-2 flex gap-2">
+                <div className={cn(
+                  "absolute flex gap-1",
+                  isMobile ? "bottom-2 right-2" : "bottom-2 right-2 gap-2"
+                )}>
                   <Button
                     variant="secondary"
-                    size="sm"
+                    size={isMobile ? "sm" : "sm"}
                     onClick={() => setImageZoom(prev => Math.min(prev + 0.2, 3))}
+                    className="min-h-[44px] min-w-[44px] bg-white/90 hover:bg-white"
                   >
                     <ZoomIn className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="secondary"
-                    size="sm"
+                    size={isMobile ? "sm" : "sm"}
                     onClick={() => setImageZoom(prev => Math.max(prev - 0.2, 0.5))}
+                    className="min-h-[44px] min-w-[44px] bg-white/90 hover:bg-white"
                   >
                     <ZoomOut className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="secondary"
-                    size="sm"
+                    size={isMobile ? "sm" : "sm"}
                     onClick={resetImageView}
+                    className="min-h-[44px] min-w-[44px] bg-white/90 hover:bg-white"
                   >
                     <RotateCcw className="h-4 w-4" />
                   </Button>
@@ -556,9 +629,11 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                <Target className="h-16 w-16 mb-4 text-gray-300" />
-                <p className="text-center">Nenhuma imagem disponível</p>
-                <p className="text-sm text-center mt-2">
+                <Target className={isMobile ? "h-12 w-12" : "h-16 w-16"} />
+                <p className={cn("text-center", isMobile ? "text-sm" : "text-base")}>
+                  Nenhuma imagem disponível
+                </p>
+                <p className={cn("text-center mt-2", isMobile ? "text-xs" : "text-sm")}>
                   Imagens médicas aparecerão aqui
                 </p>
               </div>
@@ -575,8 +650,11 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
           )}
         </div>
 
-        {/* Coluna 2: Caso Clínico Principal - sem alterações significativas */}
-        <div className="flex-1 p-6 overflow-y-auto max-h-screen">
+        {/* Seção Principal RESPONSIVA */}
+        <div className={cn(
+          "flex-1 overflow-y-auto",
+          isMobile ? "p-3 max-h-none" : isTablet ? "p-4" : "p-6 max-h-screen"
+        )}>
           {/* História Clínica */}
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-5 mb-6 border border-green-200">
             <div className="flex items-center gap-3 mb-4">
@@ -682,12 +760,15 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
               ))}
             </div>
 
-            {/* Botão Responder */}
+            {/* Botão Responder RESPONSIVO */}
             {!isAnswered && (
               <Button
                 disabled={selected === null}
                 onClick={handleAnswerSubmit}
-                className="w-full bg-cyan-700 hover:bg-cyan-800 text-white font-bold shadow text-lg py-3 mt-6"
+                className={cn(
+                  "w-full bg-cyan-700 hover:bg-cyan-800 text-white font-bold shadow mt-6 min-h-[50px]",
+                  isMobile ? "text-base py-3" : "text-lg py-3"
+                )}
                 size="lg"
               >
                 Responder
@@ -753,8 +834,13 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
           )}
         </div>
 
-        {/* Coluna 3: Sistema de Ajudas - Atualizado para modo revisão */}
-        <div className="w-64 bg-gradient-to-b from-yellow-50 to-orange-50 border-l border-gray-200 p-4">
+        {/* Seção de Ajudas RESPONSIVA */}
+        <div className={cn(
+          "bg-gradient-to-b from-yellow-50 to-orange-50",
+          isMobile ? "w-full border-t border-gray-200 p-3" : 
+          isTablet ? "w-full lg:w-64 lg:border-l border-t lg:border-t-0 border-gray-200 p-4" :
+          "w-64 border-l border-gray-200 p-4"
+        )}>
           <div className="flex items-center gap-2 mb-4">
             <div className="p-2 bg-yellow-500 rounded-lg">
               <Lightbulb className="h-4 w-4 text-white" />
@@ -783,7 +869,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full justify-start gap-2 border-yellow-300 hover:bg-yellow-50"
+                className="w-full justify-start gap-2 border-yellow-300 hover:bg-yellow-50 min-h-[48px]"
                 disabled={isAnswered || (!isReview && (!helpAids || helpAids.elimination_aids <= 0)) || !canEliminate}
                 onClick={handleEliminateOption}
               >
@@ -813,7 +899,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full justify-start gap-2 border-orange-300 hover:bg-orange-50"
+                className="w-full justify-start gap-2 border-orange-300 hover:bg-orange-50 min-h-[48px]"
                 disabled={isAnswered || isReview || !helpAids || helpAids.skip_aids <= 0}
                 onClick={handleSkipCase}
               >
@@ -849,7 +935,7 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full border-purple-300 hover:bg-purple-50"
+                className="w-full border-purple-300 hover:bg-purple-50 min-h-[48px]"
                 disabled={isAnswered || isReview || !helpAids || helpAids.ai_tutor_credits <= 0 || isGettingHint}
                 onClick={handleRequestTutorHint}
               >
