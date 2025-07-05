@@ -101,8 +101,28 @@ export function useEventCases(eventId: string) {
           casesToUse = shuffleArray(casesToUse, userSeed);
         }
 
+        // PROTEÇÃO: Filtrar casos undefined ou inválidos
+        const validCases = casesToUse.filter((case_, index) => {
+          if (!case_) {
+            console.warn(`⚠️ Caso ${index} é undefined/null no evento ${eventId}`);
+            return false;
+          }
+          if (!case_.id) {
+            console.warn(`⚠️ Caso ${index} não tem ID no evento ${eventId}:`, case_);
+            return false;
+          }
+          return true;
+        });
+
+        console.log(`📊 DIAGNÓSTICO EVENTO ${eventId}:`, {
+          casosOriginais: casesToUse.length,
+          casosValidos: validCases.length,
+          casosInvalidos: casesToUse.length - validCases.length,
+          usuarioId: user.id
+        });
+
         // Formatar casos para uso na arena
-        const formattedCases: EventCase[] = casesToUse.map(case_ => ({
+        const formattedCases: EventCase[] = validCases.map(case_ => ({
           id: case_.id,
           title: case_.title || "Caso Médico",
           description: case_.description || "",
@@ -121,9 +141,20 @@ export function useEventCases(eventId: string) {
         }));
 
         setCases(formattedCases);
+        
+        // Log final de sucesso
+        console.log(`✅ Casos carregados com sucesso para evento ${eventId}:`, {
+          totalCasos: formattedCases.length,
+          primeirosCasos: formattedCases.slice(0, 3).map(c => ({ id: c.id, title: c.title }))
+        });
       } catch (err: any) {
-        console.error("Erro ao buscar casos do evento:", err);
-        setError(err.message);
+        console.error(`❌ ERRO DETALHADO evento ${eventId}:`, {
+          erro: err.message,
+          stack: err.stack,
+          usuarioId: user.id,
+          timestamp: new Date().toISOString()
+        });
+        setError(`Falha ao carregar casos: ${err.message}`);
       } finally {
         setLoading(false);
       }
