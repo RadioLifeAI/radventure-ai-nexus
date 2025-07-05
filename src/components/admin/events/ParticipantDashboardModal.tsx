@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useEventParticipants } from "@/hooks/useEventParticipants";
 import {
   Users,
   Mail,
@@ -53,8 +54,6 @@ interface Props {
 
 export function ParticipantDashboardModal({ open, onClose, eventId, eventName }: Props) {
   const [activeTab, setActiveTab] = useState("participants");
-  const [participants, setParticipants] = useState<Participant[]>([]);
-  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
     academicStage: "",
@@ -62,74 +61,14 @@ export function ParticipantDashboardModal({ open, onClose, eventId, eventName }:
     levelRange: ""
   });
 
-  useEffect(() => {
-    if (open && eventId) {
-      fetchParticipants();
-    }
-  }, [open, eventId]);
+  const { participants, stats, loading, error, exportParticipants } = useEventParticipants(eventId);
 
-  async function fetchParticipants() {
-    setLoading(true);
-    try {
-      // Simulated data for demonstration
-      const mockParticipants: Participant[] = [
-        {
-          id: "1",
-          user_id: "user1",
-          registered_at: new Date().toISOString(),
-          profiles: {
-            id: "user1",
-            full_name: "Dr. Ana Silva",
-            username: "ana_silva",
-            email: "ana.silva@email.com",
-            academic_stage: "ESPECIALISTA",
-            medical_specialty: "Cardiologia",
-            total_points: 2500,
-            user_level: 5
-          }
-        },
-        {
-          id: "2", 
-          user_id: "user2",
-          registered_at: new Date().toISOString(),
-          profiles: {
-            id: "user2",
-            full_name: "João Santos",
-            username: "joao_santos",
-            email: "joao.santos@email.com",
-            academic_stage: "RESIDENTE",
-            medical_specialty: "Neurologia",
-            total_points: 1200,
-            user_level: 3
-          }
-        },
-        {
-          id: "3",
-          user_id: "user3", 
-          registered_at: new Date().toISOString(),
-          profiles: {
-            id: "user3",
-            full_name: "Maria Costa",
-            username: "maria_costa",
-            email: "maria.costa@email.com",
-            academic_stage: "ESTUDANTE",
-            medical_specialty: "Radiologia",
-            total_points: 800,
-            user_level: 2
-          }
-        }
-      ];
-
-      setParticipants(mockParticipants);
-    } catch (error: any) {
-      toast({
-        title: "Erro ao carregar participantes",
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
+  if (error) {
+    toast({
+      title: "Erro ao carregar participantes",
+      description: error,
+      variant: "destructive"
+    });
   }
 
   const filteredParticipants = participants.filter(participant => {
@@ -150,17 +89,16 @@ export function ParticipantDashboardModal({ open, onClose, eventId, eventName }:
     return matchesSearch && matchesAcademicStage && matchesSpecialty;
   });
 
-  const participantStats = {
-    total: participants.length,
-    students: participants.filter(p => p.profiles?.academic_stage === "ESTUDANTE").length,
-    residents: participants.filter(p => p.profiles?.academic_stage === "RESIDENTE").length,
-    specialists: participants.filter(p => p.profiles?.academic_stage === "ESPECIALISTA").length,
-    avgLevel: participants.length > 0 
-      ? Math.round(participants.reduce((sum, p) => sum + (p.profiles?.user_level || 1), 0) / participants.length)
-      : 0,
-    avgPoints: participants.length > 0
-      ? Math.round(participants.reduce((sum, p) => sum + (p.profiles?.total_points || 0), 0) / participants.length)
-      : 0
+  const participantStats = stats || {
+    total: 0,
+    students: 0,
+    residents: 0,
+    specialists: 0,
+    avgLevel: 0,
+    avgPoints: 0,
+    avgCompletionTime: 0,
+    completionRate: 0,
+    avgAccuracy: 0
   };
 
   const handleSendNotification = () => {
@@ -172,29 +110,7 @@ export function ParticipantDashboardModal({ open, onClose, eventId, eventName }:
   };
 
   const handleExportParticipants = () => {
-    const csvData = filteredParticipants.map(p => ({
-      Nome: p.profiles?.full_name || "",
-      Email: p.profiles?.email || "",
-      Username: p.profiles?.username || "",
-      Nivel: p.profiles?.user_level || 1,
-      Pontos: p.profiles?.total_points || 0,
-      EtapaAcademica: p.profiles?.academic_stage || "",
-      Especialidade: p.profiles?.medical_specialty || "",
-      DataRegistro: new Date(p.registered_at).toLocaleDateString("pt-BR")
-    }));
-
-    const headers = Object.keys(csvData[0] || {});
-    const csvContent = [
-      headers.join(","),
-      ...csvData.map(row => headers.map(header => `"${row[header as keyof typeof row]}"`).join(","))
-    ].join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `participantes_${eventName.replace(/\s+/g, "_")}_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-
+    exportParticipants(filteredParticipants, eventName);
     toast({
       title: "Exportação concluída",
       description: `${filteredParticipants.length} participantes exportados`,

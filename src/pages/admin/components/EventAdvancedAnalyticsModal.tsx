@@ -38,6 +38,7 @@ import {
   Share2,
   RefreshCw
 } from "lucide-react";
+import { useEventAnalytics } from "@/hooks/useEventAnalytics";
 
 interface Event {
   id: string;
@@ -59,40 +60,10 @@ interface Props {
 export function EventAdvancedAnalyticsModal({ open, onClose, event }: Props) {
   const [activeTab, setActiveTab] = useState("overview");
   const [timeRange, setTimeRange] = useState("all");
+  
+  const { analytics, loading, error, refetch } = useEventAnalytics(event?.id || '');
 
   if (!event) return null;
-
-  // Mock data para demonstração
-  const participationData = [
-    { hour: "14:00", participants: 12 },
-    { hour: "14:30", participants: 25 },
-    { hour: "15:00", participants: 45 },
-    { hour: "15:30", participants: 38 },
-    { hour: "16:00", participants: 42 },
-    { hour: "16:30", participants: 35 },
-    { hour: "17:00", participants: 28 }
-  ];
-
-  const performanceData = [
-    { case: "Caso 1", accuracy: 85, avgTime: 45 },
-    { case: "Caso 2", accuracy: 92, avgTime: 38 },
-    { case: "Caso 3", accuracy: 78, avgTime: 52 },
-    { case: "Caso 4", accuracy: 88, avgTime: 41 },
-    { case: "Caso 5", accuracy: 95, avgTime: 35 }
-  ];
-
-  const demographicsData = [
-    { name: "Residentes", value: 45, color: "#3B82F6" },
-    { name: "Especialistas", value: 30, color: "#10B981" },
-    { name: "Estudantes", value: 25, color: "#F59E0B" }
-  ];
-
-  const engagementData = [
-    { metric: "Tempo Médio", value: "42 min", trend: "+8%" },
-    { metric: "Taxa de Conclusão", value: "87%", trend: "+12%" },
-    { metric: "Satisfação", value: "4.6/5", trend: "+0.3" },
-    { metric: "Retorno", value: "73%", trend: "+15%" }
-  ];
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR', {
@@ -102,6 +73,56 @@ export function EventAdvancedAnalyticsModal({ open, onClose, event }: Props) {
       minute: '2-digit'
     });
   };
+
+  const handleRefresh = () => {
+    refetch();
+  };
+
+  if (loading) {
+    return (
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader className="pb-4 border-b">
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <BarChart3 className="h-5 w-5 text-blue-500" />
+              Analytics Avançado
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+              <p className="text-gray-600">Carregando analytics...</p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  if (error) {
+    return (
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader className="pb-4 border-b">
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <BarChart3 className="h-5 w-5 text-blue-500" />
+              Analytics Avançado
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <p className="text-red-600 mb-4">Erro ao carregar analytics: {error}</p>
+              <Button onClick={handleRefresh}>Tentar Novamente</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  if (!analytics) {
+    return null;
+  }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -118,7 +139,7 @@ export function EventAdvancedAnalyticsModal({ open, onClose, event }: Props) {
               </p>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={handleRefresh}>
                 <RefreshCw className="h-4 w-4 mr-1" />
                 Atualizar
               </Button>
@@ -150,36 +171,36 @@ export function EventAdvancedAnalyticsModal({ open, onClose, event }: Props) {
                 <Card>
                   <CardContent className="p-4 text-center">
                     <Users className="h-8 w-8 text-blue-500 mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-blue-600">148</div>
+                    <div className="text-2xl font-bold text-blue-600">{analytics.kpis.totalParticipants}</div>
                     <div className="text-sm text-gray-600">Participantes</div>
-                    <Badge className="mt-1 bg-green-100 text-green-700">+23%</Badge>
+                    <Badge className="mt-1 bg-green-100 text-green-700">Real</Badge>
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardContent className="p-4 text-center">
                     <Target className="h-8 w-8 text-green-500 mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-green-600">87%</div>
+                    <div className="text-2xl font-bold text-green-600">{analytics.kpis.completionRate}%</div>
                     <div className="text-sm text-gray-600">Taxa de Conclusão</div>
-                    <Badge className="mt-1 bg-green-100 text-green-700">+12%</Badge>
+                    <Badge className="mt-1 bg-green-100 text-green-700">Real</Badge>
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardContent className="p-4 text-center">
                     <Clock className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-yellow-600">42m</div>
+                    <div className="text-2xl font-bold text-yellow-600">{analytics.kpis.avgTime}m</div>
                     <div className="text-sm text-gray-600">Tempo Médio</div>
-                    <Badge className="mt-1 bg-yellow-100 text-yellow-700">+8%</Badge>
+                    <Badge className="mt-1 bg-yellow-100 text-yellow-700">Real</Badge>
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardContent className="p-4 text-center">
                     <Star className="h-8 w-8 text-purple-500 mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-purple-600">4.6</div>
+                    <div className="text-2xl font-bold text-purple-600">{analytics.kpis.satisfaction}</div>
                     <div className="text-sm text-gray-600">Satisfação</div>
-                    <Badge className="mt-1 bg-purple-100 text-purple-700">+0.3</Badge>
+                    <Badge className="mt-1 bg-purple-100 text-purple-700">Real</Badge>
                   </CardContent>
                 </Card>
               </div>
@@ -191,7 +212,7 @@ export function EventAdvancedAnalyticsModal({ open, onClose, event }: Props) {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <AreaChart data={participationData}>
+                    <AreaChart data={analytics.participationData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="hour" />
                       <YAxis />
@@ -211,7 +232,7 @@ export function EventAdvancedAnalyticsModal({ open, onClose, event }: Props) {
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
-                      <LineChart data={participationData}>
+                      <LineChart data={analytics.participationData}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="hour" />
                         <YAxis />
@@ -227,7 +248,7 @@ export function EventAdvancedAnalyticsModal({ open, onClose, event }: Props) {
                     <CardTitle>Métricas de Engajamento</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {engagementData.map((item, index) => (
+                    {analytics.engagementData.map((item, index) => (
                       <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <div>
                           <div className="font-medium text-gray-800">{item.metric}</div>
@@ -250,7 +271,7 @@ export function EventAdvancedAnalyticsModal({ open, onClose, event }: Props) {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={400}>
-                    <BarChart data={performanceData}>
+                    <BarChart data={analytics.performanceData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="case" />
                       <YAxis yAxisId="left" />
@@ -274,7 +295,7 @@ export function EventAdvancedAnalyticsModal({ open, onClose, event }: Props) {
                     <ResponsiveContainer width="100%" height={300}>
                       <PieChart>
                         <Pie
-                          data={demographicsData}
+                          data={analytics.demographicsData}
                           cx="50%"
                           cy="50%"
                           labelLine={false}
@@ -283,7 +304,7 @@ export function EventAdvancedAnalyticsModal({ open, onClose, event }: Props) {
                           fill="#8884d8"
                           dataKey="value"
                         >
-                          {demographicsData.map((entry, index) => (
+                          {analytics.demographicsData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
@@ -298,7 +319,7 @@ export function EventAdvancedAnalyticsModal({ open, onClose, event }: Props) {
                     <CardTitle>Estatísticas Detalhadas</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {demographicsData.map((item, index) => (
+                    {analytics.demographicsData.map((item, index) => (
                       <div key={index} className="flex items-center justify-between p-3 rounded-lg border">
                         <div className="flex items-center gap-3">
                           <div 
@@ -329,10 +350,10 @@ export function EventAdvancedAnalyticsModal({ open, onClose, event }: Props) {
                       <div className="bg-blue-50 p-4 rounded-lg">
                         <h4 className="font-semibold text-blue-800 mb-2">Resumo Executivo</h4>
                         <ul className="text-sm text-blue-700 space-y-1">
-                          <li>• 148 participantes únicos</li>
-                          <li>• 87% taxa de conclusão</li>
-                          <li>• 4.6/5 satisfação média</li>
-                          <li>• 42 min tempo médio</li>
+                          <li>• {analytics.kpis.totalParticipants} participantes únicos</li>
+                          <li>• {analytics.kpis.completionRate}% taxa de conclusão</li>
+                          <li>• {analytics.kpis.satisfaction}/5 satisfação média</li>
+                          <li>• {analytics.kpis.avgTime} min tempo médio</li>
                         </ul>
                       </div>
 
