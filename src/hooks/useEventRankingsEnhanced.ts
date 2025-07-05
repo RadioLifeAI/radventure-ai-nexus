@@ -13,13 +13,20 @@ export function useEventRankingsEnhanced() {
   const { personalStats, loading: statsLoading } = usePersonalEventStats(user?.id);
   const { hallOfFameData, loading: hallLoading, refetch: refetchHall } = useHallOfFame();
 
-  const loading = rankingsLoading || statsLoading || hallLoading;
-
+  // Estados de loading individuais para melhor controle
+  const loading = rankingsLoading && statsLoading && hallLoading;
+  
   const refetch = async () => {
-    await Promise.all([
-      refetchRankings(),
-      refetchHall()
-    ]);
+    console.log("Refetch completo dos rankings de eventos iniciado...");
+    try {
+      await Promise.all([
+        refetchRankings(),
+        refetchHall()
+      ]);
+      console.log("Refetch completo dos rankings concluído com sucesso");
+    } catch (error) {
+      console.error("Erro durante refetch completo:", error);
+    }
   };
 
   return {
@@ -29,7 +36,13 @@ export function useEventRankingsEnhanced() {
     loading,
     activeTab,
     setActiveTab,
-    refetch
+    refetch,
+    // Estados individuais para diagnóstico
+    loadingStates: {
+      rankings: rankingsLoading,
+      stats: statsLoading,
+      hall: hallLoading
+    }
   };
 }
 

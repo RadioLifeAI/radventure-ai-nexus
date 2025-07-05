@@ -19,6 +19,9 @@ export function usePersonalEventStats(userId?: string) {
 
   const fetchPersonalStats = async (userId: string) => {
     try {
+      console.log(`Buscando estatísticas pessoais para usuário: ${userId}`);
+      
+      // Buscar rankings de eventos ativos e finalizados
       const { data: userRankings, error: rankingsError } = await supabase
         .from("event_rankings")
         .select("*")
@@ -27,40 +30,45 @@ export function usePersonalEventStats(userId?: string) {
 
       if (rankingsError) {
         console.error("Erro ao buscar rankings do usuário:", rankingsError);
-        return;
-      }
-
-      if (!userRankings || userRankings.length === 0) {
         setPersonalStats(null);
         return;
       }
 
-      const eventIds = [...new Set(userRankings.map(r => r.event_id))];
+      // Buscar rankings finais (prêmios)
+      const { data: finalRankings, error: finalError } = await supabase
+        .from("event_final_rankings")
+        .select("radcoins_awarded, rank")
+        .eq("user_id", userId);
+
+      if (finalError) {
+        console.error("Erro ao buscar rankings finais:", finalError);
+      }
+
+      // Buscar eventos relacionados
+      const eventIds = [...new Set((userRankings || []).map(r => r.event_id))];
       const { data: events } = await supabase
         .from("events")
         .select("*")
         .in("id", eventIds);
 
+      // Buscar perfil do usuário
       const { data: userProfile } = await supabase
         .from("profiles")
         .select("full_name, username, avatar_url, medical_specialty")
         .eq("id", userId)
         .single();
 
-      const { data: finalRankings } = await supabase
-        .from("event_final_rankings")
-        .select("radcoins_awarded")
-        .eq("user_id", userId);
-
+      // Processar estatísticas
       const totalRadCoinsEarned = (finalRankings || []).reduce((sum, r) => sum + (r.radcoins_awarded || 0), 0);
       const eventsMap = new Map((events || []).map(e => [e.id, e]));
-      const ranks = userRankings.map(r => r.rank || 999).filter(rank => rank < 999);
+      const ranks = (userRankings || []).map(r => r.rank || 999).filter(rank => rank < 999);
       const bestRank = ranks.length > 0 ? Math.min(...ranks) : 0;
       const averageRank = ranks.length > 0 ? Math.round(ranks.reduce((sum, rank) => sum + rank, 0) / ranks.length) : 0;
-      const winCount = userRankings.filter(r => r.rank === 1).length;
-      const topThreeCount = userRankings.filter(r => r.rank && r.rank <= 3).length;
+      const winCount = (userRankings || []).filter(r => r.rank === 1).length;
+      const topThreeCount = (userRankings || []).filter(r => r.rank && r.rank <= 3).length;
 
-      const formattedUserRankings = userRankings.slice(0, 5).map(ranking => {
+      // Formatar eventos recentes
+      const formattedUserRankings = (userRankings || []).slice(0, 5).map(ranking => {
         const event = eventsMap.get(ranking.event_id);
         
         return {
@@ -94,18 +102,21 @@ export function usePersonalEventStats(userId?: string) {
         };
       });
 
-      setPersonalStats({
-        totalParticipations: userRankings.length,
+      const stats = {
+        totalParticipations: (userRankings || []).length,
         totalRadCoinsEarned,
         bestRank,
         averageRank,
         recentEvents: formattedUserRankings,
         winCount,
         topThreeCount
-      });
+      };
+
+      console.log(`Estatísticas calculadas:`, stats);
+      setPersonalStats(stats);
 
     } catch (error) {
-      console.error("Erro ao buscar estatísticas pessoais:", error);
+      console.error("Erro crítico ao buscar estatísticas pessoais:", error);
       setPersonalStats(null);
     }
   };

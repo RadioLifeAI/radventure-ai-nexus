@@ -6,6 +6,7 @@ import { ActiveEventTracker } from "@/components/rankings/ActiveEventTracker";
 import { EventHistoryAnalytics } from "@/components/rankings/EventHistoryAnalytics";
 import { PersonalEventStats } from "@/components/rankings/PersonalEventStats";
 import { EventHallOfFame } from "@/components/rankings/EventHallOfFame";
+import { EventRankingsDebug } from "@/components/rankings/EventRankingsDebug";
 import { Trophy, BarChart3, User, Crown } from "lucide-react";
 import { useEventRankingsEnhanced } from "@/hooks/useEventRankingsEnhanced";
 
@@ -16,8 +17,12 @@ export default function EventRankingsEnhanced() {
     hallOfFameData,
     loading,
     activeTab,
-    setActiveTab
+    setActiveTab,
+    loadingStates
   } = useEventRankingsEnhanced();
+
+  // Debug: mostrar componente de debug apenas em desenvolvimento
+  const showDebug = process.env.NODE_ENV === 'development';
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white">
@@ -34,6 +39,18 @@ export default function EventRankingsEnhanced() {
               Acompanhe performances, conquistas e o Hall da Fama dos eventos RadMed
             </p>
           </div>
+
+          {/* Debug Component */}
+          {showDebug && loadingStates && (
+            <EventRankingsDebug 
+              loadingStates={loadingStates}
+              dataStates={{
+                activeEventRankings,
+                personalStats,
+                hallOfFameData
+              }}
+            />
+          )}
 
           {/* Main Tabs Navigation */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -76,28 +93,28 @@ export default function EventRankingsEnhanced() {
             <TabsContent value="active" className="animate-fade-in">
               <ActiveEventTracker 
                 rankings={activeEventRankings}
-                loading={loading}
+                loading={loadingStates?.rankings || loading}
               />
             </TabsContent>
 
             <TabsContent value="analytics" className="animate-fade-in">
               <EventHistoryAnalytics 
                 historicalData={hallOfFameData}
-                loading={loading}
+                loading={loadingStates?.hall || loading}
               />
             </TabsContent>
 
             <TabsContent value="personal" className="animate-fade-in">
               <PersonalEventStats 
                 stats={personalStats}
-                loading={loading}
+                loading={loadingStates?.stats || loading}
               />
             </TabsContent>
 
             <TabsContent value="hall-of-fame" className="animate-fade-in">
               <EventHallOfFame 
                 hallOfFameData={hallOfFameData}
-                loading={loading}
+                loading={loadingStates?.hall || loading}
               />
             </TabsContent>
           </Tabs>

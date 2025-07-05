@@ -11,40 +11,52 @@ export function useHallOfFame() {
     try {
       setLoading(true);
       
+      // Buscar rankings finais com informações completas
       const { data: topRankings, error: rankingsError } = await supabase
         .from("event_final_rankings")
-        .select(`
-          *,
-          events:event_id (
-            id, name, status, scheduled_start, scheduled_end, prize_radcoins, banner_url
-          ),
-          profiles:user_id (
-            id, full_name, username, avatar_url, medical_specialty
-          )
-        `)
+        .select("*")
         .eq("rank", 1)
-        .limit(20)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(20);
 
       if (rankingsError) {
         console.error("Erro ao buscar Hall of Fame:", rankingsError);
-        return;
-      }
-
-      if (!topRankings || topRankings.length === 0) {
         setHallOfFameData([]);
         return;
       }
 
+      if (!topRankings || topRankings.length === 0) {
+        console.log("Nenhum campeão encontrado no Hall of Fame");
+        setHallOfFameData([]);
+        return;
+      }
+
+      // Buscar eventos e perfis separadamente para melhor controle
+      const eventIds = [...new Set(topRankings.map(r => r.event_id))];
+      const userIds = [...new Set(topRankings.map(r => r.user_id))];
+
+      const { data: events } = await supabase
+        .from("events")
+        .select("id, name, status, scheduled_start, scheduled_end, prize_radcoins, banner_url")
+        .in("id", eventIds);
+
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, username, avatar_url, medical_specialty")
+        .in("id", userIds);
+
+      const eventsMap = new Map((events || []).map(e => [e.id, e]));
+      const profilesMap = new Map((profiles || []).map(p => [p.id, p]));
+
       const formattedHallOfFame = topRankings.map(ranking => {
-        const event = ranking.events;
-        const profile = ranking.profiles;
+        const event = eventsMap.get(ranking.event_id);
+        const profile = profilesMap.get(ranking.user_id);
 
         return {
           id: ranking.id,
           event_id: ranking.event_id,
           user_id: ranking.user_id,
-          score: 0, // Final rankings não têm score
+          score: ranking.radcoins_awarded || 0, // Usar RadCoins como score
           rank: ranking.rank || 1,
           event: event ? {
             id: event.id,
@@ -57,7 +69,7 @@ export function useHallOfFame() {
           } : {
             id: ranking.event_id,
             name: "Evento não encontrado",
-            status: "UNKNOWN",
+            status: "FINISHED",
             scheduled_start: new Date().toISOString(),
             scheduled_end: new Date().toISOString(),
             prize_radcoins: 0
@@ -76,10 +88,11 @@ export function useHallOfFame() {
         };
       });
 
+      console.log(`Hall of Fame carregado: ${formattedHallOfFame.length} campeões`);
       setHallOfFameData(formattedHallOfFame);
 
     } catch (error) {
-      console.error("Erro ao buscar Hall of Fame:", error);
+      console.error("Erro crítico ao buscar Hall of Fame:", error);
       setHallOfFameData([]);
     } finally {
       setLoading(false);

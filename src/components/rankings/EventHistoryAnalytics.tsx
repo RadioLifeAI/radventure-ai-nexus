@@ -36,7 +36,7 @@ export function EventHistoryAnalytics({ historicalData, loading }: EventHistoryA
   const finishedEvents = totalEvents - metrics.activeEvents - metrics.scheduledEvents;
   const totalRadCoinsDistributed = metrics.totalPrizePool;
 
-  // Estatísticas por mês (últimos 6 meses)
+  // Estatísticas por mês baseadas em dados reais
   const monthlyStats = React.useMemo(() => {
     const months = Array.from({ length: 6 }, (_, i) => {
       const date = new Date();
@@ -49,22 +49,40 @@ export function EventHistoryAnalytics({ historicalData, loading }: EventHistoryA
       };
     }).reverse();
 
-    // Para dados mais precisos, assumir que eventos recentes aconteceram nos últimos meses
-    if (totalEvents > 0) {
-      // Distribuir eventos pelos últimos meses para demonstração
-      const currentMonth = months[months.length - 1];
-      currentMonth.events = Math.max(1, Math.floor(totalEvents / 2));
-      currentMonth.participants = Math.max(1, Math.floor(totalParticipants / 2));
+    // Distribuir dados reais pelos meses
+    if (historicalData && historicalData.length > 0) {
+      const eventsByMonth = new Map();
       
-      if (months.length > 1) {
-        const previousMonth = months[months.length - 2];
-        previousMonth.events = totalEvents - currentMonth.events;
-        previousMonth.participants = totalParticipants - currentMonth.participants;
-      }
+      historicalData.forEach(data => {
+        if (data.event && data.event.scheduled_start) {
+          const eventDate = new Date(data.event.scheduled_start);
+          const monthKey = `${eventDate.getFullYear()}-${eventDate.getMonth()}`;
+          
+          if (!eventsByMonth.has(monthKey)) {
+            eventsByMonth.set(monthKey, { events: new Set(), participants: 0 });
+          }
+          
+          const monthData = eventsByMonth.get(monthKey);
+          monthData.events.add(data.event_id);
+          monthData.participants += 1;
+        }
+      });
+
+      // Atualizar estatísticas dos meses
+      months.forEach(month => {
+        const date = new Date(month.year, new Date(`${month.month} 1`).getMonth());
+        const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+        const monthData = eventsByMonth.get(monthKey);
+        
+        if (monthData) {
+          month.events = monthData.events.size;
+          month.participants = monthData.participants;
+        }
+      });
     }
 
     return months;
-  }, [totalEvents, totalParticipants]);
+  }, [historicalData]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
