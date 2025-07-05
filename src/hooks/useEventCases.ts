@@ -43,7 +43,7 @@ export function useEventCases(eventId: string) {
 
         if (eventError) throw eventError;
 
-        // 2. Verificar se há casos já associados na tabela event_cases
+        // 2. PRIORIDADE: Verificar se há casos pré-selecionados na tabela event_cases
         const { data: eventCases, error: eventCasesError } = await supabase
           .from("event_cases")
           .select(`
@@ -59,10 +59,13 @@ export function useEventCases(eventId: string) {
         let casesToUse: any[] = [];
 
         if (eventCases && eventCases.length > 0) {
-          // Usar casos já associados
+          // ✅ SISTEMA CONSISTENTE: Usar casos pré-selecionados
           casesToUse = eventCases.map(ec => ec.medical_cases);
+          console.log(`✅ Usando ${casesToUse.length} casos pré-selecionados para evento ${eventId}`);
         } else {
-          // Buscar casos baseado nos filtros do evento
+          // 📋 FALLBACK: Buscar casos baseado nos filtros (compatibilidade)
+          console.log(`📋 Fallback: Aplicando filtros dinâmicos para evento ${eventId}`);
+          
           let query = supabase
             .from("medical_cases")
             .select("*");
@@ -71,7 +74,6 @@ export function useEventCases(eventId: string) {
           if (event.case_filters) {
             const filters = event.case_filters as any;
 
-            // CORREÇÃO: category no banco → specialty na query
             if (filters.category && filters.category.length > 0) {
               query = query.in("specialty", filters.category);
             }
@@ -80,15 +82,9 @@ export function useEventCases(eventId: string) {
               query = query.in("modality", filters.modality);
             }
 
-            // CORREÇÃO: difficulty array no banco → difficulty_level na query
             if (filters.difficulty && filters.difficulty.length > 0) {
               query = query.in("difficulty_level", filters.difficulty.map(d => parseInt(d)));
             }
-          }
-
-          // Limitar quantidade se especificado
-          if (event.number_of_cases && event.number_of_cases > 0) {
-            query = query.limit(event.number_of_cases);
           }
 
           const { data: filteredCases, error: casesError } = await query;
@@ -96,9 +92,13 @@ export function useEventCases(eventId: string) {
 
           casesToUse = filteredCases || [];
 
-          // Embaralhar casos para cada usuário (usando user.id como seed)
-          const userSeed = user.id;
-          casesToUse = shuffleArray(casesToUse, userSeed);
+          // 🎯 ORDEM CONSISTENTE: Usar seed fixo baseado no eventId (não user.id)
+          casesToUse = shuffleArray(casesToUse, eventId);
+          
+          // Limitar quantidade se especificado
+          if (event.number_of_cases && event.number_of_cases > 0) {
+            casesToUse = casesToUse.slice(0, event.number_of_cases);
+          }
         }
 
         // PROTEÇÃO: Filtrar casos undefined ou inválidos

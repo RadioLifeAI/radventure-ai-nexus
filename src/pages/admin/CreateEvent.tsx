@@ -9,6 +9,7 @@ import { EventCreationWizard } from "./components/EventCreationWizard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { useEventCaseSelection } from "@/hooks/useEventCaseSelection";
 import {
   Sparkles,
   Edit,
@@ -37,18 +38,40 @@ interface EventData {
 export default function CreateEvent() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const { selectAndSaveCases } = useEventCaseSelection();
 
   async function handleSubmit(values: any) {
     setLoading(true);
     try {
-      const { error } = await supabase.from("events").insert([
-        {
+      console.log('🎯 Criando evento com sistema de casos pré-selecionados:', values);
+
+      const { data: createdEvent, error } = await supabase
+        .from("events")
+        .insert([{
           ...values,
           status: "SCHEDULED"
-        }
-      ]);
+        }])
+        .select()
+        .single();
 
       if (error) throw error;
+
+      console.log('✅ Evento criado:', createdEvent.id);
+
+      // 🎯 NOVA LÓGICA: Selecionar e salvar casos específicos para garantir consistência
+      if (values.case_filters && Object.keys(values.case_filters).length > 0) {
+        console.log('🔄 Selecionando casos específicos para o evento...');
+        
+        await selectAndSaveCases(
+          createdEvent.id,
+          values.case_filters,
+          values.number_of_cases || 10
+        );
+
+        console.log('✅ Casos específicos salvos - todos os usuários verão os mesmos casos');
+      } else {
+        console.warn('⚠️ Evento criado sem filtros - casos serão dinâmicos');
+      }
 
       toast({
         title: "✅ Evento criado com sucesso!",
@@ -58,6 +81,7 @@ export default function CreateEvent() {
 
       navigate("/admin/events");
     } catch (error: any) {
+      console.error('❌ Erro ao criar evento:', error);
       toast({
         title: "❌ Erro ao criar evento",
         description: error.message,
