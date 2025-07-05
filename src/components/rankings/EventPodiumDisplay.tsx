@@ -89,10 +89,10 @@ export function EventPodiumDisplay({ topChampions }: EventPodiumDisplayProps) {
               <img 
                 src={champion.user.avatar_url} 
                 alt="Avatar"
-                className={`w-20 h-20 rounded-full object-cover ${getAvatarBorder(position)}`}
+                className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover ${getAvatarBorder(position)}`}
               />
             ) : (
-              <div className={`w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold ${getAvatarBorder(position)}`}>
+              <div className={`w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xl sm:text-2xl font-bold ${getAvatarBorder(position)}`}>
                 {champion.user.full_name?.charAt(0) || champion.user.username?.charAt(0) || '?'}
               </div>
             )}
@@ -130,7 +130,7 @@ export function EventPodiumDisplay({ topChampions }: EventPodiumDisplayProps) {
         </div>
 
         {/* Pódio */}
-        <div className={`${getPodiumHeight(position)} ${getPodiumColors(position)} bg-gradient-to-t w-28 rounded-t-xl flex flex-col items-center justify-start pt-3 shadow-2xl relative overflow-hidden`}>
+        <div className={`${getPodiumHeight(position)} ${getPodiumColors(position)} bg-gradient-to-t w-24 sm:w-28 rounded-t-xl flex flex-col items-center justify-start pt-2 sm:pt-3 shadow-2xl relative overflow-hidden`}>
           {/* Efeito de brilho */}
           <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/20 to-transparent opacity-30"></div>
           
@@ -162,7 +162,7 @@ export function EventPodiumDisplay({ topChampions }: EventPodiumDisplayProps) {
   return (
     <div className="w-full space-y-8">
       {/* Pódio Principal */}
-      <div className="flex items-end justify-center gap-8 mb-12 px-4">
+      <div className="flex flex-col sm:flex-row items-center sm:items-end justify-center gap-6 sm:gap-8 mb-8 sm:mb-12 px-4">
         {/* 2º Lugar */}
         {renderChampion(second, 2, "0.2s")}
         

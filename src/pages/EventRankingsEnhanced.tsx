@@ -23,15 +23,16 @@ export default function EventRankingsEnhanced() {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6] text-white">
       <HeaderNav />
-      <main className="flex-1 flex flex-col px-2 md:px-16 pt-4 pb-10">
+      <main className="flex-1 flex flex-col px-4 sm:px-6 lg:px-16 pt-4 pb-10">
         <div className="max-w-6xl mx-auto w-full">
           {/* Header Section */}
           <div className="mb-8 animate-fade-in">
-            <h1 className="font-extrabold text-4xl mb-3 flex items-center gap-4">
-              <Trophy className="text-yellow-400" size={40} />
-              Rankings de Eventos
+            <h1 className="font-extrabold text-2xl sm:text-4xl mb-3 flex items-center gap-2 sm:gap-4">
+              <Trophy className="text-yellow-400" size={32} />
+              <span className="hidden sm:inline">Rankings de Eventos</span>
+              <span className="sm:hidden">Rankings</span>
             </h1>
-            <p className="text-cyan-100 text-lg">
+            <p className="text-cyan-100 text-base sm:text-lg">
               Acompanhe performances, conquistas e o Hall da Fama dos eventos RadMed
             </p>
           </div>

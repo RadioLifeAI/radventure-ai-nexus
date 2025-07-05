@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Trophy, Clock, Target, Users, Zap, Play } from "lucide-react";
 import { EventRankingData } from "@/hooks/useEventRankingsEnhanced";
 import { useAuth } from "@/hooks/useAuth";
+import { EventFullRankingModal } from "./EventFullRankingModal";
 
 interface ActiveEventTrackerProps {
   rankings: EventRankingData[];
@@ -17,6 +18,10 @@ export function ActiveEventTracker({ rankings, loading }: ActiveEventTrackerProp
   const navigate = useNavigate();
   const { user } = useAuth();
   const [timeLeft, setTimeLeft] = useState<Record<string, string>>({});
+  const [selectedEventRankings, setSelectedEventRankings] = useState<{
+    rankings: EventRankingData[];
+    eventName: string;
+  } | null>(null);
 
   // Agrupar rankings por evento
   const eventGroups = rankings.reduce((acc, ranking) => {
@@ -101,7 +106,7 @@ export function ActiveEventTracker({ rankings, loading }: ActiveEventTrackerProp
         return (
           <Card key={event.id} className="bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200 shadow-lg animate-fade-in">
             <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                     <Trophy className="h-6 w-6 text-white" />
@@ -110,7 +115,7 @@ export function ActiveEventTracker({ rankings, loading }: ActiveEventTrackerProp
                     <CardTitle className="text-xl text-blue-800">
                       {event.name}
                     </CardTitle>
-                    <div className="flex items-center gap-4 mt-1">
+                    <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 mt-1">
                       <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
                         <Zap className="h-3 w-3 mr-1" />
                         Ao Vivo
@@ -212,7 +217,7 @@ export function ActiveEventTracker({ rankings, loading }: ActiveEventTrackerProp
               </div>
               
               {/* Ações */}
-              <div className="mt-4 pt-4 border-t border-gray-200 flex gap-2">
+              <div className="mt-4 pt-4 border-t border-gray-200 flex flex-col sm:flex-row gap-2">
                 <Button 
                   size="sm" 
                   className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
@@ -221,7 +226,14 @@ export function ActiveEventTracker({ rankings, loading }: ActiveEventTrackerProp
                   <Play className="h-4 w-4 mr-2" />
                   Entrar no Evento
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setSelectedEventRankings({
+                    rankings: rankings,
+                    eventName: event.name
+                  })}
+                >
                   Ver Ranking Completo
                 </Button>
               </div>
@@ -229,6 +241,16 @@ export function ActiveEventTracker({ rankings, loading }: ActiveEventTrackerProp
           </Card>
         );
       })}
+      
+      {/* Modal de Ranking Completo */}
+      {selectedEventRankings && (
+        <EventFullRankingModal
+          isOpen={!!selectedEventRankings}
+          onClose={() => setSelectedEventRankings(null)}
+          rankings={selectedEventRankings.rankings}
+          eventName={selectedEventRankings.eventName}
+        />
+      )}
     </div>
   );
 }

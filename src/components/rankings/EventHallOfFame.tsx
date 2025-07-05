@@ -99,8 +99,8 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
 
     return (
       <Card key={champion.user.full_name + index} className={`${index < 3 ? podiumColors[index] : 'bg-white'} hover:shadow-lg transition-shadow`}>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
+         <CardContent className="p-3 sm:p-4">
+           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
             <div className="flex items-center gap-4">
               <div className="relative">
                 {champion.user.avatar_url ? (
@@ -229,7 +229,7 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
           {topChampions.length > 3 && (
             <div className="mt-12">
               <h4 className="text-xl font-bold text-gray-800 mb-6 text-center">Outros Campeões Históricos</h4>
-              <div className="grid gap-4">
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {topChampions.slice(3).map((champion, index) => renderChampionCard(champion, index + 3))}
               </div>
             </div>
@@ -242,11 +242,11 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
             <p className="text-gray-600">Últimos vencedores de eventos</p>
           </div>
           
-          <div className="grid gap-3">
+           <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {recentEvents.map((event, index) => (
               <Card key={event.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
+                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center">
                         <Crown className="h-6 w-6 text-white" />
@@ -288,11 +288,11 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
             <p className="text-gray-600">Eventos com os maiores prêmios em RadCoins</p>
           </div>
           
-          <div className="grid gap-3">
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {biggestPrizes.map((event, index) => (
               <Card key={event.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
+                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
                     <div className="flex items-center gap-4">
                       <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-white ${
                         index < 3 ? 'bg-gradient-to-br from-yellow-500 to-orange-500' : 'bg-gradient-to-br from-blue-500 to-purple-500'
