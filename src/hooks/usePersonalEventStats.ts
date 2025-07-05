@@ -19,6 +19,7 @@ export function usePersonalEventStats(userId?: string) {
 
   const fetchPersonalStats = async (userId: string) => {
     try {
+      console.log("📊 PersonalEventStats - Buscando dados para usuário:", userId);
       const { data: userRankings, error: rankingsError } = await supabase
         .from("event_final_rankings")
         .select("*")
@@ -31,9 +32,12 @@ export function usePersonalEventStats(userId?: string) {
       }
 
       if (!userRankings || userRankings.length === 0) {
+        console.log("📊 PersonalEventStats - Nenhum ranking encontrado para usuário:", userId);
         setPersonalStats(null);
         return;
       }
+
+      console.log("📊 PersonalEventStats - Rankings encontrados:", userRankings.length, userRankings);
 
       const eventIds = [...new Set(userRankings.map(r => r.event_id))];
       const { data: events } = await supabase

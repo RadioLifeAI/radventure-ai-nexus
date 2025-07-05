@@ -5,17 +5,19 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Crown, Trophy, Star, Award, Medal, Flame } from "lucide-react";
-import { EventRankingData } from "@/hooks/useEventRankingsEnhanced";
+import { EventFinalRankingData } from "@/hooks/useEventRankingsEnhanced";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface EventHallOfFameProps {
-  hallOfFameData: EventRankingData[];
+  hallOfFameData: EventFinalRankingData[];
   loading: boolean;
 }
 
 export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProps) {
   const [selectedCategory, setSelectedCategory] = useState("champions");
+
+  console.log("🏆 EventHallOfFame - Dados recebidos:", hallOfFameData?.length || 0, hallOfFameData);
 
   if (loading) {
     return (
@@ -235,10 +237,10 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
                         <p className="text-sm text-gray-600">
                           Campeão: {event.user.full_name || event.user.username}
                         </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="outline" className="text-xs">
-                            {event.score} pontos
-                          </Badge>
+                         <div className="flex items-center gap-2 mt-1">
+                           <Badge variant="outline" className="text-xs">
+                             Rank #{event.rank}
+                           </Badge>
                           <span className="text-xs text-gray-500">
                             {formatDistanceToNow(new Date(event.event.scheduled_start), { 
                               addSuffix: true, 
@@ -292,10 +294,10 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
                       <div className="text-2xl font-bold text-green-600">
                         {event.event.prize_radcoins.toLocaleString()}
                       </div>
-                      <div className="text-sm text-gray-500">RadCoins</div>
-                      <Badge className="mt-1 bg-yellow-100 text-yellow-700">
-                        {event.score} pontos
-                      </Badge>
+                       <div className="text-sm text-gray-500">RadCoins</div>
+                       <Badge className="mt-1 bg-yellow-100 text-yellow-700">
+                         Rank #{event.rank}
+                       </Badge>
                     </div>
                   </div>
                 </CardContent>

@@ -1,15 +1,16 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { EventRankingData } from "./useEventRankings";
+import { EventFinalRankingData } from "./useEventRankingsEnhanced";
 
 export function useHallOfFame() {
-  const [hallOfFameData, setHallOfFameData] = useState<EventRankingData[]>([]);
+  const [hallOfFameData, setHallOfFameData] = useState<EventFinalRankingData[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchHallOfFame = async () => {
     try {
       setLoading(true);
+      console.log("🏆 useHallOfFame - Iniciando busca do Hall da Fama...");
       
       const { data: topRankings, error: rankingsError } = await supabase
         .from("event_final_rankings")
@@ -24,9 +25,12 @@ export function useHallOfFame() {
       }
 
       if (!topRankings || topRankings.length === 0) {
+        console.log("🏆 useHallOfFame - Nenhum campeão encontrado (rank=1)");
         setHallOfFameData([]);
         return;
       }
+
+      console.log("🏆 useHallOfFame - Campeões encontrados:", topRankings.length, topRankings);
 
       const eventIds = [...new Set(topRankings.map(r => r.event_id))];
       const { data: events } = await supabase
@@ -51,8 +55,9 @@ export function useHallOfFame() {
           id: ranking.id,
           event_id: ranking.event_id,
           user_id: ranking.user_id,
-          score: 0, // event_final_rankings doesn't have score field
           rank: ranking.rank || 1,
+          radcoins_awarded: ranking.radcoins_awarded || 0,
+          created_at: ranking.created_at || new Date().toISOString(),
           event: event ? {
             id: event.id,
             name: event.name || "Evento",
