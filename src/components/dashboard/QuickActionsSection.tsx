@@ -17,7 +17,7 @@ export function QuickActionsSection({
   onConquistas 
 }: QuickActionsSectionProps) {
   return (
-    <section className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mt-2 mb-4">
+    <section className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mt-2 mb-4 px-1 sm:px-0">
       <ActionCard
         icon={<Activity />}
         title="Central de Casos"

@@ -74,40 +74,42 @@ export function UserProfile() {
 
   return (
     <>
-      <section className="space-y-6">
+      <section className="space-y-4 md:space-y-6">
         {/* Seção Principal do Perfil */}
-        <div className="flex flex-col md:flex-row gap-6 items-center justify-between w-full rounded-xl px-6 md:px-10 py-7 bg-gradient-to-br from-[#232983] via-[#224ba7] to-[#25bfff] drop-shadow-lg hover:scale-[1.02] transition-all duration-300">
-          <div className="flex items-center gap-6">
+        <div className="flex flex-col gap-4 md:gap-6 items-center justify-between w-full rounded-xl px-4 md:px-6 lg:px-10 py-4 md:py-7 bg-gradient-to-br from-[#232983] via-[#224ba7] to-[#25bfff] drop-shadow-lg hover:scale-[1.02] transition-all duration-300">
+          <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6 w-full">
             <div className="relative">
               <img 
                 src={profile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.id}`} 
                 alt="Avatar" 
-                className="w-20 h-20 rounded-full border-4 border-cyan-400 shadow-lg hover:scale-110 transition-transform duration-300 object-cover bg-white" 
+                className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-cyan-400 shadow-lg hover:scale-110 transition-transform duration-300 object-cover bg-white" 
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.id}`;
                 }}
               />
-              <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
-                <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+              <div className="absolute -top-1 -right-1 w-5 h-5 md:w-6 md:h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-white rounded-full animate-pulse"></div>
               </div>
             </div>
             
-            <div>
-              <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-3">
-                {displayName}
-                {isAdmin && (
-                  <Badge className="bg-yellow-500 text-yellow-900 font-bold">
-                    ADMIN
-                  </Badge>
-                )}
-                {/* Exibir selo de colaborador */}
-                <CollaboratorBadge badge={benefits.collaboratorBadge} size="md" />
+            <div className="flex-1 text-center md:text-left w-full max-w-full">
+              <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white tracking-tight flex flex-col md:flex-row items-center justify-center md:justify-start gap-2 md:gap-3 mb-2">
+                <span className="truncate max-w-full">{displayName}</span>
+                <div className="flex items-center gap-2 flex-wrap justify-center md:justify-start">
+                  {isAdmin && (
+                    <Badge className="bg-yellow-500 text-yellow-900 font-bold text-xs">
+                      ADMIN
+                    </Badge>
+                  )}
+                  {/* Exibir selo de colaborador */}
+                  <CollaboratorBadge badge={benefits.collaboratorBadge} size="sm" />
+                </div>
               </h2>
               
               {/* Barra de XP e Nível */}
               {levelData && (
-                <div className="mt-2 mb-2">
+                <div className="mb-3 w-full max-w-full">
                   <XPProgressBar
                     level={levelData.level}
                     currentXP={totalPoints}
@@ -119,14 +121,14 @@ export function UserProfile() {
                 </div>
               )}
               
-              <div className="flex items-center gap-4 mt-1 text-cyan-50 font-medium text-base">
+              <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-2 sm:gap-4 text-cyan-50 font-medium text-sm md:text-base mb-3">
                 <div className="flex items-center gap-1">
                   <Zap className="h-4 w-4 text-yellow-400" />
                   <span>{totalPoints.toLocaleString()} pts</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <MapPin className="h-4 w-4 text-cyan-400" />
-                  <span>{location}</span>
+                  <span className="truncate max-w-[200px]">{location}</span>
                 </div>
                 {currentStreak > 0 && (
                   <div className="flex items-center gap-1">
@@ -136,34 +138,34 @@ export function UserProfile() {
                 )}
               </div>
               
-              <div className="flex gap-4 mt-3 text-sm">
-                <Badge className="bg-cyan-600/70 px-4 py-1 rounded-2xl text-white font-medium flex items-center gap-2 hover:bg-cyan-600/80 transition-colors">
-                  <Trophy className="h-4 w-4" />
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-xs sm:text-sm">
+                <Badge className="bg-cyan-600/70 px-3 py-1 rounded-2xl text-white font-medium flex items-center gap-2 hover:bg-cyan-600/80 transition-colors justify-center sm:justify-start">
+                  <Trophy className="h-3 w-3 sm:h-4 sm:w-4" />
                   {rankingsLoading ? (
                     <span className="flex items-center gap-1">
-                      Ranking Nacional: <div className="w-8 h-4 bg-white/30 rounded animate-pulse"></div>
+                      Ranking: <div className="w-8 h-3 bg-white/30 rounded animate-pulse"></div>
                     </span>
                   ) : displayRank ? (
-                    <span>Ranking Nacional: <b>#{displayRank}</b></span>
+                    <span>Ranking: <b>#{displayRank}</b></span>
                   ) : (
-                    <span>Ranking Nacional: <b>Calculando...</b></span>
+                    <span>Ranking: <b>Calculando...</b></span>
                   )}
                 </Badge>
                 
-                <Badge className="bg-gradient-to-r from-yellow-500/70 to-orange-500/70 px-4 py-1 rounded-2xl text-white font-medium flex items-center gap-2 hover:from-yellow-500/80 hover:to-orange-500/80 transition-colors">
+                <Badge className="bg-gradient-to-r from-yellow-500/70 to-orange-500/70 px-3 py-1 rounded-2xl text-white font-medium flex items-center gap-2 hover:from-yellow-500/80 hover:to-orange-500/80 transition-colors justify-center sm:justify-start">
                   <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
                   {radcoins.toLocaleString()} RadCoins
                 </Badge>
                 
                 {profile.medical_specialty && (
-                  <Badge className="bg-purple-600/70 px-4 py-1 rounded-2xl text-white font-medium hover:bg-purple-600/80 transition-colors">
+                  <Badge className="bg-purple-600/70 px-3 py-1 rounded-2xl text-white font-medium hover:bg-purple-600/80 transition-colors text-center truncate max-w-full">
                     {profile.medical_specialty}
                   </Badge>
                 )}
 
                 {/* Exibir plano ativo se houver */}
                 {benefits.hasActivePlan && benefits.planName && (
-                  <Badge className="bg-green-600/70 px-4 py-1 rounded-2xl text-white font-medium hover:bg-green-600/80 transition-colors">
+                  <Badge className="bg-green-600/70 px-3 py-1 rounded-2xl text-white font-medium hover:bg-green-600/80 transition-colors text-center">
                     📋 {benefits.planName}
                   </Badge>
                 )}
@@ -171,32 +173,34 @@ export function UserProfile() {
             </div>
           </div>
           
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             <Button 
               onClick={() => navigate('/app/casos')}
-              className="bg-gradient-to-r from-cyan-400 to-blue-500 shadow-lg px-8 py-3 text-lg font-extrabold rounded-xl text-white hover:scale-105 transition-all duration-300 hover:shadow-xl group"
+              className="bg-gradient-to-r from-cyan-400 to-blue-500 shadow-lg px-4 sm:px-6 lg:px-8 py-2 sm:py-3 text-sm sm:text-base lg:text-lg font-bold rounded-xl text-white hover:scale-105 transition-all duration-300 hover:shadow-xl group w-full sm:w-auto"
             >
-              <span className="group-hover:animate-pulse">🚀</span>
-              <span className="ml-2">Começar Novo Desafio</span>
+              <span className="group-hover:animate-pulse text-sm sm:text-base">🚀</span>
+              <span className="ml-2 truncate">Começar Novo Desafio</span>
             </Button>
             
-            <Button 
-              variant="outline"
-              onClick={() => setIsSettingsOpen(true)}
-              className="bg-white/10 border-white/30 text-white hover:bg-white/20 px-4 py-3 rounded-xl transition-all duration-300"
-            >
-              <Settings className="h-5 w-5" />
-            </Button>
-
-            {isAdmin && (
+            <div className="flex gap-3 justify-center sm:justify-start">
               <Button 
-                onClick={() => navigate('/admin')}
-                className="bg-gradient-to-r from-red-500 to-pink-600 shadow-lg px-6 py-3 text-lg font-bold rounded-xl text-white hover:scale-105 transition-all duration-300 hover:shadow-xl flex items-center gap-2"
+                variant="outline"
+                onClick={() => setIsSettingsOpen(true)}
+                className="bg-white/10 border-white/30 text-white hover:bg-white/20 px-3 sm:px-4 py-2 sm:py-3 rounded-xl transition-all duration-300"
               >
-                <Shield className="h-5 w-5" />
-                Painel Admin
+                <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
-            )}
+
+              {isAdmin && (
+                <Button 
+                  onClick={() => navigate('/admin')}
+                  className="bg-gradient-to-r from-red-500 to-pink-600 shadow-lg px-3 sm:px-4 lg:px-6 py-2 sm:py-3 text-sm sm:text-base lg:text-lg font-bold rounded-xl text-white hover:scale-105 transition-all duration-300 hover:shadow-xl flex items-center gap-2"
+                >
+                  <Shield className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="hidden sm:inline">Painel Admin</span>
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 

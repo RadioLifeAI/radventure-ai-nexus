@@ -26,19 +26,19 @@ export function XPProgressBar({
 
   if (compact) {
     return (
-      <div className="flex items-center gap-3">
-        <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold px-3 py-1">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full max-w-full">
+        <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold px-2 py-1 text-xs whitespace-nowrap">
           <Crown className="h-3 w-3 mr-1" />
           Nv. {level}
         </Badge>
-        <div className="flex-1">
+        <div className="flex-1 w-full min-w-0">
           <Progress 
             value={currentProgress} 
-            className="h-2 bg-white/20"
+            className="h-2 bg-white/20 w-full"
           />
         </div>
-        <span className="text-xs text-white/80 font-medium">
-          {currentXP}/{nextLevelXP} XP
+        <span className="text-xs text-white/80 font-medium whitespace-nowrap">
+          {currentXP.toLocaleString()}/{nextLevelXP.toLocaleString()} XP
         </span>
       </div>
     );
