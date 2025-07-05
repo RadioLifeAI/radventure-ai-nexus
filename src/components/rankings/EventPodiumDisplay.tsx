@@ -58,10 +58,10 @@ export function EventPodiumDisplay({ topChampions }: EventPodiumDisplayProps) {
 
   const getCardColors = (position: number) => {
     switch (position) {
-      case 1: return "bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-300 shadow-yellow-200/50";
-      case 2: return "bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300 shadow-gray-200/50";
-      case 3: return "bg-gradient-to-br from-amber-50 to-amber-100 border-amber-300 shadow-amber-200/50";
-      default: return "bg-white border-gray-200";
+      case 1: return "bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-400 shadow-yellow-300/60";
+      case 2: return "bg-gradient-to-br from-gray-50 to-gray-100 border-gray-400 shadow-gray-300/60";
+      case 3: return "bg-gradient-to-br from-amber-50 to-amber-100 border-amber-400 shadow-amber-300/60";
+      default: return "bg-white border-gray-300";
     }
   };
 
@@ -109,20 +109,20 @@ export function EventPodiumDisplay({ topChampions }: EventPodiumDisplayProps) {
           </div>
           
           <div className="text-center">
-            <h3 className="font-bold text-lg text-gray-800 mb-1">
+            <h3 className="font-bold text-lg text-gray-900 mb-1">
               {champion.user.full_name || champion.user.username}
             </h3>
-            <p className="text-sm text-gray-600 mb-3">
+            <p className="text-sm text-gray-700 mb-3">
               {champion.user.medical_specialty}
             </p>
             
             {/* Badges de estatísticas */}
             <div className="flex flex-col gap-2 items-center">
-              <Badge className="bg-yellow-100 text-yellow-700 border-yellow-300 px-3 py-1">
+              <Badge className="bg-yellow-200 text-yellow-800 border-yellow-400 px-3 py-1 font-semibold">
                 <Crown className="h-3 w-3 mr-1" />
                 {champion.totalVictories} vitória{champion.totalVictories !== 1 ? 's' : ''}
               </Badge>
-              <Badge className="bg-green-100 text-green-700 border-green-300 px-3 py-1">
+              <Badge className="bg-green-200 text-green-800 border-green-400 px-3 py-1 font-semibold">
                 {champion.totalRadCoins.toLocaleString()} RadCoins
               </Badge>
             </div>
@@ -135,7 +135,7 @@ export function EventPodiumDisplay({ topChampions }: EventPodiumDisplayProps) {
           <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/20 to-transparent opacity-30"></div>
           
           {/* Número da posição */}
-          <span className="text-white font-bold text-2xl drop-shadow-lg relative z-10">
+          <span className="text-white font-bold text-2xl drop-shadow-2xl relative z-10" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
             {position}º
           </span>
           
@@ -183,23 +183,23 @@ export function EventPodiumDisplay({ topChampions }: EventPodiumDisplayProps) {
             <div className="text-center mb-4">
               <div className="flex items-center justify-center gap-2 mb-2">
                 {getPodiumIcon(index + 1)}
-                <span className="text-2xl font-bold text-gray-700">#{index + 1}</span>
+                <span className="text-2xl font-bold text-gray-900">#{index + 1}</span>
               </div>
-              <h4 className="font-bold text-lg text-gray-800">
+              <h4 className="font-bold text-lg text-gray-900">
                 {champion.user.full_name || champion.user.username}
               </h4>
             </div>
 
             <div className="space-y-3">
               <div className="text-center">
-                <p className="text-sm text-gray-600 mb-2">Últimas Vitórias:</p>
+                <p className="text-sm text-gray-700 mb-2 font-medium">Últimas Vitórias:</p>
                 <div className="space-y-1">
                   {champion.victories.slice(0, 2).map((victory, vIndex) => (
-                    <div key={vIndex} className="flex items-center justify-between text-xs bg-white/60 rounded-lg p-2">
-                      <span className="text-gray-700 truncate flex-1 mr-2 font-medium">
+                    <div key={vIndex} className="flex items-center justify-between text-xs bg-white/80 rounded-lg p-2 border border-white/40">
+                      <span className="text-gray-800 truncate flex-1 mr-2 font-medium">
                         {victory.event.name}
                       </span>
-                      <span className="text-gray-500 whitespace-nowrap">
+                      <span className="text-gray-600 whitespace-nowrap font-medium">
                         {formatDistanceToNow(new Date(victory.event.scheduled_start), { 
                           addSuffix: true, 
                           locale: ptBR 
@@ -208,7 +208,7 @@ export function EventPodiumDisplay({ topChampions }: EventPodiumDisplayProps) {
                     </div>
                   ))}
                   {champion.victories.length > 2 && (
-                    <p className="text-xs text-gray-500 italic">
+                    <p className="text-xs text-gray-600 italic font-medium">
                       +{champion.victories.length - 2} outras vitórias
                     </p>
                   )}
@@ -216,7 +216,7 @@ export function EventPodiumDisplay({ topChampions }: EventPodiumDisplayProps) {
               </div>
               
               <div className="text-center pt-2">
-                <Button size="sm" variant="outline" className="hover:scale-105 transition-transform">
+                <Button size="sm" variant="outline" className="hover:scale-105 transition-transform border-gray-400 text-gray-800 hover:bg-gray-100 font-medium">
                   Ver Perfil Completo
                 </Button>
               </div>

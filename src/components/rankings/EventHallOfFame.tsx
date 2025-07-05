@@ -124,18 +124,18 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
               </div>
               
               <div>
-                <h3 className="font-bold text-lg text-gray-800">
+                <h3 className="font-bold text-lg text-gray-900">
                   {champion.user.full_name || champion.user.username}
                 </h3>
-                <p className="text-sm text-gray-600 mb-2">
+                <p className="text-sm text-gray-700 mb-2">
                   {champion.user.medical_specialty}
                 </p>
                 <div className="flex items-center gap-2">
-                  <Badge className="bg-yellow-100 text-yellow-700 border-yellow-300">
+                  <Badge className="bg-yellow-200 text-yellow-800 border-yellow-400 font-semibold">
                     <Trophy className="h-3 w-3 mr-1" />
                     {champion.totalVictories} vitória{champion.totalVictories !== 1 ? 's' : ''}
                   </Badge>
-                  <Badge className="bg-green-100 text-green-700 border-green-300">
+                  <Badge className="bg-green-200 text-green-800 border-green-400 font-semibold">
                     {champion.totalRadCoins.toLocaleString()} RadCoins
                   </Badge>
                 </div>
@@ -143,25 +143,25 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
             </div>
             
             <div className="text-right">
-              <div className="text-2xl font-bold text-gray-700">
+              <div className="text-2xl font-bold text-gray-900">
                 #{index + 1}
               </div>
-              <Button size="sm" variant="outline" className="mt-2">
+              <Button size="sm" variant="outline" className="mt-2 border-gray-400 text-gray-800 hover:bg-gray-100 font-medium">
                 Ver Perfil
               </Button>
             </div>
           </div>
           
           {/* Eventos recentes do campeão */}
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <p className="text-sm font-medium text-gray-700 mb-2">Últimas Vitórias:</p>
+          <div className="mt-4 pt-4 border-t border-gray-300">
+            <p className="text-sm font-medium text-gray-800 mb-2">Últimas Vitórias:</p>
             <div className="space-y-1">
               {champion.victories.slice(0, 2).map((victory: any, vIndex: number) => (
                 <div key={vIndex} className="flex items-center justify-between text-xs">
-                  <span className="text-gray-600 truncate flex-1 mr-2">
+                  <span className="text-gray-700 truncate flex-1 mr-2 font-medium">
                     {victory.event.name}
                   </span>
-                  <span className="text-gray-500 whitespace-nowrap">
+                  <span className="text-gray-600 whitespace-nowrap font-medium">
                     {formatDistanceToNow(new Date(victory.event.scheduled_start), { 
                       addSuffix: true, 
                       locale: ptBR 
@@ -170,7 +170,7 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
                 </div>
               ))}
               {champion.victories.length > 2 && (
-                <p className="text-xs text-gray-500 italic">
+                <p className="text-xs text-gray-600 italic font-medium">
                   +{champion.victories.length - 2} outras vitórias
                 </p>
               )}
@@ -252,15 +252,15 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
                         <Crown className="h-6 w-6 text-white" />
                       </div>
                       <div>
-                        <h4 className="font-semibold text-gray-800">{event.event.name}</h4>
-                        <p className="text-sm text-gray-600">
+                        <h4 className="font-semibold text-gray-900">{event.event.name}</h4>
+                        <p className="text-sm text-gray-700">
                           Campeão: {event.user.full_name || event.user.username}
                         </p>
                          <div className="flex items-center gap-2 mt-1">
-                           <Badge variant="outline" className="text-xs">
+                           <Badge variant="outline" className="text-xs border-gray-400 text-gray-800">
                              Rank #{event.rank}
                            </Badge>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-600 font-medium">
                             {formatDistanceToNow(new Date(event.event.scheduled_start), { 
                               addSuffix: true, 
                               locale: ptBR 
@@ -270,10 +270,10 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
                       </div>
                     </div>
                      <div className="text-right">
-                       <div className="font-bold text-green-600">
+                       <div className="font-bold text-green-700 text-lg">
                          {(event.radcoins_awarded || 0).toLocaleString()}
                        </div>
-                       <div className="text-xs text-gray-500">RadCoins Ganhos</div>
+                       <div className="text-xs text-gray-600 font-medium">RadCoins Ganhos</div>
                      </div>
                   </div>
                 </CardContent>
@@ -300,21 +300,21 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
                         #{index + 1}
                       </div>
                       <div>
-                        <h4 className="font-semibold text-gray-800">{event.event.name}</h4>
-                        <p className="text-sm text-gray-600">
+                        <h4 className="font-semibold text-gray-900">{event.event.name}</h4>
+                        <p className="text-sm text-gray-700">
                           Vencedor: {event.user.full_name || event.user.username}
                         </p>
-                        <div className="text-xs text-gray-500 mt-1">
+                        <div className="text-xs text-gray-600 mt-1 font-medium">
                           {new Date(event.event.scheduled_start).toLocaleDateString('pt-BR')}
                         </div>
                       </div>
                     </div>
                      <div className="text-right">
-                       <div className="text-2xl font-bold text-green-600">
+                       <div className="text-2xl font-bold text-green-700">
                          {(event.radcoins_awarded || 0).toLocaleString()}
                        </div>
-                        <div className="text-sm text-gray-500">RadCoins Ganhos</div>
-                        <Badge className="mt-1 bg-yellow-100 text-yellow-700">
+                        <div className="text-sm text-gray-600 font-medium">RadCoins Ganhos</div>
+                        <Badge className="mt-1 bg-yellow-200 text-yellow-800 border-yellow-400 font-semibold">
                           Rank #{event.rank}
                         </Badge>
                      </div>
