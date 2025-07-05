@@ -9,13 +9,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { useNavigate } from "react-router-dom";
+import { useResponsive } from "@/hooks/useResponsive";
 import { 
   Settings, 
   User, 
   Camera, 
   Shield, 
   Loader2,
-  Coins
+  Coins,
+  Menu
 } from "lucide-react";
 import { ProfileEditTab } from "./ProfileEditTab";
 import { AvatarUploadTab } from "./AvatarUploadTab";
@@ -32,6 +34,7 @@ export function ProfileSettingsModal({ isOpen, onClose }: ProfileSettingsModalPr
   const { profile, updateProfile, isUpdating } = useUserProfile();
   const { isAdmin } = useAdminAccess();
   const navigate = useNavigate();
+  const { isMobile, isTablet, getModalSize, getTabsLayout } = useResponsive();
 
   const [formData, setFormData] = useState({
     full_name: '',
@@ -83,42 +86,50 @@ export function ProfileSettingsModal({ isOpen, onClose }: ProfileSettingsModalPr
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl h-[90vh] overflow-hidden p-0 bg-gradient-to-br from-background via-muted/20 to-background border-primary/20">
-        <DialogHeader className="px-6 py-4 bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 border-b border-primary/20">
-          <DialogTitle className="flex items-center gap-3 text-2xl bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent font-semibold">
-            <div className="p-2 bg-gradient-to-br from-primary to-secondary rounded-lg">
-              <Settings className="h-6 w-6 text-primary-foreground" />
+      <DialogContent className={`${getModalSize()} overflow-hidden p-0 bg-gradient-to-br from-background via-muted/20 to-background border-primary/20`}>
+        <DialogHeader className={`px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 border-b border-primary/20`}>
+          <DialogTitle className={`flex items-center gap-2 sm:gap-3 ${isMobile ? 'text-lg' : 'text-2xl'} bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent font-semibold`}>
+            <div className="p-1.5 sm:p-2 bg-gradient-to-br from-primary to-secondary rounded-lg">
+              <Settings className={`${isMobile ? 'h-4 w-4' : 'h-6 w-6'} text-primary-foreground`} />
             </div>
-            Gerenciar Conta
+            {isMobile ? 'Conta' : 'Gerenciar Conta'}
           </DialogTitle>
         </DialogHeader>
 
         <div className="flex-1 overflow-auto">
           <Tabs defaultValue="profile" className="h-full">
-            <TabsList className="grid w-full grid-cols-5 bg-gradient-to-r from-muted/50 via-card to-muted/50 mx-6 mt-4 border border-primary/20">
-              <TabsTrigger value="profile" className="flex items-center gap-2 hover:bg-primary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground transition-all duration-300">
-                <User className="h-4 w-4" />
-                Perfil
+            <TabsList className={`grid w-full ${getTabsLayout()} bg-gradient-to-r from-muted/50 via-card to-muted/50 mx-2 sm:mx-6 mt-2 sm:mt-4 border border-primary/20`}>
+              <TabsTrigger value="profile" className={`flex items-center ${isMobile ? 'gap-1 px-2 text-xs' : 'gap-2'} hover:bg-primary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground transition-all duration-300 min-h-[44px]`}>
+                <User className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
+                <span className={isMobile ? 'hidden sm:inline' : ''}>Perfil</span>
               </TabsTrigger>
-              <TabsTrigger value="avatar" className="flex items-center gap-2 hover:bg-secondary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-accent data-[state=active]:text-secondary-foreground transition-all duration-300">
-                <Camera className="h-4 w-4" />
-                Avatar
+              <TabsTrigger value="avatar" className={`flex items-center ${isMobile ? 'gap-1 px-2 text-xs' : 'gap-2'} hover:bg-secondary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-accent data-[state=active]:text-secondary-foreground transition-all duration-300 min-h-[44px]`}>
+                <Camera className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
+                <span className={isMobile ? 'hidden sm:inline' : ''}>Avatar</span>
               </TabsTrigger>
-              <TabsTrigger value="security" className="flex items-center gap-2 hover:bg-accent/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-accent data-[state=active]:to-primary data-[state=active]:text-accent-foreground transition-all duration-300">
-                <Shield className="h-4 w-4" />
-                Segurança
+              {!isMobile && (
+                <TabsTrigger value="security" className="flex items-center gap-2 hover:bg-accent/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-accent data-[state=active]:to-primary data-[state=active]:text-accent-foreground transition-all duration-300 min-h-[44px]">
+                  <Shield className="h-4 w-4" />
+                  Segurança
+                </TabsTrigger>
+              )}
+              <TabsTrigger value="radcoin-shop" className={`flex items-center ${isMobile ? 'gap-1 px-2 text-xs' : 'gap-2'} hover:bg-primary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground transition-all duration-300 min-h-[44px]`}>
+                <Coins className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
+                <span className={isMobile ? 'hidden sm:inline' : ''}>Loja</span>
               </TabsTrigger>
-              <TabsTrigger value="radcoin-shop" className="flex items-center gap-2 hover:bg-primary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground transition-all duration-300">
-                <Coins className="h-4 w-4" />
-                Loja RadCoin
+              <TabsTrigger value="history" className={`flex items-center ${isMobile ? 'gap-1 px-2 text-xs' : 'gap-2'} hover:bg-secondary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-accent data-[state=active]:text-secondary-foreground transition-all duration-300 min-h-[44px]`}>
+                <Settings className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
+                <span className={isMobile ? 'hidden sm:inline' : ''}>Histórico</span>
               </TabsTrigger>
-              <TabsTrigger value="history" className="flex items-center gap-2 hover:bg-secondary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-accent data-[state=active]:text-secondary-foreground transition-all duration-300">
-                <Settings className="h-4 w-4" />
-                Histórico
-              </TabsTrigger>
+              {isMobile && (
+                <TabsTrigger value="security" className="flex items-center gap-1 px-2 text-xs hover:bg-accent/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-accent data-[state=active]:to-primary data-[state=active]:text-accent-foreground transition-all duration-300 min-h-[44px]">
+                  <Shield className="h-3 w-3" />
+                  <span className="hidden sm:inline">Segurança</span>
+                </TabsTrigger>
+              )}
             </TabsList>
 
-            <div className="p-6">
+            <div className={`p-3 sm:p-6`}>
               <TabsContent value="profile" className="mt-0">
                 <ProfileEditTab 
                   formData={formData}
