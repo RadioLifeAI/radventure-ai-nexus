@@ -144,10 +144,9 @@ export default function EventoArena() {
     const originalCorrectText = currentCase.answer_options?.[currentCase.correct_answer_index] || '';
     const isCorrect = selectedText === originalCorrectText;
     
-    // ✅ CORREÇÃO: Usar pontuação real baseada na dificuldade
+    // ✅ CORREÇÃO: Usar pontuação direta sem multiplicador de confiança  
     const basePoints = currentCase.points || (currentCase.difficulty_level * 5) || 10;
-    const confidenceMultiplier = confidence / 10;
-    const pointsEarned = isCorrect ? Math.round(basePoints * confidenceMultiplier) : 0;
+    const pointsEarned = isCorrect ? basePoints : 0;
     const caseTimeSpent = Math.floor((Date.now() - startTime) / 1000) - timeSpent;
 
     console.log('🎯 Dados para validação:', {
@@ -713,33 +712,6 @@ export default function EventoArena() {
                   </div>
                 </div>
 
-                {/* Seletor de Confiança */}
-                {selectedAnswer !== null && (
-                  <div className="space-y-4">
-                    <h4 className="font-semibold text-gray-800 flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-yellow-500" />
-                      Nível de Confiança
-                    </h4>
-                    <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                      <input
-                        type="range"
-                        min="1"
-                        max="10"
-                        value={confidence}
-                        onChange={(e) => setConfidence(Number(e.target.value))}
-                        className="w-full h-2 bg-yellow-200 rounded-lg appearance-none cursor-pointer"
-                      />
-                      <div className="flex justify-between text-xs text-yellow-700 mt-2">
-                        <span>Baixa (1)</span>
-                        <span className="font-bold">Confiança: {confidence}/10</span>
-                        <span>Alta (10)</span>
-                      </div>
-                      <p className="text-xs text-yellow-600 mt-2">
-                        Multiplicador de pontos: {(confidence / 10).toFixed(1)}x
-                      </p>
-                    </div>
-                  </div>
-                )}
 
                 {/* Botão de Responder */}
                 <Button
