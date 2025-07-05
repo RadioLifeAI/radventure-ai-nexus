@@ -174,32 +174,32 @@ export function EventPodiumDisplay({ topChampions }: EventPodiumDisplayProps) {
       </div>
 
       {/* Detalhes dos Campeões */}
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
         {topChampions.slice(0, 3).map((champion, index) => (
           <div 
             key={champion.user.full_name + index} 
-            className={`${getCardColors(index + 1)} rounded-xl p-6 shadow-lg border-2 hover:shadow-2xl transition-all duration-300 hover:scale-105`}
+            className={`${getCardColors(index + 1)} rounded-xl p-3 sm:p-4 md:p-6 shadow-lg border-2 hover:shadow-2xl transition-all duration-300 hover:scale-105`}
           >
-            <div className="text-center mb-4">
+            <div className="text-center mb-3 sm:mb-4">
               <div className="flex items-center justify-center gap-2 mb-2">
                 {getPodiumIcon(index + 1)}
-                <span className="text-2xl font-bold text-gray-900">#{index + 1}</span>
+                <span className="text-xl sm:text-2xl font-bold text-gray-900">#{index + 1}</span>
               </div>
-              <h4 className="font-bold text-lg text-gray-900">
+              <h4 className="font-bold text-base sm:text-lg text-gray-900 truncate">
                 {champion.user.full_name || champion.user.username}
               </h4>
             </div>
 
             <div className="space-y-3">
               <div className="text-center">
-                <p className="text-sm text-gray-700 mb-2 font-medium">Últimas Vitórias:</p>
-                <div className="space-y-1">
+                <p className="text-xs sm:text-sm text-gray-700 mb-2 font-medium">Últimas Vitórias:</p>
+                <div className="space-y-2">
                   {champion.victories.slice(0, 2).map((victory, vIndex) => (
-                    <div key={vIndex} className="flex items-center justify-between text-xs bg-white/80 rounded-lg p-2 border border-white/40">
-                      <span className="text-gray-800 truncate flex-1 mr-2 font-medium">
+                    <div key={vIndex} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2 bg-white/80 rounded-lg p-2 border border-white/40">
+                      <span className="text-gray-800 font-medium text-xs leading-tight">
                         {victory.event.name}
                       </span>
-                      <span className="text-gray-600 whitespace-nowrap font-medium">
+                      <span className="text-gray-600 text-xs font-medium">
                         {formatDistanceToNow(new Date(victory.event.scheduled_start), { 
                           addSuffix: true, 
                           locale: ptBR 
@@ -208,7 +208,7 @@ export function EventPodiumDisplay({ topChampions }: EventPodiumDisplayProps) {
                     </div>
                   ))}
                   {champion.victories.length > 2 && (
-                    <p className="text-xs text-gray-600 italic font-medium">
+                    <p className="text-xs text-gray-600 italic font-medium mt-2">
                       +{champion.victories.length - 2} outras vitórias
                     </p>
                   )}
@@ -216,7 +216,7 @@ export function EventPodiumDisplay({ topChampions }: EventPodiumDisplayProps) {
               </div>
               
               <div className="text-center pt-2">
-                <Button size="sm" variant="outline" className="hover:scale-105 transition-transform border-gray-400 text-gray-800 hover:bg-gray-100 font-medium">
+                <Button size="sm" variant="outline" className="hover:scale-105 transition-transform border-gray-400 text-gray-800 hover:bg-gray-100 font-medium text-xs">
                   Ver Perfil Completo
                 </Button>
               </div>

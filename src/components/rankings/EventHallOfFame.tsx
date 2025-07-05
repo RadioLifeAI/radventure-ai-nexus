@@ -99,69 +99,71 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
 
     return (
       <Card key={champion.user.full_name + index} className={`${index < 3 ? podiumColors[index] : 'bg-white'} hover:shadow-lg transition-shadow`}>
-         <CardContent className="p-4 sm:p-6">
-           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                {champion.user.avatar_url ? (
-                  <img 
-                    src={champion.user.avatar_url} 
-                    alt="Avatar"
-                    className="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md"
-                  />
-                ) : (
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xl font-bold border-2 border-white shadow-md">
-                    {champion.user.full_name?.charAt(0) || champion.user.username?.charAt(0) || '?'}
+         <CardContent className="p-3 sm:p-4 md:p-6">
+           <div className="flex flex-col gap-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <div className="flex items-center gap-3 flex-1">
+                <div className="relative flex-shrink-0">
+                  {champion.user.avatar_url ? (
+                    <img 
+                      src={champion.user.avatar_url} 
+                      alt="Avatar"
+                      className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-white shadow-md"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-lg sm:text-xl font-bold border-2 border-white shadow-md">
+                      {champion.user.full_name?.charAt(0) || champion.user.username?.charAt(0) || '?'}
+                    </div>
+                  )}
+                  {index < 3 && (
+                    <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center">
+                      <span className="text-white font-bold text-xs sm:text-sm">
+                        {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-sm sm:text-base md:text-lg text-gray-900 truncate">
+                    {champion.user.full_name || champion.user.username}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-700 mb-2 truncate">
+                    {champion.user.medical_specialty}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+                    <Badge className="bg-yellow-200 text-yellow-800 border-yellow-400 font-semibold text-xs">
+                      <Trophy className="h-3 w-3 mr-1" />
+                      {champion.totalVictories} vitória{champion.totalVictories !== 1 ? 's' : ''}
+                    </Badge>
+                    <Badge className="bg-green-200 text-green-800 border-green-400 font-semibold text-xs">
+                      {champion.totalRadCoins.toLocaleString()} RadCoins
+                    </Badge>
                   </div>
-                )}
-                {index < 3 && (
-                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">
-                      {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
-                    </span>
-                  </div>
-                )}
-              </div>
-              
-               <div>
-                 <h3 className="font-bold text-base sm:text-lg text-gray-900">
-                   {champion.user.full_name || champion.user.username}
-                 </h3>
-                <p className="text-sm text-gray-700 mb-2">
-                  {champion.user.medical_specialty}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Badge className="bg-yellow-200 text-yellow-800 border-yellow-400 font-semibold">
-                    <Trophy className="h-3 w-3 mr-1" />
-                    {champion.totalVictories} vitória{champion.totalVictories !== 1 ? 's' : ''}
-                  </Badge>
-                  <Badge className="bg-green-200 text-green-800 border-green-400 font-semibold">
-                    {champion.totalRadCoins.toLocaleString()} RadCoins
-                  </Badge>
                 </div>
               </div>
-            </div>
-            
-             <div className="text-right">
-               <div className="text-xl sm:text-2xl font-bold text-gray-900">
-                 #{index + 1}
-               </div>
-              <Button size="sm" variant="outline" className="mt-2 border-gray-400 text-gray-800 hover:bg-gray-100 font-medium">
-                Ver Perfil
-              </Button>
+              
+              <div className="flex sm:flex-col items-center sm:items-end gap-2">
+                <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
+                  #{index + 1}
+                </div>
+                <Button size="sm" variant="outline" className="border-gray-400 text-gray-800 hover:bg-gray-100 font-medium text-xs">
+                  Ver Perfil
+                </Button>
+              </div>
             </div>
           </div>
           
            {/* Eventos recentes do campeão */}
            <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-300">
              <p className="text-xs sm:text-sm font-medium text-gray-800 mb-2">Últimas Vitórias:</p>
-             <div className="space-y-1">
+             <div className="space-y-2">
               {champion.victories.slice(0, 2).map((victory: any, vIndex: number) => (
-                <div key={vIndex} className="flex items-center justify-between text-xs">
-                  <span className="text-gray-700 truncate flex-1 mr-2 font-medium">
+                <div key={vIndex} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2 bg-white/80 rounded-lg p-2 border border-white/40">
+                  <span className="text-gray-800 font-medium text-xs leading-tight">
                     {victory.event.name}
                   </span>
-                  <span className="text-gray-600 whitespace-nowrap font-medium">
+                  <span className="text-gray-600 text-xs font-medium">
                     {formatDistanceToNow(new Date(victory.event.scheduled_start), { 
                       addSuffix: true, 
                       locale: ptBR 
@@ -170,7 +172,7 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
                 </div>
               ))}
               {champion.victories.length > 2 && (
-                <p className="text-xs text-gray-600 italic font-medium">
+                <p className="text-xs text-gray-600 italic font-medium mt-2">
                   +{champion.victories.length - 2} outras vitórias
                 </p>
               )}
@@ -229,7 +231,7 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
           {topChampions.length > 3 && (
             <div className="mt-12">
               <h4 className="text-xl font-bold text-gray-800 mb-6 text-center">Outros Campeões Históricos</h4>
-              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
                 {topChampions.slice(3).map((champion, index) => renderChampionCard(champion, index + 3))}
               </div>
             </div>
@@ -242,21 +244,21 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
             <p className="text-gray-600">Últimos vencedores de eventos</p>
           </div>
           
-           <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+           <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
             {recentEvents.map((event, index) => (
               <Card key={event.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center">
-                        <Crown className="h-6 w-6 text-white" />
+                <CardContent className="p-3 sm:p-4">
+                   <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center flex-shrink-0">
+                        <Crown className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
                       </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-900">{event.event.name}</h4>
-                        <p className="text-sm text-gray-700">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-gray-900 text-sm sm:text-base truncate">{event.event.name}</h4>
+                        <p className="text-xs sm:text-sm text-gray-700 truncate">
                           Campeão: {event.user.full_name || event.user.username}
                         </p>
-                         <div className="flex items-center gap-2 mt-1">
+                         <div className="flex flex-wrap items-center gap-2 mt-1">
                            <Badge variant="outline" className="text-xs border-gray-400 text-gray-800">
                              Rank #{event.rank}
                            </Badge>
@@ -269,8 +271,8 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
                         </div>
                       </div>
                     </div>
-                     <div className="text-right">
-                       <div className="font-bold text-green-700 text-lg">
+                     <div className="text-center sm:text-right border-t sm:border-t-0 pt-2 sm:pt-0">
+                       <div className="font-bold text-green-700 text-base sm:text-lg">
                          {(event.radcoins_awarded || 0).toLocaleString()}
                        </div>
                        <div className="text-xs text-gray-600 font-medium">RadCoins Ganhos</div>
@@ -288,20 +290,20 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
             <p className="text-gray-600">Eventos com os maiores prêmios em RadCoins</p>
           </div>
           
-          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
             {biggestPrizes.map((event, index) => (
               <Card key={event.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-white ${
+                <CardContent className="p-3 sm:p-4">
+                   <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-bold text-white flex-shrink-0 ${
                         index < 3 ? 'bg-gradient-to-br from-yellow-500 to-orange-500' : 'bg-gradient-to-br from-blue-500 to-purple-500'
                       }`}>
                         #{index + 1}
                       </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-900">{event.event.name}</h4>
-                        <p className="text-sm text-gray-700">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-gray-900 text-sm sm:text-base truncate">{event.event.name}</h4>
+                        <p className="text-xs sm:text-sm text-gray-700 truncate">
                           Vencedor: {event.user.full_name || event.user.username}
                         </p>
                         <div className="text-xs text-gray-600 mt-1 font-medium">
@@ -309,11 +311,11 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
                         </div>
                       </div>
                     </div>
-                     <div className="text-right">
-                       <div className="text-2xl font-bold text-green-700">
+                     <div className="text-center sm:text-right border-t sm:border-t-0 pt-2 sm:pt-0">
+                       <div className="text-xl sm:text-2xl font-bold text-green-700">
                          {(event.radcoins_awarded || 0).toLocaleString()}
                        </div>
-                        <div className="text-sm text-gray-600 font-medium">RadCoins Ganhos</div>
+                        <div className="text-xs sm:text-sm text-gray-600 font-medium">RadCoins Ganhos</div>
                         <Badge className="mt-1 bg-yellow-200 text-yellow-800 border-yellow-400 font-semibold">
                           Rank #{event.rank}
                         </Badge>
