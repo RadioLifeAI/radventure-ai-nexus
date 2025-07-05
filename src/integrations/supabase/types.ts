@@ -2828,6 +2828,10 @@ export type Database = {
         Args: { p_event_id: string }
         Returns: Json
       }
+      distribute_event_prizes: {
+        Args: { p_event_id: string }
+        Returns: Json
+      }
       emergency_admin_recovery: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -2860,6 +2864,10 @@ export type Database = {
       }
       get_daily_challenge_for_user_debug: {
         Args: { p_user_id: string }
+        Returns: Json
+      }
+      get_event_prize_stats: {
+        Args: { p_event_id: string }
         Returns: Json
       }
       get_system_status: {
@@ -2908,6 +2916,10 @@ export type Database = {
       maintain_question_pool: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      manual_event_prize_redistribution: {
+        Args: { p_event_id: string; p_force?: boolean }
+        Returns: Json
       }
       optimize_database_performance: {
         Args: Record<PropertyKey, never>
