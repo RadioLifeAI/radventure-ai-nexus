@@ -23,7 +23,7 @@ export default function EventosEnhanced() {
     hasActiveFilters 
   } = useEventFilters();
   const { handleEnterEvent } = useEventosHandlers();
-  const [activeView, setActiveView] = useState("dashboard");
+  const [activeView, setActiveView] = useState("events");
 
   // Aplicar filtros aos eventos
   const filteredEvents = applyFilters(events);

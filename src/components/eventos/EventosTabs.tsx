@@ -2,7 +2,6 @@
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, TrendingUp, Calendar, Target } from "lucide-react";
-import { EventsDashboardRealTime } from "./EventsDashboardRealTime";
 import { EventsAdvancedVisualization } from "./EventsAdvancedVisualization";
 import { EventFilterBarFunctional } from "./EventFilterBarFunctional";
 import { EventsGrid } from "./EventsGrid";
@@ -38,11 +37,7 @@ export function EventosTabs({
   return (
     <div className="mt-6">
       <Tabs value={activeView} onValueChange={onViewChange} className="space-y-6">
-        <TabsList className="grid grid-cols-2 md:grid-cols-4 bg-white/10 backdrop-blur-sm border border-white/20">
-          <TabsTrigger value="dashboard" className="data-[state=active]:bg-white/20">
-            <BarChart3 className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Dashboard</span>
-          </TabsTrigger>
+        <TabsList className="grid grid-cols-3 bg-white/10 backdrop-blur-sm border border-white/20">
           <TabsTrigger value="visualization" className="data-[state=active]:bg-white/20">
             <TrendingUp className="h-4 w-4 mr-2" />
             <span className="hidden sm:inline">Visualizações</span>
@@ -56,10 +51,6 @@ export function EventosTabs({
             <span className="hidden sm:inline">Analytics</span>
           </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="dashboard">
-          <EventsDashboardRealTime />
-        </TabsContent>
 
         <TabsContent value="visualization">
           <EventsAdvancedVisualization events={filteredEvents} onEnterEvent={onEnterEvent} />
