@@ -77,24 +77,32 @@ export function useEventMetrics() {
           if (!error) userCompletedEvents = count || 0;
         }
 
-        // Calcular métricas
-        const totalEvents = events?.length || 0;
-        const activeEvents = events?.filter(e => e.status === "ACTIVE").length || 0;
-        const scheduledEvents = events?.filter(e => e.status === "SCHEDULED").length || 0;
-        const totalPrizePool = events?.reduce((sum, event) => sum + event.prize_radcoins, 0) || 0;
-        const avgParticipantsPerEvent = totalEvents > 0 ? Math.round((totalRegistrations || 0) / totalEvents) : 0;
+      // Buscar total de RadCoins realmente distribuídos
+      const { data: distributedCoins } = await supabase
+        .from("event_final_rankings")
+        .select("radcoins_awarded");
+
+      const totalRadCoinsDistributed = (distributedCoins || []).reduce((sum, r) => sum + (r.radcoins_awarded || 0), 0);
+
+      // Calcular métricas
+      const totalEvents = events?.length || 0;
+      const activeEvents = events?.filter(e => e.status === "ACTIVE").length || 0;
+      const scheduledEvents = events?.filter(e => e.status === "SCHEDULED").length || 0;
+      const finishedEvents = events?.filter(e => e.status === "FINISHED").length || 0;
+      const totalPrizePool = events?.reduce((sum, event) => sum + event.prize_radcoins, 0) || 0;
+      const avgParticipantsPerEvent = totalEvents > 0 ? Math.round((totalRegistrations || 0) / totalEvents) : 0;
 
         if (!ignore) {
-          setMetrics({
-            totalEvents,
-            activeEvents,
-            scheduledEvents,
-            totalParticipants: totalRegistrations || 0,
-            userRegistrations,
-            userCompletedEvents,
-            totalPrizePool,
-            avgParticipantsPerEvent
-          });
+        setMetrics({
+          totalEvents,
+          activeEvents,
+          scheduledEvents,
+          totalParticipants: totalRegistrations || 0,
+          userRegistrations,
+          userCompletedEvents,
+          totalPrizePool: totalRadCoinsDistributed,
+          avgParticipantsPerEvent
+        });
         }
       } catch (error) {
         console.error("Erro ao buscar métricas:", error);
@@ -156,12 +164,19 @@ export function useEventMetrics() {
         if (!error) userCompletedEvents = count || 0;
       }
 
-      // Calcular métricas
-      const totalEvents = events?.length || 0;
-      const activeEvents = events?.filter(e => e.status === "ACTIVE").length || 0;
-      const scheduledEvents = events?.filter(e => e.status === "SCHEDULED").length || 0;
-      const totalPrizePool = events?.reduce((sum, event) => sum + event.prize_radcoins, 0) || 0;
-      const avgParticipantsPerEvent = totalEvents > 0 ? Math.round((totalRegistrations || 0) / totalEvents) : 0;
+    // Buscar total de RadCoins realmente distribuídos
+    const { data: distributedCoins } = await supabase
+      .from("event_final_rankings")
+      .select("radcoins_awarded");
+
+    const totalRadCoinsDistributed = (distributedCoins || []).reduce((sum, r) => sum + (r.radcoins_awarded || 0), 0);
+
+    // Calcular métricas
+    const totalEvents = events?.length || 0;
+    const activeEvents = events?.filter(e => e.status === "ACTIVE").length || 0;
+    const scheduledEvents = events?.filter(e => e.status === "SCHEDULED").length || 0;
+    const totalPrizePool = events?.reduce((sum, event) => sum + event.prize_radcoins, 0) || 0;
+    const avgParticipantsPerEvent = totalEvents > 0 ? Math.round((totalRegistrations || 0) / totalEvents) : 0;
 
       setMetrics({
         totalEvents,
@@ -170,7 +185,7 @@ export function useEventMetrics() {
         totalParticipants: totalRegistrations || 0,
         userRegistrations,
         userCompletedEvents,
-        totalPrizePool,
+        totalPrizePool: totalRadCoinsDistributed,
         avgParticipantsPerEvent
       });
     } catch (error) {

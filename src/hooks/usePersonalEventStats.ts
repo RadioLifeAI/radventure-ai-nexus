@@ -23,7 +23,7 @@ export function usePersonalEventStats(userId?: string) {
         .from("event_rankings")
         .select("*")
         .eq("user_id", userId)
-        .order("created_at", { ascending: false });
+        .order("updated_at", { ascending: false });
 
       if (rankingsError) {
         console.error("Erro ao buscar rankings do usuário:", rankingsError);

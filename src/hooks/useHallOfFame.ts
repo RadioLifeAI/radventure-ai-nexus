@@ -12,8 +12,16 @@ export function useHallOfFame() {
       setLoading(true);
       
       const { data: topRankings, error: rankingsError } = await supabase
-        .from("event_rankings")
-        .select("*")
+        .from("event_final_rankings")
+        .select(`
+          *,
+          events:event_id (
+            id, name, status, scheduled_start, scheduled_end, prize_radcoins, banner_url
+          ),
+          profiles:user_id (
+            id, full_name, username, avatar_url, medical_specialty
+          )
+        `)
         .eq("rank", 1)
         .limit(20)
         .order("created_at", { ascending: false });
@@ -28,30 +36,15 @@ export function useHallOfFame() {
         return;
       }
 
-      const eventIds = [...new Set(topRankings.map(r => r.event_id))];
-      const { data: events } = await supabase
-        .from("events")
-        .select("*")
-        .in("id", eventIds);
-
-      const userIds = [...new Set(topRankings.map(r => r.user_id))];
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, full_name, username, avatar_url, medical_specialty")
-        .in("id", userIds);
-
-      const eventsMap = new Map((events || []).map(e => [e.id, e]));
-      const profilesMap = new Map((profiles || []).map(p => [p.id, p]));
-
       const formattedHallOfFame = topRankings.map(ranking => {
-        const event = eventsMap.get(ranking.event_id);
-        const profile = profilesMap.get(ranking.user_id);
+        const event = ranking.events;
+        const profile = ranking.profiles;
 
         return {
           id: ranking.id,
           event_id: ranking.event_id,
           user_id: ranking.user_id,
-          score: ranking.score || 0,
+          score: 0, // Final rankings não têm score
           rank: ranking.rank || 1,
           event: event ? {
             id: event.id,
