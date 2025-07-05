@@ -97,39 +97,56 @@ export function ProfileSettingsModal({ isOpen, onClose }: ProfileSettingsModalPr
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 max-h-[calc(85vh-100px)] sm:max-h-[calc(90vh-120px)]">
-          <Tabs defaultValue="profile" className="h-full">
-            <TabsList className={`grid w-full ${isMobile ? 'grid-cols-2 gap-0.5' : isTablet ? 'grid-cols-3 gap-1' : 'grid-cols-5 gap-1'} bg-gradient-to-r from-muted/50 via-card to-muted/50 mx-2 sm:mx-6 mt-2 sm:mt-4 border border-primary/20 ${isMobile ? 'overflow-x-auto' : ''}`}>
-              <TabsTrigger value="profile" className={`flex items-center justify-center ${isMobile ? 'gap-1 px-1 text-xs' : 'gap-2 px-3'} hover:bg-primary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground transition-all duration-300 min-h-[44px] whitespace-nowrap`}>
+        <Tabs defaultValue="profile" className="h-full flex flex-col">
+          {/* Abas fixas fora do ScrollArea */}
+          <div className="flex-shrink-0 px-2 sm:px-6 mt-2 sm:mt-4">
+            <TabsList className={`w-full bg-gradient-to-r from-muted/50 via-card to-muted/50 border border-primary/20 ${
+              isMobile 
+                ? 'flex overflow-x-auto scrollbar-hide gap-1 p-1' 
+                : isTablet 
+                  ? 'grid grid-cols-3 gap-1' 
+                  : 'grid grid-cols-5 gap-1'
+            }`}>
+              <TabsTrigger 
+                value="profile" 
+                className={`flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 hover:bg-primary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground transition-all duration-300 min-h-[44px] whitespace-nowrap ${isMobile ? 'min-w-[80px] flex-shrink-0' : ''}`}
+              >
                 <User className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} flex-shrink-0`} />
                 <span className={`${isMobile ? 'text-xs' : 'text-sm'} truncate`}>Perfil</span>
               </TabsTrigger>
-              <TabsTrigger value="avatar" className={`flex items-center justify-center ${isMobile ? 'gap-1 px-1 text-xs' : 'gap-2 px-3'} hover:bg-secondary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-accent data-[state=active]:text-secondary-foreground transition-all duration-300 min-h-[44px] whitespace-nowrap`}>
+              <TabsTrigger 
+                value="avatar" 
+                className={`flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 hover:bg-secondary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-accent data-[state=active]:text-secondary-foreground transition-all duration-300 min-h-[44px] whitespace-nowrap ${isMobile ? 'min-w-[80px] flex-shrink-0' : ''}`}
+              >
                 <Camera className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} flex-shrink-0`} />
                 <span className={`${isMobile ? 'text-xs' : 'text-sm'} truncate`}>Avatar</span>
               </TabsTrigger>
-              {!isMobile && (
-                <TabsTrigger value="security" className="flex items-center justify-center gap-2 px-3 hover:bg-accent/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-accent data-[state=active]:to-primary data-[state=active]:text-accent-foreground transition-all duration-300 min-h-[44px] whitespace-nowrap">
-                  <Shield className="h-4 w-4 flex-shrink-0" />
-                  <span className="text-sm truncate">Segurança</span>
-                </TabsTrigger>
-              )}
-              <TabsTrigger value="radcoin-shop" className={`flex items-center justify-center ${isMobile ? 'gap-1 px-1 text-xs' : 'gap-2 px-3'} hover:bg-primary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground transition-all duration-300 min-h-[44px] whitespace-nowrap ${isMobile ? 'col-span-1' : ''}`}>
+              <TabsTrigger 
+                value="radcoin-shop" 
+                className={`flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 hover:bg-primary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground transition-all duration-300 min-h-[44px] whitespace-nowrap ${isMobile ? 'min-w-[70px] flex-shrink-0' : ''}`}
+              >
                 <Coins className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} flex-shrink-0`} />
                 <span className={`${isMobile ? 'text-xs' : 'text-sm'} truncate`}>Loja</span>
               </TabsTrigger>
-              <TabsTrigger value="history" className={`flex items-center justify-center ${isMobile ? 'gap-1 px-1 text-xs' : 'gap-2 px-3'} hover:bg-secondary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-accent data-[state=active]:text-secondary-foreground transition-all duration-300 min-h-[44px] whitespace-nowrap ${isMobile ? 'col-span-1' : ''}`}>
+              <TabsTrigger 
+                value="history" 
+                className={`flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 hover:bg-secondary/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-secondary data-[state=active]:to-accent data-[state=active]:text-secondary-foreground transition-all duration-300 min-h-[44px] whitespace-nowrap ${isMobile ? 'min-w-[90px] flex-shrink-0' : ''}`}
+              >
                 <Settings className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} flex-shrink-0`} />
                 <span className={`${isMobile ? 'text-xs' : 'text-sm'} truncate`}>Histórico</span>
               </TabsTrigger>
-              {isMobile && (
-                <TabsTrigger value="security" className="flex items-center justify-center gap-1 px-1 text-xs hover:bg-accent/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-accent data-[state=active]:to-primary data-[state=active]:text-accent-foreground transition-all duration-300 min-h-[44px] whitespace-nowrap col-span-2">
-                  <Shield className="h-3 w-3 flex-shrink-0" />
-                  <span className="text-xs truncate">Segurança</span>
-                </TabsTrigger>
-              )}
+              <TabsTrigger 
+                value="security" 
+                className={`flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 hover:bg-accent/10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-accent data-[state=active]:to-primary data-[state=active]:text-accent-foreground transition-all duration-300 min-h-[44px] whitespace-nowrap ${isMobile ? 'min-w-[95px] flex-shrink-0' : ''}`}
+              >
+                <Shield className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} flex-shrink-0`} />
+                <span className={`${isMobile ? 'text-xs' : 'text-sm'} truncate`}>Segurança</span>
+              </TabsTrigger>
             </TabsList>
+          </div>
 
+          {/* ScrollArea apenas para o conteúdo das abas */}
+          <ScrollArea className="flex-1 max-h-[calc(85vh-180px)] sm:max-h-[calc(90vh-200px)]">
             <div className={`p-3 sm:p-6`}>
               <TabsContent value="profile" className="mt-0">
                 <ProfileEditTab 
@@ -156,8 +173,8 @@ export function ProfileSettingsModal({ isOpen, onClose }: ProfileSettingsModalPr
                 <HistoryAnalyticsTab />
               </TabsContent>
             </div>
-          </Tabs>
-        </ScrollArea>
+          </ScrollArea>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
