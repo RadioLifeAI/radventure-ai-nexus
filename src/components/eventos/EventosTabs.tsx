@@ -38,15 +38,15 @@ export function EventosTabs({
     <div className="mt-6">
       <Tabs value={activeView} onValueChange={onViewChange} className="space-y-6">
         <TabsList className="grid grid-cols-3 bg-white/10 backdrop-blur-sm border border-white/20">
-          <TabsTrigger value="visualization" className="data-[state=active]:bg-white/20">
+          <TabsTrigger value="visualization" className="text-white data-[state=active]:bg-white/20 data-[state=active]:text-white">
             <TrendingUp className="h-4 w-4 mr-2" />
             <span className="hidden sm:inline">Visualizações</span>
           </TabsTrigger>
-          <TabsTrigger value="events" className="data-[state=active]:bg-white/20">
+          <TabsTrigger value="events" className="text-white data-[state=active]:bg-white/20 data-[state=active]:text-white">
             <Calendar className="h-4 w-4 mr-2" />
             <span className="hidden sm:inline">Todos</span>
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="data-[state=active]:bg-white/20">
+          <TabsTrigger value="analytics" className="text-white data-[state=active]:bg-white/20 data-[state=active]:text-white">
             <Target className="h-4 w-4 mr-2" />
             <span className="hidden sm:inline">Analytics</span>
           </TabsTrigger>

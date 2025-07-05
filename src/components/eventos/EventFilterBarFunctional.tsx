@@ -47,9 +47,9 @@ export function EventFilterBarFunctional({
   filteredEvents
 }: Props) {
   const statusOptions = [
-    { value: "SCHEDULED", label: "Agendado", icon: Clock, color: "bg-blue-100 text-blue-700" },
-    { value: "ACTIVE", label: "Ativo", icon: Zap, color: "bg-green-100 text-green-700" },
-    { value: "FINISHED", label: "Finalizado", icon: Trophy, color: "bg-gray-100 text-gray-700" }
+    { value: "SCHEDULED", label: "Agendado", icon: Clock, color: "bg-blue-500 text-white" },
+    { value: "ACTIVE", label: "Ativo", icon: Zap, color: "bg-green-500 text-white" },
+    { value: "FINISHED", label: "Finalizado", icon: Trophy, color: "bg-gray-500 text-white" }
   ];
 
   const eventTypeOptions = [
@@ -74,7 +74,7 @@ export function EventFilterBarFunctional({
 
       {/* Filtros rápidos */}
       <div className="flex flex-wrap gap-3 items-center">
-        <div className="flex items-center gap-2 text-cyan-700 font-semibold">
+        <div className="flex items-center gap-2 text-white font-semibold">
           <Filter className="h-4 w-4" />
           Filtros:
         </div>
