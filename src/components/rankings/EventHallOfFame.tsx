@@ -99,7 +99,7 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
 
     return (
       <Card key={champion.user.full_name + index} className={`${index < 3 ? podiumColors[index] : 'bg-white'} hover:shadow-lg transition-shadow`}>
-         <CardContent className="p-3 sm:p-4">
+         <CardContent className="p-4 sm:p-6">
            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
             <div className="flex items-center gap-4">
               <div className="relative">
@@ -123,10 +123,10 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
                 )}
               </div>
               
-              <div>
-                <h3 className="font-bold text-lg text-gray-900">
-                  {champion.user.full_name || champion.user.username}
-                </h3>
+               <div>
+                 <h3 className="font-bold text-base sm:text-lg text-gray-900">
+                   {champion.user.full_name || champion.user.username}
+                 </h3>
                 <p className="text-sm text-gray-700 mb-2">
                   {champion.user.medical_specialty}
                 </p>
@@ -142,20 +142,20 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
               </div>
             </div>
             
-            <div className="text-right">
-              <div className="text-2xl font-bold text-gray-900">
-                #{index + 1}
-              </div>
+             <div className="text-right">
+               <div className="text-xl sm:text-2xl font-bold text-gray-900">
+                 #{index + 1}
+               </div>
               <Button size="sm" variant="outline" className="mt-2 border-gray-400 text-gray-800 hover:bg-gray-100 font-medium">
                 Ver Perfil
               </Button>
             </div>
           </div>
           
-          {/* Eventos recentes do campeão */}
-          <div className="mt-4 pt-4 border-t border-gray-300">
-            <p className="text-sm font-medium text-gray-800 mb-2">Últimas Vitórias:</p>
-            <div className="space-y-1">
+           {/* Eventos recentes do campeão */}
+           <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-300">
+             <p className="text-xs sm:text-sm font-medium text-gray-800 mb-2">Últimas Vitórias:</p>
+             <div className="space-y-1">
               {champion.victories.slice(0, 2).map((victory: any, vIndex: number) => (
                 <div key={vIndex} className="flex items-center justify-between text-xs">
                   <span className="text-gray-700 truncate flex-1 mr-2 font-medium">
@@ -229,7 +229,7 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
           {topChampions.length > 3 && (
             <div className="mt-12">
               <h4 className="text-xl font-bold text-gray-800 mb-6 text-center">Outros Campeões Históricos</h4>
-              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {topChampions.slice(3).map((champion, index) => renderChampionCard(champion, index + 3))}
               </div>
             </div>
