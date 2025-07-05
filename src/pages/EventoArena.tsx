@@ -216,37 +216,17 @@ export default function EventoArena() {
     );
   }
 
-  // CORREÇÃO: Verificar se evento não tem casos e mostrar mensagem apropriada
+  // SISTEMA INDEPENDENTE: Eventos permitem TODOS os casos (novos + revisões)
   if (!casesLoading && cases.length === 0) {
+    console.warn(`⚠️ Evento ${eventId} sem casos carregados - aguardando...`);
     return (
       <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#181842] via-[#262975] to-[#1cbad6]">
-        <div className="flex-1 flex items-center justify-center p-4">
-          <Card className="w-full max-w-2xl bg-white/95 backdrop-blur">
-            <CardContent className="p-8 text-center">
-              <XCircle className="h-16 w-16 mx-auto text-red-500 mb-4" />
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">Evento Indisponível</h1>
-              <p className="text-gray-600 mb-6">
-                Este evento não possui casos médicos configurados ou disponíveis no momento.
-              </p>
-              <div className="bg-yellow-50 p-4 rounded-lg mb-6 text-left">
-                <h3 className="font-semibold text-yellow-800 mb-2">Por que isso acontece?</h3>
-                <ul className="text-yellow-700 text-sm space-y-1">
-                  <li>• O evento ainda não foi configurado completamente</li>
-                  <li>• Os casos médicos estão sendo revisados</li>
-                  <li>• Problema temporário na configuração do evento</li>
-                </ul>
-              </div>
-              <div className="flex gap-4 justify-center">
-                <Button onClick={() => navigate("/app/eventos")}>
-                  <Home className="mr-2 h-4 w-4" />
-                  Outros Eventos
-                </Button>
-                <Button variant="outline" onClick={() => window.location.reload()}>
-                  Tentar Novamente
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-white text-center">
+            <Timer className="h-12 w-12 mx-auto animate-spin mb-4" />
+            <h2 className="text-2xl font-bold mb-2">Carregando Casos...</h2>
+            <p className="text-cyan-100">Preparando casos para o evento</p>
+          </div>
         </div>
       </div>
     );
