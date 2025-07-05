@@ -11,15 +11,10 @@ export function useHallOfFame() {
     try {
       setLoading(true);
       
-      // CORREÇÃO: Buscar líderes de eventos ATIVOS e FINALIZADOS
       const { data: topRankings, error: rankingsError } = await supabase
         .from("event_rankings")
-        .select(`
-          *,
-          events!inner(id, name, status, scheduled_start, scheduled_end, prize_radcoins, banner_url)
-        `)
+        .select("*")
         .eq("rank", 1)
-        .in("events.status", ["ACTIVE", "FINISHED"])
         .limit(20)
         .order("created_at", { ascending: false });
 
@@ -33,17 +28,23 @@ export function useHallOfFame() {
         return;
       }
 
-      // CORREÇÃO: Dados dos eventos já vêm da query JOIN
+      const eventIds = [...new Set(topRankings.map(r => r.event_id))];
+      const { data: events } = await supabase
+        .from("events")
+        .select("*")
+        .in("id", eventIds);
+
       const userIds = [...new Set(topRankings.map(r => r.user_id))];
       const { data: profiles } = await supabase
         .from("profiles")
         .select("id, full_name, username, avatar_url, medical_specialty")
         .in("id", userIds);
 
+      const eventsMap = new Map((events || []).map(e => [e.id, e]));
       const profilesMap = new Map((profiles || []).map(p => [p.id, p]));
 
       const formattedHallOfFame = topRankings.map(ranking => {
-        const event = ranking.events; // Dados já vêm do JOIN
+        const event = eventsMap.get(ranking.event_id);
         const profile = profilesMap.get(ranking.user_id);
 
         return {
@@ -52,7 +53,7 @@ export function useHallOfFame() {
           user_id: ranking.user_id,
           score: ranking.score || 0,
           rank: ranking.rank || 1,
-          event: {
+          event: event ? {
             id: event.id,
             name: event.name || "Evento",
             status: event.status || "FINISHED",
@@ -60,6 +61,13 @@ export function useHallOfFame() {
             scheduled_end: event.scheduled_end || new Date().toISOString(),
             prize_radcoins: event.prize_radcoins || 0,
             banner_url: event.banner_url
+          } : {
+            id: ranking.event_id,
+            name: "Evento não encontrado",
+            status: "UNKNOWN",
+            scheduled_start: new Date().toISOString(),
+            scheduled_end: new Date().toISOString(),
+            prize_radcoins: 0
           },
           user: profile ? {
             full_name: profile.full_name || profile.username || "Usuário",
