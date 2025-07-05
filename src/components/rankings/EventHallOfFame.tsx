@@ -17,7 +17,11 @@ interface EventHallOfFameProps {
 export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProps) {
   const [selectedCategory, setSelectedCategory] = useState("champions");
 
-  console.log("🏆 EventHallOfFame - Dados recebidos:", hallOfFameData?.length || 0, hallOfFameData);
+  console.log("🏆 EventHallOfFame - RENDER - Dados recebidos:", {
+    dataLength: hallOfFameData?.length || 0, 
+    loading, 
+    data: hallOfFameData?.slice(0, 2) // Apenas os primeiros 2 para debug
+  });
 
   if (loading) {
     return (
@@ -34,6 +38,8 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
   // Análise dos dados para diferentes categorias
   const champions = hallOfFameData.filter(data => data.rank === 1);
   
+  console.log("🏆 EventHallOfFame - Campeões filtrados (rank=1):", champions.length, champions);
+  
   // Agrupar por usuário para encontrar múltiplos campeões
   const championsByUser = champions.reduce((acc, champion) => {
     const userId = champion.user_id;
@@ -46,8 +52,8 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
       };
     }
     acc[userId].victories.push(champion);
-    acc[userId].totalVictories++;
-    // CORRIGIDO: Usar radcoins_awarded (valor real distribuído) em vez de prize_radcoins
+    acc[userId].totalVictories = acc[userId].victories.length;
+    // USAR radcoins_awarded (valor real distribuído)
     acc[userId].totalRadCoins += champion.radcoins_awarded || 0;
     return acc;
   }, {} as Record<string, any>);
@@ -56,7 +62,11 @@ export function EventHallOfFame({ hallOfFameData, loading }: EventHallOfFameProp
     .sort((a: any, b: any) => b.totalVictories - a.totalVictories)
     .slice(0, 10);
 
-  console.log("🏆 EventHallOfFame - Campeões agrupados:", topChampions.length, championsByUser);
+  console.log("🏆 EventHallOfFame - PROCESSAMENTO FINAL:", {
+    championsByUser: Object.keys(championsByUser).length,
+    topChampions: topChampions.length,
+    firstChampion: topChampions[0]
+  });
 
   // Eventos mais recentes
   const recentEvents = hallOfFameData

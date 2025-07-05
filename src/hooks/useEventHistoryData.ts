@@ -1,29 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-
-export interface EventFinalRankingData {
-  id: string;
-  event_id: string;
-  user_id: string;
-  rank: number;
-  radcoins_awarded: number;
-  created_at: string;
-  event: {
-    id: string;
-    name: string;
-    status: string;
-    scheduled_start: string;
-    scheduled_end: string;
-    prize_radcoins: number;
-    banner_url?: string;
-  };
-  user: {
-    full_name: string;
-    username: string;
-    avatar_url: string;
-    medical_specialty: string;
-  };
-}
+import { EventFinalRankingData } from "./useEventRankingsEnhanced";
 
 export function useEventHistoryData() {
   const [historyData, setHistoryData] = useState<EventFinalRankingData[]>([]);

@@ -77,28 +77,28 @@ export default function EventRankingsEnhanced() {
             <TabsContent value="active" className="animate-fade-in">
               <ActiveEventTracker 
                 rankings={activeEventRankings}
-                loading={loading}
+                loading={loading.rankings}
               />
             </TabsContent>
 
             <TabsContent value="analytics" className="animate-fade-in">
               <EventHistoryAnalytics 
                 historicalData={historyData}
-                loading={loading}
+                loading={loading.history}
               />
             </TabsContent>
 
             <TabsContent value="personal" className="animate-fade-in">
               <PersonalEventStats 
                 stats={personalStats}
-                loading={loading}
+                loading={loading.stats}
               />
             </TabsContent>
 
             <TabsContent value="hall-of-fame" className="animate-fade-in">
               <EventHallOfFame 
                 hallOfFameData={hallOfFameData}
-                loading={loading}
+                loading={loading.hall}
               />
             </TabsContent>
           </Tabs>
