@@ -109,10 +109,10 @@ export function EventPodiumDisplay({ topChampions }: EventPodiumDisplayProps) {
           </div>
           
           <div className="text-center">
-            <h3 className="font-bold text-lg text-gray-900 mb-1">
+            <h3 className="font-bold text-lg text-white mb-1">
               {champion.user.full_name || champion.user.username}
             </h3>
-            <p className="text-sm text-gray-700 mb-3">
+            <p className="text-sm text-gray-100 mb-3">
               {champion.user.medical_specialty}
             </p>
             
