@@ -148,6 +148,15 @@ export function useCaseProgress(caseId: string) {
     const selectedText = case_.user_selected_text || case_.answer_options?.[selectedIndex] || '';
     const correctText = case_.original_correct_text || case_.answer_options?.[case_.correct_answer_index] || '';
     
+    // CORREÇÃO: Buscar feedback correto baseado no texto selecionado, não no índice
+    let selectedFeedback = '';
+    if (case_.answer_options && case_.answer_feedbacks) {
+      const originalIndex = case_.answer_options.findIndex((option: string) => option === selectedText);
+      if (originalIndex >= 0 && case_.answer_feedbacks[originalIndex]) {
+        selectedFeedback = case_.answer_feedbacks[originalIndex];
+      }
+    }
+    
     // Validação pura baseada em texto normalizado
     const isCorrect = validateAnswer(
       selectedIndex,
@@ -272,7 +281,7 @@ export function useCaseProgress(caseId: string) {
       timeSpent,
       helpUsed,
       selectedIndex,
-      answerFeedbacks: case_.answer_feedbacks,
+      selectedFeedback, // Feedback correto baseado no texto
       eliminatedOptions,
       eliminationCount,
       isReview,

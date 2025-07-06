@@ -211,9 +211,11 @@ export default function CasoUsuarioView(props: CasoUsuarioViewProps) {
     
     const result = await submitAnswer(selected, {
       ...caso,
-      // Passar textos para validação correta
+      // Passar textos para validação correta e arrays originais para feedback
       user_selected_text: selectedText,
-      original_correct_text: originalCorrectText
+      original_correct_text: originalCorrectText,
+      answer_options: caso.answer_options, // Array original para buscar feedback
+      answer_feedbacks: caso.answer_feedbacks // Array original de feedbacks
     });
     
     setPerformance(result);

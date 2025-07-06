@@ -34,7 +34,7 @@ type Props = {
     helpUsed: string[];
     penalty: number;
     selectedIndex?: number;
-    answerFeedbacks?: string[];
+    selectedFeedback?: string; // Feedback correto da alternativa selecionada
     confidence?: number;
   };
   onNextCase: () => void;
@@ -82,15 +82,8 @@ export function FeedbackModal({
   // Usar o isCorrect como fonte única de verdade (já validado no useCaseProgress)
   const actuallyCorrect = isCorrect;
 
-  let selectedFeedback = '';
-  if (performance.answerFeedbacks && performance.selectedIndex !== undefined) {
-    const feedbacks = performance.answerFeedbacks;
-    const selectedIdx = performance.selectedIndex;
-    
-    if (selectedIdx >= 0 && selectedIdx < feedbacks.length && feedbacks[selectedIdx]) {
-      selectedFeedback = feedbacks[selectedIdx].trim();
-    }
-  }
+  // CORREÇÃO: Usar o feedback correto que já vem mapeado do useCaseProgress
+  const selectedFeedback = performance.selectedFeedback || '';
 
   // Métricas de performance avançadas
   const getPerformanceLevel = () => {
