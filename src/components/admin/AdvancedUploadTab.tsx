@@ -71,9 +71,9 @@ export function AdvancedUploadTab({ caseId, onImagesChange }: AdvancedUploadTabP
     setShowImageEditor(true);
   };
 
-  const handleImageEdited = (editedFile: File) => {
+  const handleImageEdited = (editedFile: File, legend?: string) => {
     // Aqui você integraria com o sistema de upload existente
-    console.log('Imagem editada:', editedFile);
+    console.log('Imagem editada:', editedFile, 'Legenda:', legend);
     setSelectedFile(null);
   };
 

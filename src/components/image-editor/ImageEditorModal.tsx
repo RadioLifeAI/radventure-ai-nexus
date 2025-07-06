@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { 
   Crop, 
   RotateCcw, 
@@ -14,7 +16,8 @@ import {
   Sun, 
   Contrast,
   ZoomIn,
-  Square
+  Square,
+  FileText
 } from 'lucide-react';
 import ReactCrop, { Crop as CropType, PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -23,7 +26,7 @@ interface ImageEditorModalProps {
   open: boolean;
   onClose: () => void;
   file: File;
-  onSave: (editedFile: File) => void;
+  onSave: (editedFile: File, legend?: string) => void;
 }
 
 export function ImageEditorModal({ open, onClose, file, onSave }: ImageEditorModalProps) {
@@ -34,6 +37,7 @@ export function ImageEditorModal({ open, onClose, file, onSave }: ImageEditorMod
   const [zoom, setZoom] = useState([100]);
   const [force1to1, setForce1to1] = useState(false);
   const [imageUrl, setImageUrl] = useState<string>('');
+  const [legend, setLegend] = useState<string>('');
   
   const imgRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -142,7 +146,7 @@ export function ImageEditorModal({ open, onClose, file, onSave }: ImageEditorMod
   const handleSave = async () => {
     try {
       const editedFile = await generateEditedImage();
-      onSave(editedFile);
+      onSave(editedFile, legend.trim() || undefined);
       onClose();
     } catch (error) {
       console.error('Erro ao salvar imagem editada:', error);
@@ -269,6 +273,27 @@ export function ImageEditorModal({ open, onClose, file, onSave }: ImageEditorMod
                   <RotateCcw className="h-4 w-4 mr-2" />
                   Resetar
                 </Button>
+              </CardContent>
+            </Card>
+
+            {/* Legenda da Imagem */}
+            <Card>
+              <CardContent className="p-4 space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <FileText className="h-4 w-4" />
+                  <Label className="text-sm font-medium">Legenda da Imagem</Label>
+                </div>
+                <Textarea
+                  placeholder="Digite uma legenda para esta imagem (será exibida no caso para os usuários)..."
+                  value={legend}
+                  onChange={(e) => setLegend(e.target.value)}
+                  className="min-h-[80px] resize-none"
+                  maxLength={500}
+                />
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>Esta legenda aparecerá embaixo da imagem no caso</span>
+                  <span>{legend.length}/500</span>
+                </div>
               </CardContent>
             </Card>
 

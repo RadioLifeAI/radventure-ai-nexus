@@ -83,12 +83,12 @@ export function AdvancedUploadTabSpecialized({
     setShowImageEditor(true);
   };
 
-  const handleImageEdited = async (editedFile: File) => {
+  const handleImageEdited = async (editedFile: File, legend?: string) => {
     const result = await uploadSpecializedImage(editedFile, {
       caseId,
       categoryId,
       modality,
-      legend: `Imagem editada - ${editedFile.name}`
+      legend: legend || `Imagem editada - ${editedFile.name}`
     });
     
     if (result && onImagesChange) {
