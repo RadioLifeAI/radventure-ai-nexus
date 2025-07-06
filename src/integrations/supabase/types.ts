@@ -2909,7 +2909,9 @@ export type Database = {
         Returns: Json[]
       }
       get_challenge_analytics: {
-        Args: { p_date_from?: string; p_date_to?: string }
+        Args:
+          | Record<PropertyKey, never>
+          | { p_date_from?: string; p_date_to?: string }
         Returns: Json
       }
       get_daily_challenge_for_user: {

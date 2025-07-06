@@ -4,18 +4,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { QuestionGeneratorSimplified } from './daily-challenge/QuestionGeneratorSimplified';
-import { AutomationDashboard } from './daily-challenge/AutomationDashboard';
-import { AutomationControlCenter } from './daily-challenge/AutomationControlCenter';
-import { AutomationNotifications } from './daily-challenge/AutomationNotifications';
-import { PublishingScheduler } from './daily-challenge/PublishingScheduler';
-import { ChallengeAnalytics } from './daily-challenge/ChallengeAnalytics';
-import { QuestionHistory } from './daily-challenge/QuestionHistory';
-import { useDailyChallengeStats } from '@/hooks/useDailyChallengeStats';
-import { Bot, Zap, Calendar, BarChart3, History, Loader2 } from 'lucide-react';
+import { MonitorControlCenter } from './daily-challenge/MonitorControlCenter';
+import { WeeklyScheduler } from './daily-challenge/WeeklyScheduler';
+import { AnalyticsHistory } from './daily-challenge/AnalyticsHistory';
+import { useAdminDashboardData } from '@/hooks/useAdminDashboardData';
+import { Bot, Zap, Calendar, BarChart3, Loader2 } from 'lucide-react';
 
 export function DailyChallengeManagement() {
-  const [activeTab, setActiveTab] = useState('automation');
-  const { stats, isLoading } = useDailyChallengeStats();
+  const [activeTab, setActiveTab] = useState('monitor');
+  const { data, isLoading } = useAdminDashboardData();
 
   return (
     <div className="space-y-6">
@@ -35,31 +32,31 @@ export function DailyChallengeManagement() {
         </div>
       </div>
 
-      {/* Stats Cards Compactas */}
+      {/* Stats Cards Otimizadas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Questões Hoje</CardTitle>
+            <CardTitle className="text-sm font-medium">Pool de Questões</CardTitle>
             <Zap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold flex items-center gap-2">
-              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : stats.pendingQuestions || 0}
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : data?.approved_questions || 0}
             </div>
-            <p className="text-xs text-muted-foreground">Geradas automaticamente</p>
+            <p className="text-xs text-muted-foreground">Questões aprovadas</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Auto-aprovadas</CardTitle>
+            <CardTitle className="text-sm font-medium">Esta Semana</CardTitle>
             <Bot className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold flex items-center gap-2">
-              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : '0'}
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : data?.weekly_generated || 0}
             </div>
-            <p className="text-xs text-muted-foreground">Confiança ≥90%</p>
+            <p className="text-xs text-muted-foreground">Questões geradas</p>
           </CardContent>
         </Card>
 
@@ -70,59 +67,55 @@ export function DailyChallengeManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold flex items-center gap-2 text-green-600">
-              ON
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : data?.pool_health === 'excellent' ? 'ÓTIMO' : 'BOM'}
             </div>
-            <p className="text-xs text-muted-foreground">Funcionando</p>
+            <p className="text-xs text-muted-foreground">Status automação</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Eficiência</CardTitle>
+            <CardTitle className="text-sm font-medium">Taxa de Acerto</CardTitle>
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold flex items-center gap-2 text-blue-600">
-              95%
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : `${data?.accuracy_rate.toFixed(1) || 0}%`}
             </div>
-            <p className="text-xs text-muted-foreground">Automação ativa</p>
+            <p className="text-xs text-muted-foreground">Usuários acertam</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Tabs Simplificadas */}
+      {/* Tabs Otimizadas - 4 Abas */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="automation" className="flex items-center gap-2">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="monitor" className="flex items-center gap-2">
             <Bot className="h-4 w-4" />
-            Controle Auto
+            Monitor & Controle
           </TabsTrigger>
           <TabsTrigger value="generator" className="flex items-center gap-2">
             <Zap className="h-4 w-4" />
-            Gerador
-          </TabsTrigger>
-          <TabsTrigger value="dashboard" className="flex items-center gap-2">
-            <Bot className="h-4 w-4" />
-            Dashboard
+            Gerador Inteligente
           </TabsTrigger>
           <TabsTrigger value="scheduler" className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
-            Agendamento
+            Agendamento Semanal
           </TabsTrigger>
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
-            Analytics
-          </TabsTrigger>
-          <TabsTrigger value="history" className="flex items-center gap-2">
-            <History className="h-4 w-4" />
-            Histórico
+            Analytics & Histórico
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="monitor" className="space-y-4">
+          <MonitorControlCenter />
+        </TabsContent>
 
         <TabsContent value="generator" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Gerador Simplificado</CardTitle>
+              <CardTitle>Gerador Inteligente</CardTitle>
               <CardDescription>
                 Sistema automatizado com prompt global unificado - 95% menos trabalho manual
               </CardDescription>
@@ -133,51 +126,16 @@ export function DailyChallengeManagement() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="automation" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>🤖 Central de Controle da Automação</CardTitle>
-                  <CardDescription>
-                    Sistema 100% automatizado - Gera, agenda e publica questões diariamente
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <AutomationControlCenter />
-                </CardContent>
-              </Card>
-            </div>
-            <div className="lg:col-span-1">
-              <AutomationNotifications />
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="dashboard" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Dashboard de Automação</CardTitle>
-              <CardDescription>
-                Monitoramento e métricas do sistema automatizado
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <AutomationDashboard />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         <TabsContent value="scheduler" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Agendamento e Publicação</CardTitle>
+              <CardTitle>Agendamento Semanal</CardTitle>
               <CardDescription>
-                Gerencie o calendário de publicação de desafios diários
+                Configure e agende questões em lotes semanais otimizados
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <PublishingScheduler />
+              <WeeklyScheduler />
             </CardContent>
           </Card>
         </TabsContent>
@@ -185,27 +143,13 @@ export function DailyChallengeManagement() {
         <TabsContent value="analytics" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Analytics e Estatísticas</CardTitle>
+              <CardTitle>Analytics & Histórico</CardTitle>
               <CardDescription>
-                Acompanhe o desempenho e engajamento dos desafios
+                Dados reais de performance, engajamento e histórico completo
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ChallengeAnalytics />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="history" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Histórico de Questões</CardTitle>
-              <CardDescription>
-                Visualize todas as questões criadas e suas métricas
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <QuestionHistory />
+              <AnalyticsHistory />
             </CardContent>
           </Card>
         </TabsContent>
