@@ -19,7 +19,7 @@ export function ActionCard({ icon, title, description, link, color, onClick }: A
   
   const getButtonText = () => {
     switch (title) {
-      case "Central de Casos": return isMobile ? "Explorar" : "Explorar";
+      case "Central de Casos": return isMobile ? "Explorar" : "Explorar Casos";
       case "Crie sua Jornada": return isMobile ? "Criar" : "Nova Jornada";
       case "Sistema de Conquistas": return isMobile ? "Conquistas" : "Ver Conquistas";
       default: return isMobile ? "Eventos" : "Ver Eventos";
@@ -45,18 +45,18 @@ export function ActionCard({ icon, title, description, link, color, onClick }: A
         <Button
           onClick={onClick}
           variant="outline"
-          className={`${getResponsiveButton()} border-none text-[#11d3fc] bg-white hover:bg-[#d1f6fd] font-bold rounded-xl shadow hover:shadow-lg transition-all duration-200 w-full max-w-[180px] sm:max-w-[200px] touch-target`}
+          className={`${getResponsiveButton()} border-none text-[#11d3fc] bg-white hover:bg-[#d1f6fd] font-bold rounded-xl shadow hover:shadow-lg transition-all duration-200 w-full max-w-[180px] sm:max-w-[200px] min-h-[44px] px-4 py-3 touch-target flex items-center justify-center`}
         >
           <Activity size={16} className="mr-2 flex-shrink-0" />
-          <span className="truncate">{getButtonText()}</span>
+          <span className="truncate leading-tight">{getButtonText()}</span>
         </Button>
       ) : (
         <Button asChild variant="outline"
-          className={`${getResponsiveButton()} border-none text-[#11d3fc] bg-white hover:bg-[#d1f6fd] font-bold rounded-xl shadow hover:shadow-lg transition-all duration-200 w-full max-w-[180px] sm:max-w-[200px] touch-target`}
+          className={`${getResponsiveButton()} border-none text-[#11d3fc] bg-white hover:bg-[#d1f6fd] font-bold rounded-xl shadow hover:shadow-lg transition-all duration-200 w-full max-w-[180px] sm:max-w-[200px] min-h-[44px] px-4 py-3 touch-target flex items-center justify-center`}
         >
-          <Link to={link || "#"}>
+          <Link to={link || "#"} className="flex items-center justify-center w-full">
             <Activity size={16} className="mr-2 flex-shrink-0" />
-            <span className="truncate">{getButtonText()}</span>
+            <span className="truncate leading-tight">{getButtonText()}</span>
           </Link>
         </Button>
       )}

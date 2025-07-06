@@ -102,7 +102,10 @@ export function useResponsive() {
       return grids[cols];
     },
     
-    getResponsiveButton: () => 'min-h-[44px] px-3 py-2 sm:px-4 sm:py-2 lg:px-6 lg:py-3 text-sm sm:text-base',
+    getResponsiveButton: () => {
+      const base = 'min-h-[44px] px-3 py-2 sm:px-4 sm:py-2 lg:px-6 lg:py-3 text-sm sm:text-base';
+      return base;
+    },
     
     // Helpers existentes melhorados
     getModalSize: () => {
@@ -112,9 +115,9 @@ export function useResponsive() {
     },
     
     getChatSize: () => {
-      if (screenSize === 'mobile') return 'w-[95vw] h-[80vh] fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2';
-      if (screenSize === 'tablet') return 'w-80 h-[450px] fixed bottom-4 right-4';
-      return 'w-96 h-[500px] fixed bottom-4 right-4';
+      if (screenSize === 'mobile') return 'fixed bottom-0 right-0 left-0 h-[85vh] w-full';
+      if (screenSize === 'tablet') return 'fixed bottom-4 right-4 h-[70vh] w-[400px]';
+      return 'fixed bottom-4 right-4 h-[75vh] w-[450px]';
     },
     
     getTabsLayout: () => {

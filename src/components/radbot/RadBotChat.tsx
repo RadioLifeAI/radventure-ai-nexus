@@ -116,14 +116,14 @@ export function RadBotChat({ isOpen, onClose }: RadBotChatProps) {
                 }`}>
                   {message.type === 'user' ? <User className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} /> : <Bot className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />}
                 </div>
-                <div className={`flex-1 ${isMobile ? 'max-w-[85%]' : 'max-w-[80%]'} ${
+                <div className={`flex-1 ${isMobile ? 'max-w-[85%]' : 'max-w-[90%]'} ${
                   message.type === 'user' ? 'text-right' : 'text-left'
                 }`}>
-                  <div className={`inline-block ${isMobile ? 'p-2' : 'p-3'} rounded-lg ${isMobile ? 'text-xs' : 'text-sm'} ${
+                  <div className={`inline-block ${isMobile ? 'p-2' : 'p-4'} rounded-lg ${isMobile ? 'text-xs' : 'text-sm'} ${isMobile ? 'leading-relaxed' : 'leading-relaxed'} break-words overflow-wrap-anywhere ${
                     message.type === 'user'
                       ? 'bg-blue-500 text-white'
                       : 'bg-gray-100 text-gray-800'
-                  }`}>
+                  }`} style={{ wordBreak: 'break-word' }}>
                     {message.content}
                   </div>
                   {message.cost && (

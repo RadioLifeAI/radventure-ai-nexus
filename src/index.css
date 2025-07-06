@@ -83,6 +83,15 @@
     @apply min-h-[44px] min-w-[44px];
   }
   
+  /* Word breaking utilities for chat and text */
+  .overflow-wrap-anywhere {
+    overflow-wrap: anywhere;
+  }
+  
+  .break-words {
+    word-break: break-word;
+  }
+  
   /* Responsive text utilities */
   .text-responsive-xs { @apply text-xs sm:text-sm; }
   .text-responsive-sm { @apply text-sm sm:text-base; }
