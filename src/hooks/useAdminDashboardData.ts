@@ -30,6 +30,36 @@ interface DashboardData {
   };
 }
 
+const parseAnalyticsData = (data: any): DashboardData => {
+  const parsed = data as unknown as DashboardData;
+  return {
+    total_questions: parsed.total_questions || 0,
+    approved_questions: parsed.approved_questions || 0,
+    pending_questions: parsed.pending_questions || 0,
+    published_questions: parsed.published_questions || 0,
+    avg_confidence: parsed.avg_confidence || 0,
+    total_responses: parsed.total_responses || 0,
+    correct_responses: parsed.correct_responses || 0,
+    accuracy_rate: parsed.accuracy_rate || 0,
+    weekly_generated: parsed.weekly_generated || 0,
+    monthly_generated: parsed.monthly_generated || 0,
+    pool_health: parsed.pool_health || 'good',
+    last_generation: parsed.last_generation,
+    next_schedule: parsed.next_schedule || new Date().toISOString(),
+    generation_trend: parsed.generation_trend || {
+      this_week: 0,
+      last_week: 0,
+      this_month: 0,
+    },
+    automation_status: parsed.automation_status || {
+      cron_active: true,
+      last_maintenance: null,
+      next_publish: new Date().toISOString(),
+      system_health: 'good',
+    },
+  };
+};
+
 export function useAdminDashboardData() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -41,7 +71,8 @@ export function useAdminDashboardData() {
       
       if (error) throw error;
       
-      setData(analyticsData as DashboardData);
+      const parsedData = parseAnalyticsData(analyticsData);
+      setData(parsedData);
     } catch (error: any) {
       console.error('Erro ao carregar dados do dashboard:', error);
       toast({
