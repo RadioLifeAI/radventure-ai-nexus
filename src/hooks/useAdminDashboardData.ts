@@ -67,7 +67,9 @@ export function useAdminDashboardData() {
 
   const loadData = async () => {
     try {
-      const { data: analyticsData, error } = await supabase.rpc('get_challenge_analytics', {});
+      const { data: analyticsData, error } = await supabase.rpc('get_challenge_analytics_unified', { 
+        p_historical: false 
+      });
       
       if (error) throw error;
       

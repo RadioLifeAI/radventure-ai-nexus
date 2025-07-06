@@ -2908,10 +2908,12 @@ export type Database = {
         Args: { p_case_id: string }
         Returns: Json[]
       }
-      get_challenge_analytics: {
-        Args:
-          | Record<PropertyKey, never>
-          | { p_date_from?: string; p_date_to?: string }
+      get_challenge_analytics_unified: {
+        Args: {
+          p_historical?: boolean
+          p_date_from?: string
+          p_date_to?: string
+        }
         Returns: Json
       }
       get_daily_challenge_for_user: {
